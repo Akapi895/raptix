@@ -1,0 +1,24 @@
+# Build artifacts
+backend/server
+backend/migrate
+backend/*.exe
+/bin/
+/dist/
+
+# Local config & secrets
+configs/app.yaml
+.env
+.env.*
+
+# Content snapshots & runtime data
+data/
+content/inventory.json
+
+# Go toolchain/module caches
+vendor/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

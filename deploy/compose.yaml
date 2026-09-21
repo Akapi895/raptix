@@ -1,0 +1,22 @@
+# Phase 1 topology: PostgreSQL only. DSN matches POSTGRES_USER/PASSWORD/DB below.
+# Start for dev: docker compose up -d --wait postgres
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: raptix-postgres
+    environment:
+      POSTGRES_USER: raptix
+      POSTGRES_PASSWORD: raptix
+      POSTGRES_DB: raptix
+    ports:
+      - "5432:5432"
+    volumes:
+      - raptix_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U raptix -d raptix"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  raptix_pgdata:

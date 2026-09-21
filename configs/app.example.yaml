@@ -1,0 +1,19 @@
+# Example config. Copy to configs/app.yaml or override fields via RAP_* env vars.
+server:
+  addr: ":8080"
+  shutdown_timeout: 10s
+
+database:
+  url: "postgres://raptix:raptix@localhost:5432/raptix?sslmode=disable"
+  max_conns: 10
+  connect_timeout: 5s
+  migration_lock_timeout: 15s
+
+artifact:
+  root: "./data/artifacts"
+
+content:
+  root: "./content"
+
+log:
+  level: "info"
