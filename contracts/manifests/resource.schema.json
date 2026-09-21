@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raptix.local/contracts/manifests/resource.schema.json",
+  "title": "Resource manifest",
+  "description": "A resource pack references external material: source, license, digest, size, format and a stable reference for provenance.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["apiVersion", "kind", "name"],
+  "properties": {
+    "apiVersion": { "type": "string", "const": "manifest/v1" },
+    "kind": { "type": "string", "const": "resource" },
+    "name": { "type": "string", "minLength": 1 },
+    "version": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string" },
+        "repo": { "type": "string" },
+        "commit": { "type": "string" }
+      }
+    },
+    "license": { "type": "string" },
+    "digest": { "type": "string" },
+    "size": { "type": "integer", "minimum": 0 },
+    "format": { "type": "string" },
+    "reference": { "type": "string" }
+  }
+}

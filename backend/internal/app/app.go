@@ -7,12 +7,17 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/Akapi895/raptix/backend/internal/api"
+	"github.com/Akapi895/raptix/backend/internal/content"
+	"github.com/Akapi895/raptix/backend/internal/engine/llm"
+	einoadapter "github.com/Akapi895/raptix/backend/internal/engine/llm/adapters/eino"
 	"github.com/Akapi895/raptix/backend/internal/infrastructure/database/filesystem"
 	"github.com/Akapi895/raptix/backend/internal/infrastructure/database/postgres"
+	"github.com/Akapi895/raptix/backend/internal/tools/registry"
 )
 
 // App is the composition root: wires adapters and manages the HTTP server and storage.
@@ -21,6 +26,9 @@ type App struct {
 	log      *slog.Logger
 	pool     *postgres.Pool
 	fs       *filesystem.Store
+	content  *content.Loader
+	allTools *registry.Registry
+	model    llm.Model
 	srv      *http.Server
 	requests *api.RequestTracker
 
@@ -34,6 +42,9 @@ type App struct {
 
 // New builds an App, opening the PostgreSQL pool, filesystem store and HTTP server.
 func New(cfg *Config, log *slog.Logger) (*App, error) {
+	if log == nil {
+		log = slog.Default()
+	}
 	connectCtx, cancel := context.WithTimeout(context.Background(), cfg.Database.ConnectTimeout)
 	defer cancel()
 
@@ -52,6 +63,50 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 		return nil, fmt.Errorf("open artifact store: %w", err)
 	}
 
+	contentLoader, err := content.NewLoader(cfg.Content.Root, cfg.Content.SchemaRoot)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			log.Info("content catalog disabled; root not present", "root", cfg.Content.Root)
+		} else {
+			_ = fs.Close()
+			pool.Close()
+			return nil, fmt.Errorf("open content loader: %w", err)
+		}
+	}
+
+	// The tool registry maps manifest-declared capabilities to implementations.
+	// Registration only makes a tool discoverable; it grants no execution right.
+	allTools := registry.New()
+	if contentLoader != nil {
+		if err := registerManifestTools(allTools, contentLoader, log); err != nil {
+			_ = fs.Close()
+			pool.Close()
+			return nil, fmt.Errorf("register manifest tools: %w", err)
+		}
+	}
+
+	// The model adapter exposes the business llm.Model contract. It is optional
+	// for Phase 1-3 (agent loop is Phase 5): without an API key we skip wiring so
+	// startup still succeeds; with a key we connect the provider.
+	var model llm.Model
+	if cfg.LLM.APIKey != "" {
+		model, err = einoadapter.New(einoadapter.Config{
+			BaseURL:      cfg.LLM.BaseURL,
+			APIKey:       cfg.LLM.APIKey,
+			Timeout:      cfg.LLM.Timeout,
+			DefaultModel: cfg.LLM.Model,
+		})
+		if err != nil {
+			_ = fs.Close()
+			pool.Close()
+			return nil, fmt.Errorf("initialize LLM adapter: %w", err)
+		} else {
+			log.Info("llm model configured", "model", cfg.LLM.Model, "base_url", cfg.LLM.BaseURL)
+		}
+	} else {
+		log.Warn("llm API key not set; model calls disabled")
+	}
+
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 
 	requests := api.NewRequestTracker()
@@ -64,9 +119,29 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 	}
 
 	return &App{
-		cfg: cfg, log: log, pool: pool, fs: fs, srv: srv, requests: requests,
+		cfg: cfg, log: log, pool: pool, fs: fs, content: contentLoader,
+		allTools: allTools, model: model,
+		srv: srv, requests: requests,
 		baseCtx: baseCtx, baseCancel: baseCancel,
 	}, nil
+}
+
+// registerManifestTools declares tool capabilities found in the content root.
+// Tools with a registered Go implementation are wired here; the rest are
+// declared-only (compatible but not yet runnable) until execution dispatches.
+func registerManifestTools(reg *registry.Registry, l *content.Loader, log *slog.Logger) error {
+	names, err := l.List(content.KindTool)
+	if err != nil {
+		return fmt.Errorf("list tools: %w", err)
+	}
+	for _, n := range names {
+		if err := reg.RegisterFromManifest(l, n, nil); err != nil {
+			log.Warn("register tool manifest", "tool", n, "error", err)
+			continue
+		}
+		log.Info("registered tool from manifest", "tool", n)
+	}
+	return nil
 }
 
 // Run listens on cfg.Server.Addr and coordinates shutdown. For production use.

@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -23,6 +25,73 @@ func newTestApp(t *testing.T, shutdownTimeout time.Duration) *App {
 	}
 	t.Cleanup(a.closeStorage)
 	return a
+}
+
+func TestNewWiresContentLoaderWhenRootExists(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "content")
+	if err := os.MkdirAll(filepath.Join(root, "skills", "utility", "demo"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "skills", "utility", "demo", "SKILL.md"), []byte("---\nname: demo\ndescription: demo\n---\nbody\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := defaults()
+	cfg.Artifact.Root = t.TempDir()
+	cfg.Content.Root = root
+	cfg.Content.SchemaRoot = ""
+	a, err := New(cfg, NewLogger("error"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	t.Cleanup(a.closeStorage)
+	if a.content == nil {
+		t.Fatal("content loader was not wired when content root exists")
+	}
+	if _, err := a.content.LoadSkill("demo"); err != nil {
+		t.Fatalf("LoadSkill(demo): %v", err)
+	}
+}
+
+func TestNewWiresToolRegistryFromManifest(t *testing.T) {
+	root := filepath.Join(t.TempDir(), "content")
+	if err := os.MkdirAll(filepath.Join(root, "tools", "manifests"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "tools", "manifests", "nmap.yaml"), []byte("apiVersion: manifest/v1\nkind: tool\nname: nmap\ndescription: 'network scanner'\nexecutor:\n  type: command\n  command: nmap\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg := defaults()
+	cfg.Artifact.Root = t.TempDir()
+	cfg.Content.Root = root
+	cfg.Content.SchemaRoot = ""
+	a, err := New(cfg, NewLogger("error"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	t.Cleanup(a.closeStorage)
+	if a.allTools == nil {
+		t.Fatal("tool registry was not wired")
+	}
+	if a.allTools.Available("nmap") {
+		t.Error("declared-only nmap must not report as available")
+	}
+	if _, _, err := a.allTools.Get("nmap"); err == nil {
+		t.Error("declared-only nmap should not return an implementation")
+	}
+}
+
+func TestNewToleratesMissingContentRoot(t *testing.T) {
+	cfg := defaults()
+	cfg.Artifact.Root = t.TempDir()
+	cfg.Content.Root = filepath.Join(t.TempDir(), "does-not-exist")
+	a, err := New(cfg, NewLogger("error"))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	t.Cleanup(a.closeStorage)
+	if a.content != nil {
+		t.Fatal("content loader should be nil when content root is missing")
+	}
 }
 
 // TestGracefulShutdownWaitsForInFlight verifies the server waits for an in-flight

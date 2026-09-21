@@ -13,7 +13,15 @@ artifact:
   root: "./data/artifacts"
 
 content:
-  root: "./content"
+  # These paths are relative to the process CWD. Run the server from backend/.
+  root: "../content"
+  schema_root: "../contracts/manifests"
+
+llm:
+  base_url: "https://stream-netmind.viettel.vn/aigw/ai/v1"
+  model: "MiniMax/MiniMax-M3-VIP"
+  # api_key: set via RAP_LLM_API_KEY (or configs/app.yaml, which is git-ignored)
+  timeout: 60s
 
 log:
   level: "info"

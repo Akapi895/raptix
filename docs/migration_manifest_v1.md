@@ -12,6 +12,7 @@ File này là sản phẩm của **Phase 0 (đối chiếu và danh sách migrat
 |---|---|---|
 | `frameworks/strix` | `4c1f00d1ee5bac0880e66e325ba50ed18a0b182b` | `fix(runtime): tear the sandbox down when staging is cancelled` |
 | `frameworks/CyberStrikeAI` | `f44adaddf399244f701bfefc6767f164fb3eec2c` | `Update config.example.yaml` |
+| `frameworks/Claude-Red` | `24d7968bab4b883e7f13477afe0fd91f2df3b722` | Skill catalog source for Phase 2 |
 
 - **CyberStrikeAI**: nguồn chính cho phần Go (cấu trúc `cmd/`, `internal/`, catalog, MCP, model integration).
 - **Strix**: nguồn chính cho content, agent loop, sandbox, verification.
@@ -25,7 +26,7 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 |---|---|---|---|
 | 0 | Đối chiếu + danh sách migrate (file này) | viết mới | ✅ file này |
 | 1 | Khung app + storage | tham chiếu (CyberStrikeAI Go layout), viết mới wiring/persistence | ✅ |
-| 2 | Content, catalog, model adapter | migrate (Strix content; CyberStrikeAI registry/MCP/model) | ⏳ |
+| 2 | Content, catalog, model adapter | migrate (Claude-Red skills; CyberStrikeAI tool model), viết mới Go contracts/adapters | ✅ |
 | 3 | Dữ liệu lõi + quyền tối thiểu | migrate cả hai | ⏳ |
 | 4 | Một capability qua execution | migrate (Strix sandbox/tool; CyberStrikeAI capability) | ⏳ |
 | 5 | Một agent hoàn chỉnh + verifier | migrate (Strix agent loop; adapter Go có sẵn) | ⏳ |
@@ -50,3 +51,10 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 - **Migration governance đã chạy:** `backend/migrations/00001_enable_extensions.sql` (pgcrypto) qua `cmd/migrate -command up`, verify bằng `status`; `goose_db_version` ở version 1.
 - **Blocker đã sửa:** bổ sung `github.com/jackc/puddle/v2 v2.2.2` vào `go.mod`/`go.sum`; `go test -mod=readonly ./...` chạy sạch.
 - **Còn thiếu (phase sau):** River, sqlc.yaml, filesystem artifact gắn nghiệp vụ, contracts/openapi, `containers/app/Dockerfile`, sandbox.
+
+## Phase 2 — Đã migrate
+
+- **Content catalog:** loader YAML/Markdown schema-validated, path-contained, provenance hash/version/path, profile prompt/reference validation, và 78 skills từ Claude-Red revision đã pin. Skill bodies giữ nguyên; chỉ relocation và NOTICE MIT được thêm.
+- **Tool catalog:** nmap manifest giữ source path và CyberStrikeAI revision đã pin; registry tách declaration, binding và readiness, không cấp execution right.
+- **LLM:** business contract cùng OpenAI-compatible Eino adapter, HTTP/SSE mock regression tests. Retry thuộc owner orchestration/execution ở phase sau; adapter không retry một stream đã phát dữ liệu.
+- **Không thuộc Phase 2:** tool dispatch/sandbox, governance, agent loop, evidence persistence và finding verification.

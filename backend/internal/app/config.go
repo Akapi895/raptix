@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"strconv"
 	"time"
@@ -16,6 +17,7 @@ type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	Artifact ArtifactConfig `yaml:"artifact"`
 	Content  ContentConfig  `yaml:"content"`
+	LLM      LLMConfig      `yaml:"llm"`
 	Log      LogConfig      `yaml:"log"`
 }
 
@@ -36,7 +38,16 @@ type ArtifactConfig struct {
 }
 
 type ContentConfig struct {
-	Root string `yaml:"root"`
+	Root       string `yaml:"root"`
+	SchemaRoot string `yaml:"schema_root"`
+}
+
+// LLMConfig configures the model provider (OpenAI-compatible endpoint).
+type LLMConfig struct {
+	BaseURL string        `yaml:"base_url"`
+	Model   string        `yaml:"model"`
+	APIKey  string        `yaml:"api_key"`
+	Timeout time.Duration `yaml:"timeout"`
 }
 
 type LogConfig struct {
@@ -81,8 +92,13 @@ func defaults() *Config {
 			MigrationLockTimeout: 15 * time.Second,
 		},
 		Artifact: ArtifactConfig{Root: "./data/artifacts"},
-		Content:  ContentConfig{Root: "./content"},
-		Log:      LogConfig{Level: "info"},
+		Content:  ContentConfig{Root: "./content", SchemaRoot: "./contracts/manifests"},
+		LLM: LLMConfig{
+			BaseURL: "https://stream-netmind.viettel.vn/aigw/ai/v1",
+			Model:   "MiniMax/MiniMax-M3-VIP",
+			Timeout: 60 * time.Second,
+		},
+		Log: LogConfig{Level: "info"},
 	}
 }
 
@@ -94,6 +110,7 @@ func applyEnvOverrides(cfg *Config) error {
 	cfg.Log.Level = envOr("RAP_LOG_LEVEL", cfg.Log.Level)
 	cfg.Artifact.Root = envOr("RAP_ARTIFACT_ROOT", cfg.Artifact.Root)
 	cfg.Content.Root = envOr("RAP_CONTENT_ROOT", cfg.Content.Root)
+	cfg.Content.SchemaRoot = envOr("RAP_CONTENT_SCHEMA_ROOT", cfg.Content.SchemaRoot)
 
 	if v, ok := os.LookupEnv("RAP_DATABASE_MAX_CONNS"); ok && v != "" {
 		n, err := strconv.ParseInt(v, 10, 32)
@@ -123,6 +140,17 @@ func applyEnvOverrides(cfg *Config) error {
 		}
 		cfg.Database.MigrationLockTimeout = d
 	}
+
+	cfg.LLM.BaseURL = envOr("RAP_LLM_BASE_URL", cfg.LLM.BaseURL)
+	cfg.LLM.Model = envOr("RAP_LLM_MODEL", cfg.LLM.Model)
+	cfg.LLM.APIKey = envOr("RAP_LLM_API_KEY", cfg.LLM.APIKey)
+	if v, ok := os.LookupEnv("RAP_LLM_TIMEOUT"); ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("RAP_LLM_TIMEOUT: invalid duration %q: %w", v, err)
+		}
+		cfg.LLM.Timeout = d
+	}
 	return nil
 }
 
@@ -146,6 +174,19 @@ func (c *Config) validate() error {
 	}
 	if c.Database.MaxConns <= 0 {
 		return fmt.Errorf("database.max_conns must be positive, got %d", c.Database.MaxConns)
+	}
+	if c.LLM.BaseURL == "" {
+		return fmt.Errorf("llm.base_url must not be empty")
+	}
+	u, err := url.ParseRequestURI(c.LLM.BaseURL)
+	if err != nil || u.Scheme == "" || u.Host == "" || (u.Scheme != "http" && u.Scheme != "https") {
+		return fmt.Errorf("llm.base_url must be an absolute http(s) URL")
+	}
+	if c.LLM.Model == "" {
+		return fmt.Errorf("llm.model must not be empty")
+	}
+	if c.LLM.Timeout <= 0 {
+		return fmt.Errorf("llm.timeout must be positive, got %s", c.LLM.Timeout)
 	}
 	return nil
 }

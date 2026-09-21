@@ -2,7 +2,7 @@
 
 Backend security-automation platform (agent + skills + tools + evidence + findings + reporting), built as a **Go modular monolith**. This is the `raptix` repo; authoritative docs live in `docs/` (`repository_structure_v1.md`, `migration_roadmap_v1.md`, `migration_manifest_v1.md`).
 
-> Trạng thái: **Phase 1 hoàn tất** — khung app + storage. Chưa có agent/tool/engine. Xem manifest để theo dõi từng phase.
+> Trạng thái: **Phase 2 hoàn tất** — content catalog, tool declaration/registry và LLM adapter đã có contract/test; agent loop và tool execution thật thuộc phase sau. Xem manifest để theo dõi.
 
 ## Nhanh
 
@@ -20,7 +20,7 @@ docker compose -f deploy/compose.yaml up -d --wait postgres
 
 Hoặc dùng helper: `scripts/dev.sh up` rồi `scripts/dev.sh server`. `scripts/check.sh` chạy vet+build+test.
 
-## Cấu trúc (đã triển khai ở Phase 1)
+## Cấu trúc (đã triển khai đến Phase 2)
 
 - `backend/` — module Go duy nhất `github.com/Akapi895/raptix/backend`, Go 1.26.
 - `backend/cmd/server` — entrypoint HTTP server (sole engine host trong tương lai).
@@ -30,6 +30,10 @@ Hoặc dùng helper: `scripts/dev.sh up` rồi `scripts/dev.sh server`. `scripts
 - `backend/internal/infrastructure/database/postgres` — pgxpool + health + transaction primitive.
 - `backend/internal/infrastructure/database/filesystem` — blob store (artifact).
 - `backend/migrations` — goose migrations.
+- `backend/internal/content` — declarative catalog loader, schema/provenance/reference validation.
+- `backend/internal/tools` — tool registry và output contract; chưa dispatch capability.
+- `backend/internal/engine/llm` — business LLM contract và Eino OpenAI-compatible adapter.
+- `content/` — profile, prompt, tool manifests và skill catalog; xem `content/skills/NOTICE.md` cho attribution.
 
 ## Config
 

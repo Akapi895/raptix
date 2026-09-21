@@ -27,7 +27,6 @@ func Router(db Pinger, log *slog.Logger, requests *RequestTracker) http.Handler 
 	}
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
-	r.Use(middleware.RealIP)
 	r.Use(requests.Middleware)
 	r.Use(requestLogger(log))
 

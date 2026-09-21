@@ -1,0 +1,16 @@
+apiVersion: manifest/v1
+kind: profile
+name: recon
+version: 1.0.0
+description: Lightweight reconnaissance/API assessment agent. Enumerates and analyzes API attack surface; execution rights are granted separately by governance, not by this profile.
+license: Apache-2.0
+promptRefs:
+  - agents/prompts/recon-system.md
+requested:
+  skills:
+    - offensive-api-security
+    - offensive-osint
+  tools:
+    - nmap
+  resources: []
+model: MiniMax/MiniMax-M3-VIP
