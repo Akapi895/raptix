@@ -22,6 +22,9 @@ execution:
   default_timeout: 30s
   max_output_bytes: 1048576
   max_invocations_per_run: 100
+  # How old a non-terminal invocation must be before startup reconcile marks
+  # it unknown (after a crash). Override via RAP_EXECUTION_RECONCILE_STALE_AFTER.
+  reconcile_stale_after: 5m
 
 sandbox:
   # local = run command tools on the host (lab/dev); container = docker boundary.

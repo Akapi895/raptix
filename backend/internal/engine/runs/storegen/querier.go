@@ -21,6 +21,7 @@ type Querier interface {
 	ListAgentInstancesByRun(ctx context.Context, runID pgtype.UUID) ([]AgentInstance, error)
 	ListRunsByProject(ctx context.Context, projectID pgtype.UUID) ([]Run, error)
 	ListTaskDependencies(ctx context.Context, taskID pgtype.UUID) ([]TaskDependency, error)
+	ListTasksByRun(ctx context.Context, runID pgtype.UUID) ([]Task, error)
 	TransitionAgentInstance(ctx context.Context, arg TransitionAgentInstanceParams) (AgentInstance, error)
 	TransitionRun(ctx context.Context, arg TransitionRunParams) (Run, error)
 	TransitionTask(ctx context.Context, arg TransitionTaskParams) (Task, error)

@@ -116,6 +116,7 @@ SET status = $2,
     finished_at = $3,
     updated_at = now()
 WHERE id = $1
+  AND status = 'running'
 RETURNING id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
 `
 

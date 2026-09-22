@@ -30,7 +30,7 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 | 3 | Dữ liệu lõi + quyền tối thiểu | migrate cả hai | ✅ |
 | 4 | Một capability qua execution | migrate (Strix sandbox/tool; CyberStrikeAI capability) | ✅ |
 | 5 | Một agent hoàn chỉnh + verifier | migrate (Strix agent loop; adapter Go có sẵn) | ✅ |
-| 6 | Độ tin cậy execution/run | migrate (lỗi/restart), triển khai theo Postgres+V1 | ⏳ |
+| 6 | Độ tin cậy execution/run | migrate (lỗi/restart), triển khai theo Postgres+V1 | ✅ |
 | 7 | API, CLI, UI cơ bản | migrate (CLI/API cả hai), UI mới React/TS | ⏳ |
 | 8 | Review, report, jobs | migrate cả hai (finding/report; River) | ⏳ |
 | 9 | Memory, knowledge, context | tùy chọn từ cả hai, không mặc định chép | ⏳ |
@@ -101,3 +101,15 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 - **Evals:** `evals/cases/agent_http_probe.yaml` + baseline + runner `tests/evals/agent_test.go` (fake model script, deterministic, không cần API key/DB).
 - **Kiến trúc:** `engine/agents↛workspace/{findings,verifier}`, `workspace/verifier↛engine/agents`, `engine/contextbuild↛execution`.
 - **Đã validate live:** `TestPhase5AgentDataFlow` PASS trên DB thật — project+scope+member+grant `run.start`/`http_probe` → authorized run → agent attempt (model script gọi `http_probe` qua execution rồi final) → invocation `succeeded` + evidence bytes → finding draft gắn evidence (status vẫn `draft`) → verifier re-check → verdict `confirmed`; `agent_attempts` succeeded, `agent_messages` có lượt tool nối `invocation_id`. Toàn bộ `gofmt`/`vet`/`staticcheck`/`build`/`test -race`/`mod verify`/`check.sh` sạch; `sqlc diff` không drift.
+
+## Phase 6 — Đã migrate + validate live
+
+- **Migration:** `00013_execution_cancel.sql` — hai index partial cho stale scan: `tool_invocations_pending_stale_idx (created_at) WHERE status='pending'` và `tool_invocations_running_stale_idx (started_at) WHERE status IN ('dispatched','running')`. Đã apply live (13/13).
+- **execution/invocation:** hoàn thiện trạng thái trung gian. Thêm 4 method repo `StartInvocation` (`pending→running` + `started_at` + bump version, state-aware optimistic-lock), `ListStaleInvocations`, `CancelInvocationsByRun`, `MarkUnknown`. Ghi `pending` lấy `FOR SHARE` lock trên run active trong cùng statement để cancel không bỏ sót invocation vừa tạo; `Invoke` dùng version của `running` cho `UpdateResult`. Idempotency hit ở mọi trạng thái unresolved (`pending`/`dispatched`/`running`/`unknown`) trả `ErrOutcomeUnknown`; unique-key race đọc lại outcome đã tồn tại, không dispatch lại.
+- **execution/cancel:** package mới sở hữu chính sách hủy/đối soát. `Service.CancelRun` áp dụng D1 (`pending`/`dispatched`→`cancelled`, `running`→`unknown`); `Service.Reconcile` đánh `unknown` các stale, optimistic-lock safe (bỏ qua nếu vừa kết thúc) và idempotent. Chỉ thao tác `tool_invocations`, không import `engine`.
+- **engine/runs:** thêm `ListTasksByRun` + `CancelRun` (cascade run/task/agent non-terminal → `cancelled`, compare-and-set từng child, retry trên run đã `cancelled` hoàn tất cascade partial). Tạo task/agent chỉ được phép trên run non-terminal và lấy shared lock trong SQL.
+- **engine/agents:** thêm `CancelRunningAttempts` (chỉ đổi attempt `running` → `cancelled`; `agent_instances` giữ nguyên cho `runs`). `FinishAttempt` là compare-and-set theo `status='running'`, nên agent completion không thể đè cancellation.
+- **app:** `ExecutionConfig.ReconcileStaleAfter` (env `RAP_EXECUTION_RECONCILE_STALE_AFTER`, default 5m, validate > 0); wire `execution/cancel` (Store = `invocation.Postgres`); use case `Services.CancelRun` (dàn xếp xuyên module + audit `run.cancel`) và `Services.Reconcile`; `App.Services()` accessor.
+- **cmd/server:** chạy 1 pass `Reconcile` khi khởi động, non-fatal (log warning, không chặn khi DB tạm lỗi).
+- **Kiến trúc:** `execution/cancel↛engine` (chỉ import `execution/invocation` types).
+- **Đã validate live:** `TestPhase6ReconcileStale` (giả lập crash để invocation treo `running` → `Reconcile` → `unknown`, idempotent), `TestPhase6CancelRunCascade` (run/task/agent `cancelled`, attempt `cancelled`, invocation `running`→`unknown` + `pending`→`cancelled`, audit `run.cancel`), `TestPhase6CancelDoesNotMissConcurrentInvocationCreation` (cancel tuần tự với create lock, sweep pending row, không thể start sau cancel), `TestPhase6IdempotencyNoRerun` (invocation `unknown` cùng key → trả `ErrOutcomeUnknown`, không dispatch mới) — tất cả PASS trên DB thật. Toàn bộ `gofmt`/`vet`/`staticcheck`/`build`/`test -race`/`mod verify`/`check.sh` sạch; `sqlc diff` không drift.

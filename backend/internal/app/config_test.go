@@ -33,7 +33,7 @@ func cleanEnv(t *testing.T) {
 		"RAP_SERVER_ADDR", "RAP_SERVER_SHUTDOWN_TIMEOUT",
 		"RAP_DATABASE_URL", "RAP_DATABASE_MAX_CONNS", "RAP_DATABASE_CONNECT_TIMEOUT", "RAP_DATABASE_MIGRATION_LOCK_TIMEOUT",
 		"RAP_LOG_LEVEL", "RAP_ARTIFACT_ROOT", "RAP_CONTENT_ROOT", "RAP_CONTENT_SCHEMA_ROOT",
-		"RAP_EXECUTION_DEFAULT_TIMEOUT", "RAP_EXECUTION_MAX_OUTPUT_BYTES", "RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN",
+		"RAP_EXECUTION_DEFAULT_TIMEOUT", "RAP_EXECUTION_MAX_OUTPUT_BYTES", "RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN", "RAP_EXECUTION_RECONCILE_STALE_AFTER",
 		"RAP_SANDBOX_MODE", "RAP_SANDBOX_IMAGE", "RAP_SANDBOX_NETWORK", "RAP_SANDBOX_MAX_OUTPUT_BYTES",
 		"RAP_AGENT_MAX_STEPS", "RAP_AGENT_MAX_CONTEXT_TOKENS", "RAP_AGENT_DEFAULT_TIMEOUT", "RAP_AGENT_MODEL",
 		"RAP_LLM_BASE_URL", "RAP_LLM_MODEL", "RAP_LLM_API_KEY", "RAP_LLM_TIMEOUT",
@@ -67,13 +67,14 @@ func TestLoadConfigExecutionAndSandboxOverrides(t *testing.T) {
 	t.Setenv("RAP_EXECUTION_DEFAULT_TIMEOUT", "5s")
 	t.Setenv("RAP_EXECUTION_MAX_OUTPUT_BYTES", "2048")
 	t.Setenv("RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN", "3")
+	t.Setenv("RAP_EXECUTION_RECONCILE_STALE_AFTER", "90s")
 	t.Setenv("RAP_SANDBOX_MODE", "local")
 	t.Setenv("RAP_SANDBOX_NETWORK", "false")
 	cfg, err := LoadConfig(writeConfig(t, ""))
 	if err != nil {
 		t.Fatalf("LoadConfig: %v", err)
 	}
-	if cfg.Execution.DefaultTimeout != 5*time.Second || cfg.Execution.MaxOutputBytes != 2048 || cfg.Execution.MaxInvocationsPerRun != 3 {
+	if cfg.Execution.DefaultTimeout != 5*time.Second || cfg.Execution.MaxOutputBytes != 2048 || cfg.Execution.MaxInvocationsPerRun != 3 || cfg.Execution.ReconcileStaleAfter != 90*time.Second {
 		t.Fatalf("execution overrides = %+v", cfg.Execution)
 	}
 	if cfg.Sandbox.Network {

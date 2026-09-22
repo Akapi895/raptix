@@ -3,6 +3,7 @@ package invocation
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 	"time"
 
@@ -220,4 +221,96 @@ func TestInvokeIdempotent(t *testing.T) {
 		t.Errorf("status = %s, want succeeded", second.Status)
 	}
 	_ = res
+}
+
+func TestInvokeIdempotencySurfacesUnknownOutcome(t *testing.T) {
+	h := newHarness()
+	ctx := context.Background()
+	p := h.params()
+	// A prior invocation exists for the same (run, key) and is in flight (running).
+	inv, err := h.repo.CreateInvocation(ctx, CreateParams{
+		RunID: p.RunID, ScopeID: p.ScopeID, Actor: p.Actor, Capability: p.Capability,
+		IdempotencyKey: p.IdempotencyKey, Request: p.Args,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.repo.StartInvocation(ctx, inv.ID, inv.Version); err != nil {
+		t.Fatal(err)
+	}
+
+	_, res, err := h.svc.Invoke(ctx, p)
+	var unknown *ErrOutcomeUnknown
+	if !errors.As(err, &unknown) {
+		t.Fatalf("err = %v, want ErrOutcomeUnknown", err)
+	}
+	if res != nil {
+		t.Error("unknown outcome must produce a nil result (no dispatch)")
+	}
+	if h.impl.calls != 0 {
+		t.Error("unknown outcome must not trigger a re-dispatch")
+	}
+}
+
+func TestInvokeIdempotencySurfacesAllUnresolvedStates(t *testing.T) {
+	for _, status := range []Status{StatusPending, StatusDispatched, StatusRunning, StatusUnknown} {
+		t.Run(string(status), func(t *testing.T) {
+			h := newHarness()
+			ctx := context.Background()
+			p := h.params()
+			inv, err := h.repo.CreateInvocation(ctx, CreateParams{
+				RunID: p.RunID, ScopeID: p.ScopeID, Actor: p.Actor, Capability: p.Capability,
+				IdempotencyKey: p.IdempotencyKey, Request: p.Args,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if status == StatusRunning {
+				inv, err = h.repo.StartInvocation(ctx, inv.ID, inv.Version)
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+			if status != StatusPending && status != StatusRunning {
+				inv.Status = status
+				h.repo.invocations[inv.ID] = inv
+			}
+
+			_, _, err = h.svc.Invoke(ctx, p)
+			var unknown *ErrOutcomeUnknown
+			if !errors.As(err, &unknown) || unknown.Status != status {
+				t.Fatalf("err = %v, want ErrOutcomeUnknown for %s", err, status)
+			}
+			if h.impl.calls != 0 {
+				t.Fatalf("%s idempotency hit must not dispatch", status)
+			}
+		})
+	}
+}
+
+func TestInvokeConcurrentIdempotencyConflictReturnsStoredOutcome(t *testing.T) {
+	h := newHarness()
+	ctx := context.Background()
+	p := h.params()
+	inv, err := h.repo.CreateInvocation(ctx, CreateParams{
+		RunID: p.RunID, ScopeID: p.ScopeID, Actor: p.Actor, Capability: p.Capability,
+		IdempotencyKey: p.IdempotencyKey, Request: p.Args,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.repo.StartInvocation(ctx, inv.ID, inv.Version); err != nil {
+		t.Fatal(err)
+	}
+	// Simulate two first callers observing no row, with the other caller winning
+	// the insert immediately before this caller attempts its own insert.
+	h.repo.hideLookupOnce = true
+	_, _, err = h.svc.Invoke(ctx, p)
+	var unknown *ErrOutcomeUnknown
+	if !errors.As(err, &unknown) || unknown.ID != inv.ID {
+		t.Fatalf("err = %v, want stored ErrOutcomeUnknown", err)
+	}
+	if h.impl.calls != 0 {
+		t.Error("concurrent idempotency conflict must not dispatch")
+	}
 }

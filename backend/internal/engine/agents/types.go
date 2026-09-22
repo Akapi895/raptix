@@ -105,6 +105,14 @@ type ErrAttemptNotFound struct{ ID uuid.UUID }
 
 func (e *ErrAttemptNotFound) Error() string { return "agent attempt not found: " + e.ID.String() }
 
+// ErrAttemptNotRunning reports a completion race with an attempt that was
+// already finished or cancelled.
+type ErrAttemptNotRunning struct{ ID uuid.UUID }
+
+func (e *ErrAttemptNotRunning) Error() string {
+	return "agent attempt is not running: " + e.ID.String()
+}
+
 // ErrSnapshotNotFound reports that an agent has no recorded snapshot.
 type ErrSnapshotNotFound struct{ AgentID uuid.UUID }
 

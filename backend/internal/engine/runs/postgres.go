@@ -88,11 +88,14 @@ func (r *Postgres) ListRunsByProject(ctx context.Context, projectID uuid.UUID) (
 
 func (r *Postgres) CreateTask(ctx context.Context, p CreateTaskParams) (Task, error) {
 	row, err := r.q.CreateTask(ctx, storegen.CreateTaskParams{
-		RunID:  uuidToPG(p.RunID),
+		ID:     uuidToPG(p.RunID),
 		Name:   p.Name,
 		Status: string(p.Status),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Task{}, &ErrRunNotAcceptingWork{ID: p.RunID}
+		}
 		return Task{}, fmt.Errorf("create task: %w", err)
 	}
 	return toTask(row), nil
@@ -148,14 +151,29 @@ func (r *Postgres) ListTaskDependencies(ctx context.Context, taskID uuid.UUID) (
 	return out, nil
 }
 
+func (r *Postgres) ListTasksByRun(ctx context.Context, runID uuid.UUID) ([]Task, error) {
+	rows, err := r.q.ListTasksByRun(ctx, uuidToPG(runID))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Task, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toTask(row))
+	}
+	return out, nil
+}
+
 func (r *Postgres) CreateAgent(ctx context.Context, p CreateAgentParams) (AgentInstance, error) {
 	row, err := r.q.CreateAgentInstance(ctx, storegen.CreateAgentInstanceParams{
-		RunID:   uuidToPG(p.RunID),
+		ID:      uuidToPG(p.RunID),
 		TaskID:  uuidPtrToPG(p.TaskID),
 		Profile: p.Profile,
 		Status:  string(p.Status),
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return AgentInstance{}, &ErrRunNotAcceptingWork{ID: p.RunID}
+		}
 		return AgentInstance{}, fmt.Errorf("create agent: %w", err)
 	}
 	return toAgent(row), nil

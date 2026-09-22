@@ -70,6 +70,9 @@ func (m *memRepo) FinishAttempt(ctx context.Context, p FinishAttemptParams) (Att
 	if !ok {
 		return Attempt{}, &ErrAttemptNotFound{ID: p.ID}
 	}
+	if a.Status != AttemptRunning {
+		return Attempt{}, &ErrAttemptNotRunning{ID: p.ID}
+	}
 	a.Status = p.Status
 	ft := p.FinishedAt
 	a.FinishedAt = &ft

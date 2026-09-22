@@ -35,7 +35,7 @@ type DBTX interface {
 
 func (r *Postgres) CreateInvocation(ctx context.Context, p CreateParams) (Invocation, error) {
 	row, err := r.q.CreateInvocation(ctx, storegen.CreateInvocationParams{
-		RunID:             uuidToPG(p.RunID),
+		ID:                uuidToPG(p.RunID),
 		TaskID:            uuidPtrToPG(p.TaskID),
 		ScopeID:           uuidToPG(p.ScopeID),
 		Actor:             p.Actor,
@@ -45,6 +45,13 @@ func (r *Postgres) CreateInvocation(ctx context.Context, p CreateParams) (Invoca
 		IdempotencyKey:    p.IdempotencyKey,
 	})
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Invocation{}, &ErrRunNotAcceptingWork{RunID: p.RunID}
+		}
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return Invocation{}, &ErrIdempotencyConflict{RunID: p.RunID, Key: p.IdempotencyKey}
+		}
 		return Invocation{}, fmt.Errorf("create invocation: %w", err)
 	}
 	return toInvocation(row), nil
@@ -100,6 +107,56 @@ func (r *Postgres) UpdateResult(ctx context.Context, u ResultUpdate) (Invocation
 
 func (r *Postgres) CountByRun(ctx context.Context, runID uuid.UUID) (int64, error) {
 	return r.q.CountInvocationsByRun(ctx, uuidToPG(runID))
+}
+
+func (r *Postgres) StartInvocation(ctx context.Context, id uuid.UUID, version int) (Invocation, error) {
+	row, err := r.q.StartInvocation(ctx, storegen.StartInvocationParams{
+		ID: uuidToPG(id), Version: int32(version),
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Invocation{}, &ErrOptimisticLock{ID: id}
+		}
+		return Invocation{}, err
+	}
+	return toInvocation(row), nil
+}
+
+func (r *Postgres) MarkUnknown(ctx context.Context, id uuid.UUID, version int) (Invocation, error) {
+	row, err := r.q.MarkUnknown(ctx, storegen.MarkUnknownParams{
+		ID: uuidToPG(id), Version: int32(version),
+	})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Invocation{}, &ErrOptimisticLock{ID: id}
+		}
+		return Invocation{}, err
+	}
+	return toInvocation(row), nil
+}
+
+func (r *Postgres) ListStaleInvocations(ctx context.Context, olderThan time.Time) ([]Invocation, error) {
+	rows, err := r.q.ListStaleInvocations(ctx, timeToPG(&olderThan))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Invocation, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toInvocation(row))
+	}
+	return out, nil
+}
+
+func (r *Postgres) CancelInvocationsByRun(ctx context.Context, runID uuid.UUID, from []Status, to Status) (int64, error) {
+	statuses := make([]string, len(from))
+	for i, s := range from {
+		statuses[i] = string(s)
+	}
+	return r.q.CancelInvocationsByRun(ctx, storegen.CancelInvocationsByRunParams{
+		RunID:   uuidToPG(runID),
+		Column2: statuses,
+		Status:  string(to),
+	})
 }
 
 func (r *Postgres) ListByRun(ctx context.Context, runID uuid.UUID) ([]Invocation, error) {

@@ -121,18 +121,3 @@ sql:
         output_db_file_name: "db.go"
         output_models_file_name: "models.go"
         output_querier_file_name: "querier.go"
-
-  - engine: "postgresql"
-    schema: "migrations"
-    queries: "internal/execution/invocation/queries"
-    gen:
-      go:
-        package: "storegen"
-        out: "internal/execution/invocation/storegen"
-        emit_json_tags: true
-        emit_interface: true
-        sql_package: "pgx/v5"
-        output_batch_file_name: "batch.go"
-        output_db_file_name: "db.go"
-        output_models_file_name: "models.go"
-        output_querier_file_name: "querier.go"

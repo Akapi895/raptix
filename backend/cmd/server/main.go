@@ -33,6 +33,13 @@ func run() error {
 		return fmt.Errorf("initialize application: %w", err)
 	}
 
+	// One-shot reconcile before serving: invocations left non-terminal by a
+	// prior crash are marked unknown. Non-fatal so the server still starts if
+	// the database is briefly unreachable.
+	if _, err := application.Services().Reconcile(ctx); err != nil {
+		log.Warn("startup reconcile failed", "error", err)
+	}
+
 	if err := application.Run(ctx); err != nil {
 		if errors.Is(err, context.Canceled) {
 			return nil

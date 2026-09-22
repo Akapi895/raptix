@@ -108,6 +108,13 @@ type ErrRunNotFound struct{ ID uuid.UUID }
 
 func (e *ErrRunNotFound) Error() string { return "run not found: " + e.ID.String() }
 
+// ErrRunNotAcceptingWork reports an attempt to add work to a terminal run.
+type ErrRunNotAcceptingWork struct{ ID uuid.UUID }
+
+func (e *ErrRunNotAcceptingWork) Error() string {
+	return "run does not accept work: " + e.ID.String()
+}
+
 // ErrTaskNotFound reports a missing task.
 type ErrTaskNotFound struct{ ID uuid.UUID }
 

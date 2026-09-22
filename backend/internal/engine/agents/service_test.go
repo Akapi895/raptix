@@ -94,6 +94,19 @@ type fakeResolver struct{ available map[string]bool }
 
 func (f *fakeResolver) Available(id string) bool { return f.available[id] }
 
+// finishConflictRepo simulates cancellation winning after the agent loop exits
+// but before it persists its own terminal outcome.
+type finishConflictRepo struct{ *memRepo }
+
+func (r *finishConflictRepo) FinishAttempt(ctx context.Context, p FinishAttemptParams) (Attempt, error) {
+	if _, err := r.memRepo.FinishAttempt(ctx, FinishAttemptParams{
+		ID: p.ID, Status: AttemptCancelled, FinishedAt: p.FinishedAt,
+	}); err != nil {
+		return Attempt{}, err
+	}
+	return Attempt{}, &ErrAttemptNotRunning{ID: p.ID}
+}
+
 func reconProfile() *content.Profile {
 	p := &content.Profile{Model: "test-model"}
 	p.Name = "recon"
@@ -263,5 +276,61 @@ func TestResolveSnapshotRecordsGranted(t *testing.T) {
 	}
 	if string(snap.Requested) == "" {
 		t.Error("requested snapshot is empty")
+	}
+}
+
+func TestCancelRunningAttempts(t *testing.T) {
+	h := newHarness()
+	ctx := context.Background()
+
+	a1, err := h.repo.CreateAttempt(ctx, CreateAttemptParams{AgentID: h.agent.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	a2, err := h.repo.CreateAttempt(ctx, CreateAttemptParams{AgentID: h.agent.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A finished attempt must be left untouched.
+	finished, err := h.repo.CreateAttempt(ctx, CreateAttemptParams{AgentID: h.agent.ID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := h.repo.FinishAttempt(ctx, FinishAttemptParams{ID: finished.ID, Status: AttemptSucceeded, FinishedAt: time.Now().UTC()}); err != nil {
+		t.Fatal(err)
+	}
+
+	n, err := h.svc.CancelRunningAttempts(ctx, h.agent.ID)
+	if err != nil {
+		t.Fatalf("cancel: %v", err)
+	}
+	if n != 2 {
+		t.Errorf("cancelled = %d, want 2", n)
+	}
+	for _, id := range []uuid.UUID{a1.ID, a2.ID} {
+		got, _ := h.repo.GetAttempt(ctx, id)
+		if got.Status != AttemptCancelled {
+			t.Errorf("attempt %s status = %s, want cancelled", id, got.Status)
+		}
+	}
+	if _, err := h.repo.FinishAttempt(ctx, FinishAttemptParams{ID: a1.ID, Status: AttemptSucceeded, FinishedAt: time.Now().UTC()}); err == nil {
+		t.Error("completion must not overwrite a cancelled attempt")
+	}
+	gotFinished, _ := h.repo.GetAttempt(ctx, finished.ID)
+	if gotFinished.Status != AttemptSucceeded {
+		t.Errorf("finished attempt status = %s, want succeeded untouched", gotFinished.Status)
+	}
+}
+
+func TestRunAgentDoesNotOverwriteCancelledAttempt(t *testing.T) {
+	h := newHarness(`{"action":"final","summary":"done"}`)
+	h.svc.repo = &finishConflictRepo{memRepo: h.repo}
+
+	res := h.run(t)
+	if res.Attempt.Status != AttemptCancelled {
+		t.Fatalf("attempt status = %s, want cancelled", res.Attempt.Status)
+	}
+	if got := h.runs.transitions; len(got) != 1 || got[0] != runs.AgentRunning {
+		t.Errorf("transitions = %v, want only transition to running", got)
 	}
 }

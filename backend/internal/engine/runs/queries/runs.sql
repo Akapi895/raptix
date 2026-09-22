@@ -21,14 +21,28 @@ WHERE project_id = $1
 ORDER BY created_at DESC;
 
 -- name: CreateTask :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    WHERE runs.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE
+)
 INSERT INTO tasks (run_id, name, status)
-VALUES ($1, $2, $3)
+SELECT active_run.id, $2, $3
+FROM active_run
 RETURNING id, run_id, name, status, version, created_at, updated_at;
 
 -- name: GetTask :one
 SELECT id, run_id, name, status, version, created_at, updated_at
 FROM tasks
 WHERE id = $1;
+
+-- name: ListTasksByRun :many
+SELECT id, run_id, name, status, version, created_at, updated_at
+FROM tasks
+WHERE run_id = $1
+ORDER BY created_at ASC;
 
 -- name: TransitionTask :one
 UPDATE tasks
@@ -46,8 +60,16 @@ FROM task_dependencies
 WHERE task_id = $1;
 
 -- name: CreateAgentInstance :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    WHERE runs.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE
+)
 INSERT INTO agent_instances (run_id, task_id, profile, status)
-VALUES ($1, $2, $3, $4)
+SELECT active_run.id, $2, $3, $4
+FROM active_run
 RETURNING id, run_id, task_id, profile, status, version, created_at, updated_at;
 
 -- name: GetAgentInstance :one

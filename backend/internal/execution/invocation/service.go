@@ -108,7 +108,7 @@ func (s *Service) Invoke(ctx context.Context, p InvokeParams) (Invocation, *outp
 	// Only a genuine "not found" proceeds; any other repository error surfaces
 	// rather than silently re-dispatching under a transient database failure.
 	if existing, err := s.repo.GetByRunAndIdempotencyKey(ctx, p.RunID, p.IdempotencyKey); err == nil {
-		return existing, nil, nil
+		return idempotentOutcome(existing)
 	} else {
 		var nf *ErrInvocationNotFound
 		if !errors.As(err, &nf) {
@@ -168,9 +168,30 @@ func (s *Service) Invoke(ctx context.Context, p InvokeParams) (Invocation, *outp
 		Request: p.Args, IdempotencyKey: p.IdempotencyKey,
 	})
 	if err != nil {
+		var conflict *ErrIdempotencyConflict
+		if errors.As(err, &conflict) {
+			existing, lookupErr := s.repo.GetByRunAndIdempotencyKey(ctx, p.RunID, p.IdempotencyKey)
+			if lookupErr != nil {
+				return Invocation{}, nil, fmt.Errorf("read concurrent idempotency result: %w", lookupErr)
+			}
+			return idempotentOutcome(existing)
+		}
+		var inactive *ErrRunNotAcceptingWork
+		if errors.As(err, &inactive) {
+			return deny(fmt.Sprintf("run %s is in a terminal state", p.RunID))
+		}
 		return Invocation{}, nil, fmt.Errorf("record invocation: %w", err)
 	}
 	s.recordDecision(ctx, audit.OutcomeAllowed, p, created.ID.String())
+
+	// Mark the invocation running with a started_at before dispatch. This
+	// separates "created but not yet dispatched" (pending) from "in flight"
+	// (running), which is what stale detection and cancellation rely on. If the
+	// process dies here or during dispatch, reconcile finds the non-terminal row.
+	running, err := s.repo.StartInvocation(ctx, created.ID, created.Version)
+	if err != nil {
+		return Invocation{}, nil, fmt.Errorf("start invocation: %w", err)
+	}
 
 	dctx, cancel := context.WithTimeout(ctx, s.timeout())
 	defer cancel()
@@ -194,8 +215,8 @@ func (s *Service) Invoke(ctx context.Context, p InvokeParams) (Invocation, *outp
 
 	now := time.Now().UTC()
 	updated, err := s.repo.UpdateResult(ctx, ResultUpdate{
-		ID:                   created.ID,
-		Version:              created.Version,
+		ID:                   running.ID,
+		Version:              running.Version,
 		Status:               mapOutcome(res.Execution),
 		RawArtifactID:        parseRef(res.RawRef),
 		StructuredArtifactID: parseRef(res.StructuredRef),
@@ -210,6 +231,17 @@ func (s *Service) Invoke(ctx context.Context, p InvokeParams) (Invocation, *outp
 		return Invocation{}, res, fmt.Errorf("record invocation result: %w", err)
 	}
 	return updated, res, nil
+}
+
+func idempotentOutcome(existing Invocation) (Invocation, *output.Result, error) {
+	switch existing.Status {
+	case StatusPending, StatusDispatched, StatusRunning, StatusUnknown:
+		// The prior attempt may not have completed. Do not treat it as a result
+		// and never issue another dispatch for the same idempotency key.
+		return Invocation{}, nil, &ErrOutcomeUnknown{ID: existing.ID, Status: existing.Status}
+	default:
+		return existing, nil, nil
+	}
 }
 
 // Get returns an invocation by id for read-back and tests.

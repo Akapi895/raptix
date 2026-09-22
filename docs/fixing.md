@@ -1,319 +1,312 @@
-# Phase 5 — Một agent hoàn chỉnh, có verifier (kế hoạch triển khai)
+# Phase 6 — Độ tin cậy của execution và run (kế hoạch triển khai)
 
-**Căn cứ:** `docs/migration_roadmap_v1.md` (Phase 5), `docs/repository_structure_v1.md` (§1, §3.3, §3.3.1, §3.4.1, §3.5, §3.6, §6, §9.2), `AGENTS.md`.
-**Trạng thái:** **đã triển khai** (xem §15 cho bản ghi implementation và các sai lệch có chủ đích). Phase 4 đã xong và validate live (xem `migration_manifest_v1.md` Phase 4).
+**Căn cứ:** `docs/migration_roadmap_v1.md` (Phase 6), `docs/repository_structure_v1.md` (§3.3 "phân biệt attempt", §3.5 "execution/cancel", §6.1 "chiều dependency", §7 "transaction/artifact/report flow"), `AGENTS.md`.
+**Trạng thái:** đã triển khai và validate live (xem `migration_manifest_v1.md` Phase 6).
 
 ---
 
 ## 0. Mốc hoàn thành và ràng buộc
 
-**Folder theo thứ tự (roadmap):** `engine/contextbuild/` → `engine/agents/` + `engine/runs/` → `workspace/verifier/` + `workspace/findings/` + `workspace/assessment/`; mở rộng `evals/`.
+**Folder (roadmap):** `execution/cancel/`, `execution/invocation/`, `execution/artifact/`, `engine/runs/`, `engine/agents/`, `workspace/evidence/`; mở rộng test integration.
 
-**Xong khi:** một run đi trọn đường `task → agent → tool → evidence/observation → verifier → finding draft có căn cứ`, đánh giá được trên lab bằng runner + oracle + reset.
+**Xong khi:** luồng Phase 5 chịu được **hủy** và **restart**; hệ thống **không mặc nhiên báo thành công hoặc chạy lại tool** khi kết quả lần trước chưa rõ.
 
-**Ràng buộc bất biến (không được vi phạm):**
+Cụ thể:
+1. **Hủy (cancel)**: hủy một run đang chạy → run/task/agent/attempt chuyển `cancelled`, invocation chưa dispatch chuyển `cancelled`, invocation đang chạy chuyển `unknown` (side effect ngoài chưa rõ). Không có invocation nào bị báo `succeeded` sai.
+2. **Restart (reconcile)**: khi server chết giữa chừng, invocation để lại trạng thái không cuối (`pending`/`dispatched`/`running`) được đối soát về `unknown`; không tự chạy lại, không tự báo thành công.
+3. **Retry an toàn**: cùng `idempotency_key` không bao giờ dispatch lại; kết quả `unknown` không được xử lý như thành công/thất bại cuối cùng.
 
-- Mọi invocation — kể cả **verifier kiểm tra chủ động** — phải đi qua `execution`. Không có đường thực thi thứ hai; verifier không tự chạy process/gọi MCP trực tiếp.
-- `engine/runs` là **owner duy nhất** của lifecycle transition (run/task/agent). `engine/agents` yêu cầu chuyển trạng thái qua `engine/runs`, không tự ghi status thứ hai.
-- `engine/agents` **không tự quyết định quyền**; mọi access đi qua `platform/governance`. Snapshot Requested/Available/Granted là ghi nhận tại một thời điểm, **không thay thế kiểm tra quyền hiện tại** (execution vẫn kiểm scope/grant/budget lúc dispatch).
-- Eino chỉ đứng sau `engine/llm/adapters/eino` cho model call/streaming; plan/replan/checkpoint/retry/lifecycle thuộc `engine/orchestrator` + `engine/runs`. Không dùng workflow runtime của Eino làm vòng điều phối thứ hai.
-- `workspace/verifier` **trả verdict** (confirmed/refuted/inconclusive) + evidence refs; **`workspace/findings` là owner duy nhất** của status transition — verdict không tự đổi status.
-- Ownership dữ liệu: conversation/content snapshot → `engine/agents`; lifecycle → `engine/runs`; bytes/artifact → `workspace/evidence`; verdict → `workspace/verifier`; status/revision → `workspace/findings`; result envelope → `tools/output`.
-- Cross-module qua public service API; không join bảng chéo; atomicity đa module phải có transaction boundary tường minh.
-- `tools` không import `engine/agents`; `execution` không import `api`/`app`/`engine/agents`. (Luật kiến trúc Phase 5 cần bổ sung: `engine/agents` không import `workspace/verifier`/`findings`; `verifier` không import `engine/agents`.)
+**Ràng buộc bất biến (giữ nguyên từ Phase 4/5, thêm Phase 6):**
+
+- Mọi invocation — kể cả verifier — đi qua `execution`. Không có đường thực thi thứ hai.
+- `engine/runs` là **owner duy nhất** của lifecycle transition run/task/agent; `engine/agents` sở hữu attempt/conversation. Hủy phải **yêu cầu transition qua chủ sở hữu**, không tự sửa bảng chéo.
+- `execution/cancel` chỉ thao tác trên `tool_invocations` (một miền execution); **không import `engine`** (runs/agents). Cascade xuyên module do `app` dàn xếp.
+- "Unknown" là trạng thái bắt buộc đối soát: tác động ngoài **đã xảy ra hoặc có thể đã xảy ra** nhưng kết quả chưa ghi nhận. `cancelled` chỉ dùng khi chưa dispatch (chưa có side effect).
+- Retry queue/attempt mới **không mặc nhiên tạo lại tool invocation** khi invocation trước cùng mục đích còn `unknown`; phải đối soát trước (để Phase 8–10 xử lý tiếp).
+- Go `context` cancellation thể hiện **ý định hủy**; trạng thái bền vững `completed/cancelled/unknown` theo **kết quả đã ghi nhận**, không theo HTTP đã trả response.
+- Ownership dữ liệu không đổi: lifecycle → `engine/runs`; invocation → `execution`; attempt/conversation → `engine/agents`; bytes → `workspace/evidence`.
 
 ---
 
-## 1. Quyết định cần chốt trước khi code
+## 1. Quyết định đã chốt
 
-| # | Quyết định | Đề xuất |
+| # | Quyết định | Lựa chọn |
 |---|---|---|
-| D1 | Agent loop tối thiểu | **ReAct đơn giản, single agent**: dựng context → gọi model → model trả *action* (tool call) hoặc *final answer*. Dùng structured output (JSON) thay vì parse function-calling của provider để giữ contract ổn định qua Eino. |
-| D2 | Tool call qua execution | Agent **không** gọi tool trực tiếp. Agent sinh request capability, `engine/agents` gọi `execution.InvokeCapability` rồi đưa `output.Result` trở lại context. |
-| D3 | Context ban đầu | Dùng conversation + evidence references (đã có từ Phase 3/4); **chưa cần** memory/knowledge (Phase 9). `contextbuild` ghép prompt + skill đã chọn + tool results với ngân sách token. |
-| D4 | Verifier | Một loại verification đầu tiên: **re-run/re-check qua `execution`** với tiêu chí theo loại kết luận (ví dụ re-probe `http_probe` để đối chiếu observation), trả verdict gắn finding revision. |
-| D5 | Điểm khởi chạy | **Plan tối thiểu**: 1 run → 1 task → 1 agent, không spawn subagent (Phase 10). Orchestrator chỉ là lớp mỏng tạo kế hoạch một bước, hoặc bỏ qua — `agents` tự chạy cho một task. |
-| D6 | Lab + oracle | Lab `http_probe` đã có (`evals/fixtures/lab/compose.yaml`); thêm case agent end-to-end với oracle xác nhận finding draft + verdict. |
+| D1 | Trạng thái invocation khi hủy | `pending`/`dispatched` → `cancelled` (chưa có side effect); `running` → `unknown` (side effect chưa rõ, bắt buộc đối soát) |
+| D2 | Reconcile trigger | Chạy **1 pass khi `cmd/server` khởi động** + use case `Reconcile` gọi tường minh (test/thủ công). Vòng lặp định kỳ để **Phase 8** (River jobs) |
+| D3 | Phạm vi cancel | **Cascade đầy đủ**: use case `CancelRun` (app) → run/task/agent/attempt `cancelled` + invocation hai mức như D1 |
+| D4 | Package cancel | `execution/cancel` là package riêng (theo roadmap), chỉ thao tác `tool_invocations` qua port `Store` do `execution/invocation` triển khai; không import `engine` |
+| D5 | Trạng thái trung gian | `pending` (đã ghi, chưa dispatch) → `running` (đã dispatch, đang chạy, có `started_at`) → terminal. Bỏ qua `dispatched` (giữ cột hợp lệ nhưng không dùng ở Phase 6) |
+| D6 | Reconcile policy | Idempotent + optimistic-lock an toàn: nếu invocation đồng thời kết thúc, bỏ qua thay vì đè trạng thái |
 
 ---
 
-## 2. Package sẽ tạo và chiều dependency
+## 2. Package và chiều dependency
 
 ```text
+backend/internal/execution/
+├── invocation/     # mở rộng: StartInvocation (pending→running, started_at), ListStale, CancelByRun, MarkUnknown
+├── cancel/         # mới: policy cancel/reconcile (Service + Store port + Report types)
+└── sandbox/        # không đổi
 backend/internal/engine/
-├── contextbuild/        # types.go, builder.go, budget.go, builder_test.go
-├── agents/              # types.go, service.go, loop.go, tool.go, snapshot.go, queries/, storegen/, service_test.go
-└── runs/                # mở rộng: agent attempt/state cần thiết
-backend/internal/workspace/
-├── verifier/            # types.go, service.go, criteria.go, queries/, storegen/, service_test.go
-└── findings/            # mở rộng: gắn verdict với revision
-evals/
-├── cases/agent_*.yaml
-├── baselines/agent_*.json
-└── fixtures/lab/compose.yaml  # đã có, bổ sung nếu cần
+├── runs/           # mở rộng: ListTasksByRun + CancelRun (cascade run/task/agent trong miền runs)
+└── agents/         # mở rộng: CancelRunningAttempts (running→cancelled)
+backend/internal/app/  # use case CancelRun + Reconcile; startup reconcile
+backend/cmd/server/    # gọi reconcile một lần khi khởi động
+backend/tests/architecture/  # thêm luật execution/cancel ↛ engine
 ```
 
-**Ports do nơi dùng sở hữu** (consumer-owned port), `app` inject adapter bọc service thật:
+**Ports do nơi dùng sở hữu** (consumer-owned), `app` inject adapter:
 
 ```go
-// engine/agents tự định nghĩa:
-type ToolExecutor interface {
-    InvokeCapability(ctx context.Context, p invocation.InvokeParams) (invocation.Invocation, *output.Result, error)
-}
-type ModelCaller interface { // thực chất tái dùng engine/llm.Model
-    Chat(ctx context.Context, req *llm.ChatRequest) (*llm.ChatResponse, error)
-}
-type RunState interface {
-    GetRun(ctx, id) (runs.Run, error)
-    TransitionAgent(ctx, id, fromVersion, to) (runs.Agent, error) // lifecycle qua runs
-}
-
-// workspace/verifier tự định nghĩa:
-type Executor interface { // gọi lại execution để re-check
-    InvokeCapability(ctx, p invocation.InvokeParams) (invocation.Invocation, *output.Result, error)
-}
-type FindingReader interface {
-    GetFinding(ctx, id) (findings.Finding, error)
-    GetRevision(ctx, id) (findings.FindingRevision, error)
-}
-type VerdictWriter interface { // findings là owner transition; verifier chỉ ghi verdict
-    RecordVerdict(ctx, p findings.InsertVerdictParams) (findings.Verdict, error)
+// execution/cancel tự định nghĩa:
+type Store interface {
+    ListStaleInvocations(ctx context.Context, olderThan time.Time) ([]invocation.Invocation, error)
+    MarkUnknown(ctx context.Context, id uuid.UUID, version int) (invocation.Invocation, error)
+    CancelInvocationsByRun(ctx context.Context, runID uuid.UUID, from []invocation.Status, to invocation.Status) (int64, error)
 }
 ```
 
 **Chiều dependency bắt buộc:**
 
-- `engine/agents` import `engine/llm` (contract), `engine/contextbuild`, `engine/runs` (types + service contract), `tools/output`, `tools/registry` (resolve descriptor), `execution/invocation` (types của `InvokeParams`/`Invocation`), `platform/governance` (qua interface nếu cần check granted).
-- `engine/contextbuild` import `content` (prompt/skill), `workspace/evidence` (refs), `engine/llm` (message shape).
-- `workspace/verifier` import `execution/invocation` (types), `workspace/findings` (types/params), `workspace/evidence` (refs). **Không** import `engine/agents`.
-- `app` dựng tất cả, inject `execution.InvokeCapability` cho cả `agents` lẫn `verifier`.
+- `execution/cancel` import **chỉ** `execution/invocation` (types) — không import `engine`/`api`/`app`. `invocation.Postgres` thoả `Store`.
+- `execution/invocation` giữ nguyên quy tắc hiện có (`↛ api/app/engine/agents`); vẫn được phép dùng `engine/runs` chỉ cho **type** của port `RunStateReader` (đã có từ Phase 4).
+- `engine/runs` + `engine/agents` không import `execution` (cascade do app dàn xếp).
+- `app` import tất cả và dựng `execution/cancel`, inject `Store = invocation.Postgres`.
 
 ---
 
-## 3. Data model — mở rộng `engine/agents` (migration 00012)
+## 3. Migration 00013 — index cho stale scan
 
-Agent attempt và conversation là tài sản của `engine/agents`. Cần lưu bền vững để run có thể tiếp tục (Phase 6) và truy vết context đã dùng.
+Không cần bảng mới (mọi trạng thái đã có ở `tool_invocations` từ 00011). Chỉ thêm index phục vụ query stale:
 
 ```sql
 -- +goose Up
--- Domain: engine/agents
-CREATE TABLE agent_attempts (
-    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id      uuid NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    attempt_no    integer NOT NULL DEFAULT 1,
-    status        text NOT NULL DEFAULT 'running',
-        -- running | succeeded | failed | timed_out | cancelled
-    started_at    timestamptz,
-    finished_at   timestamptz,
-    created_at    timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (agent_id, attempt_no),
-    CHECK (status IN ('running','succeeded','failed','timed_out','cancelled')),
-    CHECK (attempt_no > 0)
-);
+-- Domain: execution/cancel (đọc dữ liệu của execution/invocation)
+CREATE INDEX tool_invocations_pending_stale_idx
+    ON tool_invocations (created_at) WHERE status = 'pending';
+CREATE INDEX tool_invocations_running_stale_idx
+    ON tool_invocations (started_at) WHERE status IN ('dispatched','running');
 
-CREATE TABLE agent_messages (
-    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    attempt_id    uuid NOT NULL REFERENCES agent_attempts(id) ON DELETE CASCADE,
-    seq           integer NOT NULL,
-    role          text NOT NULL,        -- system | user | assistant | tool
-    content       text NOT NULL,
-    invocation_id uuid REFERENCES tool_invocations(id) ON DELETE SET NULL,
-    created_at    timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (attempt_id, seq),
-    CHECK (role IN ('system','user','assistant','tool'))
-);
-
-CREATE TABLE agent_snapshots (
-    id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-    agent_id      uuid NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
-    profile_ref   text NOT NULL,        -- name/version của profile
-    content_hash  text NOT NULL,        -- hash của profile+prompt+skill đã resolve
-    requested     jsonb NOT NULL DEFAULT '[]'::jsonb, -- tools/skills/resources đã yêu cầu
-    granted       jsonb NOT NULL DEFAULT '{}'::jsonb, -- capability grant snapshot (tham chiếu, không thay quyền)
-    created_at    timestamptz NOT NULL DEFAULT now(),
-    UNIQUE (agent_id, content_hash)
-);
+-- +goose Down
+DROP INDEX IF EXISTS tool_invocations_pending_stale_idx;
+DROP INDEX IF EXISTS tool_invocations_running_stale_idx;
 ```
 
-- `agent_messages.invocation_id` nối message "tool result" với `tool_invocations` để truy vết (không join bảng chéo — chỉ là ref).
-- Snapshot ghi nhận **đã resolve tại thời điểm** chạy; `granted` là tham chiếu, **không thay thế** kiểm tra quyền hiện tại ở `execution`.
-
-> Kiểm tra `engine/runs/agents` bảng hiện tại đã có (Phase 3 tạo `agents`); migration 00012 chỉ **mở rộng** thêm 3 bảng trên, không sửa bảng `agents`.
+> Ghi chú: hai index partial phục vụ đúng hai nhánh stale (`pending` dùng `created_at`, `dispatched`/`running` dùng `started_at`). Không thay đổi CHECK/status vì enum đã chứa `cancelled`/`unknown`.
 
 ---
 
-## 4. `engine/contextbuild` — dựng context có ngân sách
+## 4. `execution/invocation` — hoàn thiện trạng thái trung gian
 
-`contextbuild.go` + `builder.go`:
+Hiện tại `Invoke` ghi `pending` rồi nhảy thẳng đến terminal (không đặt `started_at`), nên crash giữa chừng để lại `pending` không phân biệt được với "chưa dispatch".
 
-```go
-type Budget struct {
-    MaxTokens int
-}
-
-type Builder struct {
-    prompts PromptSource // content.Loader
-}
-
-func NewBuilder(p PromptSource, budget Budget) *Builder
-
-// Build trả danh sách message theo thứ tự: system prompt (profile + skill) →
-// lịch sử conversation → tool results (đã tóm tắt/truncate) → user task.
-func (b *Builder) Build(ctx context.Context, in BuildInput) ([]llm.ChatMessage, error)
-```
-
-`BuildInput` gồm: profile, các skill đã chọn (body), task, các message trước đó, evidence refs (id + tóm tắt). Provenance: context view ghi nguồn dữ liệu đã dùng (không sửa raw evidence). Khi vượt ngân sách → truncate từ dưới lên, giữ system prompt và lượt gần nhất; ghi nhận đã cắt.
-
-Unit test: thứ tự message, cắt budget, provenance của skill/prompt.
-
----
-
-## 5. `engine/agents` — agent loop
-
-Files: `types.go`, `snapshot.go`, `tool.go`, `loop.go`, `service.go`, `repository.go`, `postgres.go`, `queries/`, `storegen/`, `service_test.go`.
-
-### 5.1. Snapshot (Requested / Available / Granted)
-
-`snapshot.go` — `ResolveSnapshot(ctx, agent)`:
-
-1. **Requested**: từ profile (`Requested.Tools/Skills/Resources`).
-2. **Available**: hỏi `tools/registry` (Available/Compat) cho từng tool.
-3. **Granted**: hỏi `platform/governance` (`CheckActiveGrant`) cho từng capability trong scope của run.
-4. Lưu `agent_snapshots` (hash profile+prompt+skill). Nạp skill hai mức (metadata trước, body khi dùng).
-
-### 5.2. Tool call (`tool.go`)
-
-Agent muốn chạy tool → sinh request (`capability`, `args`, `idempotency_key` từ attempt+seq) → gọi `ToolExecutor.InvokeCapability` với `InvokeParams{RunID, ScopeID, Actor, Capability, Args}`. Nhận `(Invocation, *output.Result)`:
-
-- `result.Execution == denied` → ghi message "tool" + kết thúc attempt với lý do (hoặc báo model điều chỉnh).
-- `succeeded` → đưa `RawRef` + tóm tắt vào context.
-- `failed`/`timed_out` → đưa lỗi vào context, model quyết định tiếp tục hay dừng.
-
-`idempotency_key = "<attempt_id>:<seq>"` để retry không chạy tool trùng.
-
-### 5.3. Loop (`loop.go`)
+### 4.1. Repository (thêm 4 method)
 
 ```go
-func (s *Service) RunAttempt(ctx context.Context, agent runs.Agent) (attemptResult, error)
-```
-
-1. `runs.TransitionAgent(→ running)` (nếu chưa).
-2. Lặp tối đa `max_steps` (config):
-   - `contextbuild.Build` → `llm.Chat` (structured JSON output).
-   - Parse action: `{"action":"tool","capability":...,"args":{...}}` hoặc `{"action":"final","summary":...,"finding_draft":{...}}`.
-   - Nếu `tool` → `tool.go` dispatch; ghi `agent_messages` (assistant + tool result).
-   - Nếu `final` → dừng, trả summary + finding draft thô.
-3. `runs.TransitionAgent(→ succeeded/failed)`; đóng `agent_attempts`.
-4. Timeout/cancel: `ctx` deadline → `timed_out`; hủy → `cancelled` (map đúng, không báo thành công khi chưa rõ).
-
-### 5.4. Service (`service.go`)
-
-`RunAgent(ctx, agentID)` là entrypoint công khai; `runs`/`execution`/`llm`/`contextbuild` đều qua interface. Không ghi status run/task ở đây — chỉ yêu cầu `runs.TransitionAgent`.
-
-Unit test (fake Model + fake ToolExecutor + memRepo): model trả `tool` rồi `final`; verify snapshot, thứ tự dispatch, idempotency key, mapping denied/failed/timeout.
-
----
-
-## 6. `workspace/verifier` — kiểm chứng theo tiêu chí
-
-Files: `types.go`, `criteria.go`, `service.go`, `repository.go`, `postgres.go`, `queries/`, `storegen/`, `service_test.go`.
-
-### 6.1. Verdict contract
-
-```go
-type Verdict string
-const (
-    VerdictConfirmed    Verdict = "confirmed"
-    VerdictRefuted      Verdict = "refuted"
-    VerdictInconclusive Verdict = "inconclusive"
-)
-
-type Criteria struct {
-    FindingKind string          // loại kết luận (vd: "http-200-exposed")
-    Checks      []CheckSpec     // danh sách bước kiểm chứng
+type Repository interface {
+    // ... existing ...
+    StartInvocation(ctx context.Context, id uuid.UUID, version int) (Invocation, error)
+    ListStaleInvocations(ctx context.Context, olderThan time.Time) ([]Invocation, error)
+    CancelInvocationsByRun(ctx context.Context, runID uuid.UUID, from []Status, to Status) (int64, error)
+    MarkUnknown(ctx context.Context, id uuid.UUID, version int) (Invocation, error)
 }
 ```
 
-### 6.2. Luồng `Verify`
+Queries (`queries/invocations.sql`):
 
-`Verify(ctx, findingID)`:
+```sql
+-- name: StartInvocation :one
+UPDATE tool_invocations SET status='running', started_at=now(), version=version+1, updated_at=now()
+WHERE id=$1 AND version=$2 AND status='pending'
+RETURNING <all columns>;
 
-1. Đọc finding + evidence links (`FindingReader`).
-2. Chọn `Criteria` theo loại kết luận của finding.
-3. Chạy checks qua `Executor.InvokeCapability` (vd re-probe URL → so observation). Mọi check đi qua `execution` → có `tool_invocations` + audit.
-4. So kết quả với tiêu chí → `Verdict` + lý do + evidence mới.
-5. Gọi `VerdictWriter.RecordVerdict` (findings là owner; verdict gắn revision, **không tự đổi status**).
+-- name: ListStaleInvocations :many
+SELECT <all columns> FROM tool_invocations
+WHERE (status='pending' AND created_at < $1)
+   OR (status IN ('dispatched','running') AND started_at < $1);
 
-Lưu ý quan trọng từ §3.6: một lần re-run thất bại có thể do môi trường/credential/thiếu điều kiện → chưa đủ kết luận `refuted`; mapping thận trọng `failed → inconclusive` (trừ tiêu chí rõ ràng).
+-- name: CancelInvocationsByRun :execrows
+UPDATE tool_invocations SET status=$3, finished_at=now(), version=version+1, updated_at=now()
+WHERE run_id=$1 AND status = ANY($2::text[]);
 
-Unit test (fake Executor + fake FindingReader): confirmed khi re-check khớp, inconclusive khi môi trường lỗi, verdict gắn đúng revision.
-
----
-
-## 7. `engine/runs` + `workspace/findings` — mở rộng nhỏ
-
-- `engine/runs`: thêm transition agent `running → succeeded/failed/timed_out/cancelled` (kiểm `allowedAgentTransitions`), method đọc `ListAgentsByRun`.
-- `workspace/findings`: `RecordVerdict` đã có (Phase 3). Bổ sung nếu cần: đọc `FindingRevision`/`GetVerdict` cho verifier.
-
----
-
-## 8. `app` wiring + config
-
-`backend/internal/app/services.go`:
-
-```go
-// buildAgentLoop builds the Phase 5 agent + verifier and returns them for the
-// composition root to expose (invoke path lives in cmd/server later).
-ctxBuilder := contextbuild.NewBuilder(contentLoader, contextbuild.Budget{MaxTokens: cfg.Agent.MaxContextTokens})
-agentSvc := agents.NewService(
-    agents.NewPostgres(dbtx),
-    model,          // llm.Model (nil khi chưa có API key → agent loop bị disable)
-    ctxBuilder,
-    svc.Execution,  // ToolExecutor (InvokeCapability)
-    svc.Runs,       // RunState (transition qua runs)
-    svc.Governance, // granted check cho snapshot
-    cfg.Agent,
-)
-verifierSvc := verifier.NewService(
-    verifier.NewPostgres(dbtx),
-    svc.Execution,  // Executor (re-check qua execution)
-    svc.Findings,   // FindingReader + VerdictWriter
-    defaultCriteria(),
-)
+-- name: MarkUnknown :one
+UPDATE tool_invocations SET status='unknown', finished_at=now(), version=version+1, updated_at=now()
+WHERE id=$1 AND version=$2 AND status IN ('pending','dispatched','running')
+RETURNING <all columns>;
 ```
 
-**Config** (`internal/app/config.go`): thêm `AgentConfig{ MaxSteps, MaxContextTokens, DefaultTimeout, Model }`, env `RAP_AGENT_*`; validate. `model` nil (thiếu `RAP_LLM_API_KEY`) → agent loop disable nhưng server vẫn khởi động (giống Phase 2 đã làm).
+### 4.2. Service — luồng `Invoke`
 
-Thêm use case `Services.RunAgent(ctx, runID, taskID)` làm entrypoint cho test/integration (giống `StartAuthorizedRun`).
+1. Validate → idempotency → run state → scope → grant → registry → budget (giữ nguyên Phase 4).
+2. Ghi `pending` (`CreateInvocation`).
+3. **Mới:** `StartInvocation(ctx, id, created.Version)` → `running` + `started_at`.
+4. Dispatch có timeout (giữ nguyên), thu kết quả, `UpdateResult` (giữ nguyên optimistic version).
+5. Khi context bị hủy trong lúc dispatch → kết quả impl là `cancelled`/`timed_out` → `UpdateResult` ghi terminal tương ứng (đã có). Trường hợp impl không kịp trả (panic/process chết) → để lại `running`, để `reconcile` xử lý (mục §5).
 
----
+`StartInvocation` và `UpdateResult` cùng lấy `FOR SHARE` lock trên run active trong statement SQL. Nếu cancellation đã ghi run `cancelled`, start/result update trả optimistic conflict; sweep cancellation giữ `running` ở `unknown`, không ghi `succeeded` sau cancel.
 
-## 9. Evals + lab
+### 4.3. Bất biến thêm
 
-- `evals/cases/agent_http_probe.yaml`: case end-to-end — agent nhận task "kiểm tra endpoint lab" → chạy `http_probe` → tạo finding draft → verifier confirm. Oracle xác nhận: có ≥1 `tool_invocations` succeeded, có finding draft gắn evidence, verdict `confirmed`.
-- `evals/baselines/agent_http_probe.json`: baseline để so sánh Phase 6+.
-- `backend/tests/evals/`: mở rộng runner để chạy case agent (dùng fake Model có lời đáp script, không cần API key — deterministic).
-
----
-
-## 10. Tests
-
-- **Unit** `engine/contextbuild`: thứ tự message, cắt budget, provenance.
-- **Unit** `engine/agents`: snapshot (requested/available/granted), tool dispatch + idempotency key, loop mapping (tool→final, denied/failed/timed_out/cancelled).
-- **Unit** `workspace/verifier`: confirmed/inconclusive/refuted theo tiêu chí; verdict gắn revision, không đổi status.
-- **Integration** (`internal/app` opt-in `RAP_TEST_DATABASE_URL`): run→task→agent (fake Model) → `InvokeCapability` `http_probe` thành công → finding draft + verdict → assert invocation/evidence/finding/verdict rows.
-- **Architecture** (`tests/architecture/imports_test.go`): bổ sung `engine/agents ↛ workspace/{verifier,findings}`; `workspace/verifier ↛ engine/agents`; `engine/contextbuild ↛ execution` (chỉ đọc refs).
+- `Invoke` không bao giờ dispatch khi idempotency hit trả invocation `pending`/`dispatched`/`running`/`unknown`: trả về **rõ ràng** là "outcome chưa rõ" thay vì coi là xong.
+- Ghi `pending` lấy `FOR SHARE` lock trên run active trong cùng statement SQL; cancel và create được tuần tự hóa, nên cancel không bỏ sót invocation vừa được tạo.
+- `started_at` là nguồn cho stale detection của `dispatched`/`running`.
 
 ---
 
-## 11. CI
+## 5. `execution/cancel` — cancel + reconcile
 
-- Giữ integration test Phase 3/4/5 chung một job `raptix_test` + migrate (đã có).
-- Eval agent chạy trong job test thường (fake Model, không cần API key).
+Package mới `backend/internal/execution/cancel/`, sở hữu **chính sách** hủy/đối soát. Files: `types.go` (Report), `service.go`, `service_test.go`.
+
+```go
+type Service struct { store Store; log *slog.Logger }
+func NewService(store Store, log *slog.Logger) *Service
+
+type CancelReport struct { Cancelled int64; Unknown int64 }
+type ReconcileReport struct { Reconciled int64; Skipped int64; Errors []error }
+```
+
+### 5.1. `CancelRun(ctx, runID) (CancelReport, error)`
+
+Áp dụng chính sách D1:
+1. `store.CancelInvocationsByRun(ctx, runID, []Status{pending, dispatched}, cancelled)`.
+2. `store.CancelInvocationsByRun(ctx, runID, []Status{running}, unknown)`.
+3. Trả report (`cancelled` count + `unknown` count).
+
+Lưu ý: không đụng terminal (`succeeded`/`failed`/`timed_out`/`denied`/`cancelled`/`unknown` đã tồn tại) — hủy chỉ chuyển các trạng thái còn đang dở.
+
+### 5.2. `Reconcile(ctx, olderThan time.Duration) (ReconcileReport, error)`
+
+1. `store.ListStaleInvocations(ctx, now- olderThan)`.
+2. Với mỗi invocation stale: `store.MarkUnknown(ctx, id, version)`.
+   - Nếu `MarkUnknown` báo `ErrOptimisticLock` (invocation vừa kết thúc trong lúc đối soát) → `Skipped++` (không đè trạng thái).
+   - Lỗi khác → gom vào `Errors` (không chặn toàn bộ batch).
+
+Idempotent: chạy nhiều lần chỉ tái xét các invocation còn non-terminal; lần sau không thấy gì mới.
+
+Unit test: fake `Store` — cancel hai mức đúng mapping; reconcile đánh `unknown` các stale, bỏ qua optimistic-lock, gom lỗi.
 
 ---
 
-## 12. Verification checklist (acceptance)
+## 6. `engine/runs` + `engine/agents` — cascade trong miền sở hữu
+
+### 6.1. `engine/runs`
+
+Thêm read `ListTasksByRun` (đối xứng `ListAgentsByRun` đã có) + use case miền `CancelRun`:
+
+```go
+func (s *Service) ListTasksByRun(ctx context.Context, runID uuid.UUID) ([]Task, error)
+
+// CancelRun transitions the run and its tasks/agents to cancelled. Idempotent
+// for an already-terminal run; returns counts.
+type RunCancelResult struct { RunCancelled bool; TasksCancelled int; AgentsCancelled int }
+func (s *Service) CancelRun(ctx context.Context, runID uuid.UUID) (RunCancelResult, error)
+```
+
+Luồng `CancelRun`:
+1. `GetRun`; nếu `cancelled`/`completed`/`budget_exhausted` → trả `RunCancelled=false` (idempotent).
+2. `TransitionRun(→ cancelled)`.
+3. `ListTasksByRun` + `ListAgentsByRun`; với mỗi task/agent non-terminal → compare-and-set `→ cancelled`. Bỏ qua optimistic-lock của từng phần tử, gom đếm. Nếu một lần cascade lỗi sau khi run đã `cancelled`, retry vẫn quét child non-terminal để hoàn tất cascade.
+
+### 6.2. `engine/agents`
+
+```go
+// CancelRunningAttempts marks all running attempts of an agent cancelled.
+func (s *Service) CancelRunningAttempts(ctx context.Context, agentID uuid.UUID) (int, error)
+```
+Luồng: `ListAttemptsByAgent` → với mỗi attempt `running` → compare-and-set `FinishAttempt(→ cancelled)`. Completion không được đè một attempt đã `cancelled`.
+
+> Hủy attempt chỉ đổi `agent_attempts`; việc chuyển `agent_instances` → `cancelled` thuộc `runs` (chủ sở hữu lifecycle), không làm ở đây.
+
+---
+
+## 7. `app` — use case + config
+
+### 7.1. Use case `CancelRun` (app)
+
+`backend/internal/app/phase6_cancel.go`:
+
+```go
+type CancelRunResult struct {
+    RunID         uuid.UUID
+    TasksCancelled  int
+    AgentsCancelled int
+    AttemptsCancelled int
+    InvsCancelled  int64
+    InvsUnknown    int64
+}
+
+func (s *Services) CancelRun(ctx context.Context, runID uuid.UUID) (CancelRunResult, error)
+```
+
+Luồng (app dàn xếp xuyên module, mỗi module tự chuyển trạng thái của mình):
+1. `s.Runs.CancelRun(ctx, runID)` → run + tasks + agents `cancelled`.
+2. Với mỗi agent của run (lấy từ kết quả hoặc `ListAgentsByRun` trước đó): `s.Agents.CancelRunningAttempts(ctx, agent.ID)`.
+3. `s.cancel.CancelRun(ctx, runID)` → invocation `cancelled`/`unknown` (theo D1).
+4. `s.Audit.Record(... "run.cancel" ...)` (allow) — truy vết quyết định hủy.
+
+### 7.2. Use case `Reconcile` (app)
+
+```go
+func (s *Services) Reconcile(ctx context.Context) (cancel.ReconcileReport, error)
+```
+→ `s.cancel.Reconcile(ctx, s.cfg.Execution.ReconcileStaleAfter)`.
+
+### 7.3. Config
+
+`internal/app/config.go` — `ExecutionConfig` thêm:
+
+```go
+ReconcileStaleAfter time.Duration `yaml:"reconcile_stale_after"` // default 5m
+```
+
+Env `RAP_EXECUTION_RECONCILE_STALE_AFTER`; validate > 0. (Cập nhật `configs/app.example.yaml`, `cleanEnv` trong `config_test.go`.)
+
+### 7.4. Wiring (`wireServices`)
+
+```go
+svc.cancel = cancel.NewService(invocation.NewPostgres(dbtx), log) // Store = invocation repo
+```
+Thêm field `cancel *cancel.Service` (private) hoặc expose `CancelRun`/`Reconcile` qua `Services`.
+
+---
+
+## 8. `cmd/server` — startup reconcile
+
+Sau khi `app.New(...)` thành công, trước khi `Serve`:
+
+```go
+if _, err := app.Services().Reconcile(ctx); err != nil {
+    log.Warn("startup reconcile failed", "error", err)  // không chặn khởi động
+}
+```
+
+Không chạy lại trên mỗi request; vòng lặp định kỳ để Phase 8.
+
+---
+
+## 9. Tests
+
+- **Unit `execution/cancel`** (`service_test.go`, fake Store): mapping hai mức D1; reconcile đánh `unknown` stale, bỏ qua optimistic-lock, gom lỗi, idempotent.
+- **Unit `execution/invocation`** (`service_test.go` + `repository_test.go` memRepo): `StartInvocation` set `running` + `started_at` + bump version; `ListStaleInvocations`/`CancelInvocationsByRun`/`MarkUnknown` đúng; idempotency hit trả non-terminal đúng nghĩa.
+- **Unit `engine/runs`** (`service_test.go`): `CancelRun` idempotent cho run terminal; cascade task/agent non-terminal → cancelled.
+- **Unit `engine/agents`** (`service_test.go`): `CancelRunningAttempts` chỉ đổi attempt `running`.
+- **Concurrency:** cancel chạy giữa dispatch/create không để invocation mới dispatch sau cancel; attempt completion không được đè `cancelled`; retry cancel hoàn tất cascade partial.
+- **Integration (`internal/app`, opt-in `RAP_TEST_DATABASE_URL`)**:
+  - `TestPhase6ReconcileStale`: run + invoke `http_probe` succeeded → SQL update invocation về `running` với `started_at` cũ (giả lập crash) → `Services.Reconcile` → assert invocation `unknown`, không thành `succeeded`.
+  - `TestPhase6CancelRunCascade`: run+task+agent+attempt+running invocation → `Services.CancelRun` → assert run/task/agent `cancelled`, attempt `cancelled`, invocation `unknown` (vì running) và một invocation `pending` → `cancelled`.
+  - `TestPhase6IdempotencyNoRerun`: gọi lại `InvokeCapability` cùng `idempotency_key` khi invocation đang `unknown` → không dispatch mới, trả invocation `unknown` hiện có.
+- **Architecture** (`tests/architecture/imports_test.go`): thêm luật `execution/cancel ↛ engine` (chỉ import `execution/invocation`).
+
+---
+
+## 10. CI
+
+- Giữ integration Phase 3/4/5/6 chung một job `raptix_test` + migrate (đã có). Reconcile/cancel không cần Docker.
+
+---
+
+## 11. Verification checklist (acceptance)
 
 ```bash
 cd backend
@@ -323,61 +316,38 @@ gofmt -l internal tests
 ~/go1.26/bin/go build -mod=readonly ./...
 ~/go1.26/bin/go test -race -mod=readonly -count=1 -timeout=300s ./...
 ~/go1.26/bin/go mod verify
+/home/pat/go/bin/sqlc diff
 
 # live
 RAP_DATABASE_URL=... go run ./cmd/migrate -config ../configs/app.yaml -dir migrations -command up
-RAP_TEST_DATABASE_URL=... go test -race -count=1 -run "TestPhase5" ./internal/app/
+RAP_TEST_DATABASE_URL=... go test -race -count=1 -run "TestPhase6" ./internal/app/
 ```
 
-Đối chiếu DB: `agent_attempts` có attempt succeeded; `agent_messages` có tool + tool result (nối `invocation_id`); `tool_invocations` có succeeded từ agent; `findings` có draft gắn evidence; verdict gắn revision; `audit_records` có `tool.invoke` allowed.
+Đối chiếu DB:
+- `tool_invocations` có `cancelled` (pending/dispatched) và `unknown` (running) đúng theo D1; không có `succeeded` sai.
+- `agent_attempts`/`agent_instances`/`tasks`/`runs` chuyển `cancelled` đầy đủ khi hủy.
+- Reconcile sau khi giả lập crash đưa invocation treo về `unknown`, `started_at` được đặt đúng ở bước dispatch.
 
 ---
 
-## 13. Gotchas
+## 12. Gotchas
 
-- **Không gọi tool ngoài execution** — cả agent lẫn verifier.
-- **Lifecycle qua `runs`** — agent không tự ghi status.
-- **Snapshot không thay quyền hiện tại** — thu hồi/scope hết hạn vẫn chặn ở dispatch.
-- **Structured output của model là contract nội bộ** — parse JSON thận trọng; parse lỗi = attempt failed có lý do, không crash.
-- **Idempotency key theo attempt:seq** — retry loop không chạy lại tool.
-- **Mapping verdict thận trọng** — re-check fail ≠ refuted.
-- **`model == nil` khi thiếu API key** — agent loop disabled nhưng app vẫn khởi động.
-
----
-
-## 14. Thứ tự commit đề xuất
-
-1. Migration `00012` + `engine/agents` types/repo/queries/postgres (+ test repo).
-2. `engine/contextbuild` builder + budget + unit test.
-3. `engine/agents` snapshot + tool + loop + service + unit tests (fake model/executor).
-4. `workspace/verifier` types/criteria/service + unit tests.
-5. `engine/runs` transition agent + `workspace/findings` read/verdict mở rộng nhỏ.
-6. `app` wiring + `AgentConfig` + use case `RunAgent`.
-7. Integration test + `evals` case agent + architecture tests + docs (`migration_manifest_v1.md` Phase 5, `AGENTS.md`, `README`).
+- **`running` → `unknown`, không phải `cancelled`**: side effect ngoài đã/có thể xảy ra; `unknown` bắt buộc đối soát, không mặc nhiên kết luận.
+- **Reconcile phải optimistic-lock safe**: nếu invocation vừa kết thúc trong lúc đối soát, bỏ qua thay vì đè trạng thái.
+- **Startup reconcile non-fatal**: log warning, không chặn khởi động (server vẫn phải lên khi DB tạm lỗi).
+- **Không đè terminal**: cancel/reconcile chỉ chạm `pending`/`dispatched`/`running`.
+- **Idempotency vẫn chặn dispatch trùng** kể cả sau reconcile; `unknown` không được xử lý như `succeeded`.
+- **Cascade do app dàn xếp**, mỗi module tự chuyển trạng thái của mình — không join bảng chéo, không import ngược.
+- **`started_at` phải được đặt ở bước dispatch** (`StartInvocation`) để stale detection đúng.
+- **Mọi transition là state-aware:** version lock không thay thế predicate source state; terminal row không được restart hoặc bị reconcile đè.
 
 ---
 
-## 15. Bản ghi implementation (Phase 5)
+## 13. Thứ tự commit đề xuất
 
-Đã triển khai đủ 7 bước commit đề xuất. Xác minh: `gofmt`/`vet`/`build`/`staticcheck`/`mod verify`/`test -race ./...`/`scripts/check.sh` sạch; `sqlc diff` không drift; integration Phase 3/4/5 chạy live trên PostgreSQL.
-
-**Đã tạo:**
-
-- `backend/migrations/00012_engine_agents.sql` — `agent_attempts`, `agent_messages`, `agent_snapshots` (owner: engine/agents; FK tới `agent_instances` + `tool_invocations`). Đã apply live (12/12).
-- `backend/internal/engine/agents/` — `types.go`, `repository.go`, `postgres.go`, `queries/agents.sql`, `storegen/`, `service.go` (ports `ToolExecutor`/`RunState`/`GrantChecker`/`CapabilityResolver`), `loop.go`, `tool.go`, `snapshot.go`, `memrepo_test.go`, `repository_test.go`, `service_test.go`.
-- `backend/internal/engine/contextbuild/` — `types.go`, `builder.go` (`Resolve` + `Build` có budget), `builder_test.go`.
-- `backend/internal/workspace/verifier/` — `types.go`, `service.go` (criteria + verdict aggregation), `service_test.go`. Stateless: verdict ghi qua findings.
-- `backend/internal/content/loader.go` — thêm `LoadPrompt(ref)`.
-- `backend/internal/engine/runs/` — thêm `ListAgentsByRun` (query + repo + service + memRepo).
-- `backend/internal/app/` — `AgentConfig` (+ env `RAP_AGENT_*`), wiring `Agents`/`Verifier` trong `wireServices`, use case `Services.RunAgent` (`phase5_runs.go`), integration test `phase5_integration_test.go`.
-- `evals/cases/agent_http_probe.yaml` + `evals/baselines/agent_http_probe.json` + runner `backend/tests/evals/agent_test.go`.
-- `backend/tests/architecture/imports_test.go` — luật `engine/agents↛workspace/{findings,verifier}`, `workspace/verifier↛engine/agents`, `engine/contextbuild↛execution`.
-
-**Sai lệch có chủ đích so với hướng dẫn (và lý do):**
-
-1. **Verifier stateless, không có repository/queries/storegen riêng.** §6 liệt kê repository/queries/storegen cho verifier, nhưng verdict thuộc `workspace/findings` (`finding_verdicts`) và §3.6 chốt findings là owner duy nhất. Verifier chỉ đọc finding + ghi verdict qua findings service, nên không cần bảng riêng (đúng nguyên tắc "chỉ tạo package có implementation thật").
-2. **Criteria truyền tường minh thay vì suy từ `FindingKind`.** Findings chưa có trường `kind` (finding revision/report để Phase 8). Verifier nhận `[]Check{Capability, Args, ConfirmOn, RefuteOn}` do app dựng từ các tool call thành công của agent (`AttemptResult.ToolCalls`) — grounding vào đúng kiểm tra đã tạo ra evidence. `RefuteOn` mặc định rỗng nên re-check lỗi → `inconclusive` (theo §3.6).
-3. **`RunAgentParams` mang `ScopeID`/`Actor`.** `runs` không lưu scope (Phase 3); agent cần scope để dispatch. Truyền qua params thay vì đổi schema runs.
-4. **Tool result là lượt `user` khi gửi model.** Contract `engine/llm` chỉ có system/user/assistant (không có tool role); `agent_messages` vẫn lưu role `tool` + `invocation_id` để truy vết.
-5. **Agent trả finding draft thô, không tự tạo finding.** §5.3 nói loop trả "finding draft thô"; `engine/agents` không import `findings` (luật kiến trúc), nên `Services.RunAgent` (app) tạo draft + link evidence + verify.
-6. **Status agent instance dùng `completed/failed/cancelled`** (enum sẵn có của `runs`); `timed_out` nằm ở `agent_attempts.status` và map sang `failed` ở agent instance.
+1. Migration `00013` (index) + `execution/invocation` repository/queries/postgres: `StartInvocation`/`ListStale`/`CancelByRun`/`MarkUnknown` + memRepo + unit tests.
+2. `execution/cancel` Service + Store port + unit tests.
+3. `execution/invocation` service: chèn `StartInvocation` vào luồng `Invoke`, xử lý idempotency non-terminal; unit tests.
+4. `engine/runs` `ListTasksByRun` + `CancelRun`; `engine/agents` `CancelRunningAttempts`; unit tests.
+5. `app` config `ReconcileStaleAfter` + use case `CancelRun`/`Reconcile` + wiring `execution/cancel`; `cmd/server` startup reconcile.
+6. Integration tests (`TestPhase6*`) + architecture test + docs (`migration_manifest_v1.md` Phase 6, `AGENTS.md`, `README`, `configs/app.example.yaml`).

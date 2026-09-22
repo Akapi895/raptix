@@ -87,7 +87,39 @@ type ErrInvocationNotFound struct{ ID uuid.UUID }
 
 func (e *ErrInvocationNotFound) Error() string { return "invocation not found: " + e.ID.String() }
 
-// ErrOptimisticLock reports a version mismatch on a result update.
+// ErrOptimisticLock reports a state/version mismatch on a transition.
 type ErrOptimisticLock struct{ ID uuid.UUID }
 
 func (e *ErrOptimisticLock) Error() string { return "optimistic lock conflict for: " + e.ID.String() }
+
+// ErrRunNotAcceptingWork reports that the run became terminal before its
+// invocation could be recorded.
+type ErrRunNotAcceptingWork struct{ RunID uuid.UUID }
+
+func (e *ErrRunNotAcceptingWork) Error() string {
+	return "run does not accept work: " + e.RunID.String()
+}
+
+// ErrIdempotencyConflict reports a simultaneous first use of an idempotency
+// key. Callers must read the stored invocation rather than dispatching again.
+type ErrIdempotencyConflict struct {
+	RunID uuid.UUID
+	Key   string
+}
+
+func (e *ErrIdempotencyConflict) Error() string {
+	return "idempotency key already exists for run " + e.RunID.String()
+}
+
+// ErrOutcomeUnknown reports that a prior invocation for the same idempotency key
+// is non-terminal or unknown: its external effect may have happened but the
+// result is not recorded. The caller must reconcile before concluding, and must
+// NOT treat the work as done or re-dispatch.
+type ErrOutcomeUnknown struct {
+	ID     uuid.UUID
+	Status Status
+}
+
+func (e *ErrOutcomeUnknown) Error() string {
+	return "invocation " + e.ID.String() + " outcome is unknown (status " + string(e.Status) + ")"
+}

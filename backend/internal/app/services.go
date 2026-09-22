@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/Akapi895/raptix/backend/internal/content"
 	"github.com/Akapi895/raptix/backend/internal/engine/agents"
@@ -11,6 +12,7 @@ import (
 	"github.com/Akapi895/raptix/backend/internal/engine/llm"
 	"github.com/Akapi895/raptix/backend/internal/engine/runs"
 	"github.com/Akapi895/raptix/backend/internal/execution/artifact"
+	"github.com/Akapi895/raptix/backend/internal/execution/cancel"
 	"github.com/Akapi895/raptix/backend/internal/execution/invocation"
 	"github.com/Akapi895/raptix/backend/internal/execution/sandbox"
 	"github.com/Akapi895/raptix/backend/internal/execution/sandbox/container"
@@ -43,6 +45,9 @@ type Services struct {
 	Execution  *invocation.Service
 	Agents     *agents.Service
 	Verifier   *verifier.Service
+
+	cancel              *cancel.Service
+	reconcileStaleAfter time.Duration
 }
 
 // InvokeCapability is the use case entrypoint for dispatching a capability
@@ -104,6 +109,12 @@ func wireServices(pool *postgres.Pool, fs *filesystem.Store, reg *registry.Regis
 		reg,            // resolver
 		log,
 	)
+
+	// Phase 6: cancel/reconcile policy over executions. It shares the
+	// invocation Postgres repository as its Store; cascade across runs/agents
+	// is orchestrated by the app-level CancelRun use case.
+	svc.cancel = cancel.NewService(invocation.NewPostgres(dbtx), log)
+	svc.reconcileStaleAfter = cfg.Execution.ReconcileStaleAfter
 
 	// Phase 5: the agent loop and verifier. Both dispatch through the same
 	// execution service (svc.InvokeCapability), so there is no second execution

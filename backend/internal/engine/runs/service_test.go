@@ -113,6 +113,16 @@ func (m *memRepo) ListTaskDependencies(ctx context.Context, taskID uuid.UUID) ([
 	return append([]TaskDependency(nil), m.deps[taskID]...), nil
 }
 
+func (m *memRepo) ListTasksByRun(ctx context.Context, runID uuid.UUID) ([]Task, error) {
+	out := make([]Task, 0)
+	for _, t := range m.tasks {
+		if t.RunID == runID {
+			out = append(out, t)
+		}
+	}
+	return out, nil
+}
+
 func (m *memRepo) CreateAgent(ctx context.Context, p CreateAgentParams) (AgentInstance, error) {
 	id := m.newID()
 	a := AgentInstance{ID: id, RunID: p.RunID, TaskID: p.TaskID, Profile: p.Profile, Status: p.Status, Version: 1}
@@ -385,5 +395,151 @@ func TestCreateAgentRejectsForeignTask(t *testing.T) {
 	taskOfRun2, _ := svc.CreateTask(ctx, r2.ID, "T", TaskQueued)
 	if _, err := svc.CreateAgent(ctx, r1.ID, &taskOfRun2.ID, "recon-agent"); err == nil {
 		t.Error("expected agent/task run-mismatch rejection")
+	}
+}
+
+func TestListTasksByRun(t *testing.T) {
+	svc := NewService(newMemRepo())
+	ctx := context.Background()
+	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r2, _ := svc.StartRun(ctx, uuid.New(), "Other", "alice")
+
+	a, _ := svc.CreateTask(ctx, r.ID, "A", TaskQueued)
+	b, _ := svc.CreateTask(ctx, r.ID, "B", TaskQueued)
+	_, _ = svc.CreateTask(ctx, r2.ID, "X", TaskQueued)
+
+	tasks, err := svc.ListTasksByRun(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("list tasks: %v", err)
+	}
+	if len(tasks) != 2 {
+		t.Fatalf("tasks = %+v, want 2 for run", tasks)
+	}
+	got := map[uuid.UUID]bool{}
+	for _, tk := range tasks {
+		got[tk.ID] = true
+	}
+	if !got[a.ID] || !got[b.ID] {
+		t.Errorf("missing expected tasks: %+v", tasks)
+	}
+}
+
+func TestCancelRunCascadesToTasksAndAgents(t *testing.T) {
+	svc := NewService(newMemRepo())
+	ctx := context.Background()
+	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	if _, err := svc.TransitionRun(ctx, r.ID, r.Version, RunRunning); err != nil {
+		t.Fatal(err)
+	}
+	tk, _ := svc.CreateTask(ctx, r.ID, "Scan", TaskQueued)
+	if _, err := svc.TransitionTask(ctx, tk.ID, tk.Version, TaskRunning); err != nil {
+		t.Fatal(err)
+	}
+	// One already-terminal task must be left alone.
+	done, _ := svc.CreateTask(ctx, r.ID, "Done", TaskQueued)
+	done, err := svc.TransitionTask(ctx, done.ID, done.Version, TaskRunning)
+	if err != nil {
+		t.Fatal(err)
+	}
+	done, err = svc.TransitionTask(ctx, done.ID, done.Version, TaskCompleted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if done.Status != TaskCompleted {
+		t.Fatalf("status = %s, want completed", done.Status)
+	}
+
+	a, _ := svc.CreateAgent(ctx, r.ID, nil, "recon-agent")
+	if _, err := svc.TransitionAgent(ctx, a.ID, a.Version, AgentRunning); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := svc.GetRun(ctx, r.ID); err != nil {
+		t.Fatal(err)
+	}
+	res, err := svc.CancelRun(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("cancel run: %v", err)
+	}
+	if !res.RunCancelled || res.TasksCancelled != 1 || res.AgentsCancelled != 1 {
+		t.Errorf("cancel result = %+v", res)
+	}
+
+	run, _ := svc.GetRun(ctx, r.ID)
+	if run.Status != RunCancelled {
+		t.Errorf("run status = %s, want cancelled", run.Status)
+	}
+	if got, _ := svc.GetTask(ctx, tk.ID); got.Status != TaskCancelled {
+		t.Errorf("task status = %s, want cancelled", got.Status)
+	}
+	if got, _ := svc.GetTask(ctx, done.ID); got.Status != TaskCompleted {
+		t.Errorf("terminal task must not be touched, got %s", got.Status)
+	}
+	if got, _ := svc.GetAgent(ctx, a.ID); got.Status != AgentCancelled {
+		t.Errorf("agent status = %s, want cancelled", got.Status)
+	}
+}
+
+func TestCancelRunIdempotentForTerminalRun(t *testing.T) {
+	svc := NewService(newMemRepo())
+	ctx := context.Background()
+	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, err := svc.TransitionRun(ctx, r.ID, r.Version, RunRunning)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, err = svc.TransitionRun(ctx, r.ID, r.Version, RunCompleted)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := svc.CancelRun(ctx, r.ID)
+	if err != nil {
+		t.Fatalf("cancel run: %v", err)
+	}
+	if res.RunCancelled || res.TasksCancelled != 0 || res.AgentsCancelled != 0 {
+		t.Errorf("terminal run should not be cancelled: %+v", res)
+	}
+}
+
+func TestCancelRunCompletesAnEarlierPartialCascade(t *testing.T) {
+	repo := newMemRepo()
+	svc := NewService(repo)
+	ctx := context.Background()
+	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	task, _ := svc.CreateTask(ctx, r.ID, "Scan", TaskQueued)
+	agent, _ := svc.CreateAgent(ctx, r.ID, &task.ID, "recon-agent")
+
+	// Simulate a prior cancel that transitioned the run but failed before its
+	// children. Retrying must finish the remaining cascade.
+	if _, err := svc.TransitionRun(ctx, r.ID, r.Version, RunCancelled); err != nil {
+		t.Fatal(err)
+	}
+	res, err := svc.CancelRun(ctx, r.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res.RunCancelled || res.TasksCancelled != 1 || res.AgentsCancelled != 1 {
+		t.Errorf("recovery result = %+v", res)
+	}
+	if got, _ := svc.GetTask(ctx, task.ID); got.Status != TaskCancelled {
+		t.Errorf("task status = %s, want cancelled", got.Status)
+	}
+	if got, _ := svc.GetAgent(ctx, agent.ID); got.Status != AgentCancelled {
+		t.Errorf("agent status = %s, want cancelled", got.Status)
+	}
+}
+
+func TestCreateWorkRejectsTerminalRun(t *testing.T) {
+	svc := NewService(newMemRepo())
+	ctx := context.Background()
+	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	if _, err := svc.TransitionRun(ctx, r.ID, r.Version, RunCancelled); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.CreateTask(ctx, r.ID, "Scan", TaskQueued); err == nil {
+		t.Error("expected task creation on a cancelled run to fail")
+	}
+	if _, err := svc.CreateAgent(ctx, r.ID, nil, "recon-agent"); err == nil {
+		t.Error("expected agent creation on a cancelled run to fail")
 	}
 }

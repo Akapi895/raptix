@@ -169,6 +169,12 @@ func (a *App) Serve(ctx context.Context, ln net.Listener) error {
 	return a.serve(ctx, ln)
 }
 
+// Services exposes the wired business services so entrypoints can drive use
+// cases (for example, a one-shot startup reconcile).
+func (a *App) Services() *Services {
+	return a.services
+}
+
 // serve is the lifecycle core: on ctx cancel or listener error it stops accepting
 // requests, drains in-flight ones within ShutdownTimeout, then cancels them on a
 // timeout. Storage is closed only after draining finishes. Returns a timeout error

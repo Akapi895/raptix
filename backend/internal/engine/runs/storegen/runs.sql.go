@@ -28,13 +28,21 @@ func (q *Queries) AddTaskDependency(ctx context.Context, arg AddTaskDependencyPa
 }
 
 const createAgentInstance = `-- name: CreateAgentInstance :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    WHERE runs.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE
+)
 INSERT INTO agent_instances (run_id, task_id, profile, status)
-VALUES ($1, $2, $3, $4)
+SELECT active_run.id, $2, $3, $4
+FROM active_run
 RETURNING id, run_id, task_id, profile, status, version, created_at, updated_at
 `
 
 type CreateAgentInstanceParams struct {
-	RunID   pgtype.UUID `json:"run_id"`
+	ID      pgtype.UUID `json:"id"`
 	TaskID  pgtype.UUID `json:"task_id"`
 	Profile string      `json:"profile"`
 	Status  string      `json:"status"`
@@ -42,7 +50,7 @@ type CreateAgentInstanceParams struct {
 
 func (q *Queries) CreateAgentInstance(ctx context.Context, arg CreateAgentInstanceParams) (AgentInstance, error) {
 	row := q.db.QueryRow(ctx, createAgentInstance,
-		arg.RunID,
+		arg.ID,
 		arg.TaskID,
 		arg.Profile,
 		arg.Status,
@@ -96,19 +104,27 @@ func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, erro
 }
 
 const createTask = `-- name: CreateTask :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    WHERE runs.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE
+)
 INSERT INTO tasks (run_id, name, status)
-VALUES ($1, $2, $3)
+SELECT active_run.id, $2, $3
+FROM active_run
 RETURNING id, run_id, name, status, version, created_at, updated_at
 `
 
 type CreateTaskParams struct {
-	RunID  pgtype.UUID `json:"run_id"`
+	ID     pgtype.UUID `json:"id"`
 	Name   string      `json:"name"`
 	Status string      `json:"status"`
 }
 
 func (q *Queries) CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error) {
-	row := q.db.QueryRow(ctx, createTask, arg.RunID, arg.Name, arg.Status)
+	row := q.db.QueryRow(ctx, createTask, arg.ID, arg.Name, arg.Status)
 	var i Task
 	err := row.Scan(
 		&i.ID,
@@ -275,6 +291,41 @@ func (q *Queries) ListTaskDependencies(ctx context.Context, taskID pgtype.UUID) 
 	for rows.Next() {
 		var i TaskDependency
 		if err := rows.Scan(&i.TaskID, &i.DependsOn, &i.Required); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listTasksByRun = `-- name: ListTasksByRun :many
+SELECT id, run_id, name, status, version, created_at, updated_at
+FROM tasks
+WHERE run_id = $1
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListTasksByRun(ctx context.Context, runID pgtype.UUID) ([]Task, error) {
+	rows, err := q.db.Query(ctx, listTasksByRun, runID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Task
+	for rows.Next() {
+		var i Task
+		if err := rows.Scan(
+			&i.ID,
+			&i.RunID,
+			&i.Name,
+			&i.Status,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

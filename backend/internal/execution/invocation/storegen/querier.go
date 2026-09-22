@@ -11,11 +11,15 @@ import (
 )
 
 type Querier interface {
+	CancelInvocationsByRun(ctx context.Context, arg CancelInvocationsByRunParams) (int64, error)
 	CountInvocationsByRun(ctx context.Context, runID pgtype.UUID) (int64, error)
 	CreateInvocation(ctx context.Context, arg CreateInvocationParams) (ToolInvocation, error)
 	GetInvocation(ctx context.Context, id pgtype.UUID) (ToolInvocation, error)
 	GetInvocationByRunAndKey(ctx context.Context, arg GetInvocationByRunAndKeyParams) (ToolInvocation, error)
 	ListInvocationsByRun(ctx context.Context, runID pgtype.UUID) ([]ToolInvocation, error)
+	ListStaleInvocations(ctx context.Context, createdAt pgtype.Timestamptz) ([]ToolInvocation, error)
+	MarkUnknown(ctx context.Context, arg MarkUnknownParams) (ToolInvocation, error)
+	StartInvocation(ctx context.Context, arg StartInvocationParams) (ToolInvocation, error)
 	UpdateInvocationResult(ctx context.Context, arg UpdateInvocationResultParams) (ToolInvocation, error)
 }
 

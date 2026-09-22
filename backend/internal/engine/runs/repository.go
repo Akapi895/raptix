@@ -20,6 +20,7 @@ type Repository interface {
 	TransitionTask(ctx context.Context, id uuid.UUID, version int, newStatus TaskStatus) (Task, error)
 	AddTaskDependency(ctx context.Context, taskID uuid.UUID, dependsOn uuid.UUID, required bool) error
 	ListTaskDependencies(ctx context.Context, taskID uuid.UUID) ([]TaskDependency, error)
+	ListTasksByRun(ctx context.Context, runID uuid.UUID) ([]Task, error)
 
 	CreateAgent(ctx context.Context, p CreateAgentParams) (AgentInstance, error)
 	GetAgent(ctx context.Context, id uuid.UUID) (AgentInstance, error)

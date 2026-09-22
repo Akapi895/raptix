@@ -216,6 +216,23 @@ func TestExecutionDoesNotImportAgentsAPIOrApp(t *testing.T) {
 	assertInspected(t, "execution↛{engine/agents,api,app}", inspected)
 }
 
+// TestExecutionCancelDoesNotImportEngine keeps the cancel/reconcile policy in
+// the execution domain: it transitions tool_invocations only and never reaches
+// into the lifecycle modules. Cross-module cascade is orchestrated by app, which
+// wires each owner to transition its own state.
+func TestExecutionCancelDoesNotImportEngine(t *testing.T) {
+	inspected := 0
+	for _, p := range listPackages(t) {
+		if isInternal(p.path) && inDir(p.path, "execution/cancel") {
+			inspected++
+			if importsPrefix(p, base+"engine") {
+				t.Errorf("%s must not import engine", p.path)
+			}
+		}
+	}
+	assertInspected(t, "execution/cancel↛engine", inspected)
+}
+
 // TestOnlyAppImportsConcreteSandbox ensures the host and container runners are
 // constructed solely at the composition root. Execution and tools depend on the
 // sandbox.Runner interface; importing a concrete runner elsewhere would let a

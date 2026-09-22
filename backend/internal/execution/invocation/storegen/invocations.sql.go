@@ -11,6 +11,26 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const cancelInvocationsByRun = `-- name: CancelInvocationsByRun :execrows
+UPDATE tool_invocations
+SET status = $3, finished_at = now(), version = version + 1, updated_at = now()
+WHERE run_id = $1 AND status = ANY($2::text[])
+`
+
+type CancelInvocationsByRunParams struct {
+	RunID   pgtype.UUID `json:"run_id"`
+	Column2 []string    `json:"column_2"`
+	Status  string      `json:"status"`
+}
+
+func (q *Queries) CancelInvocationsByRun(ctx context.Context, arg CancelInvocationsByRunParams) (int64, error) {
+	result, err := q.db.Exec(ctx, cancelInvocationsByRun, arg.RunID, arg.Column2, arg.Status)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const countInvocationsByRun = `-- name: CountInvocationsByRun :one
 SELECT count(*)
 FROM tool_invocations
@@ -25,11 +45,19 @@ func (q *Queries) CountInvocationsByRun(ctx context.Context, runID pgtype.UUID) 
 }
 
 const createInvocation = `-- name: CreateInvocation :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    WHERE runs.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE
+)
 INSERT INTO tool_invocations (
     run_id, task_id, scope_id, actor, capability, capability_version,
     status, request, idempotency_key
 )
-VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7, $8)
+SELECT active_run.id, $2, $3, $4, $5, $6, 'pending', $7, $8
+FROM active_run
 RETURNING id, run_id, task_id, scope_id, actor, capability, capability_version,
           status, request, raw_artifact_id, structured_artifact_id,
           result_execution, result_parse, exit_code, error_code, error_message,
@@ -37,7 +65,7 @@ RETURNING id, run_id, task_id, scope_id, actor, capability, capability_version,
 `
 
 type CreateInvocationParams struct {
-	RunID             pgtype.UUID `json:"run_id"`
+	ID                pgtype.UUID `json:"id"`
 	TaskID            pgtype.UUID `json:"task_id"`
 	ScopeID           pgtype.UUID `json:"scope_id"`
 	Actor             string      `json:"actor"`
@@ -49,7 +77,7 @@ type CreateInvocationParams struct {
 
 func (q *Queries) CreateInvocation(ctx context.Context, arg CreateInvocationParams) (ToolInvocation, error) {
 	row := q.db.QueryRow(ctx, createInvocation,
-		arg.RunID,
+		arg.ID,
 		arg.TaskID,
 		arg.ScopeID,
 		arg.Actor,
@@ -222,8 +250,167 @@ func (q *Queries) ListInvocationsByRun(ctx context.Context, runID pgtype.UUID) (
 	return items, nil
 }
 
-const updateInvocationResult = `-- name: UpdateInvocationResult :one
+const listStaleInvocations = `-- name: ListStaleInvocations :many
+SELECT id, run_id, task_id, scope_id, actor, capability, capability_version,
+       status, request, raw_artifact_id, structured_artifact_id,
+       result_execution, result_parse, exit_code, error_code, error_message,
+       idempotency_key, version, started_at, finished_at, created_at, updated_at
+FROM tool_invocations
+WHERE (status = 'pending' AND created_at < $1)
+   OR (status IN ('dispatched', 'running') AND started_at < $1)
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListStaleInvocations(ctx context.Context, createdAt pgtype.Timestamptz) ([]ToolInvocation, error) {
+	rows, err := q.db.Query(ctx, listStaleInvocations, createdAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ToolInvocation{}
+	for rows.Next() {
+		var i ToolInvocation
+		if err := rows.Scan(
+			&i.ID,
+			&i.RunID,
+			&i.TaskID,
+			&i.ScopeID,
+			&i.Actor,
+			&i.Capability,
+			&i.CapabilityVersion,
+			&i.Status,
+			&i.Request,
+			&i.RawArtifactID,
+			&i.StructuredArtifactID,
+			&i.ResultExecution,
+			&i.ResultParse,
+			&i.ExitCode,
+			&i.ErrorCode,
+			&i.ErrorMessage,
+			&i.IdempotencyKey,
+			&i.Version,
+			&i.StartedAt,
+			&i.FinishedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markUnknown = `-- name: MarkUnknown :one
 UPDATE tool_invocations
+SET status = 'unknown', finished_at = now(), version = version + 1, updated_at = now()
+WHERE id = $1 AND version = $2
+  AND status IN ('pending', 'dispatched', 'running')
+RETURNING id, run_id, task_id, scope_id, actor, capability, capability_version,
+          status, request, raw_artifact_id, structured_artifact_id,
+          result_execution, result_parse, exit_code, error_code, error_message,
+          idempotency_key, version, started_at, finished_at, created_at, updated_at
+`
+
+type MarkUnknownParams struct {
+	ID      pgtype.UUID `json:"id"`
+	Version int32       `json:"version"`
+}
+
+func (q *Queries) MarkUnknown(ctx context.Context, arg MarkUnknownParams) (ToolInvocation, error) {
+	row := q.db.QueryRow(ctx, markUnknown, arg.ID, arg.Version)
+	var i ToolInvocation
+	err := row.Scan(
+		&i.ID,
+		&i.RunID,
+		&i.TaskID,
+		&i.ScopeID,
+		&i.Actor,
+		&i.Capability,
+		&i.CapabilityVersion,
+		&i.Status,
+		&i.Request,
+		&i.RawArtifactID,
+		&i.StructuredArtifactID,
+		&i.ResultExecution,
+		&i.ResultParse,
+		&i.ExitCode,
+		&i.ErrorCode,
+		&i.ErrorMessage,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.StartedAt,
+		&i.FinishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const startInvocation = `-- name: StartInvocation :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    JOIN tool_invocations inv ON inv.run_id = runs.id
+    WHERE inv.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE OF runs
+)
+UPDATE tool_invocations AS ti
+SET status = 'running', started_at = now(), version = version + 1, updated_at = now()
+WHERE ti.id = $1 AND ti.version = $2 AND ti.status = 'pending'
+  AND EXISTS (SELECT 1 FROM active_run)
+RETURNING ti.id, ti.run_id, ti.task_id, ti.scope_id, ti.actor, ti.capability, ti.capability_version, ti.status, ti.request, ti.raw_artifact_id, ti.structured_artifact_id, ti.result_execution, ti.result_parse, ti.exit_code, ti.error_code, ti.error_message, ti.idempotency_key, ti.version, ti.started_at, ti.finished_at, ti.created_at, ti.updated_at
+`
+
+type StartInvocationParams struct {
+	ID      pgtype.UUID `json:"id"`
+	Version int32       `json:"version"`
+}
+
+func (q *Queries) StartInvocation(ctx context.Context, arg StartInvocationParams) (ToolInvocation, error) {
+	row := q.db.QueryRow(ctx, startInvocation, arg.ID, arg.Version)
+	var i ToolInvocation
+	err := row.Scan(
+		&i.ID,
+		&i.RunID,
+		&i.TaskID,
+		&i.ScopeID,
+		&i.Actor,
+		&i.Capability,
+		&i.CapabilityVersion,
+		&i.Status,
+		&i.Request,
+		&i.RawArtifactID,
+		&i.StructuredArtifactID,
+		&i.ResultExecution,
+		&i.ResultParse,
+		&i.ExitCode,
+		&i.ErrorCode,
+		&i.ErrorMessage,
+		&i.IdempotencyKey,
+		&i.Version,
+		&i.StartedAt,
+		&i.FinishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateInvocationResult = `-- name: UpdateInvocationResult :one
+WITH active_run AS (
+    SELECT runs.id
+    FROM runs
+    JOIN tool_invocations inv ON inv.run_id = runs.id
+    WHERE inv.id = $1
+      AND runs.status NOT IN ('cancelled', 'completed', 'budget_exhausted')
+    FOR SHARE OF runs
+)
+UPDATE tool_invocations AS ti
 SET status = $2,
     raw_artifact_id = $3,
     structured_artifact_id = $4,
@@ -235,11 +422,10 @@ SET status = $2,
     finished_at = $10,
     version = version + 1,
     updated_at = now()
-WHERE id = $1 AND version = $11
-RETURNING id, run_id, task_id, scope_id, actor, capability, capability_version,
-          status, request, raw_artifact_id, structured_artifact_id,
-          result_execution, result_parse, exit_code, error_code, error_message,
-          idempotency_key, version, started_at, finished_at, created_at, updated_at
+WHERE ti.id = $1 AND ti.version = $11
+  AND ti.status = 'running'
+  AND EXISTS (SELECT 1 FROM active_run)
+RETURNING ti.id, ti.run_id, ti.task_id, ti.scope_id, ti.actor, ti.capability, ti.capability_version, ti.status, ti.request, ti.raw_artifact_id, ti.structured_artifact_id, ti.result_execution, ti.result_parse, ti.exit_code, ti.error_code, ti.error_message, ti.idempotency_key, ti.version, ti.started_at, ti.finished_at, ti.created_at, ti.updated_at
 `
 
 type UpdateInvocationResultParams struct {

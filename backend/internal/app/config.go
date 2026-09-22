@@ -46,11 +46,14 @@ type ContentConfig struct {
 }
 
 // ExecutionConfig bounds capability dispatch: how long a capability may run, how
-// much output it may produce, and how many invocations a single run may make.
+// much output it may produce, how many invocations a single run may make, and
+// how old a non-terminal invocation must be before startup reconcile treats it
+// as stale.
 type ExecutionConfig struct {
 	DefaultTimeout       time.Duration `yaml:"default_timeout"`
 	MaxOutputBytes       int64         `yaml:"max_output_bytes"`
 	MaxInvocationsPerRun int           `yaml:"max_invocations_per_run"`
+	ReconcileStaleAfter  time.Duration `yaml:"reconcile_stale_after"`
 }
 
 // SandboxConfig selects the environment command capabilities run in. Local is
@@ -126,6 +129,7 @@ func defaults() *Config {
 			DefaultTimeout:       30 * time.Second,
 			MaxOutputBytes:       1 << 20,
 			MaxInvocationsPerRun: 100,
+			ReconcileStaleAfter:  5 * time.Minute,
 		},
 		Sandbox: SandboxConfig{
 			Mode:           "local",
@@ -206,6 +210,13 @@ func applyEnvOverrides(cfg *Config) error {
 			return fmt.Errorf("RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN: invalid integer %q: %w", v, err)
 		}
 		cfg.Execution.MaxInvocationsPerRun = n
+	}
+	if v, ok := os.LookupEnv("RAP_EXECUTION_RECONCILE_STALE_AFTER"); ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("RAP_EXECUTION_RECONCILE_STALE_AFTER: invalid duration %q: %w", v, err)
+		}
+		cfg.Execution.ReconcileStaleAfter = d
 	}
 	cfg.Sandbox.Mode = envOr("RAP_SANDBOX_MODE", cfg.Sandbox.Mode)
 	cfg.Sandbox.Image = envOr("RAP_SANDBOX_IMAGE", cfg.Sandbox.Image)
@@ -288,6 +299,9 @@ func (c *Config) validate() error {
 	}
 	if c.Execution.MaxInvocationsPerRun < 0 {
 		return fmt.Errorf("execution.max_invocations_per_run must not be negative, got %d", c.Execution.MaxInvocationsPerRun)
+	}
+	if c.Execution.ReconcileStaleAfter <= 0 {
+		return fmt.Errorf("execution.reconcile_stale_after must be positive, got %s", c.Execution.ReconcileStaleAfter)
 	}
 	switch c.Sandbox.Mode {
 	case "local", "container":

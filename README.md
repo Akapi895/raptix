@@ -2,7 +2,7 @@
 
 Backend security-automation platform (agent + skills + tools + evidence + findings + reporting), built as a **Go modular monolith**. This is the `raptix` repo; authoritative docs live in `docs/` (`repository_structure_v1.md`, `migration_roadmap_v1.md`, `migration_manifest_v1.md`).
 
-> Trạng thái: **Phase 5 hoàn tất** — một agent hoàn chỉnh có verifier: `engine/contextbuild` dựng context, `engine/agents` chạy agent loop (model → capability qua `execution` → finding draft), `workspace/verifier` kiểm chứng qua cùng đường execution; use case `Services.RunAgent`. Agent loop tự tắt khi thiếu `RAP_LLM_API_KEY`. HTTP/SSE run endpoints, orchestrator nhiều agent và reporting thuộc phase sau. Xem manifest để theo dõi.
+> Trạng thái: **Phase 6 hoàn tất** — một agent hoàn chỉnh có verifier (`engine/contextbuild` + `engine/agents` + `workspace/verifier`, use case `Services.RunAgent`) và độ tin cậy execution/run: `execution/cancel` hủy run (invocation `pending`→`cancelled`, `running`→`unknown`) và đối soát sau crash (`Reconcile` startup đánh stale → `unknown`), idempotency an toàn cho kết quả chưa rõ (`ErrOutcomeUnknown`). Agent loop tự tắt khi thiếu `RAP_LLM_API_KEY`. HTTP/SSE run endpoints, orchestrator nhiều agent, reporting và vòng lặp reconcile định kỳ (River jobs) thuộc phase sau. Xem manifest để theo dõi.
 
 ## Nhanh
 
@@ -20,7 +20,7 @@ docker compose -f deploy/compose.yaml up -d --wait postgres
 
 Hoặc dùng helper: `scripts/dev.sh up` rồi `scripts/dev.sh server`. `scripts/check.sh` chạy vet+build+test.
 
-## Cấu trúc (đã triển khai đến Phase 5)
+## Cấu trúc (đã triển khai đến Phase 6)
 
 - `backend/` — module Go duy nhất `github.com/Akapi895/raptix/backend`, Go 1.26.
 - `backend/cmd/server` — entrypoint HTTP server (sole engine host trong tương lai).

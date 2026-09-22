@@ -72,7 +72,10 @@ func (r *Postgres) FinishAttempt(ctx context.Context, p FinishAttemptParams) (At
 	})
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return Attempt{}, &ErrAttemptNotFound{ID: p.ID}
+			if _, getErr := r.GetAttempt(ctx, p.ID); getErr != nil {
+				return Attempt{}, getErr
+			}
+			return Attempt{}, &ErrAttemptNotRunning{ID: p.ID}
 		}
 		return Attempt{}, err
 	}

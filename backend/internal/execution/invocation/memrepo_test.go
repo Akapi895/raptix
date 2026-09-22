@@ -2,8 +2,8 @@ package invocation
 
 import (
 	"context"
-	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -12,9 +12,10 @@ import (
 // It mirrors production semantics: idempotency by (run, key) and optimistic
 // version on result updates.
 type memRepo struct {
-	invocations map[uuid.UUID]Invocation
-	byKey       map[string]uuid.UUID
-	next        int
+	invocations    map[uuid.UUID]Invocation
+	byKey          map[string]uuid.UUID
+	hideLookupOnce bool
+	next           int
 }
 
 func newMemRepo() *memRepo {
@@ -32,7 +33,7 @@ func (m *memRepo) newID() uuid.UUID {
 func (m *memRepo) CreateInvocation(ctx context.Context, p CreateParams) (Invocation, error) {
 	key := p.RunID.String() + ":" + p.IdempotencyKey
 	if id, ok := m.byKey[key]; ok {
-		return m.invocations[id], fmt.Errorf("duplicate idempotency key")
+		return m.invocations[id], &ErrIdempotencyConflict{RunID: p.RunID, Key: p.IdempotencyKey}
 	}
 	id := m.newID()
 	inv := Invocation{
@@ -55,6 +56,10 @@ func (m *memRepo) GetInvocation(ctx context.Context, id uuid.UUID) (Invocation, 
 }
 
 func (m *memRepo) GetByRunAndIdempotencyKey(ctx context.Context, runID uuid.UUID, key string) (Invocation, error) {
+	if m.hideLookupOnce {
+		m.hideLookupOnce = false
+		return Invocation{}, &ErrInvocationNotFound{}
+	}
 	id, ok := m.byKey[runID.String()+":"+key]
 	if !ok {
 		return Invocation{}, &ErrInvocationNotFound{}
@@ -67,7 +72,7 @@ func (m *memRepo) UpdateResult(ctx context.Context, u ResultUpdate) (Invocation,
 	if !ok {
 		return Invocation{}, &ErrInvocationNotFound{ID: u.ID}
 	}
-	if inv.Version != u.Version {
+	if inv.Version != u.Version || inv.Status != StatusRunning {
 		return Invocation{}, &ErrOptimisticLock{ID: u.ID}
 	}
 	inv.Status = u.Status
@@ -89,6 +94,74 @@ func (m *memRepo) CountByRun(ctx context.Context, runID uuid.UUID) (int64, error
 	var n int64
 	for _, inv := range m.invocations {
 		if inv.RunID == runID {
+			n++
+		}
+	}
+	return n, nil
+}
+
+func (m *memRepo) StartInvocation(ctx context.Context, id uuid.UUID, version int) (Invocation, error) {
+	inv, ok := m.invocations[id]
+	if !ok {
+		return Invocation{}, &ErrInvocationNotFound{ID: id}
+	}
+	if inv.Version != version || inv.Status != StatusPending {
+		return Invocation{}, &ErrOptimisticLock{ID: id}
+	}
+	inv.Status = StatusRunning
+	now := time.Now().UTC()
+	inv.StartedAt = &now
+	inv.Version++
+	m.invocations[id] = inv
+	return inv, nil
+}
+
+func (m *memRepo) MarkUnknown(ctx context.Context, id uuid.UUID, version int) (Invocation, error) {
+	inv, ok := m.invocations[id]
+	if !ok {
+		return Invocation{}, &ErrInvocationNotFound{ID: id}
+	}
+	if inv.Version != version || (inv.Status != StatusPending && inv.Status != StatusDispatched && inv.Status != StatusRunning) {
+		return Invocation{}, &ErrOptimisticLock{ID: id}
+	}
+	inv.Status = StatusUnknown
+	now := time.Now().UTC()
+	inv.FinishedAt = &now
+	inv.Version++
+	m.invocations[id] = inv
+	return inv, nil
+}
+
+func (m *memRepo) ListStaleInvocations(ctx context.Context, olderThan time.Time) ([]Invocation, error) {
+	out := make([]Invocation, 0)
+	for _, inv := range m.invocations {
+		if inv.Status != StatusPending && inv.Status != StatusRunning && inv.Status != StatusDispatched {
+			continue
+		}
+		age := inv.CreatedAt
+		if inv.StartedAt != nil {
+			age = *inv.StartedAt
+		}
+		if age.Before(olderThan) {
+			out = append(out, inv)
+		}
+	}
+	return out, nil
+}
+
+func (m *memRepo) CancelInvocationsByRun(ctx context.Context, runID uuid.UUID, from []Status, to Status) (int64, error) {
+	in := map[Status]bool{}
+	for _, s := range from {
+		in[s] = true
+	}
+	var n int64
+	now := time.Now().UTC()
+	for id, inv := range m.invocations {
+		if inv.RunID == runID && in[inv.Status] {
+			inv.Status = to
+			inv.FinishedAt = &now
+			inv.Version++
+			m.invocations[id] = inv
 			n++
 		}
 	}

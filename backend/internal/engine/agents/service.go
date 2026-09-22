@@ -179,6 +179,35 @@ func (s *Service) GetSnapshot(ctx context.Context, agentID uuid.UUID) (Snapshot,
 	return s.repo.GetSnapshotByAgent(ctx, agentID)
 }
 
+// CancelRunningAttempts marks all running attempts of an agent as cancelled and
+// returns how many it changed. It only touches agent_attempts, owned by this
+// module; transitioning the agent instance itself is engine/runs's job.
+func (s *Service) CancelRunningAttempts(ctx context.Context, agentID uuid.UUID) (int, error) {
+	attempts, err := s.repo.ListAttemptsByAgent(ctx, agentID)
+	if err != nil {
+		return 0, err
+	}
+	cancelled := 0
+	for _, a := range attempts {
+		if a.Status != AttemptRunning {
+			continue
+		}
+		if _, err := s.repo.FinishAttempt(ctx, FinishAttemptParams{
+			ID:         a.ID,
+			Status:     AttemptCancelled,
+			FinishedAt: time.Now().UTC(),
+		}); err != nil {
+			var terminal *ErrAttemptNotRunning
+			if errors.As(err, &terminal) {
+				continue
+			}
+			return cancelled, err
+		}
+		cancelled++
+	}
+	return cancelled, nil
+}
+
 // RunAgent runs one attempt of an agent: resolve content, record a snapshot,
 // transition the agent to running, loop model/tool until a final answer or the
 // step budget, then record the attempt outcome and request the agent transition.
@@ -242,6 +271,15 @@ func (s *Service) RunAgent(ctx context.Context, p RunParams) (AttemptResult, err
 
 	finished, err := s.repo.FinishAttempt(ctx, FinishAttemptParams{ID: attempt.ID, Status: status, FinishedAt: time.Now().UTC()})
 	if err != nil {
+		var terminal *ErrAttemptNotRunning
+		if errors.As(err, &terminal) {
+			finished, err = s.repo.GetAttempt(ctx, attempt.ID)
+			if err != nil {
+				return AttemptResult{}, err
+			}
+			result.Attempt = finished
+			return result, nil
+		}
 		return AttemptResult{}, err
 	}
 	result.Attempt = finished

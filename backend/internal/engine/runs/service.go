@@ -2,6 +2,7 @@ package runs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -104,6 +105,94 @@ func (s *Service) ListAgentsByRun(ctx context.Context, runID uuid.UUID) ([]Agent
 	return s.repo.ListAgentsByRun(ctx, runID)
 }
 
+// ListTasksByRun returns the tasks of a run, oldest first.
+func (s *Service) ListTasksByRun(ctx context.Context, runID uuid.UUID) ([]Task, error) {
+	if runID == uuid.Nil {
+		return nil, fmt.Errorf("run id is required")
+	}
+	return s.repo.ListTasksByRun(ctx, runID)
+}
+
+// RunCancelResult reports how many entities a CancelRun call transitioned.
+type RunCancelResult struct {
+	RunCancelled    bool
+	TasksCancelled  int
+	AgentsCancelled int
+}
+
+// CancelRun transitions a run and its tasks/agents to cancelled. It is
+// idempotent for an already-terminal run (queued/running/paused are cancelled;
+// a run already completed/cancelled/budget-exhausted is left alone). Per-item
+// optimistic-lock failures are skipped so a concurrent caller finishing an
+// item does not abort the whole cascade.
+func (s *Service) CancelRun(ctx context.Context, runID uuid.UUID) (RunCancelResult, error) {
+	if runID == uuid.Nil {
+		return RunCancelResult{}, fmt.Errorf("run id is required")
+	}
+	run, err := s.repo.GetRun(ctx, runID)
+	if err != nil {
+		return RunCancelResult{}, err
+	}
+	if run.Status == RunCompleted || run.Status == RunBudgetExhausted {
+		return RunCancelResult{}, nil
+	}
+	res := RunCancelResult{}
+	if run.Status != RunCancelled {
+		if _, err := s.TransitionRun(ctx, run.ID, run.Version, RunCancelled); err != nil {
+			return RunCancelResult{}, err
+		}
+		res.RunCancelled = true
+	}
+
+	tasks, err := s.repo.ListTasksByRun(ctx, runID)
+	if err != nil {
+		return res, err
+	}
+	for _, t := range tasks {
+		if isTerminalTask(t.Status) {
+			continue
+		}
+		if _, err := s.repo.TransitionTask(ctx, t.ID, t.Version, TaskCancelled); err != nil {
+			if isOptimisticLock(err) {
+				continue
+			}
+			return res, err
+		}
+		res.TasksCancelled++
+	}
+
+	agents, err := s.repo.ListAgentsByRun(ctx, runID)
+	if err != nil {
+		return res, err
+	}
+	for _, a := range agents {
+		if isTerminalAgent(a.Status) {
+			continue
+		}
+		if _, err := s.repo.TransitionAgent(ctx, a.ID, a.Version, AgentCancelled); err != nil {
+			if isOptimisticLock(err) {
+				continue
+			}
+			return res, err
+		}
+		res.AgentsCancelled++
+	}
+	return res, nil
+}
+
+func isTerminalTask(s TaskStatus) bool {
+	return s == TaskCompleted || s == TaskCancelled || s == TaskBudgetExhausted
+}
+
+func isTerminalAgent(s AgentStatus) bool {
+	return s == AgentCompleted || s == AgentFailed || s == AgentCancelled
+}
+
+func isOptimisticLock(err error) bool {
+	var ol *ErrOptimisticLock
+	return errors.As(err, &ol)
+}
+
 // TransitionRun applies a status transition to a run, rejecting transitions
 // not described by the transition table.
 func (s *Service) TransitionRun(ctx context.Context, id uuid.UUID, fromVersion int, toStatus RunStatus) (Run, error) {
@@ -132,6 +221,13 @@ func (s *Service) CreateTask(ctx context.Context, runID uuid.UUID, name string, 
 	}
 	if runID == uuid.Nil {
 		return Task{}, fmt.Errorf("run id is required")
+	}
+	run, err := s.repo.GetRun(ctx, runID)
+	if err != nil {
+		return Task{}, err
+	}
+	if run.Status == RunCancelled || run.Status == RunCompleted || run.Status == RunBudgetExhausted {
+		return Task{}, &ErrRunNotAcceptingWork{ID: runID}
 	}
 	if !initialTaskStatuses[status] {
 		return Task{}, fmt.Errorf("task cannot start in status %q", status)
@@ -191,6 +287,13 @@ func (s *Service) CreateAgent(ctx context.Context, runID uuid.UUID, taskID *uuid
 	}
 	if runID == uuid.Nil {
 		return AgentInstance{}, fmt.Errorf("run id is required")
+	}
+	run, err := s.repo.GetRun(ctx, runID)
+	if err != nil {
+		return AgentInstance{}, err
+	}
+	if run.Status == RunCancelled || run.Status == RunCompleted || run.Status == RunBudgetExhausted {
+		return AgentInstance{}, &ErrRunNotAcceptingWork{ID: runID}
 	}
 	if taskID != nil {
 		task, err := s.repo.GetTask(ctx, *taskID)
