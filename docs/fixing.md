@@ -1,84 +1,40 @@
-# Phase 2 Fix Closure
+# Phase 3 - Dữ liệu lõi + quyền tối thiểu (closure & hardening)
 
-## Status
+## Trạng thái
 
-Phase 2 acceptance is closed for the repository-local unit, contract, mock
-provider, and race-test scope. No commit or stage operation was performed.
+Phase 3 da hoan thien, HARDENED va VALIDATE LIVE tren PostgreSQL that. Gap trong audit da duoc sua het, integration repeatable, DB tu choi du lieu sai. Chua commit/stage.
 
-## Resolved Findings
+## Cac lang chang da sua (tu audit)
 
-1. **Registry concurrency and versions:** all map lookup/selection happens
-   under the registry read lock. Concurrent registration and lookup are covered
-   by `-race`; semver ordering selects `1.10.0` over `1.9.0`. Empty manifest
-   versions resolve deterministically to `1.0.0`.
-2. **Manifest contracts:** `jsonschema/v6` compiles the authoritative schemas.
-   YAML decoding rejects unknown fields and multiple documents; the schemas,
-   Go models, and real profile/tool fixtures agree on fields and local `$ref`.
-   Negative coverage includes invalid apiVersion/executor, malformed schema
-   documents, negative resource size, boolean input/output schema, and missing
-   schema roots.
-3. **Content containment:** loader references reject absolute/traversal paths
-   and resolve existing paths through the canonical content root before reads.
-   Tests cover escaping symlinks and valid bare/qualified skill references.
-4. **Skill parsing:** duplicate bare names are rejected as ambiguous; qualified
-   names remain valid. Parsing recognizes only full-line frontmatter delimiters,
-   accepts BOM/LF/CRLF, preserves body bytes, verifies directory identity, and
-   preserves supplied version metadata.
-5. **Identity and provenance:** skill metadata can be read without the body and
-   includes identity, deterministic SHA-256 source hash, version, and
-   content-root-relative path. Hash tests cover stable and changed content.
-6. **Registry lifecycle:** declaration, one-time implementation binding, and
-   readiness are distinct. Declared-only entries are not available; invalid
-   executor kinds and conflicting bindings fail. Immutable descriptors expose
-   executor, source, schemas, runtime requirements, and readiness without
-   granting execution rights.
-7. **Composition and references:** configured malformed content/model setup
-   fails startup; an absent content root is the disabled catalog mode. Profile
-   prompt/skill/tool/resource references are resolved before profile success.
-   The example configuration uses repo-relative paths for a server started from
-   `backend/`.
-8. **Output contract:** execution and parser outcomes are independent, failure
-   details are serializable, raw evidence survives parser failure, and result
-   invariants reject contradictory artifact/status combinations. `Result` no
-   longer implements `error`.
-9. **LLM contract:** request and URL validation reject invalid values before
-   adapter conversion. Stream chunks retain finish reason and emit a terminal
-   chunk with the latest known usage on provider EOF. HTTP/SSE mock tests cover
-   Chat, model override, provider errors, streamed terminal usage, and EOF.
-   Retry remains owned by a later orchestration/execution phase; the adapter
-   does not retry a stream after emitting data.
-10. **Milestone:** `phase2_milestone_test.go` uses `app.New`, a real temporary
-    content catalog and prompt, an OpenAI-compatible `httptest` provider, and
-    the wired `a.model` for both Chat and Stream. Missing prompt references
-    fail the composition-root test.
-11. **Attribution and docs:** Claude-Red source revision and full MIT notice
-    are recorded in `content/skills/NOTICE.md`; nmap records its pinned source
-    commit; migration manifest and README describe the implemented Phase 2
-    boundary.
-12. **Module hygiene:** `go mod tidy` was run; direct dependencies are recorded
-    correctly and module verification passes.
+- `tests/architecture/imports_test.go` truoc false-pass do matcher chuoi address dung dau cham thay vi slash. Da dung bien directory dung (co/khong co slash duoi), them assert tung luat inspect >=1 package, storegen match theo path segment.
+- `Scope versioning`: `CreateScope` cap version bang counter nguyen tu `projects.scope_version` (migration 00010; thay cho MAX(version) cung statement voi FOR UPDATE, khong an toan READ COMMITTED) + UNIQUE(project_id, version). Verify: 8 goroutine tao scope dong thoi ra version 1..8.
+- `Governance scope validity`: GrantCapability/CheckActiveGrant/CreateApproval goi ScopeAuthority (projects service contract) - scope het han hoac project archived thi quyen va approval khong con hieu luc; approval het han phai superseded.
+- `Authorized run start`: StartAuthorizedRun (app) ep membership + scope active + grant run.start truoc khi tao run, audit allow/deny. Run doc lai duoc qua Runs.GetRun.
+- `Evidence bytes that`: Register nhan io.Reader, service tinh size+SHA-256 tu bytes, ghi qua filesystem.Store, verify doc lai roi moi insert metadata, rollback bytes neu metadata fail. ReadRef doc bytes.
+- `Finding atomic`: TransitionFindingWithHistory (CTE mot statement) - status/version va review history khong the tach roi; stale version => optimistic lock, khong ghi history le.
+- `Runs lifecycle`: CreateTask chi nhan trang thai khoi dau hop le; CreateAgent xac nhan task thuoc run; AddTaskDependency la service method chan cross-run.
+- `Assessment service`: them RecordHypothesis + reads (Get/List); verified_negative bat buoc co evidence.
+- `Schema constraints` (migration 00009 + 00010): CHECK/UNIQUE version>0, status/severity/confidence enum, sha256 format, size>=0, raw/derived parent rule, audit outcome; parent FK RESTRICT; index cho sha256/run_id/finding_id/grant. DB tu choi du lieu sai (verify truc tiep bang psql).
+- `Review round 2 fixes`: findings from_status lay tu row update (khong tin caller) + assert version==current; **evidence chuyen content-addressed storage** (key sha256/<checksum> tu bytes, dedup an toan, het lo ghi de storage key); LinkEvidence validate role + upsert; DecideApproval tai kiem tra scope; Revoke idempotent; audit.Record validate outcome; assessment nil properties -> {}; test doubles dung ID duy nhat; milestone test bat wiring hong; architecture test guard vacuity + inspect test imports; test filesystem.Rename va dedup tren real store.
+- `Integration repeatable + CI`: slug/bytes unique, lookup SHA theo run (GetBySHA256InRun), CI chay cmd/migrate up truoc test.
 
-## Verification
+## Kiem chung (tat ca pass)
 
-Run from `backend/` on 2026-09-21:
+### DB-free
+gofmt -l internal tests (can), staticcheck ./..., go vet -mod=readonly ./..., go build -mod=readonly ./..., go test -race -mod=readonly -count=1 -timeout=300s ./..., go mod verify.
 
-```text
-gofmt -l internal
-go vet -mod=readonly ./...
-go build -mod=readonly ./...
-go test -race -mod=readonly -count=1 -timeout=90s ./...
-go mod verify
-```
+### Integration (PostgreSQL 17 qua Docker Desktop)
 
-All commands passed. The `gofmt -l internal` command produced no output.
+- docker compose -f deploy/compose.yaml up -d postgres; cmd/migrate -command up applied 10/10 migration (00001-00010).
+- RAP_TEST_DATABASE_URL=... go test -race -count=1 -run TestPhase3 ./internal/app/ : PASS (data-flow + concurrent-scope + milestone), chay lap nhieu lan tren cung DB (repeatable).
+- Luong: project+scope{1,2} -> member -> denied run(no grant) -> grant -> authorized run -> read-back -> task/agent -> artifact bytes write+checksum+read -> observation/hypothesis/coverage -> finding draft+evidence+atomic review+verdict(no flip).
+- DB constraints tu choi insert sai (sha ngang, status bogus) - verify truc tiep bang psql.
 
-## Integration Scope
+## Ngoai pham vi Phase 3
 
-- PostgreSQL transaction integration tests were not run: Docker is unavailable
-  in this WSL environment. They remain opt-in through `RAP_TEST_DATABASE_URL`
-  and are covered by CI's dedicated database.
-- The live VTNet provider test remains opt-in through `RAP_TEST_LLM_API_KEY`.
-  It was not run; CI-safe `httptest` OpenAI/SSE regressions are part of the
-  regular suite.
-- Tool dispatch, sandboxing, governance, agent loop, evidence persistence, and
-  verification/finding lifecycle remain later phases by design.
+- execution/invocation + sandbox + dispatch (scope/grant/budget tai dispatch) - Phase 4.
+- Agent loop, verifier, context build - Phase 5.
+- Review workflow day du / finding revision rieng - Phase 8.
+- Memory, vault, MCP, reporting/jobs/River, CLI/API/UI - Phase 7/9/11.
+- Policy engine chap hanh content/policies/default.yaml - Phase 4.
+

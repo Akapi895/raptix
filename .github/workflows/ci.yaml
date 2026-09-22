@@ -41,6 +41,14 @@ jobs:
       - name: Build
         run: go build ./...
 
+      # The test database is provisioned empty; the integration test asserts
+      # on live rows so migrations must be applied before the suite runs.
+      # Migrations are never run by server startup, only by cmd/migrate here.
+      - name: Migrate
+        env:
+          RAP_DATABASE_URL: postgres://raptix:raptix@localhost:5432/raptix_test?sslmode=disable
+        run: go run ./cmd/migrate -config ../configs/app.yaml -dir migrations -command up
+
       - name: Test
         run: go test -mod=readonly -count=1 ./...
 

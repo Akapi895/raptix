@@ -31,6 +31,7 @@ type App struct {
 	model    llm.Model
 	srv      *http.Server
 	requests *api.RequestTracker
+	services *Services
 
 	// baseCtx/baseCancel root every request context; on shutdown timeout
 	// baseCancel cancels in-flight requests before storage is closed.
@@ -122,7 +123,8 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 		cfg: cfg, log: log, pool: pool, fs: fs, content: contentLoader,
 		allTools: allTools, model: model,
 		srv: srv, requests: requests,
-		baseCtx: baseCtx, baseCancel: baseCancel,
+		services: wireServices(pool, fs),
+		baseCtx:  baseCtx, baseCancel: baseCancel,
 	}, nil
 }
 

@@ -1,0 +1,18 @@
+apiVersion: policy/v1
+kind: policy
+name: default
+description: Base engagement policy for capability approval and execution limits.
+version: 1.0.0
+
+# Policy samples are declarative configuration sources. A policy only takes
+# effect when it is loaded and enforced by the backend (platform/governance +
+# execution in Phase 4+); the existence of this file grants nothing by itself.
+rules:
+  - action: run.start
+    approval: false
+  - action: tool.nmap
+    approval: false
+    scope: required
+  - action: tool.with_credentials
+    approval: true
+    scope: required

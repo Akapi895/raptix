@@ -182,6 +182,28 @@ func (s *Store) Read(ctx context.Context, key string) (io.ReadCloser, error) {
 	return f, nil
 }
 
+// Rename moves a stored blob from one key to another within the root, creating
+// the target directory as needed. Used to promote a staging copy to its final
+// content-addressed location (atomic within the root directory).
+func (s *Store) Rename(ctx context.Context, from, to string) error {
+	if err := validateKey(from); err != nil {
+		return err
+	}
+	if err := validateKey(to); err != nil {
+		return err
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if err := s.root.MkdirAll(filepath.Dir(filepath.FromSlash(to)), 0o755); err != nil {
+		return fmt.Errorf("mkdir artifact dir: %w", err)
+	}
+	if err := s.root.Rename(filepath.FromSlash(from), filepath.FromSlash(to)); err != nil {
+		return fmt.Errorf("promote artifact %q: %w", to, err)
+	}
+	return nil
+}
+
 // Exists reports whether key is present.
 func (s *Store) Exists(ctx context.Context, key string) (bool, error) {
 	if err := validateKey(key); err != nil {

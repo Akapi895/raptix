@@ -97,3 +97,10 @@ func (p *Pool) Close() {
 		p.pool.Close()
 	}
 }
+
+// DB exposes the underlying pgxpool so module repositories can run queries
+// against it. Module repositories define their own small query interfaces; a
+// *pgxpool.Pool satisfies them without leaking pgx types beyond the adapter.
+func (p *Pool) DB() *pgxpool.Pool {
+	return p.pool
+}

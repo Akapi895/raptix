@@ -1,0 +1,107 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/platform/projects/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/platform/projects/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        emit_empty_slices: true
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"
+
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/platform/governance/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/platform/governance/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"
+
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/platform/audit/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/platform/audit/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"
+
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/engine/runs/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/engine/runs/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"
+
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/workspace/evidence/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/workspace/evidence/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"
+
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/workspace/assessment/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/workspace/assessment/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"
+
+  - engine: "postgresql"
+    schema: "migrations"
+    queries: "internal/workspace/findings/queries"
+    gen:
+      go:
+        package: "storegen"
+        out: "internal/workspace/findings/storegen"
+        emit_json_tags: true
+        emit_interface: true
+        sql_package: "pgx/v5"
+        output_batch_file_name: "batch.go"
+        output_db_file_name: "db.go"
+        output_models_file_name: "models.go"
+        output_querier_file_name: "querier.go"

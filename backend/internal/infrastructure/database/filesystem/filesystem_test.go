@@ -194,3 +194,36 @@ func (r cancelAfterFirstRead) Read(p []byte) (int, error) {
 	r.cancel()
 	return len("new"), nil
 }
+
+func TestRenameMovesWithinRoot(t *testing.T) {
+	dir := t.TempDir()
+	s, err := NewStore(dir)
+	if err != nil {
+		t.Fatalf("NewStore: %v", err)
+	}
+	defer s.Close()
+	ctx := context.Background()
+
+	if err := s.Write(ctx, "pending/abc", strings.NewReader("bytes")); err != nil {
+		t.Fatalf("Write staging: %v", err)
+	}
+	if err := s.Rename(ctx, "pending/abc", "sha256/feedface"); err != nil {
+		t.Fatalf("Rename: %v", err)
+	}
+	if s, _ := s.Exists(ctx, "pending/abc"); s {
+		t.Error("staging key should be gone after rename")
+	}
+	if s, _ := s.Exists(ctx, "sha256/feedface"); !s {
+		t.Error("final key should exist after rename")
+	}
+	out, err := s.Read(ctx, "sha256/feedface")
+	if err != nil {
+		t.Fatalf("Read after rename: %v", err)
+	}
+	buf := new(bytes.Buffer)
+	_, _ = buf.ReadFrom(out)
+	out.Close()
+	if buf.String() != "bytes" {
+		t.Errorf("content after rename = %q, want bytes", buf.String())
+	}
+}
