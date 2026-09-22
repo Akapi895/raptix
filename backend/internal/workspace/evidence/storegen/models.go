@@ -235,3 +235,29 @@ type TaskDependency struct {
 	DependsOn pgtype.UUID `json:"depends_on"`
 	Required  bool        `json:"required"`
 }
+
+// Tool invocation lifecycle. Owner: execution/invocation.
+type ToolInvocation struct {
+	ID                   pgtype.UUID        `json:"id"`
+	RunID                pgtype.UUID        `json:"run_id"`
+	TaskID               pgtype.UUID        `json:"task_id"`
+	ScopeID              pgtype.UUID        `json:"scope_id"`
+	Actor                string             `json:"actor"`
+	Capability           string             `json:"capability"`
+	CapabilityVersion    string             `json:"capability_version"`
+	Status               string             `json:"status"`
+	Request              []byte             `json:"request"`
+	RawArtifactID        pgtype.UUID        `json:"raw_artifact_id"`
+	StructuredArtifactID pgtype.UUID        `json:"structured_artifact_id"`
+	ResultExecution      string             `json:"result_execution"`
+	ResultParse          string             `json:"result_parse"`
+	ExitCode             pgtype.Int4        `json:"exit_code"`
+	ErrorCode            string             `json:"error_code"`
+	ErrorMessage         string             `json:"error_message"`
+	IdempotencyKey       string             `json:"idempotency_key"`
+	Version              int32              `json:"version"`
+	StartedAt            pgtype.Timestamptz `json:"started_at"`
+	FinishedAt           pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+}

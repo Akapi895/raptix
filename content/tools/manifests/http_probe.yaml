@@ -1,0 +1,31 @@
+apiVersion: manifest/v1
+kind: tool
+name: http_probe
+version: 1.0.0
+description: "Perform a single HTTP request against an authorized target and record the raw response as evidence."
+license: Apache-2.0
+executor:
+  type: builtin
+runtime:
+  container: false
+  network: true
+input:
+  type: object
+  properties:
+    url:
+      type: string
+      description: Absolute http(s) URL to probe.
+    method:
+      type: string
+      description: HTTP method; defaults to GET.
+    headers:
+      type: object
+      description: Additional request headers.
+  required:
+    - url
+output:
+  type: object
+  description: Raw HTTP response recorded as evidence; structured parse is defined by the parser version.
+source:
+  repo: raptix
+  path: tools/builtin/http_probe.go

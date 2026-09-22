@@ -13,12 +13,14 @@ import (
 // Config is the application configuration, loaded at the composition root.
 // Sources in order: defaults, optional YAML, then RAP_* environment overrides.
 type Config struct {
-	Server   ServerConfig   `yaml:"server"`
-	Database DatabaseConfig `yaml:"database"`
-	Artifact ArtifactConfig `yaml:"artifact"`
-	Content  ContentConfig  `yaml:"content"`
-	LLM      LLMConfig      `yaml:"llm"`
-	Log      LogConfig      `yaml:"log"`
+	Server    ServerConfig    `yaml:"server"`
+	Database  DatabaseConfig  `yaml:"database"`
+	Artifact  ArtifactConfig  `yaml:"artifact"`
+	Content   ContentConfig   `yaml:"content"`
+	Execution ExecutionConfig `yaml:"execution"`
+	Sandbox   SandboxConfig   `yaml:"sandbox"`
+	LLM       LLMConfig       `yaml:"llm"`
+	Log       LogConfig       `yaml:"log"`
 }
 
 type ServerConfig struct {
@@ -40,6 +42,23 @@ type ArtifactConfig struct {
 type ContentConfig struct {
 	Root       string `yaml:"root"`
 	SchemaRoot string `yaml:"schema_root"`
+}
+
+// ExecutionConfig bounds capability dispatch: how long a capability may run, how
+// much output it may produce, and how many invocations a single run may make.
+type ExecutionConfig struct {
+	DefaultTimeout       time.Duration `yaml:"default_timeout"`
+	MaxOutputBytes       int64         `yaml:"max_output_bytes"`
+	MaxInvocationsPerRun int           `yaml:"max_invocations_per_run"`
+}
+
+// SandboxConfig selects the environment command capabilities run in. Local is
+// the lab default; container is the production boundary.
+type SandboxConfig struct {
+	Mode           string `yaml:"mode"` // local | container
+	Image          string `yaml:"image"`
+	Network        bool   `yaml:"network"`
+	MaxOutputBytes int64  `yaml:"max_output_bytes"`
 }
 
 // LLMConfig configures the model provider (OpenAI-compatible endpoint).
@@ -93,6 +112,17 @@ func defaults() *Config {
 		},
 		Artifact: ArtifactConfig{Root: "./data/artifacts"},
 		Content:  ContentConfig{Root: "./content", SchemaRoot: "./contracts/manifests"},
+		Execution: ExecutionConfig{
+			DefaultTimeout:       30 * time.Second,
+			MaxOutputBytes:       1 << 20,
+			MaxInvocationsPerRun: 100,
+		},
+		Sandbox: SandboxConfig{
+			Mode:           "local",
+			Image:          "raptix/sandbox:latest",
+			Network:        true,
+			MaxOutputBytes: 1 << 20,
+		},
 		LLM: LLMConfig{
 			BaseURL: "https://stream-netmind.viettel.vn/aigw/ai/v1",
 			Model:   "MiniMax/MiniMax-M3-VIP",
@@ -141,6 +171,44 @@ func applyEnvOverrides(cfg *Config) error {
 		cfg.Database.MigrationLockTimeout = d
 	}
 
+	if v, ok := os.LookupEnv("RAP_EXECUTION_DEFAULT_TIMEOUT"); ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("RAP_EXECUTION_DEFAULT_TIMEOUT: invalid duration %q: %w", v, err)
+		}
+		cfg.Execution.DefaultTimeout = d
+	}
+	if v, ok := os.LookupEnv("RAP_EXECUTION_MAX_OUTPUT_BYTES"); ok && v != "" {
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return fmt.Errorf("RAP_EXECUTION_MAX_OUTPUT_BYTES: invalid integer %q: %w", v, err)
+		}
+		cfg.Execution.MaxOutputBytes = n
+	}
+	if v, ok := os.LookupEnv("RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN"); ok && v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN: invalid integer %q: %w", v, err)
+		}
+		cfg.Execution.MaxInvocationsPerRun = n
+	}
+	cfg.Sandbox.Mode = envOr("RAP_SANDBOX_MODE", cfg.Sandbox.Mode)
+	cfg.Sandbox.Image = envOr("RAP_SANDBOX_IMAGE", cfg.Sandbox.Image)
+	if v, ok := os.LookupEnv("RAP_SANDBOX_NETWORK"); ok && v != "" {
+		b, err := strconv.ParseBool(v)
+		if err != nil {
+			return fmt.Errorf("RAP_SANDBOX_NETWORK: invalid bool %q: %w", v, err)
+		}
+		cfg.Sandbox.Network = b
+	}
+	if v, ok := os.LookupEnv("RAP_SANDBOX_MAX_OUTPUT_BYTES"); ok && v != "" {
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			return fmt.Errorf("RAP_SANDBOX_MAX_OUTPUT_BYTES: invalid integer %q: %w", v, err)
+		}
+		cfg.Sandbox.MaxOutputBytes = n
+	}
+
 	cfg.LLM.BaseURL = envOr("RAP_LLM_BASE_URL", cfg.LLM.BaseURL)
 	cfg.LLM.Model = envOr("RAP_LLM_MODEL", cfg.LLM.Model)
 	cfg.LLM.APIKey = envOr("RAP_LLM_API_KEY", cfg.LLM.APIKey)
@@ -174,6 +242,26 @@ func (c *Config) validate() error {
 	}
 	if c.Database.MaxConns <= 0 {
 		return fmt.Errorf("database.max_conns must be positive, got %d", c.Database.MaxConns)
+	}
+	if c.Execution.DefaultTimeout <= 0 {
+		return fmt.Errorf("execution.default_timeout must be positive, got %s", c.Execution.DefaultTimeout)
+	}
+	if c.Execution.MaxOutputBytes <= 0 {
+		return fmt.Errorf("execution.max_output_bytes must be positive, got %d", c.Execution.MaxOutputBytes)
+	}
+	if c.Execution.MaxInvocationsPerRun < 0 {
+		return fmt.Errorf("execution.max_invocations_per_run must not be negative, got %d", c.Execution.MaxInvocationsPerRun)
+	}
+	switch c.Sandbox.Mode {
+	case "local", "container":
+	default:
+		return fmt.Errorf("sandbox.mode %q is invalid (local|container)", c.Sandbox.Mode)
+	}
+	if c.Sandbox.Mode == "container" && c.Sandbox.Image == "" {
+		return fmt.Errorf("sandbox.image is required when sandbox.mode is container")
+	}
+	if c.Sandbox.MaxOutputBytes <= 0 {
+		return fmt.Errorf("sandbox.max_output_bytes must be positive, got %d", c.Sandbox.MaxOutputBytes)
 	}
 	if c.LLM.BaseURL == "" {
 		return fmt.Errorf("llm.base_url must not be empty")

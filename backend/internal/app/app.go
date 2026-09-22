@@ -110,6 +110,14 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 
+	services, err := wireServices(pool, fs, allTools, contentLoader, cfg, log)
+	if err != nil {
+		baseCancel()
+		_ = fs.Close()
+		pool.Close()
+		return nil, fmt.Errorf("wire services: %w", err)
+	}
+
 	requests := api.NewRequestTracker()
 	handler := api.Router(pool, log, requests)
 	srv := &http.Server{
@@ -123,7 +131,7 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 		cfg: cfg, log: log, pool: pool, fs: fs, content: contentLoader,
 		allTools: allTools, model: model,
 		srv: srv, requests: requests,
-		services: wireServices(pool, fs),
+		services: services,
 		baseCtx:  baseCtx, baseCancel: baseCancel,
 	}, nil
 }

@@ -1,0 +1,29 @@
+# Lab fixtures for Phase 4 capability evaluation.
+#
+# Brings up deterministic endpoints for http_probe and nmap. It is intentionally
+# separate from deploy/compose.yaml (which runs PostgreSQL) so the lab is started
+# only when evaluating tools.
+#
+#   docker compose -f evals/fixtures/lab/compose.yaml up -d
+#   curl http://localhost:18081/
+#   nmap -sT -sV -p 18082 localhost
+services:
+  lab-http:
+    image: nginx:1.27-alpine
+    ports:
+      - "18081:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  lab-target:
+    image: nginx:1.27-alpine
+    ports:
+      - "18082:80"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      interval: 2s
+      timeout: 2s
+      retries: 15

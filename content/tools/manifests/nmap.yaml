@@ -2,7 +2,7 @@ apiVersion: manifest/v1
 kind: tool
 name: nmap
 version: 1.0.0
-description: "Network mapping and port scanning. Default behavior: TCP connect scan (-sT), version detection (-sV) and default NSE scripts (-sC). Optional timing templates, custom NSE scripts and OS detection (requires root). Use only against targets you own or are authorized to test."
+description: "Network mapping and port scanning via the sandboxed nmap command. Phase 4 supports a validated subset of arguments: a target, an optional port list, and flags drawn from a per-tool allowlist. Use only against targets you own or are authorized to test."
 license: Apache-2.0
 executor:
   type: command
@@ -10,7 +10,6 @@ executor:
   args:
     - -sT
     - -sV
-    - -sC
 runtime:
   container: true
   network: true
@@ -22,33 +21,20 @@ input:
   properties:
     target:
       type: string
-      description: IP, hostname, CIDR, or domain; URL host is extracted automatically.
+      description: IP, hostname, CIDR, or domain. Must not start with '-' or contain whitespace.
     ports:
       type: string
-      description: Port range, e.g. 80, 1-1000, or 80,443,8080.
-    timing:
-      type: string
-      description: Timing template T0-T5; e.g. 4 produces -T4.
-    nse_scripts:
-      type: string
-      description: NSE scripts passed to --script, e.g. vuln or http-title,http-headers.
-    os_detection:
-      type: boolean
-      description: Enable -O OS detection. Requires root.
-    aggressive:
-      type: boolean
-      description: Enable -A aggressive scan including OS detection. Requires root.
-    scan_type:
-      type: string
-      description: Replaces the default -sT -sV -sC; e.g. -sT -sV or -sU.
-    additional_args:
-      type: string
-      description: Extra arguments appended to the command line.
+      description: Port list or range, e.g. 80, 1-1000, or 80,443,8080.
+    flags:
+      type: array
+      items:
+        type: string
+      description: Additional flags, each restricted to the capability allowlist (e.g. -sV, -Pn, -T4).
   required:
     - target
 output:
   type: object
-  description: Raw nmap output; parsed structure is defined by the registry parser version.
+  description: Raw nmap stdout recorded as a raw artifact; parsed structure is defined by a later parser version.
 source:
   repo: CyberStrikeAI
   path: tools/nmap.yaml

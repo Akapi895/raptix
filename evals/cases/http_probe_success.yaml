@@ -1,0 +1,10 @@
+apiVersion: eval/v1
+kind: case
+name: http_probe_success
+description: A reachable lab endpoint must yield an execution success with raw evidence.
+capability: http_probe
+input:
+  url: "${LAB_HTTP_URL}"
+expect:
+  execution: success
+  has_raw_evidence: true

@@ -1,5 +1,8 @@
-// Package architecture enforces the Phase 3 import boundaries from
-// docs/repository_structure_v1.md by inspecting the direct import graph.
+// Package architecture enforces the import boundaries from
+// docs/repository_structure_v1.md by inspecting the direct import graph. It
+// covers the Phase 3 module boundaries and the Phase 4 execution boundary:
+// tools never reach into the agent runtime, execution never reaches into the
+// API or composition root, and only app constructs a concrete sandbox.
 package architecture
 
 import (
@@ -177,6 +180,68 @@ func TestNoModuleImportsTheCompositionRoot(t *testing.T) {
 		}
 	}
 	assertInspected(t, "module↛app", inspected)
+}
+
+// TestToolsDoesNotImportAgentRuntime keeps capability implementations out of the
+// agent loop: tools own capability behaviour, engine/agents owns the loop.
+func TestToolsDoesNotImportAgentRuntime(t *testing.T) {
+	inspected := 0
+	for _, p := range listPackages(t) {
+		if isInternal(p.path) && inDir(p.path, "tools") {
+			inspected++
+			if importsPrefix(p, base+"engine/agents") {
+				t.Errorf("%s must not import engine/agents", p.path)
+			}
+		}
+	}
+	assertInspected(t, "tools↛engine/agents", inspected)
+}
+
+// TestExecutionDoesNotImportAgentsAPIOrApp keeps the execution boundary free of
+// transport and composition concerns: it enforces rules at dispatch but never
+// depends on the HTTP layer, the agent loop, or app wiring.
+func TestExecutionDoesNotImportAgentsAPIOrApp(t *testing.T) {
+	inspected := 0
+	for _, p := range listPackages(t) {
+		if !isInternal(p.path) || !inDir(p.path, "execution") {
+			continue
+		}
+		inspected++
+		for _, forbidden := range []string{base + "engine/agents", base + "api", base + "app"} {
+			if importsPrefix(p, forbidden) {
+				t.Errorf("%s must not import %s", p.path, strings.TrimPrefix(forbidden, base))
+			}
+		}
+	}
+	assertInspected(t, "execution↛{engine/agents,api,app}", inspected)
+}
+
+// TestOnlyAppImportsConcreteSandbox ensures the host and container runners are
+// constructed solely at the composition root. Execution and tools depend on the
+// sandbox.Runner interface; importing a concrete runner elsewhere would let a
+// business package run processes directly.
+func TestOnlyAppImportsConcreteSandbox(t *testing.T) {
+	inspected := 0
+	concrete := []string{
+		base + "execution/sandbox/local",
+		base + "execution/sandbox/container",
+	}
+	for _, p := range listPackages(t) {
+		if !isInternal(p.path) {
+			continue
+		}
+		for _, c := range concrete {
+			if !importsPrefix(p, c) {
+				continue
+			}
+			inspected++
+			if !inDir(p.path, "app") {
+				t.Errorf("%s must not import concrete sandbox %s; only app constructs runners",
+					p.path, strings.TrimPrefix(c, base))
+			}
+		}
+	}
+	assertInspected(t, "concrete sandbox→app only", inspected)
 }
 
 // TestModuleImportsOnlyItsOwnStoregen asserts a package may only reach the

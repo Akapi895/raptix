@@ -17,6 +17,19 @@ content:
   root: "../content"
   schema_root: "../contracts/manifests"
 
+execution:
+  # Capability dispatch limits. Override via RAP_EXECUTION_* env vars.
+  default_timeout: 30s
+  max_output_bytes: 1048576
+  max_invocations_per_run: 100
+
+sandbox:
+  # local = run command tools on the host (lab/dev); container = docker boundary.
+  mode: "local"
+  image: "raptix/sandbox:latest"
+  network: true
+  max_output_bytes: 1048576
+
 llm:
   base_url: "https://stream-netmind.viettel.vn/aigw/ai/v1"
   model: "MiniMax/MiniMax-M3-VIP"

@@ -75,3 +75,17 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 - **CI:** bước `Migrate` chạy `cmd/migrate up` trước `Test` trên `raptix_test`; test integration tự-lặp (slug/bytes unique, lookup theo run).
 - **Đã validate live:** PostgreSQL 17 qua Docker Desktop 10/10 migration applied; `TestPhase3IntegrationDataFlow` chạy PASS **nhiều lần liên tục trên cùng DB** (repeatable) với đủ deny-path: project+scope{1,2}→member→denied run(no grant)→grant→authorized run→read-back→task/agent→artifact bytes write+checksum+read→observation/hypothesis/coverage→finding draft+evidence+atomic review+verdict(no flip). Thêm `TestPhase3ConcurrentScopeVersions` (8 scope đồng thời → version 1..8). Audit ghi cả allowed lẫn denied; ràng buộc DB từ chối dữ liệu sai (verify trực tiếp).
 
+## Phase 4 — Đã migrate + validate live
+
+- **Migration:** `00011_execution_invocations.sql` — bảng `tool_invocations` (owner: execution/invocation): run/task/scope/actor/capability, request JSONB, raw/structured artifact refs, `result_execution`/`result_parse`, exit code, error, `idempotency_key` UNIQUE theo run, `version` optimistic, CHECK status/result/version. Đã apply live (11/11).
+- **execution/invocation:** module chuẩn (types/repository/postgres/queries/storegen) + `Service.Invoke` thực thi đủ thứ tự §6: validate → idempotency → run state → scope → grant → registry resolve → budget → ghi `pending` + audit `allowed` → dispatch có timeout → `Result.Validate` → update optimistic. Port do nơi dùng sở hữu (`GrantChecker`/`ScopeReader`/`RunStateReader`/`AuditRecorder`), resolver là `tools/registry`. Deny trả `StatusDenied` tạm thời + `output.Denied`, không ghi row, không dispatch.
+- **tools/output:** thêm `ExecutionDenied`/`Denied(reason)`/`ExitCode *int`/`DurationMs`.
+- **tools/builtin:** `http_probe` — capability đầu tiên (deterministic, không sandbox), ghi raw response qua evidence, phân biệt success/error/timeout.
+- **tools/builtin/command:** capability command (nmap) chạy qua `sandbox.Runner`, whitelist flag, không shell, ghi stdout làm raw evidence kể cả khi exit≠0/timeout.
+- **execution/sandbox:** `Runner` interface (`Spec`/`Result`) + `local` (host lab, env tối thiểu, cap output) + `container` (docker CLI, network/resource bound) + `internal/capture`. Tách subpackage để luật "chỉ `app` dựng concrete runner" kiểm tra được.
+- **execution/artifact:** adapter chuẩn hoá raw/derived qua evidence (parent/rel_type/parser_version).
+- **app:** `wireServices` bind `http_probe`/`nmap` từ manifest rồi dựng `Execution`; `Services.InvokeCapability` là use case entrypoint; `ExecutionConfig`/`SandboxConfig` + env `RAP_EXECUTION_*`/`RAP_SANDBOX_*`.
+- **Evals:** `evals/cases/http_probe_{success,error}.yaml` + `evals/baselines/*.json` + runner Go `tests/evals`; `evals/fixtures/lab/compose.yaml`; `containers/sandbox/Dockerfile`.
+- **Kiến trúc:** thêm luật `tools↛engine/agents`, `execution↛{engine/agents,api,app}`, chỉ `app` import concrete sandbox.
+- **Đã validate live:** `TestPhase4InvokeCapabilityDataFlow` PASS trên DB thật — project+scope+member → denied (chưa grant) → grant `run.start` → authorized run → grant `http_probe` → invoke success (invocation `succeeded`, raw artifact bytes đọc lại được, idempotency không dispatch lại, audit có cả `allowed` lẫn `denied`). Toàn bộ `gofmt`/`vet`/`staticcheck`/`build`/`test -race`/`mod verify`/`check.sh` sạch.
+

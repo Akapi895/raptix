@@ -1,0 +1,7 @@
+{
+  "name": "http_probe_success",
+  "capability": "http_probe",
+  "execution": "success",
+  "parse": "not_attempted",
+  "has_raw_evidence": true
+}

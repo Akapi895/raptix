@@ -108,8 +108,8 @@ func TestPhase2Milestone(t *testing.T) {
 	if !a.allTools.Compat("nmap", content.ExecutorCommand) {
 		t.Error("nmap should be compatible with command executor")
 	}
-	if a.allTools.Available("nmap") {
-		t.Error("declared-only nmap must not be available")
+	if !a.allTools.Available("nmap") {
+		t.Error("nmap implementation must be bound from its manifest")
 	}
 	if a.model == nil {
 		t.Fatal("model was not wired")

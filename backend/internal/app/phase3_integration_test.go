@@ -298,7 +298,7 @@ func TestPhase3ConcurrentScopeVersions(t *testing.T) {
 		t.Fatalf("create project: %v", err)
 	}
 	t.Cleanup(func() {
-		_, _ = a.pool.DB().Exec(context.Background(), "DELETE FROM projects WHERE slug = ", slug)
+		_, _ = a.pool.DB().Exec(context.Background(), "DELETE FROM projects WHERE slug = $1", slug)
 	})
 
 	const n = 8

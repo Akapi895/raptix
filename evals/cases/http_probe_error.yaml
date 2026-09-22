@@ -1,0 +1,10 @@
+apiVersion: eval/v1
+kind: case
+name: http_probe_error
+description: A refused connection must fail without recording evidence.
+capability: http_probe
+input:
+  url: "http://127.0.0.1:1/"
+expect:
+  execution: failed
+  has_raw_evidence: false

@@ -72,11 +72,11 @@ func TestNewWiresToolRegistryFromManifest(t *testing.T) {
 	if a.allTools == nil {
 		t.Fatal("tool registry was not wired")
 	}
-	if a.allTools.Available("nmap") {
-		t.Error("declared-only nmap must not report as available")
+	if !a.allTools.Available("nmap") {
+		t.Error("nmap implementation must be bound from its manifest")
 	}
-	if _, _, err := a.allTools.Get("nmap"); err == nil {
-		t.Error("declared-only nmap should not return an implementation")
+	if _, _, err := a.allTools.Get("nmap"); err != nil {
+		t.Errorf("bound nmap should return an implementation: %v", err)
 	}
 }
 

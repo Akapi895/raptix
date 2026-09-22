@@ -12,6 +12,7 @@ const (
 	ExecutionFailed       ExecutionStatus = "failed"
 	ExecutionTimedOut     ExecutionStatus = "timed_out"
 	ExecutionCancelled    ExecutionStatus = "cancelled"
+	ExecutionDenied       ExecutionStatus = "denied"
 )
 
 // ParseStatus records parser outcome independently from execution outcome.
@@ -46,6 +47,8 @@ type Result struct {
 	ParserVersion string          `json:"parserVersion,omitempty"`
 	Diagnostics   []Diagnostic    `json:"diagnostics,omitempty"`
 	Error         *ErrorDetail    `json:"error,omitempty"`
+	ExitCode      *int            `json:"exitCode,omitempty"`
+	DurationMs    int64           `json:"durationMs,omitempty"`
 	Cause         error           `json:"-"`
 }
 
@@ -75,6 +78,12 @@ func Timeout(rawRef string, err error) *Result {
 
 func Cancelled(rawRef string, err error) *Result {
 	return &Result{Execution: ExecutionCancelled, Parse: ParseNotAttempted, RawRef: rawRef, Error: errorDetail(err), Cause: err}
+}
+
+// Denied reports that an invocation was not dispatched because of a permission,
+// scope, state or budget check. The capability itself never ran.
+func Denied(reason string) *Result {
+	return &Result{Execution: ExecutionDenied, Parse: ParseNotAttempted, Error: &ErrorDetail{Code: "denied", Message: reason}}
 }
 
 func errorDetail(err error) *ErrorDetail {
