@@ -185,7 +185,7 @@ func (q *Queries) ListInvocationsByRun(ctx context.Context, runID pgtype.UUID) (
 		return nil, err
 	}
 	defer rows.Close()
-	var items []ToolInvocation
+	items := []ToolInvocation{}
 	for rows.Next() {
 		var i ToolInvocation
 		if err := rows.Scan(

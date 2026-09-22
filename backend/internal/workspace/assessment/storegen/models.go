@@ -8,6 +8,18 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+// One agent working attempt. Owner: engine/agents. Lifecycle of the agent instance stays in engine/runs.
+type AgentAttempt struct {
+	ID         pgtype.UUID        `json:"id"`
+	AgentID    pgtype.UUID        `json:"agent_id"`
+	AttemptNo  int32              `json:"attempt_no"`
+	Status     string             `json:"status"`
+	StartedAt  pgtype.Timestamptz `json:"started_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
 // Agent instance lifecycle. Owner: engine/runs. Profile is a role description, not a principal.
 type AgentInstance struct {
 	ID        pgtype.UUID        `json:"id"`
@@ -18,6 +30,28 @@ type AgentInstance struct {
 	Version   int32              `json:"version"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+// Agent conversation turns. Owner: engine/agents. invocation_id references a tool invocation for traceability only.
+type AgentMessage struct {
+	ID           pgtype.UUID        `json:"id"`
+	AttemptID    pgtype.UUID        `json:"attempt_id"`
+	Seq          int32              `json:"seq"`
+	Role         string             `json:"role"`
+	Content      string             `json:"content"`
+	InvocationID pgtype.UUID        `json:"invocation_id"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+// Resolved content/capability snapshot at a point in time. Owner: engine/agents. granted is a record, not a substitute for dispatch-time checks.
+type AgentSnapshot struct {
+	ID          pgtype.UUID        `json:"id"`
+	AgentID     pgtype.UUID        `json:"agent_id"`
+	ProfileRef  string             `json:"profile_ref"`
+	ContentHash string             `json:"content_hash"`
+	Requested   []byte             `json:"requested"`
+	Granted     []byte             `json:"granted"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Approval struct {

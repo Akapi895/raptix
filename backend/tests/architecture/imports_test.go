@@ -244,6 +244,55 @@ func TestOnlyAppImportsConcreteSandbox(t *testing.T) {
 	assertInspected(t, "concrete sandbox→app only", inspected)
 }
 
+// TestAgentsDoesNotImportFindingsOrVerifier keeps the agent loop out of the
+// finding/verification domain: the agent produces a draft, and the composition
+// root persists and verifies it.
+func TestAgentsDoesNotImportFindingsOrVerifier(t *testing.T) {
+	inspected := 0
+	for _, p := range listPackages(t) {
+		if isInternal(p.path) && inDir(p.path, "engine/agents") {
+			inspected++
+			if importsPrefix(p, base+"workspace/findings") {
+				t.Errorf("%s must not import workspace/findings", p.path)
+			}
+			if importsPrefix(p, base+"workspace/verifier") {
+				t.Errorf("%s must not import workspace/verifier", p.path)
+			}
+		}
+	}
+	assertInspected(t, "engine/agents↛workspace/{findings,verifier}", inspected)
+}
+
+// TestVerifierDoesNotImportAgents keeps verification independent of the agent
+// runtime; the verifier re-checks through execution only.
+func TestVerifierDoesNotImportAgents(t *testing.T) {
+	inspected := 0
+	for _, p := range listPackages(t) {
+		if isInternal(p.path) && inDir(p.path, "workspace/verifier") {
+			inspected++
+			if importsPrefix(p, base+"engine/agents") {
+				t.Errorf("%s must not import engine/agents", p.path)
+			}
+		}
+	}
+	assertInspected(t, "workspace/verifier↛engine/agents", inspected)
+}
+
+// TestContextbuildDoesNotImportExecution keeps context assembly free of any
+// execution path: it reads already-authorized references and never dispatches.
+func TestContextbuildDoesNotImportExecution(t *testing.T) {
+	inspected := 0
+	for _, p := range listPackages(t) {
+		if isInternal(p.path) && inDir(p.path, "engine/contextbuild") {
+			inspected++
+			if importsPrefix(p, base+"execution") {
+				t.Errorf("%s must not import execution", p.path)
+			}
+		}
+	}
+	assertInspected(t, "engine/contextbuild↛execution", inspected)
+}
+
 // TestModuleImportsOnlyItsOwnStoregen asserts a package may only reach the
 // generated store that lives in its own module directory. The composition
 // root, handlers and other modules must go through the owning Repository or

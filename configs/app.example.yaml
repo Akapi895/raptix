@@ -30,6 +30,13 @@ sandbox:
   network: true
   max_output_bytes: 1048576
 
+agent:
+  # Bounds one agent attempt. Override via RAP_AGENT_* env vars.
+  max_steps: 8
+  max_context_tokens: 16000
+  default_timeout: 2m
+  # model: falls back to llm.model when empty
+
 llm:
   base_url: "https://stream-netmind.viettel.vn/aigw/ai/v1"
   model: "MiniMax/MiniMax-M3-VIP"

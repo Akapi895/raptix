@@ -6,6 +6,9 @@ import (
 	"log/slog"
 
 	"github.com/Akapi895/raptix/backend/internal/content"
+	"github.com/Akapi895/raptix/backend/internal/engine/agents"
+	"github.com/Akapi895/raptix/backend/internal/engine/contextbuild"
+	"github.com/Akapi895/raptix/backend/internal/engine/llm"
 	"github.com/Akapi895/raptix/backend/internal/engine/runs"
 	"github.com/Akapi895/raptix/backend/internal/execution/artifact"
 	"github.com/Akapi895/raptix/backend/internal/execution/invocation"
@@ -24,6 +27,7 @@ import (
 	"github.com/Akapi895/raptix/backend/internal/workspace/assessment"
 	"github.com/Akapi895/raptix/backend/internal/workspace/evidence"
 	"github.com/Akapi895/raptix/backend/internal/workspace/findings"
+	"github.com/Akapi895/raptix/backend/internal/workspace/verifier"
 )
 
 // Services exposes the business services wired through the composition root.
@@ -37,6 +41,8 @@ type Services struct {
 	Assessment *assessment.Service
 	Findings   *findings.Service
 	Execution  *invocation.Service
+	Agents     *agents.Service
+	Verifier   *verifier.Service
 }
 
 // InvokeCapability is the use case entrypoint for dispatching a capability
@@ -58,7 +64,7 @@ func (s *Services) InvokeCapability(ctx context.Context, p invocation.InvokePara
 // rather than trusting caller-supplied checksums, and execution receives its
 // ports as interfaces (governance, projects, runs, audit) so it never imports a
 // concrete store. Only app constructs the concrete sandbox adapter.
-func wireServices(pool *postgres.Pool, fs *filesystem.Store, reg *registry.Registry, loader *content.Loader, cfg *Config, log *slog.Logger) (*Services, error) {
+func wireServices(pool *postgres.Pool, fs *filesystem.Store, reg *registry.Registry, loader *content.Loader, model llm.Model, cfg *Config, log *slog.Logger) (*Services, error) {
 	dbtx := pool.DB()
 	projectSvc := projects.NewService(projects.NewPostgres(dbtx))
 	evidenceSvc := evidence.NewService(evidence.NewPostgres(dbtx), fs)
@@ -98,6 +104,35 @@ func wireServices(pool *postgres.Pool, fs *filesystem.Store, reg *registry.Regis
 		reg,            // resolver
 		log,
 	)
+
+	// Phase 5: the agent loop and verifier. Both dispatch through the same
+	// execution service (svc.InvokeCapability), so there is no second execution
+	// path. The agent loop is inert when no model is configured.
+	var source contextbuild.PromptSource
+	if loader != nil {
+		source = loader
+	}
+	ctxBuilder := contextbuild.NewBuilder(source, contextbuild.Budget{MaxTokens: cfg.Agent.MaxContextTokens})
+	agentModel := cfg.Agent.Model
+	if agentModel == "" {
+		agentModel = cfg.LLM.Model
+	}
+	svc.Agents = agents.NewService(
+		agents.NewPostgres(dbtx),
+		model,
+		ctxBuilder,
+		svc,            // ToolExecutor (Services.InvokeCapability)
+		svc.Runs,       // RunState
+		svc.Governance, // GrantChecker
+		reg,            // CapabilityResolver
+		agents.Config{
+			MaxSteps:       cfg.Agent.MaxSteps,
+			DefaultTimeout: cfg.Agent.DefaultTimeout,
+			Model:          agentModel,
+		},
+		log,
+	)
+	svc.Verifier = verifier.NewService(svc, svc.Findings, svc.Findings, "verifier")
 	return svc, nil
 }
 

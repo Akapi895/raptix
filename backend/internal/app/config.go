@@ -19,6 +19,7 @@ type Config struct {
 	Content   ContentConfig   `yaml:"content"`
 	Execution ExecutionConfig `yaml:"execution"`
 	Sandbox   SandboxConfig   `yaml:"sandbox"`
+	Agent     AgentConfig     `yaml:"agent"`
 	LLM       LLMConfig       `yaml:"llm"`
 	Log       LogConfig       `yaml:"log"`
 }
@@ -59,6 +60,15 @@ type SandboxConfig struct {
 	Image          string `yaml:"image"`
 	Network        bool   `yaml:"network"`
 	MaxOutputBytes int64  `yaml:"max_output_bytes"`
+}
+
+// AgentConfig bounds the agent loop: how many model/tool steps one attempt may
+// take, how large the assembled context may be, and the attempt timeout.
+type AgentConfig struct {
+	MaxSteps         int           `yaml:"max_steps"`
+	MaxContextTokens int           `yaml:"max_context_tokens"`
+	DefaultTimeout   time.Duration `yaml:"default_timeout"`
+	Model            string        `yaml:"model"`
 }
 
 // LLMConfig configures the model provider (OpenAI-compatible endpoint).
@@ -122,6 +132,11 @@ func defaults() *Config {
 			Image:          "raptix/sandbox:latest",
 			Network:        true,
 			MaxOutputBytes: 1 << 20,
+		},
+		Agent: AgentConfig{
+			MaxSteps:         8,
+			MaxContextTokens: 16000,
+			DefaultTimeout:   2 * time.Minute,
 		},
 		LLM: LLMConfig{
 			BaseURL: "https://stream-netmind.viettel.vn/aigw/ai/v1",
@@ -208,6 +223,28 @@ func applyEnvOverrides(cfg *Config) error {
 		}
 		cfg.Sandbox.MaxOutputBytes = n
 	}
+	if v, ok := os.LookupEnv("RAP_AGENT_MAX_STEPS"); ok && v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("RAP_AGENT_MAX_STEPS: invalid integer %q: %w", v, err)
+		}
+		cfg.Agent.MaxSteps = n
+	}
+	if v, ok := os.LookupEnv("RAP_AGENT_MAX_CONTEXT_TOKENS"); ok && v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("RAP_AGENT_MAX_CONTEXT_TOKENS: invalid integer %q: %w", v, err)
+		}
+		cfg.Agent.MaxContextTokens = n
+	}
+	if v, ok := os.LookupEnv("RAP_AGENT_DEFAULT_TIMEOUT"); ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("RAP_AGENT_DEFAULT_TIMEOUT: invalid duration %q: %w", v, err)
+		}
+		cfg.Agent.DefaultTimeout = d
+	}
+	cfg.Agent.Model = envOr("RAP_AGENT_MODEL", cfg.Agent.Model)
 
 	cfg.LLM.BaseURL = envOr("RAP_LLM_BASE_URL", cfg.LLM.BaseURL)
 	cfg.LLM.Model = envOr("RAP_LLM_MODEL", cfg.LLM.Model)
@@ -262,6 +299,15 @@ func (c *Config) validate() error {
 	}
 	if c.Sandbox.MaxOutputBytes <= 0 {
 		return fmt.Errorf("sandbox.max_output_bytes must be positive, got %d", c.Sandbox.MaxOutputBytes)
+	}
+	if c.Agent.MaxSteps <= 0 {
+		return fmt.Errorf("agent.max_steps must be positive, got %d", c.Agent.MaxSteps)
+	}
+	if c.Agent.MaxContextTokens <= 0 {
+		return fmt.Errorf("agent.max_context_tokens must be positive, got %d", c.Agent.MaxContextTokens)
+	}
+	if c.Agent.DefaultTimeout <= 0 {
+		return fmt.Errorf("agent.default_timeout must be positive, got %s", c.Agent.DefaultTimeout)
 	}
 	if c.LLM.BaseURL == "" {
 		return fmt.Errorf("llm.base_url must not be empty")

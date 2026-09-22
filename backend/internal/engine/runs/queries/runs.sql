@@ -60,3 +60,9 @@ UPDATE agent_instances
 SET status = $2, version = version + 1, updated_at = now()
 WHERE id = $1 AND version = $3
 RETURNING id, run_id, task_id, profile, status, version, created_at, updated_at;
+
+-- name: ListAgentInstancesByRun :many
+SELECT id, run_id, task_id, profile, status, version, created_at, updated_at
+FROM agent_instances
+WHERE run_id = $1
+ORDER BY created_at ASC;

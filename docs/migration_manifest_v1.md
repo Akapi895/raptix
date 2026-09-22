@@ -28,8 +28,8 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 | 1 | Khung app + storage | tham chiếu (CyberStrikeAI Go layout), viết mới wiring/persistence | ✅ |
 | 2 | Content, catalog, model adapter | migrate (Claude-Red skills; CyberStrikeAI tool model), viết mới Go contracts/adapters | ✅ |
 | 3 | Dữ liệu lõi + quyền tối thiểu | migrate cả hai | ✅ |
-| 4 | Một capability qua execution | migrate (Strix sandbox/tool; CyberStrikeAI capability) | ⏳ |
-| 5 | Một agent hoàn chỉnh + verifier | migrate (Strix agent loop; adapter Go có sẵn) | ⏳ |
+| 4 | Một capability qua execution | migrate (Strix sandbox/tool; CyberStrikeAI capability) | ✅ |
+| 5 | Một agent hoàn chỉnh + verifier | migrate (Strix agent loop; adapter Go có sẵn) | ✅ |
 | 6 | Độ tin cậy execution/run | migrate (lỗi/restart), triển khai theo Postgres+V1 | ⏳ |
 | 7 | API, CLI, UI cơ bản | migrate (CLI/API cả hai), UI mới React/TS | ⏳ |
 | 8 | Review, report, jobs | migrate cả hai (finding/report; River) | ⏳ |
@@ -89,3 +89,15 @@ Legend: `tham chiếu` = đọc nguồn để lấy kiến thức tổ chức, v
 - **Kiến trúc:** thêm luật `tools↛engine/agents`, `execution↛{engine/agents,api,app}`, chỉ `app` import concrete sandbox.
 - **Đã validate live:** `TestPhase4InvokeCapabilityDataFlow` PASS trên DB thật — project+scope+member → denied (chưa grant) → grant `run.start` → authorized run → grant `http_probe` → invoke success (invocation `succeeded`, raw artifact bytes đọc lại được, idempotency không dispatch lại, audit có cả `allowed` lẫn `denied`). Toàn bộ `gofmt`/`vet`/`staticcheck`/`build`/`test -race`/`mod verify`/`check.sh` sạch.
 
+
+## Phase 5 — Đã migrate + validate live
+
+- **Migration:** `00012_engine_agents.sql` — `agent_attempts` (một lần agent làm việc, status running/succeeded/failed/timed_out/cancelled), `agent_messages` (conversation + `invocation_id` ref), `agent_snapshots` (Requested/Available/Granted tại thời điểm chạy, hash nội dung). Đã apply live (12/12).
+- **engine/contextbuild:** `Resolve` nạp profile + prompt + skill đã chọn và hash nội dung; `Build` ghép system prompt (role/prompt/skill/protocol/evidence refs) + history + task dưới ngân sách token, cắt lịch sử cũ trước, giữ system + task. Không import `execution`.
+- **engine/agents:** agent loop ReAct đơn giản dùng structured JSON (`{"action":"tool",...}` / `{"action":"final",...}`) qua `llm.Model`; mọi tool call đi qua `execution` với idempotency key `attempt:step`; ghi `agent_messages`; snapshot Requested/Available/Granted; lifecycle yêu cầu qua `engine/runs` (không tự ghi status). `RunAgent` map timeout→`timed_out`, cancel→`cancelled`, lỗi→`failed`.
+- **workspace/verifier:** kiểm chứng theo tiêu chí, re-run capability qua `execution`; verdict `confirmed`/`refuted`/`inconclusive` ghi qua `findings.RecordVerdict` (không tự đổi status). Re-check lỗi/denied → `inconclusive` (không mặc nhiên `refuted`). Stateless (không bảng riêng).
+- **engine/runs:** thêm `ListAgentsByRun`.
+- **app:** `AgentConfig` (`max_steps`/`max_context_tokens`/`default_timeout`/`model`, env `RAP_AGENT_*`); `wireServices` dựng `Agents`/`Verifier` (executor = `Services.InvokeCapability`, cùng một đường execution); use case `Services.RunAgent` chạy agent → tạo finding draft → link evidence → verify.
+- **Evals:** `evals/cases/agent_http_probe.yaml` + baseline + runner `tests/evals/agent_test.go` (fake model script, deterministic, không cần API key/DB).
+- **Kiến trúc:** `engine/agents↛workspace/{findings,verifier}`, `workspace/verifier↛engine/agents`, `engine/contextbuild↛execution`.
+- **Đã validate live:** `TestPhase5AgentDataFlow` PASS trên DB thật — project+scope+member+grant `run.start`/`http_probe` → authorized run → agent attempt (model script gọi `http_probe` qua execution rồi final) → invocation `succeeded` + evidence bytes → finding draft gắn evidence (status vẫn `draft`) → verifier re-check → verdict `confirmed`; `agent_attempts` succeeded, `agent_messages` có lượt tool nối `invocation_id`. Toàn bộ `gofmt`/`vet`/`staticcheck`/`build`/`test -race`/`mod verify`/`check.sh` sạch; `sqlc diff` không drift.

@@ -142,6 +142,16 @@ func (m *memRepo) TransitionAgent(ctx context.Context, id uuid.UUID, version int
 	return a, nil
 }
 
+func (m *memRepo) ListAgentsByRun(ctx context.Context, runID uuid.UUID) ([]AgentInstance, error) {
+	out := make([]AgentInstance, 0)
+	for _, a := range m.agents {
+		if a.RunID == runID {
+			out = append(out, a)
+		}
+	}
+	return out, nil
+}
+
 func TestCreateRunValidatesInput(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()

@@ -24,6 +24,7 @@ type Repository interface {
 	CreateAgent(ctx context.Context, p CreateAgentParams) (AgentInstance, error)
 	GetAgent(ctx context.Context, id uuid.UUID) (AgentInstance, error)
 	TransitionAgent(ctx context.Context, id uuid.UUID, version int, newStatus AgentStatus) (AgentInstance, error)
+	ListAgentsByRun(ctx context.Context, runID uuid.UUID) ([]AgentInstance, error)
 }
 
 // TaskDependency links a task to another it depends on. Owner: engine/runs.

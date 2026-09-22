@@ -110,7 +110,7 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 
 	baseCtx, baseCancel := context.WithCancel(context.Background())
 
-	services, err := wireServices(pool, fs, allTools, contentLoader, cfg, log)
+	services, err := wireServices(pool, fs, allTools, contentLoader, model, cfg, log)
 	if err != nil {
 		baseCancel()
 		_ = fs.Close()

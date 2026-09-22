@@ -102,6 +102,10 @@ func TestHTTPProbeCasesMatchBaselines(t *testing.T) {
 			if err := yaml.Unmarshal(raw, &c); err != nil {
 				t.Fatalf("parse case: %v", err)
 			}
+			if c.Capability != "http_probe" {
+				// Agent cases are driven by the agent eval runner.
+				return
+			}
 			url := c.Input.URL
 			if url == labPlaceholder {
 				url = lab.URL

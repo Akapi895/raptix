@@ -1,0 +1,7 @@
+{
+  "name": "agent_http_probe",
+  "capability": "agent",
+  "attempt_status": "succeeded",
+  "tool_calls": 1,
+  "has_finding_draft": true
+}

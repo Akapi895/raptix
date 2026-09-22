@@ -96,6 +96,14 @@ func (s *Service) GetAgent(ctx context.Context, id uuid.UUID) (AgentInstance, er
 	return s.repo.GetAgent(ctx, id)
 }
 
+// ListAgentsByRun returns the agent instances of a run, oldest first.
+func (s *Service) ListAgentsByRun(ctx context.Context, runID uuid.UUID) ([]AgentInstance, error) {
+	if runID == uuid.Nil {
+		return nil, fmt.Errorf("run id is required")
+	}
+	return s.repo.ListAgentsByRun(ctx, runID)
+}
+
 // TransitionRun applies a status transition to a run, rejecting transitions
 // not described by the transition table.
 func (s *Service) TransitionRun(ctx context.Context, id uuid.UUID, fromVersion int, toStatus RunStatus) (Run, error) {

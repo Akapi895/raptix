@@ -1,0 +1,15 @@
+apiVersion: eval/v1
+kind: case
+name: agent_http_probe
+description: A single agent must call http_probe through execution, then finish with a grounded finding draft.
+capability: agent
+input:
+  profile: recon
+  task: probe the lab endpoint
+  script:
+    - '{"action":"tool","capability":"http_probe","args":{"url":"${LAB_HTTP_URL}"}}'
+    - '{"action":"final","summary":"lab endpoint reachable","finding_draft":{"title":"Lab endpoint reachable","description":"probe returned 200","severity":"low","confidence":"high"}}'
+expect:
+  attempt_status: succeeded
+  tool_calls: 1
+  has_finding_draft: true

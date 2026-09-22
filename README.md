@@ -2,7 +2,7 @@
 
 Backend security-automation platform (agent + skills + tools + evidence + findings + reporting), built as a **Go modular monolith**. This is the `raptix` repo; authoritative docs live in `docs/` (`repository_structure_v1.md`, `migration_roadmap_v1.md`, `migration_manifest_v1.md`).
 
-> Trạng thái: **Phase 4 hoàn tất** — đã có execution boundary: gọi capability qua `execution` (governance/scope/budget kiểm tại dispatch), durable `tool_invocations`, evidence artifact, sandbox local/container, builtin `http_probe` + command `nmap`. Agent loop, verifier và HTTP/SSE run endpoints thuộc phase sau. Xem manifest để theo dõi.
+> Trạng thái: **Phase 5 hoàn tất** — một agent hoàn chỉnh có verifier: `engine/contextbuild` dựng context, `engine/agents` chạy agent loop (model → capability qua `execution` → finding draft), `workspace/verifier` kiểm chứng qua cùng đường execution; use case `Services.RunAgent`. Agent loop tự tắt khi thiếu `RAP_LLM_API_KEY`. HTTP/SSE run endpoints, orchestrator nhiều agent và reporting thuộc phase sau. Xem manifest để theo dõi.
 
 ## Nhanh
 
@@ -20,12 +20,12 @@ docker compose -f deploy/compose.yaml up -d --wait postgres
 
 Hoặc dùng helper: `scripts/dev.sh up` rồi `scripts/dev.sh server`. `scripts/check.sh` chạy vet+build+test.
 
-## Cấu trúc (đã triển khai đến Phase 4)
+## Cấu trúc (đã triển khai đến Phase 5)
 
 - `backend/` — module Go duy nhất `github.com/Akapi895/raptix/backend`, Go 1.26.
 - `backend/cmd/server` — entrypoint HTTP server (sole engine host trong tương lai).
 - `backend/cmd/migrate` — goose migration runner (release step, không tự chạy khi server khởi động).
-- `backend/internal/app` — composition root + `LoadConfig` (defaults → YAML → `RAP_*` env) + use case `InvokeCapability`/`StartAuthorizedRun`.
+- `backend/internal/app` — composition root + `LoadConfig` (defaults → YAML → `RAP_*` env) + use case `InvokeCapability`/`StartAuthorizedRun`/`RunAgent`.
 - `backend/internal/api` — HTTP transport tối thiểu (health endpoint).
 - `backend/internal/infrastructure/database/postgres` — pgxpool + health + transaction primitive.
 - `backend/internal/infrastructure/database/filesystem` — blob store (artifact).
@@ -33,7 +33,9 @@ Hoặc dùng helper: `scripts/dev.sh up` rồi `scripts/dev.sh server`. `scripts
 - `backend/internal/content` — declarative catalog loader, schema/provenance/reference validation.
 - `backend/internal/tools` — capability implementations (`builtin/http_probe`, `builtin/command`), registry và output contract.
 - `backend/internal/execution` — `invocation` (durable dispatch), `sandbox` (local/container runner), `artifact` (provenance adapter).
-- `backend/internal/engine/llm` — business LLM contract và Eino OpenAI-compatible adapter.
+- `backend/internal/engine` — `llm` + Eino adapter, `runs` (lifecycle), `contextbuild` (context có budget), `agents` (agent loop + attempt/snapshot).
+- `backend/internal/workspace` — `evidence`, `assessment`, `findings`, `verifier` (verdict).
+- `backend/internal/platform` — `projects`, `governance`, `audit`.
 - `content/` — profile, prompt, tool manifests và skill catalog; xem `content/skills/NOTICE.md` cho attribution.
 - `containers/sandbox/Dockerfile` — image sandbox production; `evals/` — case/baseline/fixtures.
 

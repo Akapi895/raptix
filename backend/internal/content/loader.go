@@ -112,6 +112,24 @@ func (l *Loader) LoadProfile(name string) (*Profile, error) {
 	return profile, nil
 }
 
+// LoadPrompt reads a prompt file referenced by a profile's promptRefs. The ref
+// is a slash-separated path relative to the content root; reading is confined
+// to the root so a reference cannot escape the catalog.
+func (l *Loader) LoadPrompt(ref string) (string, error) {
+	if err := validateRel(ref); err != nil {
+		return "", err
+	}
+	path := filepath.Join(l.root, filepath.FromSlash(ref))
+	if err := l.ensureContained(path); err != nil {
+		return "", err
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
 func (l *Loader) validateProfileReferences(profile *Profile) error {
 	for _, ref := range profile.PromptRefs {
 		if err := l.validateContentFile(ref); err != nil {

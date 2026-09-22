@@ -187,6 +187,42 @@ func (q *Queries) GetTask(ctx context.Context, id pgtype.UUID) (Task, error) {
 	return i, err
 }
 
+const listAgentInstancesByRun = `-- name: ListAgentInstancesByRun :many
+SELECT id, run_id, task_id, profile, status, version, created_at, updated_at
+FROM agent_instances
+WHERE run_id = $1
+ORDER BY created_at ASC
+`
+
+func (q *Queries) ListAgentInstancesByRun(ctx context.Context, runID pgtype.UUID) ([]AgentInstance, error) {
+	rows, err := q.db.Query(ctx, listAgentInstancesByRun, runID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []AgentInstance
+	for rows.Next() {
+		var i AgentInstance
+		if err := rows.Scan(
+			&i.ID,
+			&i.RunID,
+			&i.TaskID,
+			&i.Profile,
+			&i.Status,
+			&i.Version,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRunsByProject = `-- name: ListRunsByProject :many
 SELECT id, project_id, name, status, version, created_by, created_at, updated_at
 FROM runs

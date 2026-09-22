@@ -187,6 +187,18 @@ func (r *Postgres) TransitionAgent(ctx context.Context, id uuid.UUID, version in
 	return toAgent(row), nil
 }
 
+func (r *Postgres) ListAgentsByRun(ctx context.Context, runID uuid.UUID) ([]AgentInstance, error) {
+	rows, err := r.q.ListAgentInstancesByRun(ctx, uuidToPG(runID))
+	if err != nil {
+		return nil, err
+	}
+	out := make([]AgentInstance, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, toAgent(row))
+	}
+	return out, nil
+}
+
 func toRun(r storegen.Run) Run {
 	return Run{
 		ID:        pgToUUID(r.ID),
