@@ -38,6 +38,7 @@ type VerifyParams struct {
 
 // Result is the verifier's verdict for a finding.
 type Result struct {
+	RevisionNo  int
 	Verdict     findings.Verdict
 	Reason      string
 	EvidenceIDs []uuid.UUID

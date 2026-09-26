@@ -122,7 +122,7 @@ func TestPhase3IntegrationDataFlow(t *testing.T) {
 		t.Fatalf("grant: %v", err)
 	}
 	run, err := a.services.StartAuthorizedRun(ctx, StartRunParams{
-		ProjectID: proj.ID, ScopeID: scope.ID, Actor: actor, Name: "recon",
+		ProjectID: proj.ID, ScopeID: scope.ID, Actor: actor, Name: "recon", RequestKey: "run-start-1",
 	})
 	if err != nil {
 		t.Fatalf("authorized start: %v", err)
@@ -130,13 +130,19 @@ func TestPhase3IntegrationDataFlow(t *testing.T) {
 	if run.Status != runs.RunQueued {
 		t.Fatalf("run status = %s, want queued", run.Status)
 	}
+	replay, err := a.services.StartAuthorizedRun(ctx, StartRunParams{
+		ProjectID: proj.ID, ScopeID: scope.ID, Actor: actor, Name: "recon", RequestKey: "run-start-1",
+	})
+	if err != nil || replay.ID != run.ID {
+		t.Fatalf("idempotent run replay = %+v, %v", replay, err)
+	}
 
 	// Run must be readable back through the service.
 	gotRun, err := a.services.Runs.GetRun(ctx, run.ID)
 	if err != nil {
 		t.Fatalf("run read-back: %v", err)
 	}
-	if gotRun.ID != run.ID || gotRun.ProjectID != proj.ID || gotRun.CreatedBy != actor {
+	if gotRun.ID != run.ID || gotRun.ProjectID != proj.ID || gotRun.ScopeID != scope.ID || gotRun.CreatedBy != actor {
 		t.Fatalf("run read-back mismatch: %+v", gotRun)
 	}
 
@@ -235,15 +241,13 @@ func TestPhase3IntegrationDataFlow(t *testing.T) {
 	f, err := a.services.Findings.CreateFinding(ctx, findings.CreateFindingParams{
 		RunID: run.ID, Title: "Missing security headers",
 		Severity: findings.SeverityMedium, Confidence: findings.ConfidenceLow,
+		Evidence: []findings.EvidenceRef{{EvidenceID: art.ID, Role: "supporting"}},
 	})
 	if err != nil {
 		t.Fatalf("create finding: %v", err)
 	}
 	if f.Status != findings.StatusDraft {
 		t.Fatalf("finding status = %s, want draft", f.Status)
-	}
-	if err := a.services.Findings.LinkEvidence(ctx, f.ID, art.ID, "supporting"); err != nil {
-		t.Fatalf("link evidence: %v", err)
 	}
 	reviewed, err := a.services.Findings.TransitionStatus(ctx, f.ID, f.Version, findings.StatusReviewed, "bob", "reviewed in integration")
 	if err != nil {
@@ -252,8 +256,12 @@ func TestPhase3IntegrationDataFlow(t *testing.T) {
 	if reviewed.Status != findings.StatusReviewed || reviewed.Version != 2 {
 		t.Fatalf("reviewed = %+v", reviewed)
 	}
+	revision, err := a.services.Findings.GetCurrentRevision(ctx, f.ID)
+	if err != nil {
+		t.Fatalf("get finding revision: %v", err)
+	}
 	if _, err := a.services.Findings.RecordVerdict(ctx, findings.InsertVerdictParams{
-		FindingID: f.ID, Verdict: findings.VerdictConfirmed, Reason: "seen in response", ProducedBy: "verifier-a",
+		FindingID: f.ID, RevisionNo: revision.RevisionNo, Verdict: findings.VerdictConfirmed, Reason: "seen in response", ProducedBy: "verifier-a",
 	}); err != nil {
 		t.Fatalf("record verdict: %v", err)
 	}

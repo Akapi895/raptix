@@ -46,14 +46,17 @@ const (
 
 // Run is an engagement run. Owner: engine/runs.
 type Run struct {
-	ID        uuid.UUID
-	ProjectID uuid.UUID
-	Name      string
-	Status    RunStatus
-	Version   int
-	CreatedBy string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID                 uuid.UUID
+	ProjectID          uuid.UUID
+	ScopeID            uuid.UUID
+	Name               string
+	Status             RunStatus
+	Version            int
+	CreatedBy          string
+	RequestKey         string
+	RequestFingerprint string
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 // Task is a unit of work within a run. Owner: engine/runs.
@@ -82,10 +85,19 @@ type AgentInstance struct {
 
 // CreateRunParams carries the fields for creating a run.
 type CreateRunParams struct {
-	ProjectID uuid.UUID
-	Name      string
-	Status    RunStatus
-	CreatedBy string
+	ProjectID          uuid.UUID
+	ScopeID            uuid.UUID
+	Name               string
+	Status             RunStatus
+	CreatedBy          string
+	RequestKey         string
+	RequestFingerprint string
+}
+
+// CreateRunResult reports whether an idempotent create inserted a new run.
+type CreateRunResult struct {
+	Run     Run
+	Created bool
 }
 
 // CreateTaskParams carries the fields for creating a task.
@@ -129,3 +141,10 @@ func (e *ErrAgentNotFound) Error() string { return "agent not found: " + e.ID.St
 type ErrOptimisticLock struct{ ID uuid.UUID }
 
 func (e *ErrOptimisticLock) Error() string { return "optimistic lock conflict for: " + e.ID.String() }
+
+// ErrRequestConflict reports reuse of an idempotency key for a different request.
+type ErrRequestConflict struct{ RequestKey string }
+
+func (e *ErrRequestConflict) Error() string {
+	return "idempotency key conflicts with a different request: " + e.RequestKey
+}

@@ -13,17 +13,18 @@ import (
 type Querier interface {
 	AddTaskDependency(ctx context.Context, arg AddTaskDependencyParams) error
 	CreateAgentInstance(ctx context.Context, arg CreateAgentInstanceParams) (AgentInstance, error)
-	CreateRun(ctx context.Context, arg CreateRunParams) (Run, error)
+	CreateOrGetRun(ctx context.Context, arg CreateOrGetRunParams) (CreateOrGetRunRow, error)
+	CreateRun(ctx context.Context, arg CreateRunParams) (CreateRunRow, error)
 	CreateTask(ctx context.Context, arg CreateTaskParams) (Task, error)
 	GetAgentInstance(ctx context.Context, id pgtype.UUID) (AgentInstance, error)
-	GetRun(ctx context.Context, id pgtype.UUID) (Run, error)
+	GetRun(ctx context.Context, id pgtype.UUID) (GetRunRow, error)
 	GetTask(ctx context.Context, id pgtype.UUID) (Task, error)
 	ListAgentInstancesByRun(ctx context.Context, runID pgtype.UUID) ([]AgentInstance, error)
-	ListRunsByProject(ctx context.Context, projectID pgtype.UUID) ([]Run, error)
+	ListRunsByProject(ctx context.Context, projectID pgtype.UUID) ([]ListRunsByProjectRow, error)
 	ListTaskDependencies(ctx context.Context, taskID pgtype.UUID) ([]TaskDependency, error)
 	ListTasksByRun(ctx context.Context, runID pgtype.UUID) ([]Task, error)
 	TransitionAgentInstance(ctx context.Context, arg TransitionAgentInstanceParams) (AgentInstance, error)
-	TransitionRun(ctx context.Context, arg TransitionRunParams) (Run, error)
+	TransitionRun(ctx context.Context, arg TransitionRunParams) (TransitionRunRow, error)
 	TransitionTask(ctx context.Context, arg TransitionTaskParams) (Task, error)
 }
 

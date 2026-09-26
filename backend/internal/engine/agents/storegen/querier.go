@@ -12,12 +12,13 @@ import (
 
 type Querier interface {
 	AppendMessage(ctx context.Context, arg AppendMessageParams) (AgentMessage, error)
-	CreateAttempt(ctx context.Context, agentID pgtype.UUID) (AgentAttempt, error)
+	CreateAttempt(ctx context.Context, agentID pgtype.UUID) (CreateAttemptRow, error)
+	CreateOrGetAttempt(ctx context.Context, arg CreateOrGetAttemptParams) (CreateOrGetAttemptRow, error)
 	CreateSnapshot(ctx context.Context, arg CreateSnapshotParams) (AgentSnapshot, error)
-	FinishAttempt(ctx context.Context, arg FinishAttemptParams) (AgentAttempt, error)
-	GetAttempt(ctx context.Context, id pgtype.UUID) (AgentAttempt, error)
+	FinishAttempt(ctx context.Context, arg FinishAttemptParams) (FinishAttemptRow, error)
+	GetAttempt(ctx context.Context, id pgtype.UUID) (GetAttemptRow, error)
 	GetSnapshotByAgent(ctx context.Context, agentID pgtype.UUID) (AgentSnapshot, error)
-	ListAttemptsByAgent(ctx context.Context, agentID pgtype.UUID) ([]AgentAttempt, error)
+	ListAttemptsByAgent(ctx context.Context, agentID pgtype.UUID) ([]ListAttemptsByAgentRow, error)
 	ListMessages(ctx context.Context, attemptID pgtype.UUID) ([]AgentMessage, error)
 }
 

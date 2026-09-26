@@ -17,20 +17,24 @@ type fakeExec struct {
 	result *output.Result
 	err    error
 	calls  []invocation.InvokeParams
+	after  func()
 }
 
 func (f *fakeExec) InvokeCapability(ctx context.Context, p invocation.InvokeParams) (invocation.Invocation, *output.Result, error) {
 	f.calls = append(f.calls, p)
+	if f.after != nil {
+		f.after()
+	}
 	return invocation.Invocation{ID: uuid.New()}, f.result, f.err
 }
 
 type fakeReader struct {
-	finding findings.Finding
-	err     error
+	revision findings.FindingRevision
+	err      error
 }
 
-func (f *fakeReader) GetFinding(ctx context.Context, id uuid.UUID) (findings.Finding, error) {
-	return f.finding, f.err
+func (f *fakeReader) GetCurrentRevision(ctx context.Context, id uuid.UUID) (findings.FindingRevision, error) {
+	return f.revision, f.err
 }
 
 type fakeVerdict struct {
@@ -44,11 +48,11 @@ func (f *fakeVerdict) RecordVerdict(ctx context.Context, p findings.InsertVerdic
 
 func harness(result *output.Result) (*Service, *fakeExec, *fakeVerdict, VerifyParams) {
 	exec := &fakeExec{result: result}
-	reader := &fakeReader{finding: findings.Finding{ID: uuid.New(), RunID: uuid.New(), Title: "exposed"}}
+	reader := &fakeReader{revision: findings.FindingRevision{FindingID: uuid.New(), RevisionNo: 4, Title: "exposed"}}
 	vw := &fakeVerdict{}
 	svc := NewService(exec, reader, vw, "verifier")
 	p := VerifyParams{
-		FindingID: reader.finding.ID, RunID: reader.finding.RunID, ScopeID: uuid.New(), Actor: "alice",
+		FindingID: reader.revision.FindingID, RunID: uuid.New(), ScopeID: uuid.New(), Actor: "alice",
 		Checks: []Check{{Capability: "http_probe", Args: json.RawMessage(`{"url":"http://lab"}`)}},
 	}
 	return svc, exec, vw, p
@@ -66,11 +70,14 @@ func TestVerifyConfirmedWhenReCheckSucceeds(t *testing.T) {
 	if len(res.EvidenceIDs) != 1 {
 		t.Errorf("evidence = %v", res.EvidenceIDs)
 	}
-	if len(exec.calls) != 1 || exec.calls[0].IdempotencyKey != "verify:"+p.FindingID.String()+":0" {
+	if len(exec.calls) != 1 || exec.calls[0].IdempotencyKey != "verify:"+p.FindingID.String()+":4:0" {
 		t.Errorf("exec calls = %+v", exec.calls)
 	}
 	if len(vw.recorded) != 1 || vw.recorded[0].FindingID != p.FindingID {
 		t.Errorf("verdicts = %+v", vw.recorded)
+	}
+	if vw.recorded[0].RevisionNo != 4 || res.RevisionNo != 4 {
+		t.Errorf("revision binding = %+v / %+v", vw.recorded[0], res)
 	}
 }
 
@@ -123,5 +130,24 @@ func TestVerifyNoChecksIsInconclusive(t *testing.T) {
 	}
 	if len(vw.recorded) != 1 {
 		t.Error("an inconclusive verdict must still be recorded")
+	}
+}
+
+func TestVerifyLateVerdictUsesRevisionReadBeforeChecks(t *testing.T) {
+	reader := &fakeReader{revision: findings.FindingRevision{FindingID: uuid.New(), RevisionNo: 2}}
+	exec := &fakeExec{result: output.Success("", "", ""), after: func() {
+		reader.revision.RevisionNo = 3
+	}}
+	writer := &fakeVerdict{}
+	svc := NewService(exec, reader, writer, "verifier")
+	_, err := svc.Verify(context.Background(), VerifyParams{
+		FindingID: reader.revision.FindingID, RunID: uuid.New(), ScopeID: uuid.New(), Actor: "alice",
+		Checks: []Check{{Capability: "http_probe"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(writer.recorded) != 1 || writer.recorded[0].RevisionNo != 2 {
+		t.Fatalf("late verdict bound to %+v, want revision 2", writer.recorded)
 	}
 }

@@ -72,14 +72,14 @@ func (c Config) timeout() time.Duration {
 	return c.DefaultTimeout
 }
 
-// RunParams identifies the agent to run and the scope it operates under. Scope
-// and actor come from the caller (runs does not store the scope); execution
-// re-checks both at dispatch.
+// RunParams identifies the agent to run. The scope is always read from its
+// persisted run; callers cannot select a different scope for an existing run.
 type RunParams struct {
-	AgentID uuid.UUID
-	ScopeID uuid.UUID
-	Actor   string
-	Task    string // optional instruction; defaults to the agent's task name
+	AgentID            uuid.UUID
+	Actor              string
+	Task               string // optional instruction; defaults to the agent's task name
+	RequestKey         string
+	RequestFingerprint string
 }
 
 // FindingDraft is a candidate finding produced by an agent. The agent does not
@@ -213,8 +213,8 @@ func (s *Service) CancelRunningAttempts(ctx context.Context, agentID uuid.UUID) 
 // step budget, then record the attempt outcome and request the agent transition.
 func (s *Service) RunAgent(ctx context.Context, p RunParams) (AttemptResult, error) {
 	p.Actor = strings.TrimSpace(p.Actor)
-	if p.AgentID == uuid.Nil || p.ScopeID == uuid.Nil {
-		return AttemptResult{}, fmt.Errorf("agent and scope are required")
+	if p.AgentID == uuid.Nil {
+		return AttemptResult{}, fmt.Errorf("agent is required")
 	}
 	if p.Actor == "" {
 		return AttemptResult{}, fmt.Errorf("actor is required")
@@ -235,6 +235,18 @@ func (s *Service) RunAgent(ctx context.Context, p RunParams) (AttemptResult, err
 	case runs.RunCancelled, runs.RunCompleted, runs.RunBudgetExhausted:
 		return AttemptResult{}, fmt.Errorf("run %s is in state %s", run.ID, run.Status)
 	}
+	if run.ScopeID == uuid.Nil {
+		return AttemptResult{}, fmt.Errorf("run %s has no scope", run.ID)
+	}
+
+	attemptResult, err := s.createAttempt(ctx, p)
+	if err != nil {
+		return AttemptResult{}, err
+	}
+	if !attemptResult.Created {
+		return AttemptResult{Attempt: attemptResult.Attempt}, nil
+	}
+	attempt := attemptResult.Attempt
 
 	task := strings.TrimSpace(p.Task)
 	if task == "" && agent.TaskID != nil {
@@ -247,7 +259,7 @@ func (s *Service) RunAgent(ctx context.Context, p RunParams) (AttemptResult, err
 	if err != nil {
 		return AttemptResult{}, err
 	}
-	if _, err := s.resolveSnapshot(ctx, agent, resolved, p.ScopeID, p.Actor); err != nil {
+	if _, err := s.resolveSnapshot(ctx, agent, resolved, run.ScopeID, p.Actor); err != nil {
 		return AttemptResult{}, fmt.Errorf("resolve snapshot: %w", err)
 	}
 
@@ -259,15 +271,10 @@ func (s *Service) RunAgent(ctx context.Context, p RunParams) (AttemptResult, err
 		}
 	}
 
-	attempt, err := s.repo.CreateAttempt(ctx, CreateAttemptParams{AgentID: agent.ID})
-	if err != nil {
-		return AttemptResult{}, err
-	}
-
 	dctx, cancel := context.WithTimeout(ctx, s.cfg.timeout())
 	defer cancel()
 
-	result, status := s.loop(dctx, agent, attempt, p.ScopeID, p.Actor, resolved, task)
+	result, status := s.loop(dctx, agent, attempt, run.ScopeID, p.Actor, resolved, task)
 
 	finished, err := s.repo.FinishAttempt(ctx, FinishAttemptParams{ID: attempt.ID, Status: status, FinishedAt: time.Now().UTC()})
 	if err != nil {
@@ -296,4 +303,18 @@ func (s *Service) RunAgent(ctx context.Context, p RunParams) (AttemptResult, err
 		s.log.Warn("agent attempt finished but lifecycle transition failed", "agent", agent.ID, "error", err)
 	}
 	return result, nil
+}
+
+func (s *Service) createAttempt(ctx context.Context, p RunParams) (CreateAttemptResult, error) {
+	requestKey := strings.TrimSpace(p.RequestKey)
+	if requestKey == "" {
+		attempt, err := s.repo.CreateAttempt(ctx, CreateAttemptParams{AgentID: p.AgentID})
+		return CreateAttemptResult{Attempt: attempt, Created: err == nil}, err
+	}
+	if strings.TrimSpace(p.RequestFingerprint) == "" {
+		return CreateAttemptResult{}, fmt.Errorf("request fingerprint is required with an idempotency key")
+	}
+	return s.repo.CreateOrGetAttempt(ctx, CreateAttemptParams{
+		AgentID: p.AgentID, RequestKey: requestKey, RequestFingerprint: p.RequestFingerprint,
+	})
 }

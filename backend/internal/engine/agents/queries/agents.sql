@@ -6,15 +6,29 @@ VALUES (
     'running',
     now()
 )
-RETURNING id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at;
+RETURNING id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at;
+
+-- name: CreateOrGetAttempt :one
+INSERT INTO agent_attempts (agent_id, attempt_no, status, started_at, request_key, request_fingerprint)
+VALUES (
+    $1,
+    COALESCE((SELECT MAX(attempt_no) FROM agent_attempts WHERE agent_id = $1), 0) + 1,
+    'running',
+    now(),
+    $2,
+    $3
+)
+ON CONFLICT (agent_id, request_key) WHERE request_key <> ''
+DO UPDATE SET request_key = EXCLUDED.request_key
+RETURNING id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at, (xmax = 0) AS created;
 
 -- name: GetAttempt :one
-SELECT id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
+SELECT id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at
 FROM agent_attempts
 WHERE id = $1;
 
 -- name: ListAttemptsByAgent :many
-SELECT id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
+SELECT id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at
 FROM agent_attempts
 WHERE agent_id = $1
 ORDER BY attempt_no DESC;
@@ -26,7 +40,7 @@ SET status = $2,
     updated_at = now()
 WHERE id = $1
   AND status = 'running'
-RETURNING id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at;
+RETURNING id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at;
 
 -- name: AppendMessage :one
 INSERT INTO agent_messages (attempt_id, seq, role, content, invocation_id)

@@ -54,21 +54,90 @@ VALUES (
     'running',
     now()
 )
-RETURNING id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
+RETURNING id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at
 `
 
-func (q *Queries) CreateAttempt(ctx context.Context, agentID pgtype.UUID) (AgentAttempt, error) {
+type CreateAttemptRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	AttemptNo          int32              `json:"attempt_no"`
+	Status             string             `json:"status"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	FinishedAt         pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateAttempt(ctx context.Context, agentID pgtype.UUID) (CreateAttemptRow, error) {
 	row := q.db.QueryRow(ctx, createAttempt, agentID)
-	var i AgentAttempt
+	var i CreateAttemptRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgentID,
 		&i.AttemptNo,
 		&i.Status,
+		&i.RequestKey,
+		&i.RequestFingerprint,
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const createOrGetAttempt = `-- name: CreateOrGetAttempt :one
+INSERT INTO agent_attempts (agent_id, attempt_no, status, started_at, request_key, request_fingerprint)
+VALUES (
+    $1,
+    COALESCE((SELECT MAX(attempt_no) FROM agent_attempts WHERE agent_id = $1), 0) + 1,
+    'running',
+    now(),
+    $2,
+    $3
+)
+ON CONFLICT (agent_id, request_key) WHERE request_key <> ''
+DO UPDATE SET request_key = EXCLUDED.request_key
+RETURNING id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at, (xmax = 0) AS created
+`
+
+type CreateOrGetAttemptParams struct {
+	AgentID            pgtype.UUID `json:"agent_id"`
+	RequestKey         string      `json:"request_key"`
+	RequestFingerprint string      `json:"request_fingerprint"`
+}
+
+type CreateOrGetAttemptRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	AttemptNo          int32              `json:"attempt_no"`
+	Status             string             `json:"status"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	FinishedAt         pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	Created            bool               `json:"created"`
+}
+
+func (q *Queries) CreateOrGetAttempt(ctx context.Context, arg CreateOrGetAttemptParams) (CreateOrGetAttemptRow, error) {
+	row := q.db.QueryRow(ctx, createOrGetAttempt, arg.AgentID, arg.RequestKey, arg.RequestFingerprint)
+	var i CreateOrGetAttemptRow
+	err := row.Scan(
+		&i.ID,
+		&i.AgentID,
+		&i.AttemptNo,
+		&i.Status,
+		&i.RequestKey,
+		&i.RequestFingerprint,
+		&i.StartedAt,
+		&i.FinishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Created,
 	)
 	return i, err
 }
@@ -117,7 +186,7 @@ SET status = $2,
     updated_at = now()
 WHERE id = $1
   AND status = 'running'
-RETURNING id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
+RETURNING id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at
 `
 
 type FinishAttemptParams struct {
@@ -126,14 +195,29 @@ type FinishAttemptParams struct {
 	FinishedAt pgtype.Timestamptz `json:"finished_at"`
 }
 
-func (q *Queries) FinishAttempt(ctx context.Context, arg FinishAttemptParams) (AgentAttempt, error) {
+type FinishAttemptRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	AttemptNo          int32              `json:"attempt_no"`
+	Status             string             `json:"status"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	FinishedAt         pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) FinishAttempt(ctx context.Context, arg FinishAttemptParams) (FinishAttemptRow, error) {
 	row := q.db.QueryRow(ctx, finishAttempt, arg.ID, arg.Status, arg.FinishedAt)
-	var i AgentAttempt
+	var i FinishAttemptRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgentID,
 		&i.AttemptNo,
 		&i.Status,
+		&i.RequestKey,
+		&i.RequestFingerprint,
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.CreatedAt,
@@ -143,19 +227,34 @@ func (q *Queries) FinishAttempt(ctx context.Context, arg FinishAttemptParams) (A
 }
 
 const getAttempt = `-- name: GetAttempt :one
-SELECT id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
+SELECT id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at
 FROM agent_attempts
 WHERE id = $1
 `
 
-func (q *Queries) GetAttempt(ctx context.Context, id pgtype.UUID) (AgentAttempt, error) {
+type GetAttemptRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	AttemptNo          int32              `json:"attempt_no"`
+	Status             string             `json:"status"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	FinishedAt         pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetAttempt(ctx context.Context, id pgtype.UUID) (GetAttemptRow, error) {
 	row := q.db.QueryRow(ctx, getAttempt, id)
-	var i AgentAttempt
+	var i GetAttemptRow
 	err := row.Scan(
 		&i.ID,
 		&i.AgentID,
 		&i.AttemptNo,
 		&i.Status,
+		&i.RequestKey,
+		&i.RequestFingerprint,
 		&i.StartedAt,
 		&i.FinishedAt,
 		&i.CreatedAt,
@@ -188,26 +287,41 @@ func (q *Queries) GetSnapshotByAgent(ctx context.Context, agentID pgtype.UUID) (
 }
 
 const listAttemptsByAgent = `-- name: ListAttemptsByAgent :many
-SELECT id, agent_id, attempt_no, status, started_at, finished_at, created_at, updated_at
+SELECT id, agent_id, attempt_no, status, request_key, request_fingerprint, started_at, finished_at, created_at, updated_at
 FROM agent_attempts
 WHERE agent_id = $1
 ORDER BY attempt_no DESC
 `
 
-func (q *Queries) ListAttemptsByAgent(ctx context.Context, agentID pgtype.UUID) ([]AgentAttempt, error) {
+type ListAttemptsByAgentRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	AttemptNo          int32              `json:"attempt_no"`
+	Status             string             `json:"status"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	FinishedAt         pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListAttemptsByAgent(ctx context.Context, agentID pgtype.UUID) ([]ListAttemptsByAgentRow, error) {
 	rows, err := q.db.Query(ctx, listAttemptsByAgent, agentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []AgentAttempt{}
+	items := []ListAttemptsByAgentRow{}
 	for rows.Next() {
-		var i AgentAttempt
+		var i ListAttemptsByAgentRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.AgentID,
 			&i.AttemptNo,
 			&i.Status,
+			&i.RequestKey,
+			&i.RequestFingerprint,
 			&i.StartedAt,
 			&i.FinishedAt,
 			&i.CreatedAt,

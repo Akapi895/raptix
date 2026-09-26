@@ -85,13 +85,13 @@ func TestAgentCaseMatchesBaseline(t *testing.T) {
 	runState := &staticRuns{
 		agent: runs.AgentInstance{ID: uuid.New(), RunID: uuid.New(), Profile: c.Input.Profile, Status: runs.AgentPaused, Version: 1},
 	}
-	runState.run = runs.Run{ID: runState.agent.RunID, Status: runs.RunRunning}
+	runState.run = runs.Run{ID: runState.agent.RunID, ScopeID: uuid.New(), Status: runs.RunRunning}
 	builder := contextbuild.NewBuilder(&staticSource{profile: reconProfile(c.Input.Profile)}, contextbuild.Budget{MaxTokens: 4000})
 	svc := agents.NewService(newAgentRepo(), model, builder, exec, runState, &allowGrants{}, &staticResolver{available: map[string]bool{"http_probe": true}},
 		agents.Config{MaxSteps: 5, DefaultTimeout: time.Second, Model: "eval-model"}, nil)
 
 	res, err := svc.RunAgent(context.Background(), agents.RunParams{
-		AgentID: runState.agent.ID, ScopeID: uuid.New(), Actor: "eval", Task: c.Input.Task,
+		AgentID: runState.agent.ID, Actor: "eval", Task: c.Input.Task,
 	})
 	if err != nil {
 		t.Fatalf("RunAgent: %v", err)
@@ -208,9 +208,22 @@ func (r *agentRepo) CreateAttempt(ctx context.Context, p agents.CreateAttemptPar
 	}
 	id := r.id()
 	now := time.Now().UTC()
-	a := agents.Attempt{ID: id, AgentID: p.AgentID, AttemptNo: no, Status: agents.AttemptRunning, StartedAt: &now, CreatedAt: now, UpdatedAt: now}
+	a := agents.Attempt{ID: id, AgentID: p.AgentID, AttemptNo: no, Status: agents.AttemptRunning, RequestKey: p.RequestKey, RequestFingerprint: p.RequestFingerprint, StartedAt: &now, CreatedAt: now, UpdatedAt: now}
 	r.attempts[id] = a
 	return a, nil
+}
+
+func (r *agentRepo) CreateOrGetAttempt(ctx context.Context, p agents.CreateAttemptParams) (agents.CreateAttemptResult, error) {
+	for _, attempt := range r.attempts {
+		if p.RequestKey != "" && attempt.AgentID == p.AgentID && attempt.RequestKey == p.RequestKey {
+			if attempt.RequestFingerprint != p.RequestFingerprint {
+				return agents.CreateAttemptResult{}, &agents.ErrRequestConflict{RequestKey: p.RequestKey}
+			}
+			return agents.CreateAttemptResult{Attempt: attempt}, nil
+		}
+	}
+	attempt, err := r.CreateAttempt(ctx, p)
+	return agents.CreateAttemptResult{Attempt: attempt, Created: err == nil}, err
 }
 
 func (r *agentRepo) GetAttempt(ctx context.Context, id uuid.UUID) (agents.Attempt, error) {

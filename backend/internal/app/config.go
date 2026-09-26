@@ -14,19 +14,43 @@ import (
 // Sources in order: defaults, optional YAML, then RAP_* environment overrides.
 type Config struct {
 	Server    ServerConfig    `yaml:"server"`
+	Auth      AuthConfig      `yaml:"auth"`
 	Database  DatabaseConfig  `yaml:"database"`
 	Artifact  ArtifactConfig  `yaml:"artifact"`
 	Content   ContentConfig   `yaml:"content"`
 	Execution ExecutionConfig `yaml:"execution"`
 	Sandbox   SandboxConfig   `yaml:"sandbox"`
 	Agent     AgentConfig     `yaml:"agent"`
+	Reporting ReportingConfig `yaml:"reporting"`
+	Jobs      JobsConfig      `yaml:"jobs"`
 	LLM       LLMConfig       `yaml:"llm"`
 	Log       LogConfig       `yaml:"log"`
+}
+
+// JobsConfig bounds the in-process River worker pool.
+type JobsConfig struct {
+	MaxWorkers int `yaml:"max_workers"`
+}
+
+// ReportingConfig bounds report rendering: how long a worker lease is held
+// before another worker may take over an interrupted render.
+type ReportingConfig struct {
+	RenderLease time.Duration `yaml:"render_lease"`
 }
 
 type ServerConfig struct {
 	Addr            string        `yaml:"addr"`
 	ShutdownTimeout time.Duration `yaml:"shutdown_timeout"`
+}
+
+// AuthConfig selects the sole API authentication boundary. Development mode is
+// intentionally explicit and uses one fixed local principal; it never accepts
+// an actor supplied by a request.
+type AuthConfig struct {
+	Mode                 string `yaml:"mode"`
+	Issuer               string `yaml:"issuer"`
+	Audience             string `yaml:"audience"`
+	DevelopmentPrincipal string `yaml:"development_principal"`
 }
 
 type DatabaseConfig struct {
@@ -54,6 +78,9 @@ type ExecutionConfig struct {
 	MaxOutputBytes       int64         `yaml:"max_output_bytes"`
 	MaxInvocationsPerRun int           `yaml:"max_invocations_per_run"`
 	ReconcileStaleAfter  time.Duration `yaml:"reconcile_stale_after"`
+	// ReconcileInterval is the periodic reconcile cadence. Zero disables the
+	// periodic loop; the one-shot startup reconcile still runs.
+	ReconcileInterval time.Duration `yaml:"reconcile_interval"`
 }
 
 // SandboxConfig selects the environment command capabilities run in. Local is
@@ -117,6 +144,7 @@ func defaults() *Config {
 			Addr:            ":8080",
 			ShutdownTimeout: 10 * time.Second,
 		},
+		Auth: AuthConfig{Mode: "development", DevelopmentPrincipal: "development"},
 		Database: DatabaseConfig{
 			URL:                  "postgres://raptix:raptix@localhost:5432/raptix?sslmode=disable",
 			MaxConns:             10,
@@ -130,7 +158,10 @@ func defaults() *Config {
 			MaxOutputBytes:       1 << 20,
 			MaxInvocationsPerRun: 100,
 			ReconcileStaleAfter:  5 * time.Minute,
+			ReconcileInterval:    10 * time.Minute,
 		},
+		Reporting: ReportingConfig{RenderLease: 2 * time.Minute},
+		Jobs:      JobsConfig{MaxWorkers: 4},
 		Sandbox: SandboxConfig{
 			Mode:           "local",
 			Image:          "raptix/sandbox:latest",
@@ -156,6 +187,10 @@ func defaults() *Config {
 func applyEnvOverrides(cfg *Config) error {
 	cfg.Database.URL = envOr("RAP_DATABASE_URL", cfg.Database.URL)
 	cfg.Server.Addr = envOr("RAP_SERVER_ADDR", cfg.Server.Addr)
+	cfg.Auth.Mode = envOr("RAP_AUTH_MODE", cfg.Auth.Mode)
+	cfg.Auth.Issuer = envOr("RAP_AUTH_ISSUER", cfg.Auth.Issuer)
+	cfg.Auth.Audience = envOr("RAP_AUTH_AUDIENCE", cfg.Auth.Audience)
+	cfg.Auth.DevelopmentPrincipal = envOr("RAP_AUTH_DEVELOPMENT_PRINCIPAL", cfg.Auth.DevelopmentPrincipal)
 	cfg.Log.Level = envOr("RAP_LOG_LEVEL", cfg.Log.Level)
 	cfg.Artifact.Root = envOr("RAP_ARTIFACT_ROOT", cfg.Artifact.Root)
 	cfg.Content.Root = envOr("RAP_CONTENT_ROOT", cfg.Content.Root)
@@ -217,6 +252,27 @@ func applyEnvOverrides(cfg *Config) error {
 			return fmt.Errorf("RAP_EXECUTION_RECONCILE_STALE_AFTER: invalid duration %q: %w", v, err)
 		}
 		cfg.Execution.ReconcileStaleAfter = d
+	}
+	if v, ok := os.LookupEnv("RAP_EXECUTION_RECONCILE_INTERVAL"); ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("RAP_EXECUTION_RECONCILE_INTERVAL: invalid duration %q: %w", v, err)
+		}
+		cfg.Execution.ReconcileInterval = d
+	}
+	if v, ok := os.LookupEnv("RAP_REPORTING_RENDER_LEASE"); ok && v != "" {
+		d, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("RAP_REPORTING_RENDER_LEASE: invalid duration %q: %w", v, err)
+		}
+		cfg.Reporting.RenderLease = d
+	}
+	if v, ok := os.LookupEnv("RAP_JOBS_MAX_WORKERS"); ok && v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			return fmt.Errorf("RAP_JOBS_MAX_WORKERS: invalid integer %q: %w", v, err)
+		}
+		cfg.Jobs.MaxWorkers = n
 	}
 	cfg.Sandbox.Mode = envOr("RAP_SANDBOX_MODE", cfg.Sandbox.Mode)
 	cfg.Sandbox.Image = envOr("RAP_SANDBOX_IMAGE", cfg.Sandbox.Image)
@@ -282,6 +338,18 @@ func (c *Config) validate() error {
 	if c.Server.ShutdownTimeout <= 0 {
 		return fmt.Errorf("server.shutdown_timeout must be positive, got %s", c.Server.ShutdownTimeout)
 	}
+	switch c.Auth.Mode {
+	case "development":
+		if c.Auth.DevelopmentPrincipal == "" {
+			return fmt.Errorf("auth.development_principal is required in development mode")
+		}
+	case "oidc":
+		if c.Auth.Issuer == "" || c.Auth.Audience == "" {
+			return fmt.Errorf("auth.issuer and auth.audience are required in oidc mode")
+		}
+	default:
+		return fmt.Errorf("auth.mode %q is invalid (development|oidc)", c.Auth.Mode)
+	}
 	if c.Database.ConnectTimeout <= 0 {
 		return fmt.Errorf("database.connect_timeout must be positive, got %s", c.Database.ConnectTimeout)
 	}
@@ -302,6 +370,15 @@ func (c *Config) validate() error {
 	}
 	if c.Execution.ReconcileStaleAfter <= 0 {
 		return fmt.Errorf("execution.reconcile_stale_after must be positive, got %s", c.Execution.ReconcileStaleAfter)
+	}
+	if c.Execution.ReconcileInterval < 0 {
+		return fmt.Errorf("execution.reconcile_interval must not be negative, got %s", c.Execution.ReconcileInterval)
+	}
+	if c.Reporting.RenderLease <= 0 {
+		return fmt.Errorf("reporting.render_lease must be positive, got %s", c.Reporting.RenderLease)
+	}
+	if c.Jobs.MaxWorkers <= 0 {
+		return fmt.Errorf("jobs.max_workers must be positive, got %d", c.Jobs.MaxWorkers)
 	}
 	switch c.Sandbox.Mode {
 	case "local", "container":

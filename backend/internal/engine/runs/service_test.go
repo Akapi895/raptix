@@ -37,10 +37,23 @@ func (m *memRepo) newID() uuid.UUID {
 
 func (m *memRepo) CreateRun(ctx context.Context, p CreateRunParams) (Run, error) {
 	id := m.newID()
-	r := Run{ID: id, ProjectID: p.ProjectID, Name: p.Name, Status: p.Status, Version: 1, CreatedBy: p.CreatedBy}
+	r := Run{ID: id, ProjectID: p.ProjectID, ScopeID: p.ScopeID, Name: p.Name, Status: p.Status, Version: 1, CreatedBy: p.CreatedBy, RequestKey: p.RequestKey, RequestFingerprint: p.RequestFingerprint}
 	m.runs[id] = r
 	m.version[id] = 1
 	return r, nil
+}
+
+func (m *memRepo) CreateOrGetRun(ctx context.Context, p CreateRunParams) (CreateRunResult, error) {
+	for _, run := range m.runs {
+		if p.RequestKey != "" && run.ProjectID == p.ProjectID && run.RequestKey == p.RequestKey {
+			if run.RequestFingerprint != p.RequestFingerprint {
+				return CreateRunResult{}, &ErrRequestConflict{RequestKey: p.RequestKey}
+			}
+			return CreateRunResult{Run: run}, nil
+		}
+	}
+	run, err := m.CreateRun(ctx, p)
+	return CreateRunResult{Run: run, Created: err == nil}, err
 }
 
 func (m *memRepo) GetRun(ctx context.Context, id uuid.UUID) (Run, error) {
@@ -167,14 +180,14 @@ func TestCreateRunValidatesInput(t *testing.T) {
 	ctx := context.Background()
 	pid := uuid.New()
 
-	if _, err := svc.StartRun(ctx, uuid.Nil, "run", "alice"); err == nil {
+	if _, err := svc.StartRun(ctx, uuid.Nil, uuid.New(), "run", "alice"); err == nil {
 		t.Error("expected missing-project error")
 	}
-	if _, err := svc.StartRun(ctx, pid, "  ", "alice"); err == nil {
+	if _, err := svc.StartRun(ctx, pid, uuid.New(), "  ", "alice"); err == nil {
 		t.Error("expected empty-name error")
 	}
 
-	r, err := svc.StartRun(ctx, pid, "Recon", "alice")
+	r, err := svc.StartRun(ctx, pid, uuid.New(), "Recon", "alice")
 	if err != nil {
 		t.Fatalf("start run: %v", err)
 	}
@@ -183,10 +196,27 @@ func TestCreateRunValidatesInput(t *testing.T) {
 	}
 }
 
+func TestStartIdempotentRunReturnsExistingRun(t *testing.T) {
+	svc := NewService(newMemRepo())
+	ctx := context.Background()
+	projectID, scopeID := uuid.New(), uuid.New()
+	first, err := svc.StartIdempotentRun(ctx, projectID, scopeID, "Recon", "alice", "request-1", "fingerprint-1")
+	if err != nil || !first.Created {
+		t.Fatalf("first start = %+v, %v", first, err)
+	}
+	second, err := svc.StartIdempotentRun(ctx, projectID, scopeID, "Recon", "alice", "request-1", "fingerprint-1")
+	if err != nil || second.Created || second.Run.ID != first.Run.ID {
+		t.Fatalf("replay = %+v, %v", second, err)
+	}
+	if _, err := svc.StartIdempotentRun(ctx, projectID, scopeID, "Other", "alice", "request-1", "fingerprint-2"); err == nil {
+		t.Fatal("expected conflicting request fingerprint")
+	}
+}
+
 func TestLegalTransitionIncrementsVersion(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 
 	upd, err := svc.TransitionRun(ctx, r.ID, r.Version, RunRunning)
 	if err != nil {
@@ -211,7 +241,7 @@ func TestLegalTransitionIncrementsVersion(t *testing.T) {
 func TestIllegalTransitionRejected(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 
 	upd, err := svc.TransitionRun(ctx, r.ID, r.Version, RunRunning)
 	if err != nil {
@@ -230,7 +260,7 @@ func TestIllegalTransitionRejected(t *testing.T) {
 func TestOptimisticLockSurfacesErr(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 
 	// Pass a stale version: the stored version is 1 but transition expects 2.
 	if _, err := svc.TransitionRun(ctx, r.ID, 2, RunRunning); err == nil {
@@ -246,7 +276,7 @@ func TestOptimisticLockSurfacesErr(t *testing.T) {
 func TestBudgetExhaustedDistinctFromCompleted(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 
 	if RunBudgetExhausted == RunCompleted {
 		t.Fatal("budget_exhausted must be distinct from completed")
@@ -277,7 +307,7 @@ func TestBudgetExhaustedDistinctFromCompleted(t *testing.T) {
 func TestTaskLifecycle(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 
 	if _, err := svc.CreateTask(ctx, r.ID, "", TaskQueued); err == nil {
 		t.Error("expected empty-task-name error")
@@ -307,7 +337,7 @@ func TestTaskLifecycle(t *testing.T) {
 func TestAgentLifecycle(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	tk, _ := svc.CreateTask(ctx, r.ID, "Scan", TaskQueued)
 
 	if _, err := svc.CreateAgent(ctx, r.ID, nil, "  "); err == nil {
@@ -341,7 +371,7 @@ func TestAgentLifecycle(t *testing.T) {
 func TestTaskDependencyRecorded(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	a, err := svc.CreateTask(ctx, r.ID, "A", TaskQueued)
 	if err != nil {
 		t.Fatal(err)
@@ -368,7 +398,7 @@ func TestTaskDependencyRecorded(t *testing.T) {
 	}
 
 	// Dependencies must stay within one run.
-	r2, _ := svc.StartRun(ctx, uuid.New(), "Other", "alice")
+	r2, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Other", "alice")
 	c, _ := svc.CreateTask(ctx, r2.ID, "C", TaskQueued)
 	if err := svc.AddTaskDependency(ctx, b.ID, c.ID, true); err == nil {
 		t.Error("expected cross-run dependency rejection")
@@ -378,7 +408,7 @@ func TestTaskDependencyRecorded(t *testing.T) {
 func TestCreateTaskRejectsTerminalStatus(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	if _, err := svc.CreateTask(ctx, r.ID, "done", TaskCompleted); err == nil {
 		t.Error("expected terminal-status rejection")
 	}
@@ -390,8 +420,8 @@ func TestCreateTaskRejectsTerminalStatus(t *testing.T) {
 func TestCreateAgentRejectsForeignTask(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r1, _ := svc.StartRun(ctx, uuid.New(), "One", "alice")
-	r2, _ := svc.StartRun(ctx, uuid.New(), "Two", "alice")
+	r1, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "One", "alice")
+	r2, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Two", "alice")
 	taskOfRun2, _ := svc.CreateTask(ctx, r2.ID, "T", TaskQueued)
 	if _, err := svc.CreateAgent(ctx, r1.ID, &taskOfRun2.ID, "recon-agent"); err == nil {
 		t.Error("expected agent/task run-mismatch rejection")
@@ -401,8 +431,8 @@ func TestCreateAgentRejectsForeignTask(t *testing.T) {
 func TestListTasksByRun(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
-	r2, _ := svc.StartRun(ctx, uuid.New(), "Other", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
+	r2, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Other", "alice")
 
 	a, _ := svc.CreateTask(ctx, r.ID, "A", TaskQueued)
 	b, _ := svc.CreateTask(ctx, r.ID, "B", TaskQueued)
@@ -427,7 +457,7 @@ func TestListTasksByRun(t *testing.T) {
 func TestCancelRunCascadesToTasksAndAgents(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	if _, err := svc.TransitionRun(ctx, r.ID, r.Version, RunRunning); err != nil {
 		t.Fatal(err)
 	}
@@ -483,7 +513,7 @@ func TestCancelRunCascadesToTasksAndAgents(t *testing.T) {
 func TestCancelRunIdempotentForTerminalRun(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	r, err := svc.TransitionRun(ctx, r.ID, r.Version, RunRunning)
 	if err != nil {
 		t.Fatal(err)
@@ -505,7 +535,7 @@ func TestCancelRunCompletesAnEarlierPartialCascade(t *testing.T) {
 	repo := newMemRepo()
 	svc := NewService(repo)
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	task, _ := svc.CreateTask(ctx, r.ID, "Scan", TaskQueued)
 	agent, _ := svc.CreateAgent(ctx, r.ID, &task.ID, "recon-agent")
 
@@ -532,7 +562,7 @@ func TestCancelRunCompletesAnEarlierPartialCascade(t *testing.T) {
 func TestCreateWorkRejectsTerminalRun(t *testing.T) {
 	svc := NewService(newMemRepo())
 	ctx := context.Background()
-	r, _ := svc.StartRun(ctx, uuid.New(), "Recon", "alice")
+	r, _ := svc.StartRun(ctx, uuid.New(), uuid.New(), "Recon", "alice")
 	if _, err := svc.TransitionRun(ctx, r.ID, r.Version, RunCancelled); err != nil {
 		t.Fatal(err)
 	}

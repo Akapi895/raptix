@@ -35,14 +35,16 @@ const (
 
 // Attempt is one run of an agent instance. Owner: engine/agents.
 type Attempt struct {
-	ID         uuid.UUID
-	AgentID    uuid.UUID
-	AttemptNo  int
-	Status     AttemptStatus
-	StartedAt  *time.Time
-	FinishedAt *time.Time
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
+	ID                 uuid.UUID
+	AgentID            uuid.UUID
+	AttemptNo          int
+	Status             AttemptStatus
+	RequestKey         string
+	RequestFingerprint string
+	StartedAt          *time.Time
+	FinishedAt         *time.Time
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
 }
 
 // Message is one conversation turn recorded for an attempt. InvocationID links
@@ -72,7 +74,15 @@ type Snapshot struct {
 
 // CreateAttemptParams carries the fields for starting an attempt.
 type CreateAttemptParams struct {
-	AgentID uuid.UUID
+	AgentID            uuid.UUID
+	RequestKey         string
+	RequestFingerprint string
+}
+
+// CreateAttemptResult reports whether an idempotent create inserted a new attempt.
+type CreateAttemptResult struct {
+	Attempt Attempt
+	Created bool
 }
 
 // FinishAttemptParams carries the outcome of an attempt.
@@ -111,6 +121,13 @@ type ErrAttemptNotRunning struct{ ID uuid.UUID }
 
 func (e *ErrAttemptNotRunning) Error() string {
 	return "agent attempt is not running: " + e.ID.String()
+}
+
+// ErrRequestConflict reports reuse of an idempotency key for a different attempt request.
+type ErrRequestConflict struct{ RequestKey string }
+
+func (e *ErrRequestConflict) Error() string {
+	return "idempotency key conflicts with a different request: " + e.RequestKey
 }
 
 // ErrSnapshotNotFound reports that an agent has no recorded snapshot.

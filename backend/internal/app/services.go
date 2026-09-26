@@ -29,6 +29,7 @@ import (
 	"github.com/Akapi895/raptix/backend/internal/workspace/assessment"
 	"github.com/Akapi895/raptix/backend/internal/workspace/evidence"
 	"github.com/Akapi895/raptix/backend/internal/workspace/findings"
+	"github.com/Akapi895/raptix/backend/internal/workspace/reporting"
 	"github.com/Akapi895/raptix/backend/internal/workspace/verifier"
 )
 
@@ -45,9 +46,23 @@ type Services struct {
 	Execution  *invocation.Service
 	Agents     *agents.Service
 	Verifier   *verifier.Service
+	Reporting  *reporting.Service
 
 	cancel              *cancel.Service
 	reconcileStaleAfter time.Duration
+	reportTemplates     *reportTemplates
+	reportJobs          ReportEnqueuer
+	pool                *postgres.Pool
+	reportInputs        *reportInputs
+	reportOutput        *reportOutput
+	reportRenderConfig  reporting.RenderConfig
+}
+
+// SetReportEnqueuer installs the durable queue adapter used to render reports.
+// It is called by the composition root after services are wired; reporting stays
+// queue-agnostic.
+func (s *Services) SetReportEnqueuer(enqueuer ReportEnqueuer) {
+	s.reportJobs = enqueuer
 }
 
 // InvokeCapability is the use case entrypoint for dispatching a capability
@@ -144,6 +159,24 @@ func wireServices(pool *postgres.Pool, fs *filesystem.Store, reg *registry.Regis
 		log,
 	)
 	svc.Verifier = verifier.NewService(svc, svc.Findings, svc.Findings, "verifier")
+
+	// Phase 8: reporting owns the immutable report snapshot and publication
+	// lifecycle. Rendering dependencies are injected here; the queue adapter is
+	// installed later by SetReportEnqueuer so reporting never imports jobs.
+	reportOutputAdapter := &reportOutput{services: svc}
+	templateAdapter := &reportTemplates{loader: loader}
+	reportInputAdapter := &reportInputs{services: svc}
+	renderConfig := reporting.RenderConfig{
+		Templates:     templateAdapter,
+		Output:        reportOutputAdapter,
+		LeaseDuration: cfg.Reporting.RenderLease,
+	}
+	svc.Reporting = reporting.NewService(reporting.NewPostgres(dbtx), reportInputAdapter, reportOutputAdapter, renderConfig)
+	svc.reportTemplates = templateAdapter
+	svc.reportInputs = reportInputAdapter
+	svc.reportOutput = reportOutputAdapter
+	svc.reportRenderConfig = renderConfig
+	svc.pool = pool
 	return svc, nil
 }
 

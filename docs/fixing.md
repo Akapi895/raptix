@@ -1,353 +1,193 @@
-# Phase 6 — Độ tin cậy của execution và run (kế hoạch triển khai)
+# Ke hoach trien khai Phase 7A va Phase 8
 
-**Căn cứ:** `docs/migration_roadmap_v1.md` (Phase 6), `docs/repository_structure_v1.md` (§3.3 "phân biệt attempt", §3.5 "execution/cancel", §6.1 "chiều dependency", §7 "transaction/artifact/report flow"), `AGENTS.md`.
-**Trạng thái:** đã triển khai và validate live (xem `migration_manifest_v1.md` Phase 6).
+**Trang thai:** ke hoach thuc thi sau Phase 6. Phase 1-6 da co implementation va da duoc kiem tra; cac thay doi hien co trong worktree chua duoc commit.
 
----
+## Muc tieu va pham vi
 
-## 0. Mốc hoàn thành và ràng buộc
+Phase 7 trong roadmap duoc chia thanh hai lat cat:
 
-**Folder (roadmap):** `execution/cancel/`, `execution/invocation/`, `execution/artifact/`, `engine/runs/`, `engine/agents/`, `workspace/evidence/`; mở rộng test integration.
+1. **Phase 7A trong tai lieu nay:** REST API, SSE va CLI la client cua server. Khong them `web/`, frontend build, static-file hosting, hay code UI cho den khi co code web do nguoi dung cung cap.
+2. **Phase 7B de lai:** `web/src/shared/`, `web/src/app/` va cac man hinh project/run/evidence/finding. Phase 7B dung nguyen OpenAPI va SSE contract cua 7A; khong doi API chi de phuc vu UI.
 
-**Xong khi:** luồng Phase 5 chịu được **hủy** và **restart**; hệ thống **không mặc nhiên báo thành công hoặc chạy lại tool** khi kết quả lần trước chưa rõ.
+Phase 8 bo sung review/revision finding, report snapshot bat bien, River worker va periodic reconcile. API/CLI can thiet cho review va report nam trong Phase 8; UI cho cac use case nay cung de lai Phase 7B/phan frontend sau.
 
-Cụ thể:
-1. **Hủy (cancel)**: hủy một run đang chạy → run/task/agent/attempt chuyển `cancelled`, invocation chưa dispatch chuyển `cancelled`, invocation đang chạy chuyển `unknown` (side effect ngoài chưa rõ). Không có invocation nào bị báo `succeeded` sai.
-2. **Restart (reconcile)**: khi server chết giữa chừng, invocation để lại trạng thái không cuối (`pending`/`dispatched`/`running`) được đối soát về `unknown`; không tự chạy lại, không tự báo thành công.
-3. **Retry an toàn**: cùng `idempotency_key` không bao giờ dispatch lại; kết quả `unknown` không được xử lý như thành công/thất bại cuối cùng.
+Khong dua memory, knowledge, orchestrator, multi-agent spawn, vault, MCP, dashboard hay workflow editor vao hai phase nay.
 
-**Ràng buộc bất biến (giữ nguyên từ Phase 4/5, thêm Phase 6):**
+## Hien trang va cac rang buoc bat buoc
 
-- Mọi invocation — kể cả verifier — đi qua `execution`. Không có đường thực thi thứ hai.
-- `engine/runs` là **owner duy nhất** của lifecycle transition run/task/agent; `engine/agents` sở hữu attempt/conversation. Hủy phải **yêu cầu transition qua chủ sở hữu**, không tự sửa bảng chéo.
-- `execution/cancel` chỉ thao tác trên `tool_invocations` (một miền execution); **không import `engine`** (runs/agents). Cascade xuyên module do `app` dàn xếp.
-- "Unknown" là trạng thái bắt buộc đối soát: tác động ngoài **đã xảy ra hoặc có thể đã xảy ra** nhưng kết quả chưa ghi nhận. `cancelled` chỉ dùng khi chưa dispatch (chưa có side effect).
-- Retry queue/attempt mới **không mặc nhiên tạo lại tool invocation** khi invocation trước cùng mục đích còn `unknown`; phải đối soát trước (để Phase 8–10 xử lý tiếp).
-- Go `context` cancellation thể hiện **ý định hủy**; trạng thái bền vững `completed/cancelled/unknown` theo **kết quả đã ghi nhận**, không theo HTTP đã trả response.
-- Ownership dữ liệu không đổi: lifecycle → `engine/runs`; invocation → `execution`; attempt/conversation → `engine/agents`; bytes → `workspace/evidence`.
+1. `internal/api.Router` hien chi co `GET /healthz`; `contracts/openapi.yaml`, `contracts/events/`, `cmd/cli`, `internal/cli`, `infrastructure/jobs` va `workspace/reporting` chua ton tai.
+2. `app.Services` la public use-case boundary. HTTP handler, SSE handler va CLI khong duoc import sqlc output, Postgres repository, filesystem store, hay chay agent/tool truc tiep.
+3. `engine/runs` so huu lifecycle run/task/agent. `engine/agents` so huu agent attempt/conversation. `execution` so huu invocation va cancel/reconcile invocation. `workspace/findings` la owner duy nhat cua finding status/revision. `workspace/reporting` se so huu report request/snapshot. River chi so huu queue attempt, khong so huu business status.
+4. `StartAuthorizedRun` nhan `ScopeID` nhung bang `runs` chua luu scope. Mot API public khong duoc tin `scope_id` do client gui lai khi cancel, xem evidence, chay agent hay review. Day la prerequisite an toan cua 7A.
+5. Phase 6 da quy dinh invocation `unknown` khong duoc re-dispatch bang retry/idempotency. Job retry o Phase 8 cung khong duoc tao invocation, agent attempt hay report business moi mot cach ngam dinh.
+6. Event SSE la read/progress transport, khong la nguon du lieu. PostgreSQL va artifact store van la authoritative state; reconnect bi mat event phai lay snapshot.
+7. Actor khong bao gio den tu request body/header tuy y. Transport chi lay principal da xac thuc; service van kiem membership, scope active va grant tai luc thuc thi.
 
----
+## Quy uoc chung se chot truoc khi code
 
-## 1. Quyết định đã chốt
+1. API base path la `/api/v1`; `/healthz` giu nguyen va khong can authentication.
+2. Tat ca response JSON dung lower camel case. UUID va timestamp la string RFC 3339 UTC. Danh sach dung `limit` va opaque `cursor`; default va max limit duoc ghi trong OpenAPI.
+3. Loi API dung `application/problem+json` theo RFC 9457: `type`, `title`, `status`, `code`, `detail`, `requestId`, va `invalidParams` khi validate input. Mapper on dinh: 400 malformed, 401 unauthenticated, 403 authorization/grant denial, 404 missing/khong duoc phep disclose, 409 optimistic-lock/idempotency-key reuse khac payload, 422 business transition invalid, 429 rate limit, 503 dependency unavailable.
+4. Cac `POST` tao run, agent va agent attempt bat buoc `Idempotency-Key` 1-128 ASCII printable. Server luu request fingerprint; cung key va cung payload tra lai ket qua cu, cung key va payload khac tra 409. `POST .../cancel` la idempotent theo business state va khong retry execution.
+5. Authentication production la Bearer OIDC JWT da verify issuer, audience, signature va expiry. Middleware chuyen `sub` thanh `Principal.Subject`. Khong tin `X-Actor`, khong nhan `actor` trong JSON, va khong mo endpoint nghiep vu neu auth verifier chua duoc wire. Test dung fake verifier inject; development chi duoc dung fixed principal tu config explicit, khong co header bypass.
+6. Authorization co hai lop: middleware xac thuc principal; app use case kiem project membership, scope active va governance grant. Capability names duoc chot trong OpenAPI/policy: `run.start`, `run.read`, `run.control`, `evidence.read`, `finding.read`, `finding.review`, `report.create`, `report.read`. Cac capability moi khong duoc suy ra tu role UI.
+7. Request ID tu `chi` duoc gan vao problem response, audit correlation va log. Secret/token/credential, raw tool argument nhay cam va evidence bytes khong di qua event payload hay log transport.
 
-| # | Quyết định | Lựa chọn |
-|---|---|---|
-| D1 | Trạng thái invocation khi hủy | `pending`/`dispatched` → `cancelled` (chưa có side effect); `running` → `unknown` (side effect chưa rõ, bắt buộc đối soát) |
-| D2 | Reconcile trigger | Chạy **1 pass khi `cmd/server` khởi động** + use case `Reconcile` gọi tường minh (test/thủ công). Vòng lặp định kỳ để **Phase 8** (River jobs) |
-| D3 | Phạm vi cancel | **Cascade đầy đủ**: use case `CancelRun` (app) → run/task/agent/attempt `cancelled` + invocation hai mức như D1 |
-| D4 | Package cancel | `execution/cancel` là package riêng (theo roadmap), chỉ thao tác `tool_invocations` qua port `Store` do `execution/invocation` triển khai; không import `engine` |
-| D5 | Trạng thái trung gian | `pending` (đã ghi, chưa dispatch) → `running` (đã dispatch, đang chạy, có `started_at`) → terminal. Bỏ qua `dispatched` (giữ cột hợp lệ nhưng không dùng ở Phase 6) |
-| D6 | Reconcile policy | Idempotent + optimistic-lock an toàn: nếu invocation đồng thời kết thúc, bỏ qua thay vì đè trạng thái |
+## Phase 7A - API, SSE va CLI
 
----
+### 7A.1. Scope binding va idempotency truoc transport
 
-## 2. Package và chiều dependency
+1. Them migration `00014_engine_runs_transport.sql`, owner `engine/runs`.
+2. Them `runs.scope_id uuid` tham chieu `scopes(id) ON DELETE RESTRICT`, index `(scope_id, created_at DESC)`, va cap nhat `runs.Run`, `CreateRunParams`, queries, sqlc output, repository va service.
+3. Backfill scope cua run cu tu `audit_records`: chi chap nhan ban ghi `action='run.start'`, `outcome='allowed'`, `correlation=runs.id::text`, trong do `resource` la UUID scope. Release migration phai dung neu mot run co zero hoac nhieu scope hop le; khong duoc tu doan theo project hay scope moi nhat. Sua du lieu do truoc khi migrate roi moi dat `scope_id NOT NULL`.
+4. `StartAuthorizedRun` luu scope sau khi da kiem membership, project/scope va `run.start` grant. Tat ca use case theo run tu do lay scope tu `runs.scope_id`; bo `ScopeID` do client cap khoi API `RunAgent` va cancel/read use case.
+5. Them `runs.request_key` va `runs.request_fingerprint`, unique partial tren `(project_id, created_by, request_key)` khi key khong null. `StartAuthorizedRun` tim/doi chieu key truoc khi tao run de HTTP retry khong tao run thu hai.
+6. Them `agent_attempts.request_key` va `agent_attempts.request_fingerprint`, unique partial tren `(agent_id, request_key)` khi key khong null. Tach API thanh tao agent va chay attempt tren agent da ton tai; nhieu retry cua lenh chay cung agent khong tao tool invocation moi.
+7. Khong tao queue/scheduler moi trong 7A. `RunAgent` van la server-hosted synchronous use case; client mo SSE sau khi co run ID va gui HTTP start-attempt tren ket noi rieng. CLI co the doc SSE dong thoi voi request do. Detached goroutine khong co durable ownership se khong duoc dung.
+8. Them app-level use cases nho, co authorization, thay vi handler goi truc tiep service truong:
 
-```text
-backend/internal/execution/
-├── invocation/     # mở rộng: StartInvocation (pending→running, started_at), ListStale, CancelByRun, MarkUnknown
-├── cancel/         # mới: policy cancel/reconcile (Service + Store port + Report types)
-└── sandbox/        # không đổi
-backend/internal/engine/
-├── runs/           # mở rộng: ListTasksByRun + CancelRun (cascade run/task/agent trong miền runs)
-└── agents/         # mở rộng: CancelRunningAttempts (running→cancelled)
-backend/internal/app/  # use case CancelRun + Reconcile; startup reconcile
-backend/cmd/server/    # gọi reconcile một lần khi khởi động
-backend/tests/architecture/  # thêm luật execution/cancel ↛ engine
-```
+   - `CreateRun(principal, projectID, scopeID, name, idempotency)`.
+   - `ListRuns` va `GetRunView(principal, runID)`.
+   - `CreateAgent(principal, runID, taskID, profile, idempotency)`.
+   - `RunAgentAttempt(principal, agentID, task, idempotency)`; scope va run duoc resolve server-side.
+   - `CancelAuthorizedRun(principal, runID)`; goi Phase 6 `CancelRun` sau khi authorize.
+   - `ListRunEvidence`, `ReadEvidence`, `ListRunFindings`, `GetFinding`; moi path deu kiem run/project/scope truoc khi tra metadata hay bytes.
 
-**Ports do nơi dùng sở hữu** (consumer-owned), `app` inject adapter:
+9. Ghi audit cho command transport `run.read`, `run.control`, evidence download va denial quan trong. `CancelRun` phai nhan actor cua principal cho audit; khong mac dinh ghi `CreatedBy` khi lenh den tu mot nguoi khac.
+10. Them test migration tren database that: backfill thanh cong, unambiguous/missing audit bi reject, run moi bat buoc scope, va idempotency key race chi tao mot row.
 
-```go
-// execution/cancel tự định nghĩa:
-type Store interface {
-    ListStaleInvocations(ctx context.Context, olderThan time.Time) ([]invocation.Invocation, error)
-    MarkUnknown(ctx context.Context, id uuid.UUID, version int) (invocation.Invocation, error)
-    CancelInvocationsByRun(ctx context.Context, runID uuid.UUID, from []invocation.Status, to invocation.Status) (int64, error)
-}
-```
+### 7A.2. External contracts truoc implementation
 
-**Chiều dependency bắt buộc:**
+1. Tao `contracts/openapi.yaml` la nguon contract duy nhat. Pin OpenAPI 3.1, API version `v1`, reusable UUID/time/pagination/problem schemas, security scheme Bearer OIDC, va operation ID on dinh.
+2. OpenAPI 7A chi mo cac resource co implementation va service ownership ro rang:
+
+   - `GET /healthz`.
+   - `GET /api/v1/projects`, `GET /api/v1/projects/{projectId}`, `GET /api/v1/projects/{projectId}/scopes` cho principal la member.
+   - `GET /api/v1/projects/{projectId}/runs` va `POST /api/v1/projects/{projectId}/runs`.
+   - `GET /api/v1/runs/{runId}`, `GET /api/v1/runs/{runId}/tasks`, `GET /api/v1/runs/{runId}/agents`.
+   - `POST /api/v1/runs/{runId}/agents`, `POST /api/v1/agents/{agentId}/attempts`, `POST /api/v1/runs/{runId}/cancel`.
+   - `GET /api/v1/runs/{runId}/evidence`, `GET /api/v1/evidence/{evidenceId}`, `GET /api/v1/evidence/{evidenceId}/content`.
+   - `GET /api/v1/runs/{runId}/findings`, `GET /api/v1/findings/{findingId}`.
+   - `GET /api/v1/runs/{runId}/events` cho SSE.
+
+3. `POST /agents/{agentId}/attempts` tra result sau khi attempt ket thuc, bao gom attempt, summary va ID finding/verdict neu co. HTTP request timeout khong duoc duoc dien giai la execution thanh cong; client phai dung run/attempt read va SSE de doi chieu ket qua.
+4. Evidence content response dung MIME type cua artifact, `Content-Disposition: attachment`, khong cache public, va tu choi artifact `secret` tru khi policy sau nay cap quyen ro rang. Phase 7A chi cho phep metadata/content da co; khong them upload endpoint.
+5. Tao `contracts/events/v1.schema.json` cho envelope bat bien: `schemaVersion`, `id`, `type`, `occurredAt`, `runId`, `data`. Payload 7A gioi han o `snapshot`, `run.updated`, `agent.updated`, `attempt.updated`, `finding.created`, `verdict.recorded`, `run.cancelled` va `heartbeat`. Khong gui evidence bytes, model conversation hay raw tool output.
+6. Them contract tests validate OpenAPI va event fixture bang schema, kiem operation ID unique, problem response cua handler va phat hien route khong nam trong contract. Chua generate client/server code tu OpenAPI trong 7A; hand-written DTO mapping giu handler mong va contract test la guard.
 
-- `execution/cancel` import **chỉ** `execution/invocation` (types) — không import `engine`/`api`/`app`. `invocation.Postgres` thoả `Store`.
-- `execution/invocation` giữ nguyên quy tắc hiện có (`↛ api/app/engine/agents`); vẫn được phép dùng `engine/runs` chỉ cho **type** của port `RunStateReader` (đã có từ Phase 4).
-- `engine/runs` + `engine/agents` không import `execution` (cascade do app dàn xếp).
-- `app` import tất cả và dựng `execution/cancel`, inject `Store = invocation.Postgres`.
-
----
-
-## 3. Migration 00013 — index cho stale scan
-
-Không cần bảng mới (mọi trạng thái đã có ở `tool_invocations` từ 00011). Chỉ thêm index phục vụ query stale:
-
-```sql
--- +goose Up
--- Domain: execution/cancel (đọc dữ liệu của execution/invocation)
-CREATE INDEX tool_invocations_pending_stale_idx
-    ON tool_invocations (created_at) WHERE status = 'pending';
-CREATE INDEX tool_invocations_running_stale_idx
-    ON tool_invocations (started_at) WHERE status IN ('dispatched','running');
-
--- +goose Down
-DROP INDEX IF EXISTS tool_invocations_pending_stale_idx;
-DROP INDEX IF EXISTS tool_invocations_running_stale_idx;
-```
-
-> Ghi chú: hai index partial phục vụ đúng hai nhánh stale (`pending` dùng `created_at`, `dispatched`/`running` dùng `started_at`). Không thay đổi CHECK/status vì enum đã chứa `cancelled`/`unknown`.
-
----
-
-## 4. `execution/invocation` — hoàn thiện trạng thái trung gian
-
-Hiện tại `Invoke` ghi `pending` rồi nhảy thẳng đến terminal (không đặt `started_at`), nên crash giữa chừng để lại `pending` không phân biệt được với "chưa dispatch".
-
-### 4.1. Repository (thêm 4 method)
-
-```go
-type Repository interface {
-    // ... existing ...
-    StartInvocation(ctx context.Context, id uuid.UUID, version int) (Invocation, error)
-    ListStaleInvocations(ctx context.Context, olderThan time.Time) ([]Invocation, error)
-    CancelInvocationsByRun(ctx context.Context, runID uuid.UUID, from []Status, to Status) (int64, error)
-    MarkUnknown(ctx context.Context, id uuid.UUID, version int) (Invocation, error)
-}
-```
-
-Queries (`queries/invocations.sql`):
-
-```sql
--- name: StartInvocation :one
-UPDATE tool_invocations SET status='running', started_at=now(), version=version+1, updated_at=now()
-WHERE id=$1 AND version=$2 AND status='pending'
-RETURNING <all columns>;
-
--- name: ListStaleInvocations :many
-SELECT <all columns> FROM tool_invocations
-WHERE (status='pending' AND created_at < $1)
-   OR (status IN ('dispatched','running') AND started_at < $1);
-
--- name: CancelInvocationsByRun :execrows
-UPDATE tool_invocations SET status=$3, finished_at=now(), version=version+1, updated_at=now()
-WHERE run_id=$1 AND status = ANY($2::text[]);
-
--- name: MarkUnknown :one
-UPDATE tool_invocations SET status='unknown', finished_at=now(), version=version+1, updated_at=now()
-WHERE id=$1 AND version=$2 AND status IN ('pending','dispatched','running')
-RETURNING <all columns>;
-```
-
-### 4.2. Service — luồng `Invoke`
-
-1. Validate → idempotency → run state → scope → grant → registry → budget (giữ nguyên Phase 4).
-2. Ghi `pending` (`CreateInvocation`).
-3. **Mới:** `StartInvocation(ctx, id, created.Version)` → `running` + `started_at`.
-4. Dispatch có timeout (giữ nguyên), thu kết quả, `UpdateResult` (giữ nguyên optimistic version).
-5. Khi context bị hủy trong lúc dispatch → kết quả impl là `cancelled`/`timed_out` → `UpdateResult` ghi terminal tương ứng (đã có). Trường hợp impl không kịp trả (panic/process chết) → để lại `running`, để `reconcile` xử lý (mục §5).
-
-`StartInvocation` và `UpdateResult` cùng lấy `FOR SHARE` lock trên run active trong statement SQL. Nếu cancellation đã ghi run `cancelled`, start/result update trả optimistic conflict; sweep cancellation giữ `running` ở `unknown`, không ghi `succeeded` sau cancel.
-
-### 4.3. Bất biến thêm
-
-- `Invoke` không bao giờ dispatch khi idempotency hit trả invocation `pending`/`dispatched`/`running`/`unknown`: trả về **rõ ràng** là "outcome chưa rõ" thay vì coi là xong.
-- Ghi `pending` lấy `FOR SHARE` lock trên run active trong cùng statement SQL; cancel và create được tuần tự hóa, nên cancel không bỏ sót invocation vừa được tạo.
-- `started_at` là nguồn cho stale detection của `dispatched`/`running`.
-
----
-
-## 5. `execution/cancel` — cancel + reconcile
-
-Package mới `backend/internal/execution/cancel/`, sở hữu **chính sách** hủy/đối soát. Files: `types.go` (Report), `service.go`, `service_test.go`.
-
-```go
-type Service struct { store Store; log *slog.Logger }
-func NewService(store Store, log *slog.Logger) *Service
-
-type CancelReport struct { Cancelled int64; Unknown int64 }
-type ReconcileReport struct { Reconciled int64; Skipped int64; Errors []error }
-```
-
-### 5.1. `CancelRun(ctx, runID) (CancelReport, error)`
-
-Áp dụng chính sách D1:
-1. `store.CancelInvocationsByRun(ctx, runID, []Status{pending, dispatched}, cancelled)`.
-2. `store.CancelInvocationsByRun(ctx, runID, []Status{running}, unknown)`.
-3. Trả report (`cancelled` count + `unknown` count).
-
-Lưu ý: không đụng terminal (`succeeded`/`failed`/`timed_out`/`denied`/`cancelled`/`unknown` đã tồn tại) — hủy chỉ chuyển các trạng thái còn đang dở.
-
-### 5.2. `Reconcile(ctx, olderThan time.Duration) (ReconcileReport, error)`
-
-1. `store.ListStaleInvocations(ctx, now- olderThan)`.
-2. Với mỗi invocation stale: `store.MarkUnknown(ctx, id, version)`.
-   - Nếu `MarkUnknown` báo `ErrOptimisticLock` (invocation vừa kết thúc trong lúc đối soát) → `Skipped++` (không đè trạng thái).
-   - Lỗi khác → gom vào `Errors` (không chặn toàn bộ batch).
-
-Idempotent: chạy nhiều lần chỉ tái xét các invocation còn non-terminal; lần sau không thấy gì mới.
-
-Unit test: fake `Store` — cancel hai mức đúng mapping; reconcile đánh `unknown` các stale, bỏ qua optimistic-lock, gom lỗi.
-
----
-
-## 6. `engine/runs` + `engine/agents` — cascade trong miền sở hữu
-
-### 6.1. `engine/runs`
-
-Thêm read `ListTasksByRun` (đối xứng `ListAgentsByRun` đã có) + use case miền `CancelRun`:
-
-```go
-func (s *Service) ListTasksByRun(ctx context.Context, runID uuid.UUID) ([]Task, error)
-
-// CancelRun transitions the run and its tasks/agents to cancelled. Idempotent
-// for an already-terminal run; returns counts.
-type RunCancelResult struct { RunCancelled bool; TasksCancelled int; AgentsCancelled int }
-func (s *Service) CancelRun(ctx context.Context, runID uuid.UUID) (RunCancelResult, error)
-```
-
-Luồng `CancelRun`:
-1. `GetRun`; nếu `cancelled`/`completed`/`budget_exhausted` → trả `RunCancelled=false` (idempotent).
-2. `TransitionRun(→ cancelled)`.
-3. `ListTasksByRun` + `ListAgentsByRun`; với mỗi task/agent non-terminal → compare-and-set `→ cancelled`. Bỏ qua optimistic-lock của từng phần tử, gom đếm. Nếu một lần cascade lỗi sau khi run đã `cancelled`, retry vẫn quét child non-terminal để hoàn tất cascade.
-
-### 6.2. `engine/agents`
-
-```go
-// CancelRunningAttempts marks all running attempts of an agent cancelled.
-func (s *Service) CancelRunningAttempts(ctx context.Context, agentID uuid.UUID) (int, error)
-```
-Luồng: `ListAttemptsByAgent` → với mỗi attempt `running` → compare-and-set `FinishAttempt(→ cancelled)`. Completion không được đè một attempt đã `cancelled`.
-
-> Hủy attempt chỉ đổi `agent_attempts`; việc chuyển `agent_instances` → `cancelled` thuộc `runs` (chủ sở hữu lifecycle), không làm ở đây.
-
----
-
-## 7. `app` — use case + config
-
-### 7.1. Use case `CancelRun` (app)
-
-`backend/internal/app/phase6_cancel.go`:
-
-```go
-type CancelRunResult struct {
-    RunID         uuid.UUID
-    TasksCancelled  int
-    AgentsCancelled int
-    AttemptsCancelled int
-    InvsCancelled  int64
-    InvsUnknown    int64
-}
-
-func (s *Services) CancelRun(ctx context.Context, runID uuid.UUID) (CancelRunResult, error)
-```
-
-Luồng (app dàn xếp xuyên module, mỗi module tự chuyển trạng thái của mình):
-1. `s.Runs.CancelRun(ctx, runID)` → run + tasks + agents `cancelled`.
-2. Với mỗi agent của run (lấy từ kết quả hoặc `ListAgentsByRun` trước đó): `s.Agents.CancelRunningAttempts(ctx, agent.ID)`.
-3. `s.cancel.CancelRun(ctx, runID)` → invocation `cancelled`/`unknown` (theo D1).
-4. `s.Audit.Record(... "run.cancel" ...)` (allow) — truy vết quyết định hủy.
-
-### 7.2. Use case `Reconcile` (app)
-
-```go
-func (s *Services) Reconcile(ctx context.Context) (cancel.ReconcileReport, error)
-```
-→ `s.cancel.Reconcile(ctx, s.cfg.Execution.ReconcileStaleAfter)`.
-
-### 7.3. Config
-
-`internal/app/config.go` — `ExecutionConfig` thêm:
-
-```go
-ReconcileStaleAfter time.Duration `yaml:"reconcile_stale_after"` // default 5m
-```
-
-Env `RAP_EXECUTION_RECONCILE_STALE_AFTER`; validate > 0. (Cập nhật `configs/app.example.yaml`, `cleanEnv` trong `config_test.go`.)
-
-### 7.4. Wiring (`wireServices`)
-
-```go
-svc.cancel = cancel.NewService(invocation.NewPostgres(dbtx), log) // Store = invocation repo
-```
-Thêm field `cancel *cancel.Service` (private) hoặc expose `CancelRun`/`Reconcile` qua `Services`.
-
----
-
-## 8. `cmd/server` — startup reconcile
-
-Sau khi `app.New(...)` thành công, trước khi `Serve`:
-
-```go
-if _, err := app.Services().Reconcile(ctx); err != nil {
-    log.Warn("startup reconcile failed", "error", err)  // không chặn khởi động
-}
-```
-
-Không chạy lại trên mỗi request; vòng lặp định kỳ để Phase 8.
-
----
-
-## 9. Tests
-
-- **Unit `execution/cancel`** (`service_test.go`, fake Store): mapping hai mức D1; reconcile đánh `unknown` stale, bỏ qua optimistic-lock, gom lỗi, idempotent.
-- **Unit `execution/invocation`** (`service_test.go` + `repository_test.go` memRepo): `StartInvocation` set `running` + `started_at` + bump version; `ListStaleInvocations`/`CancelInvocationsByRun`/`MarkUnknown` đúng; idempotency hit trả non-terminal đúng nghĩa.
-- **Unit `engine/runs`** (`service_test.go`): `CancelRun` idempotent cho run terminal; cascade task/agent non-terminal → cancelled.
-- **Unit `engine/agents`** (`service_test.go`): `CancelRunningAttempts` chỉ đổi attempt `running`.
-- **Concurrency:** cancel chạy giữa dispatch/create không để invocation mới dispatch sau cancel; attempt completion không được đè `cancelled`; retry cancel hoàn tất cascade partial.
-- **Integration (`internal/app`, opt-in `RAP_TEST_DATABASE_URL`)**:
-  - `TestPhase6ReconcileStale`: run + invoke `http_probe` succeeded → SQL update invocation về `running` với `started_at` cũ (giả lập crash) → `Services.Reconcile` → assert invocation `unknown`, không thành `succeeded`.
-  - `TestPhase6CancelRunCascade`: run+task+agent+attempt+running invocation → `Services.CancelRun` → assert run/task/agent `cancelled`, attempt `cancelled`, invocation `unknown` (vì running) và một invocation `pending` → `cancelled`.
-  - `TestPhase6IdempotencyNoRerun`: gọi lại `InvokeCapability` cùng `idempotency_key` khi invocation đang `unknown` → không dispatch mới, trả invocation `unknown` hiện có.
-- **Architecture** (`tests/architecture/imports_test.go`): thêm luật `execution/cancel ↛ engine` (chỉ import `execution/invocation`).
-
----
-
-## 10. CI
-
-- Giữ integration Phase 3/4/5/6 chung một job `raptix_test` + migrate (đã có). Reconcile/cancel không cần Docker.
-
----
-
-## 11. Verification checklist (acceptance)
-
-```bash
-cd backend
-gofmt -l internal tests
-~/go1.26/bin/staticcheck ./...
-~/go1.26/bin/go vet -mod=readonly ./...
-~/go1.26/bin/go build -mod=readonly ./...
-~/go1.26/bin/go test -race -mod=readonly -count=1 -timeout=300s ./...
-~/go1.26/bin/go mod verify
-/home/pat/go/bin/sqlc diff
-
-# live
-RAP_DATABASE_URL=... go run ./cmd/migrate -config ../configs/app.yaml -dir migrations -command up
-RAP_TEST_DATABASE_URL=... go test -race -count=1 -run "TestPhase6" ./internal/app/
-```
-
-Đối chiếu DB:
-- `tool_invocations` có `cancelled` (pending/dispatched) và `unknown` (running) đúng theo D1; không có `succeeded` sai.
-- `agent_attempts`/`agent_instances`/`tasks`/`runs` chuyển `cancelled` đầy đủ khi hủy.
-- Reconcile sau khi giả lập crash đưa invocation treo về `unknown`, `started_at` được đặt đúng ở bước dispatch.
-
----
-
-## 12. Gotchas
-
-- **`running` → `unknown`, không phải `cancelled`**: side effect ngoài đã/có thể xảy ra; `unknown` bắt buộc đối soát, không mặc nhiên kết luận.
-- **Reconcile phải optimistic-lock safe**: nếu invocation vừa kết thúc trong lúc đối soát, bỏ qua thay vì đè trạng thái.
-- **Startup reconcile non-fatal**: log warning, không chặn khởi động (server vẫn phải lên khi DB tạm lỗi).
-- **Không đè terminal**: cancel/reconcile chỉ chạm `pending`/`dispatched`/`running`.
-- **Idempotency vẫn chặn dispatch trùng** kể cả sau reconcile; `unknown` không được xử lý như `succeeded`.
-- **Cascade do app dàn xếp**, mỗi module tự chuyển trạng thái của mình — không join bảng chéo, không import ngược.
-- **`started_at` phải được đặt ở bước dispatch** (`StartInvocation`) để stale detection đúng.
-- **Mọi transition là state-aware:** version lock không thay thế predicate source state; terminal row không được restart hoặc bị reconcile đè.
-
----
-
-## 13. Thứ tự commit đề xuất
-
-1. Migration `00013` (index) + `execution/invocation` repository/queries/postgres: `StartInvocation`/`ListStale`/`CancelByRun`/`MarkUnknown` + memRepo + unit tests.
-2. `execution/cancel` Service + Store port + unit tests.
-3. `execution/invocation` service: chèn `StartInvocation` vào luồng `Invoke`, xử lý idempotency non-terminal; unit tests.
-4. `engine/runs` `ListTasksByRun` + `CancelRun`; `engine/agents` `CancelRunningAttempts`; unit tests.
-5. `app` config `ReconcileStaleAfter` + use case `CancelRun`/`Reconcile` + wiring `execution/cancel`; `cmd/server` startup reconcile.
-6. Integration tests (`TestPhase6*`) + architecture test + docs (`migration_manifest_v1.md` Phase 6, `AGENTS.md`, `README`, `configs/app.example.yaml`).
+### 7A.3. HTTP transport va security boundary
+
+1. Tach `internal/api/handlers`, `internal/api/middleware` va `internal/api/sse`; giu `api.Router` chi lam composition cua middleware va route. `app.New` inject public use-case facade va auth verifier vao router, khong inject pool vao handler ngoai health check.
+2. Middleware thu tu: request ID -> request tracking/drain -> panic recovery -> structured access log redacted -> authentication -> per-principal rate limit -> route authorization context. CORS/CSRF chi them khi co browser UI/session cookie; Bearer API 7A khong vo tinh mo CORS wildcard.
+3. Handler decode JSON co size limit, reject unknown fields, validate UUID/enum/length truoc service, doc principal tu context, map typed error sang problem response. Handler khong tu suy dien capability, scope hay status transition.
+4. Pagination va run view phai duoc bo sung bang module service/repository methods co cursor theo `(created_at, id)`, thay vi handler lay het danh sach roi cat. Su dung read DTO co IDs va status; khong expose internal error, storage key, grant snapshot hay secret.
+5. Rate limit la transport protection theo principal va IP, co cau hinh explicit. No khong thay the execution budget/governance; dung lenh do rate limit tra 429 truoc service side effect.
+6. Them HTTP integration tests voi `httptest` va PostgreSQL: no token 401, token valid khong member/grant 403, scope khac project 403/422, terminal run khong nhan agent, key retry an toan, cancel authorization, evidence ownership/sensitivity, pagination va error envelope.
+
+### 7A.4. SSE progress transport
+
+1. `internal/api/sse` cung cap hub in-memory theo run, ring buffer gioi han cau hinh, sequence tang don dieu va server epoch ngau nhien. Event ID co dang `<epoch>:<sequence>`; event cu tu epoch khac hoac da rot khoi buffer la gap.
+2. Ket noi `GET /runs/{runId}/events` phai authorize run truoc subscribe. Nhan `Last-Event-ID` hoac `cursor`; neu cursor lien tuc thi replay event con trong buffer, neu gap/server restart thi gui `snapshot` tu app read use case roi stream event moi.
+3. Response dung `text/event-stream`, `Cache-Control: no-cache`, flush sau moi event, heartbeat 15 giay, huy subscription khi request context ket thuc. RequestTracker hien co phai drain dung SSE; shutdown dong stream sach se va client reconnect/snapshot.
+4. Hub chi nhan event sau khi app use case hoan tat write thanh cong. No khong nam trong DB transaction va khong co lai de bao; missing event luon an toan vi snapshot authoritative. Phat event o ranh gioi create/cancel run, create agent, bat dau/ket thuc attempt, finding/verdict. Khong them callback tu tool implementation chi de phuc vu UI.
+5. SSE test phai cover authenticated subscription, event ordering trong mot epoch, reconnect replay, stale cursor snapshot fallback, heartbeat, cancellation, subscriber slow khong block command, va shutdown/restart snapshot fallback. Chay `go test -race` de bat race trong hub.
+
+### 7A.5. CLI la client duy nhat cua server
+
+1. Tao `backend/cmd/cli` va `internal/cli/{scan,run,view,completions}`. Dung Cobra/pflag, HTTP client co timeout va SSE parser; CLI khong import `app`, `engine`, `execution`, repository hay filesystem store.
+2. Binary ten `raptix`. Cau hinh client: `--server`/`RAP_API_URL`, `--token` hoac `RAP_API_TOKEN`, `--output table|json`, `--no-follow`; token khong ghi vao log, history hay JSON output. Co `raptix completion bash|zsh|fish`.
+3. Command 7A:
+
+   - `raptix run start --project ID --scope ID --name NAME --profile PROFILE --task TEXT` tao run, tao agent, mo SSE, gui start attempt tren request rieng va hien event/ket qua.
+   - `raptix run watch RUN_ID`, `raptix run status RUN_ID`, `raptix run cancel RUN_ID`.
+   - `raptix evidence list RUN_ID`, `raptix evidence get EVIDENCE_ID --out PATH`.
+   - `raptix finding list RUN_ID`, `raptix finding get FINDING_ID`.
+
+4. `--output json` in mot document ket qua, khong tron heartbeat/progress vao stdout; progress va diagnostic di stderr. Exit code phan biet validation/auth (2), remote/business failure (1), va context cancel (130).
+5. CLI `run start` phai tao mot idempotency key per side-effecting request va tai su dung no neu HTTP retry truoc khi co response. Khong tu retry `run control` theo cach tao attempt moi; khi state khong ro thi goi status/watch va bao nguoi dung.
+6. Test CLI bang fake HTTP/SSE server va contract fixtures: URL/token precedence, request headers/idempotency, streamed progress, reconnect snapshot, JSON output, remote problem mapping, Ctrl-C khong tu dong coi run la cancelled. Them mot E2E PostgreSQL test de CLI va HTTP client quan sat cung `run_id`.
+
+### 7A.6. Definition of done
+
+1. OpenAPI/event schemas, route implementation va fixtures dong bo; contract tests fail khi drift.
+2. OIDC-backed principal (va fake test adapter) la con duong duy nhat vao endpoint nghiep vu; actor body/header bypass khong ton tai.
+3. CLI co the tao mot run, tao/chay agent, watch SSE, xem evidence/finding va cancel chinh run do tren server. Khong co engine local hay state local.
+4. Cursor gap, server restart va slow client van tra ve snapshot dung; SSE event khong duoc coi la persistent truth.
+5. HTTP retry khong tao run/attempt/invocation thu hai; cancel va Phase 6 unknown semantics van dung.
+6. `go test -race -mod=readonly ./...`, `scripts/check.sh`, OpenAPI/event validation, SQLC generation/diff, gofmt va live PostgreSQL transport flow deu xanh.
+
+## Phase 8 - Review, report va background jobs
+
+### 8.1. Finding revision va review theo owner `workspace/findings`
+
+1. Phase 3 da co `findings.version` optimistic lock va `finding_review_history` status-only. Phase 8 mo rong, khong tao mot finding owner thu hai va khong dua status transition sang verifier/reporting.
+2. Them migration `00015_workspace_findings_revisions.sql`:
+
+   - `finding_revisions` la immutable snapshot cua title, description, severity, confidence, status, change reason, actor, created time va `revision_no` tang theo finding.
+   - `finding_revision_evidence` dong bang danh sach evidence ID + role cua tung revision. Report doc snapshot nay, khong doc lien ket finding dang song.
+   - `finding_verdicts` them `revision_no`/foreign key toi revision da duoc verifier kiem tra.
+   - `finding_review_history` them `from_revision_no` va `to_revision_no` de decision co the truy lai immutable input/output.
+   - Unique/index: `(finding_id, revision_no)`, history/verdict theo `(finding_id, revision_no, created_at DESC)`, va revision evidence theo `(finding_id, revision_no)`.
+
+3. Data migration seed mot revision `1` tu finding hien tai va evidence link hien tai, co reason `legacy baseline`. Khong duoc gia lap cac revision lich su ma schema Phase 3 khong luu. History/verdict cu giu lai va duoc danh dau legacy khi khong the gan revision chinh xac.
+4. `findings.version` van la optimistic lock cua aggregate. Moi sua content, severity/confidence, evidence set hoac status decision deu yeu cau expected version, tang version, tao immutable revision moi va ghi history phu hop trong mot transaction. `LinkEvidence` khong con la mutation public khong co revision; API dung request revise co full evidence set/reason.
+5. `workspace/verifier` lay va giu finding revision no truoc khi check. `RecordVerdict` tu choi neu revision khong ton tai; verdict cua revision cu van la evidence lich su, nhung khong duoc tu dong quyet dinh status cua revision moi.
+6. Them public service methods: get current/revision, list revisions, revise finding, review finding, va report input snapshot. Reporting chi goi public read contract cua findings/evidence; khong import storegen hay query bang module khac.
+7. App use case `ReviewFinding(principal, findingID, expectedVersion, decision, reason)` resolve run/scope tu finding, kiem `finding.review`, goi findings service va audit actor/reason/outcome. Verifier van chi ghi verdict.
+8. Test race cho hai reviewer cung version, edit-evidence so voi review, verdict den muon cho revision cu, transition illegal, va migration legacy. Ket qua can dam bao khong history/revision nao duoc ghi nua voi optimistic-lock failure.
+
+### 8.2. Report snapshot va template content
+
+1. Tao `workspace/reporting` voi types, service, repository, `queries/`, Postgres adapter va sqlc output rieng. No so huu `report_requests`, immutable snapshot va business status `queued`, `rendering`, `completed`, `failed`, `cancelled`.
+2. Phase 8 report scope la **mot run**. `CreateReport` nhan `run_id`, template reference/version va request idempotency; project/scope duoc resolve tu run. Bao cao cross-run/project la scope sau, khong tu y join cac run trong Phase 8.
+3. Migration `00016_workspace_reporting.sql` tao:
+
+   - `report_requests`: ID, run ID, requested by, template ID/version/hash, request key/fingerprint, status, output artifact ID nullable, error code safe, render lease/attempt metadata, timestamps va optimistic version.
+   - `report_snapshots`: mot row bat bien cho moi request, JSONB canonical chua finding revision IDs/noi dung, evidence IDs/checksum/provenance can thiet, verdicts, run metadata va template digest.
+   - Unique partial `(run_id, requested_by, request_key)` va unique `report_request_id` tren snapshot/output linkage de retry khong tao report business thu hai.
+
+4. `CreateReport` goi report-input contracts cua findings/evidence de copy du lieu da version hoa vao JSON snapshot. Sau khi snapshot duoc tao, revision/finding/evidence moi khong thay doi output cua report do. Khong giu DB transaction trong luc render template hay ghi file lon.
+5. Tao content declarative o `content/templates/findings/` va `content/templates/reports/`: manifest co ID, version, MIME, input schema, hash va body Markdown. Renderer dung template engine gioi han, khong co filesystem/network/shell function, chi nhan report snapshot DTO. Template loader validate schema va snapshot version/hash vao report request.
+6. Report output la artifact `derived`, MIME `text/markdown`, parser/template version ro rang va provenance toi snapshot. Renderer dang ky artifact qua `workspace/evidence`; `FinalizeReport` compare-and-set output artifact mot lan. Retry gap output da ton tai thi return success/no-op, khong tao report request moi; artifact metadata du thua neu crash duoc danh dau orphan va don bang maintenance job, khong lam thay doi business result.
+7. API Phase 8 them `POST /api/v1/runs/{runId}/reports`, `GET /api/v1/reports/{reportId}`, `GET /api/v1/reports/{reportId}/content`; finding them `GET /findings/{id}/revisions`, `POST /findings/{id}/revisions`, `POST /findings/{id}/reviews`. Cac POST dung idempotency/expected version; content report di qua evidence authorization va `report.read`.
+8. CLI Phase 8 them `raptix finding revise`, `raptix finding review`, `raptix report create`, `raptix report watch`, `raptix report get`. UI de lai; OpenAPI/SSE la contract duy nhat UI se dung sau.
+
+### 8.3. River va job reliability
+
+1. Them River dependency phu hop `pgx/v5`. Tao `internal/infrastructure/jobs` la adapter duy nhat biet River client, worker registration, payload version, retry policy va lifecycle start/stop. Domain package khong import River types.
+2. Mo rong `cmd/migrate` de chay application goose migrations va River schema migration nhu release step rieng, bao cao status cua ca hai. `cmd/server` tuyet doi khong auto-migrate. Down/status phai xu ly ordering ro rang va test tren DB rong/cap nhat.
+3. `app` wire River client va worker registry sau khi services da san sang; `cmd/server` start worker cung process server va shutdown worker co context truoc khi dong DB/artifact store. `cmd/cli` va `cmd/migrate` khong start worker.
+4. Report creation thuc hien trong mot PostgreSQL transaction ngan: persist request + snapshot + enqueue River args `{version, reportRequestID}`. Neu enqueue fail thi request/snapshot rollback; neu commit thanh cong job luon co the nhan biet request. Khong dung in-memory goroutine thay cho enqueue.
+5. Report worker chi goi `reporting.Render(requestID)`. Service claim request bang compare-and-set va lease co han; completed/cancelled la no-op. Worker retry sau crash chi reacquire lease het han va render immutable snapshot, khong tao request moi, khong goi tool/model va khong replay agent attempt.
+6. Loi render co the retry theo policy River khi transitory. Loi template/input khong hop le danh dau request `failed` voi safe error code va khong retry vo han. Huy report chi hop le khi chua completed; worker kiem status truoc finalize.
+7. Theo doi job attempt bang River, business status bang reporting. Dashboard/log co the lien ket job ID voi report ID, nhung khong duoc dung job retry count de suy ra report da hoan thanh.
+8. Test PostgreSQL/River: create hai request cung key, crash sau enqueue, crash sau render truoc finalize, lease expiry, River retry, duplicate delivery, cancelled request, completed request redelivery va concurrent worker. Moi case phai ket thuc voi toi da mot `report_requests` business result va toi da mot output artifact duoc link.
+
+### 8.4. Periodic reconcile va event mo rong
+
+1. Phase 6 giu one-shot reconcile khi startup. Phase 8 them periodic loop trong `infrastructure/jobs` hoac server-owned scheduler dang ky qua `app`; no goi public `Services.Reconcile`, khong query `tool_invocations` truc tiep.
+2. Cau hinh them `execution.reconcile_interval` va `RAP_EXECUTION_RECONCILE_INTERVAL`; validate positive, mac dinh thuc dung dai hon `reconcile_stale_after`, co jitter nho, chi mot loop moi server process, va shutdown theo context. Chay that bai chi log/metric va thu lai chu ky sau; khong chay nhieu goroutine sau moi loi.
+3. Reconcile van chi mark stale invocation `unknown`, khong dispatch lai. Event/metric chi thong bao summary da reconcile; khong expose tool input/output. Test fake clock + real Postgres xac nhan periodic call idempotent, khong chay sau shutdown va khong de result muon bi ghi de.
+4. Bo sung event schema/publisher `finding.revised`, `finding.reviewed`, `report.queued`, `report.rendering`, `report.completed`, `report.failed`. Nhu 7A, SSE event la advisory; reconnect luon doc report/finding snapshot qua API.
+
+### 8.5. Definition of done
+
+1. Reviewer co the xem revision, sua finding tren expected version, ghi decision co reason va xem history/verdict gan dung revision. Verifier khong tu doi finding status.
+2. Tao report tu mot run tao immutable snapshot va template digest; thay doi finding/template sau do khong doi artifact report cu.
+3. River retry/crash/duplicate delivery khong tao report request hay output link business thu hai, khong chay agent/tool lai, va khong giu DB transaction trong render/file I/O.
+4. Periodic reconcile chay trong server, tuan thu Phase 6 `unknown` semantics va dung sach khi shutdown.
+5. API/CLI contract tests, migration upgrade tests, River integration tests, `go test -race -mod=readonly ./...`, `scripts/check.sh`, `sqlc diff`, `go vet`, `staticcheck`, `gofmt -l` va `git diff --check` deu xanh.
+
+## Thu tu thuc hien va ranh gioi thay doi de xuat
+
+1. Phase 7A.1: migration scope/idempotency, run-bound authorization facade, tests migration va service. Day la hard gate truoc moi route public.
+2. Phase 7A.2: OpenAPI/event contracts + validation fixtures; review contract truoc handler.
+3. Phase 7A.3: auth/middleware/handlers/read pagination + HTTP integration tests.
+4. Phase 7A.4: SSE hub, snapshot fallback, race/shutdown tests.
+5. Phase 7A.5: CLI client + fake-server tests + one end-to-end shared-run test.
+6. Phase 8.1: immutable finding revisions/verdict binding/review use case + migration and concurrency tests.
+7. Phase 8.2: reporting aggregate, template validation/renderer, OpenAPI/CLI contracts.
+8. Phase 8.3: River migration integration, transactional enqueue, report worker and failure-injection tests.
+9. Phase 8.4: periodic reconcile, SSE additions, full integration/reliability pass.
+
+Moi buoc chi commit khi verification cua buoc do xanh. Khong gop UI vao bat ky buoc nao; khi web code duoc cung cap, bat dau Phase 7B bang cach consume OpenAPI va SSE fixtures da khoa, khong tao transport/business path moi.

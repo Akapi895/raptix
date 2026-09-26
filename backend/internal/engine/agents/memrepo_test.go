@@ -42,9 +42,22 @@ func (m *memRepo) CreateAttempt(ctx context.Context, p CreateAttemptParams) (Att
 	}
 	id := m.newID()
 	now := nowUTC()
-	a := Attempt{ID: id, AgentID: p.AgentID, AttemptNo: no, Status: AttemptRunning, StartedAt: &now, CreatedAt: now, UpdatedAt: now}
+	a := Attempt{ID: id, AgentID: p.AgentID, AttemptNo: no, Status: AttemptRunning, RequestKey: p.RequestKey, RequestFingerprint: p.RequestFingerprint, StartedAt: &now, CreatedAt: now, UpdatedAt: now}
 	m.attempts[id] = a
 	return a, nil
+}
+
+func (m *memRepo) CreateOrGetAttempt(ctx context.Context, p CreateAttemptParams) (CreateAttemptResult, error) {
+	for _, attempt := range m.attempts {
+		if p.RequestKey != "" && attempt.AgentID == p.AgentID && attempt.RequestKey == p.RequestKey {
+			if attempt.RequestFingerprint != p.RequestFingerprint {
+				return CreateAttemptResult{}, &ErrRequestConflict{RequestKey: p.RequestKey}
+			}
+			return CreateAttemptResult{Attempt: attempt}, nil
+		}
+	}
+	attempt, err := m.CreateAttempt(ctx, p)
+	return CreateAttemptResult{Attempt: attempt, Created: err == nil}, err
 }
 
 func (m *memRepo) GetAttempt(ctx context.Context, id uuid.UUID) (Attempt, error) {

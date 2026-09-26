@@ -2,6 +2,9 @@ package app
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -18,10 +21,11 @@ const CapabilityRunStart = "run.start"
 // StartRunParams carries the caller-provided, already-authenticated request to
 // create a run. Scope is the engagement scope the run operates under.
 type StartRunParams struct {
-	ProjectID uuid.UUID
-	ScopeID   uuid.UUID
-	Actor     string
-	Name      string
+	ProjectID  uuid.UUID
+	ScopeID    uuid.UUID
+	Actor      string
+	Name       string
+	RequestKey string
 }
 
 // ErrRunUnauthorized reports that a run start was denied by the minimum
@@ -105,9 +109,19 @@ func (s *Services) StartAuthorizedRun(ctx context.Context, p StartRunParams) (ru
 		return denied(fmt.Sprintf("%s has no active %s grant in scope %s", p.Actor, CapabilityRunStart, p.ScopeID))
 	}
 
-	run, err := s.Runs.StartRun(ctx, p.ProjectID, p.Name, p.Actor)
+	var run runs.Run
+	created := true
+	if strings.TrimSpace(p.RequestKey) == "" {
+		run, err = s.Runs.StartRun(ctx, p.ProjectID, p.ScopeID, p.Name, p.Actor)
+	} else {
+		result, startErr := s.Runs.StartIdempotentRun(ctx, p.ProjectID, p.ScopeID, p.Name, p.Actor, p.RequestKey, requestFingerprint(p.ProjectID, p.ScopeID, p.Actor, p.Name))
+		run, created, err = result.Run, result.Created, startErr
+	}
 	if err != nil {
 		return runs.Run{}, err
+	}
+	if !created {
+		return run, nil
 	}
 	if _, err := s.Audit.Record(ctx, audit.Record{
 		Actor:       p.Actor,
@@ -123,6 +137,15 @@ func (s *Services) StartAuthorizedRun(ctx context.Context, p StartRunParams) (ru
 		return run, fmt.Errorf("run %s started but its audit record failed: %w", run.ID, err)
 	}
 	return run, nil
+}
+
+func requestFingerprint(values ...any) string {
+	b, err := json.Marshal(values)
+	if err != nil {
+		panic(fmt.Sprintf("marshal idempotency fingerprint: %v", err))
+	}
+	sum := sha256.Sum256(b)
+	return hex.EncodeToString(sum[:])
 }
 
 // auditActor substitutes a placeholder for an empty actor so an input-validation

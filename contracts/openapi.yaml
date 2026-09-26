@@ -1,0 +1,1148 @@
+openapi: 3.1.0
+info:
+  title: Raptix API
+  version: v1
+  description: |
+    Phase 7A server API. Business endpoints require a verified Bearer OIDC JWT.
+    The authenticated principal is derived from the token; actor fields and actor
+    headers are not accepted. SSE is advisory progress transport: clients must
+    re-read HTTP resources after a reconnect or a cursor gap.
+servers:
+  - url: /
+security:
+  - bearerOidc: []
+x-capabilities:
+  - run.start
+  - run.read
+  - run.control
+  - evidence.read
+  - finding.read
+  - finding.review
+  - report.create
+  - report.read
+x-problem-status-mapping:
+  '400': malformed request or input validation failure
+  '401': unauthenticated
+  '403': authorization or current grant denial
+  '404': missing resource or resource not disclosed to the principal
+  '409': optimistic-lock conflict or idempotency key reused with a different payload
+  '422': invalid business transition
+  '429': rate limited
+  '503': required dependency unavailable
+paths:
+  /healthz:
+    get:
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Service is ready.
+          content:
+            text/plain:
+              schema:
+                type: string
+                const: ok
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/projects:
+    get:
+      operationId: listProjects
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      x-authorization: project membership
+      responses:
+        '200':
+          description: Projects visible to the authenticated principal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/projects/{projectId}:
+    parameters:
+      - $ref: '#/components/parameters/ProjectID'
+    get:
+      operationId: getProject
+      x-authorization: project membership
+      responses:
+        '200':
+          description: Project visible to the authenticated principal.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/projects/{projectId}/scopes:
+    parameters:
+      - $ref: '#/components/parameters/ProjectID'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+    get:
+      operationId: listProjectScopes
+      x-authorization: project membership
+      responses:
+        '200':
+          description: Scopes for a visible project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScopeList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/projects/{projectId}/runs:
+    parameters:
+      - $ref: '#/components/parameters/ProjectID'
+    get:
+      operationId: listProjectRuns
+      x-required-capability: run.read
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Runs for a visible project.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RunList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+    post:
+      operationId: createRun
+      x-required-capability: run.start
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRunRequest'
+      responses:
+        '201':
+          description: Run created, or the original result of an idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+    get:
+      operationId: getRun
+      x-required-capability: run.read
+      responses:
+        '200':
+          description: Run view.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/tasks:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+    get:
+      operationId: listRunTasks
+      x-required-capability: run.read
+      responses:
+        '200':
+          description: Tasks for a visible run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/agents:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+    get:
+      operationId: listRunAgents
+      x-required-capability: run.read
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: Agents for a visible run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+    post:
+      operationId: createRunAgent
+      x-required-capability: run.control
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateAgentRequest'
+      responses:
+        '201':
+          description: Agent created, or the original result of an idempotent retry.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Agent'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/agents/{agentId}/attempts:
+    parameters:
+      - $ref: '#/components/parameters/AgentID'
+    post:
+      operationId: runAgentAttempt
+      x-required-capability: run.control
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RunAgentAttemptRequest'
+      responses:
+        '200':
+          description: Completed attempt result, or the original result of an idempotent retry. A request timeout does not establish execution success; use the run view and event stream to reconcile state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AttemptResult'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+    post:
+      operationId: cancelRun
+      x-required-capability: run.control
+      responses:
+        '200':
+          description: Current run state after an idempotent cancellation request. Cancellation never retries execution.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Run'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/evidence:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+    get:
+      operationId: listRunEvidence
+      x-required-capability: evidence.read
+      responses:
+        '200':
+          description: Evidence metadata for a visible run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/evidence/{evidenceId}:
+    parameters:
+      - $ref: '#/components/parameters/EvidenceID'
+    get:
+      operationId: getEvidence
+      x-required-capability: evidence.read
+      responses:
+        '200':
+          description: Evidence metadata. Storage keys and bytes are never included.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Evidence'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/evidence/{evidenceId}/content:
+    parameters:
+      - $ref: '#/components/parameters/EvidenceID'
+    get:
+      operationId: downloadEvidenceContent
+      x-required-capability: evidence.read
+      responses:
+        '200':
+          description: Existing non-secret artifact content. The response uses the artifact MIME type, Content-Disposition attachment, and Cache-Control no-store; it is never publicly cacheable.
+          headers:
+            Content-Disposition:
+              required: true
+              schema:
+                type: string
+                pattern: '^attachment;'
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                const: no-store
+          content:
+            '*/*':
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/findings:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+    get:
+      operationId: listRunFindings
+      x-required-capability: finding.read
+      responses:
+        '200':
+          description: Findings for a visible run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindingList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/findings/{findingId}:
+    parameters:
+      - $ref: '#/components/parameters/FindingID'
+    get:
+      operationId: getFinding
+      x-required-capability: finding.read
+      responses:
+        '200':
+          description: Finding for a visible run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Finding'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/findings/{findingId}/revisions:
+    parameters:
+      - $ref: '#/components/parameters/FindingID'
+      - $ref: '#/components/parameters/Limit'
+      - $ref: '#/components/parameters/Cursor'
+    get:
+      operationId: listFindingRevisions
+      x-required-capability: finding.read
+      responses:
+        '200':
+          description: Immutable finding revisions, newest first.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FindingRevisionList'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+    post:
+      operationId: reviseFinding
+      x-required-capability: finding.review
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviseFindingRequest'
+      responses:
+        '200':
+          description: Finding after the new immutable revision was recorded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Finding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/findings/{findingId}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/FindingID'
+    post:
+      operationId: reviewFinding
+      x-required-capability: finding.review
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewFindingRequest'
+      responses:
+        '200':
+          description: Finding after the review decision. Findings remains the only owner of status transitions.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Finding'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/Unprocessable'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/reports:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+    post:
+      operationId: createReport
+      x-required-capability: report.create
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report request created with an immutable snapshot, or the existing single report for the run.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/reports/{reportId}:
+    parameters:
+      - $ref: '#/components/parameters/ReportID'
+    get:
+      operationId: getReport
+      x-required-capability: report.read
+      responses:
+        '200':
+          description: Report request and publication state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Report'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/reports/{reportId}/content:
+    parameters:
+      - $ref: '#/components/parameters/ReportID'
+    get:
+      operationId: downloadReportContent
+      x-required-capability: report.read
+      responses:
+        '200':
+          description: Published report Markdown. Only available once the report is completed.
+          headers:
+            Content-Disposition:
+              required: true
+              schema:
+                type: string
+                pattern: '^attachment;'
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                const: no-store
+          content:
+            text/markdown:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+  /api/v1/runs/{runId}/events:
+    parameters:
+      - $ref: '#/components/parameters/RunID'
+      - $ref: '#/components/parameters/EventCursor'
+      - $ref: '#/components/parameters/LastEventID'
+    get:
+      operationId: streamRunEvents
+      x-required-capability: run.read
+      responses:
+        '200':
+          description: |
+            Authorized SSE stream. Event IDs are `<epoch>:<sequence>`. Last-Event-ID
+            or cursor requests replay only a contiguous buffer; a gap or a changed
+            server epoch starts with a snapshot event. The stream sends a heartbeat
+            event at least every 15 seconds while idle.
+          headers:
+            Cache-Control:
+              required: true
+              schema:
+                type: string
+                const: no-cache
+          content:
+            text/event-stream:
+              schema:
+                $ref: './events/v1.schema.json'
+        '401':
+          $ref: '#/components/responses/Unauthenticated'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '503':
+          $ref: '#/components/responses/DependencyUnavailable'
+components:
+  securitySchemes:
+    bearerOidc:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer OIDC JWT verified for issuer, audience, signature, and expiry.
+  parameters:
+    ProjectID:
+      name: projectId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    RunID:
+      name: runId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    TaskID:
+      name: taskId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    AgentID:
+      name: agentId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    EvidenceID:
+      name: evidenceId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    FindingID:
+      name: findingId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    ReportID:
+      name: reportId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/UUID'
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Defaults to 50 and may not exceed 100.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Opaque cursor returned by a prior list response.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 512
+    EventCursor:
+      name: cursor
+      in: query
+      required: false
+      description: SSE event ID cursor. Last-Event-ID takes equivalent precedence when supplied by the client.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9_-]{1,64}:[1-9][0-9]*$'
+    LastEventID:
+      name: Last-Event-ID
+      in: header
+      required: false
+      description: SSE replay cursor. Equivalent to the cursor query parameter.
+      schema:
+        type: string
+        pattern: '^[A-Za-z0-9_-]{1,64}:[1-9][0-9]*$'
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Reuse only for a retry of the identical request. Reusing a key with a different payload returns 409.
+      schema:
+        type: string
+        pattern: '^[\x20-\x7E]{1,128}$'
+  responses:
+    BadRequest:
+      description: Malformed or invalid request input.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unauthenticated:
+      description: Missing or invalid bearer token.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Forbidden:
+      description: Principal lacks membership or a current capability grant.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    NotFound:
+      description: Resource is missing or is not disclosed to this principal.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Conflict:
+      description: Optimistic-lock conflict or idempotency key reused with a different payload.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    Unprocessable:
+      description: Requested business transition is invalid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    DependencyUnavailable:
+      description: A required dependency is unavailable.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+    RateLimited:
+      description: Request rate limit exceeded.
+      headers:
+        Retry-After:
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+  schemas:
+    UUID:
+      type: string
+      format: uuid
+    Timestamp:
+      type: string
+      format: date-time
+      description: RFC 3339 UTC timestamp.
+    NullableTimestamp:
+      oneOf:
+        - $ref: '#/components/schemas/Timestamp'
+        - type: 'null'
+    Problem:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, code, detail, requestId]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+          description: Stable problem type URI.
+        title:
+          type: string
+          minLength: 1
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        code:
+          type: string
+          minLength: 1
+          maxLength: 128
+          description: Stable machine-readable application error code.
+        detail:
+          type: string
+          minLength: 1
+        requestId:
+          type: string
+          minLength: 1
+          maxLength: 128
+        invalidParams:
+          type: array
+          items:
+            $ref: '#/components/schemas/InvalidParam'
+    InvalidParam:
+      type: object
+      additionalProperties: false
+      required: [name, reason]
+      properties:
+        name:
+          type: string
+          minLength: 1
+        reason:
+          type: string
+          minLength: 1
+    Project:
+      type: object
+      additionalProperties: false
+      required: [id, name, slug, status, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        name: { type: string, minLength: 1, maxLength: 256 }
+        slug: { type: string, pattern: '^[a-z0-9][a-z0-9-]{0,62}$' }
+        status: { type: string, enum: [active, archived] }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }
+    Scope:
+      type: object
+      additionalProperties: false
+      required: [id, projectId, version, assetTypes, include, exclude, expiresAt, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        projectId: { $ref: '#/components/schemas/UUID' }
+        version: { type: integer, minimum: 1 }
+        assetTypes:
+          type: array
+          items: { type: string, minLength: 1 }
+        include:
+          type: array
+          items: { type: string, minLength: 1 }
+        exclude:
+          type: array
+          items: { type: string, minLength: 1 }
+        expiresAt: { $ref: '#/components/schemas/NullableTimestamp' }
+        approvalNote:
+          type: [string, 'null']
+          maxLength: 4096
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+    Run:
+      type: object
+      additionalProperties: false
+      required: [id, projectId, scopeId, name, status, version, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        projectId: { $ref: '#/components/schemas/UUID' }
+        scopeId: { $ref: '#/components/schemas/UUID' }
+        name: { type: string, minLength: 1, maxLength: 256 }
+        status: { type: string, enum: [queued, running, paused, cancelled, completed, budget_exhausted] }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }
+    Task:
+      type: object
+      additionalProperties: false
+      required: [id, runId, name, status, version, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        runId: { $ref: '#/components/schemas/UUID' }
+        name: { type: string, minLength: 1, maxLength: 4096 }
+        status: { type: string, enum: [queued, running, paused, cancelled, completed, budget_exhausted] }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }
+    Agent:
+      type: object
+      additionalProperties: false
+      required: [id, runId, taskId, profile, status, version, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        runId: { $ref: '#/components/schemas/UUID' }
+        taskId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+        profile: { type: string, minLength: 1, maxLength: 256 }
+        status: { type: string, enum: [paused, running, completed, failed, cancelled] }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }
+    Attempt:
+      type: object
+      additionalProperties: false
+      required: [id, agentId, attemptNo, status, startedAt, finishedAt, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        agentId: { $ref: '#/components/schemas/UUID' }
+        attemptNo: { type: integer, minimum: 1 }
+        status: { type: string, enum: [running, succeeded, failed, timed_out, cancelled] }
+        startedAt: { $ref: '#/components/schemas/NullableTimestamp' }
+        finishedAt: { $ref: '#/components/schemas/NullableTimestamp' }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }
+    Evidence:
+      type: object
+      additionalProperties: false
+      required: [id, runId, kind, mime, size, sha256, schemaVersion, parserVersion, sensitivity, parentId, relationshipType, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        runId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+        kind: { type: string, enum: [raw, derived] }
+        mime: { type: string, minLength: 1, maxLength: 255 }
+        size: { type: integer, minimum: 0 }
+        sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+        schemaVersion: { type: string, maxLength: 128 }
+        parserVersion: { type: string, maxLength: 128 }
+        sensitivity: { type: string, enum: [low, medium, high, secret] }
+        parentId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+        relationshipType: { type: string, maxLength: 128 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+    Finding:
+      type: object
+      additionalProperties: false
+      required: [id, runId, title, description, severity, confidence, status, version, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        runId: { $ref: '#/components/schemas/UUID' }
+        title: { type: string, minLength: 1, maxLength: 512 }
+        description: { type: string, minLength: 1, maxLength: 65536 }
+        severity: { type: string, enum: [none, low, medium, high, critical] }
+        confidence: { type: string, enum: [low, medium, high] }
+        status: { type: string, enum: [draft, reviewed, confirmed, rejected, inconclusive] }
+        version: { type: integer, minimum: 1 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }
+    Verdict:
+      type: object
+      additionalProperties: false
+      required: [id, findingId, verdict, reason, createdAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        findingId: { $ref: '#/components/schemas/UUID' }
+        verdict: { type: string, enum: [confirmed, refuted, inconclusive] }
+        reason: { type: string, minLength: 1, maxLength: 4096 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+    CreateRunRequest:
+      type: object
+      additionalProperties: false
+      required: [scopeId, name]
+      properties:
+        scopeId: { $ref: '#/components/schemas/UUID' }
+        name: { type: string, minLength: 1, maxLength: 256 }
+    CreateAgentRequest:
+      type: object
+      additionalProperties: false
+      required: [profile]
+      properties:
+        taskId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+        profile: { type: string, minLength: 1, maxLength: 256 }
+    RunAgentAttemptRequest:
+      type: object
+      additionalProperties: false
+      required: [task]
+      properties:
+        task: { type: string, minLength: 1, maxLength: 16384 }
+    AttemptResult:
+      type: object
+      additionalProperties: false
+      required: [attempt, summary, findingId, verdictId]
+      properties:
+        attempt: { $ref: '#/components/schemas/Attempt' }
+        summary: { type: string, maxLength: 16384 }
+        findingId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+        verdictId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+    ProjectList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Project' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    ScopeList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Scope' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    RunList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Run' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    TaskList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Task' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    AgentList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Agent' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    EvidenceList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Evidence' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    FindingList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Finding' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    EvidenceRef:
+      type: object
+      additionalProperties: false
+      required: [evidenceId, role]
+      properties:
+        evidenceId: { $ref: '#/components/schemas/UUID' }
+        role: { type: string, enum: [supporting, refuting, context] }
+    FindingRevision:
+      type: object
+      additionalProperties: false
+      required: [findingId, revisionNo, title, description, severity, confidence, status, changeReason, actor, evidence, createdAt]
+      properties:
+        findingId: { $ref: '#/components/schemas/UUID' }
+        revisionNo: { type: integer, minimum: 1 }
+        title: { type: string, minLength: 1, maxLength: 512 }
+        description: { type: string, maxLength: 65536 }
+        severity: { type: string, enum: [none, low, medium, high, critical] }
+        confidence: { type: string, enum: [low, medium, high] }
+        status: { type: string, enum: [draft, reviewed, confirmed, rejected, inconclusive] }
+        changeReason: { type: string, maxLength: 4096 }
+        actor: { type: string, maxLength: 256 }
+        evidence:
+          type: array
+          items: { $ref: '#/components/schemas/EvidenceRef' }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+    FindingRevisionList:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/FindingRevision' }
+        nextCursor: { type: [string, 'null'], maxLength: 512 }
+    ReviseFindingRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, title, severity, confidence, evidence, reason]
+      properties:
+        expectedVersion: { type: integer, minimum: 1 }
+        title: { type: string, minLength: 1, maxLength: 512 }
+        description: { type: string, maxLength: 65536 }
+        severity: { type: string, enum: [none, low, medium, high, critical] }
+        confidence: { type: string, enum: [low, medium, high] }
+        evidence:
+          type: array
+          items: { $ref: '#/components/schemas/EvidenceRef' }
+        reason: { type: string, minLength: 1, maxLength: 4096 }
+    ReviewFindingRequest:
+      type: object
+      additionalProperties: false
+      required: [expectedVersion, decision, reason]
+      properties:
+        expectedVersion: { type: integer, minimum: 1 }
+        decision: { type: string, enum: [reviewed, confirmed, rejected, inconclusive] }
+        reason: { type: string, minLength: 1, maxLength: 4096 }
+    CreateReportRequest:
+      type: object
+      additionalProperties: false
+      required: [templateId, templateVersion]
+      properties:
+        templateId: { type: string, minLength: 1, maxLength: 128 }
+        templateVersion: { type: string, minLength: 1, maxLength: 64 }
+    Report:
+      type: object
+      additionalProperties: false
+      required: [id, runId, templateId, templateVersion, templateHash, status, version, createdAt, updatedAt]
+      properties:
+        id: { $ref: '#/components/schemas/UUID' }
+        runId: { $ref: '#/components/schemas/UUID' }
+        templateId: { type: string, minLength: 1, maxLength: 128 }
+        templateVersion: { type: string, minLength: 1, maxLength: 64 }
+        templateHash: { type: string, pattern: '^[0-9a-f]{64}$' }
+        status: { type: string, enum: [queued, rendering, completed, failed, cancelled] }
+        version: { type: integer, minimum: 1 }
+        outputArtifactId:
+          oneOf:
+            - $ref: '#/components/schemas/UUID'
+            - type: 'null'
+        failureCode: { type: string, maxLength: 128 }
+        failureMessage: { type: string, maxLength: 4096 }
+        createdAt: { $ref: '#/components/schemas/Timestamp' }
+        updatedAt: { $ref: '#/components/schemas/Timestamp' }

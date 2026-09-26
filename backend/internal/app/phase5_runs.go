@@ -16,16 +16,15 @@ import (
 
 // RunAgentParams is the caller request to run an agent attempt. When AgentID is
 // zero an agent instance is created from Profile; otherwise the existing agent
-// is used. Scope and actor are required because execution re-checks the grant at
-// dispatch (runs does not store the scope).
+// is used. The scope is derived from the persisted run before dispatch.
 type RunAgentParams struct {
-	RunID   uuid.UUID
-	TaskID  *uuid.UUID
-	AgentID uuid.UUID
-	Profile string
-	ScopeID uuid.UUID
-	Actor   string
-	Task    string
+	RunID      uuid.UUID
+	TaskID     *uuid.UUID
+	AgentID    uuid.UUID
+	Profile    string
+	Actor      string
+	Task       string
+	RequestKey string
 }
 
 // RunAgentResult is the outcome of the Phase 5 use case: the agent attempt plus
@@ -43,10 +42,9 @@ type RunAgentResult struct {
 // loop dispatches every capability through execution; the verifier re-checks
 // through the same path. Findings remains the only owner of finding status.
 func (s *Services) RunAgent(ctx context.Context, p RunAgentParams) (RunAgentResult, error) {
-	if p.ScopeID == uuid.Nil {
-		return RunAgentResult{}, fmt.Errorf("scope id is required")
-	}
-	if strings.TrimSpace(p.Actor) == "" {
+	p.Actor = strings.TrimSpace(p.Actor)
+	p.Task = strings.TrimSpace(p.Task)
+	if p.Actor == "" {
 		return RunAgentResult{}, fmt.Errorf("actor is required")
 	}
 
@@ -54,9 +52,18 @@ func (s *Services) RunAgent(ctx context.Context, p RunAgentParams) (RunAgentResu
 	if err != nil {
 		return RunAgentResult{}, err
 	}
+	run, err := s.Runs.GetRun(ctx, agent.RunID)
+	if err != nil {
+		return RunAgentResult{}, err
+	}
+	if p.RunID != uuid.Nil && p.RunID != run.ID {
+		return RunAgentResult{}, fmt.Errorf("agent %s does not belong to run %s", agent.ID, p.RunID)
+	}
 
 	attempt, err := s.Agents.RunAgent(ctx, agents.RunParams{
-		AgentID: agent.ID, ScopeID: p.ScopeID, Actor: p.Actor, Task: p.Task,
+		AgentID: agent.ID, Actor: p.Actor, Task: p.Task,
+		RequestKey:         p.RequestKey,
+		RequestFingerprint: requestFingerprint(agent.ID, p.Actor, p.Task),
 	})
 	out := RunAgentResult{AgentID: agent.ID, Attempt: attempt.Attempt, Summary: attempt.Summary}
 	if err != nil {
@@ -74,23 +81,23 @@ func (s *Services) RunAgent(ctx context.Context, p RunAgentParams) (RunAgentResu
 	if title == "" {
 		title = "agent finding draft"
 	}
+	evidence := make([]findings.EvidenceRef, 0, len(attempt.EvidenceIDs))
+	for _, evidenceID := range attempt.EvidenceIDs {
+		evidence = append(evidence, findings.EvidenceRef{EvidenceID: evidenceID, Role: "supporting"})
+	}
 	finding, err := s.Findings.CreateFinding(ctx, findings.CreateFindingParams{
 		RunID:       agent.RunID,
 		Title:       title,
 		Description: attempt.Draft.Description,
 		Severity:    parseSeverity(attempt.Draft.Severity),
 		Confidence:  parseConfidence(attempt.Draft.Confidence),
+		Evidence:    evidence,
+		Actor:       p.Actor,
 	})
 	if err != nil {
 		return out, fmt.Errorf("create finding draft: %w", err)
 	}
 	out.FindingID = &finding.ID
-
-	for _, evidenceID := range attempt.EvidenceIDs {
-		if err := s.Findings.LinkEvidence(ctx, finding.ID, evidenceID, "supporting"); err != nil {
-			return out, fmt.Errorf("link evidence: %w", err)
-		}
-	}
 
 	// Verify by re-running the successful tool calls through execution. A
 	// failure to re-run is inconclusive, not refuted.
@@ -107,7 +114,7 @@ func (s *Services) RunAgent(ctx context.Context, p RunAgentParams) (RunAgentResu
 		})
 	}
 	result, err := s.Verifier.Verify(ctx, verifier.VerifyParams{
-		FindingID: finding.ID, RunID: agent.RunID, ScopeID: p.ScopeID, Actor: p.Actor, Checks: checks,
+		FindingID: finding.ID, RunID: agent.RunID, ScopeID: run.ScopeID, Actor: p.Actor, Checks: checks,
 	})
 	if err != nil {
 		return out, fmt.Errorf("verify finding: %w", err)

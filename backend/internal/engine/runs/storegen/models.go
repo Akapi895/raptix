@@ -10,14 +10,16 @@ import (
 
 // One agent working attempt. Owner: engine/agents. Lifecycle of the agent instance stays in engine/runs.
 type AgentAttempt struct {
-	ID         pgtype.UUID        `json:"id"`
-	AgentID    pgtype.UUID        `json:"agent_id"`
-	AttemptNo  int32              `json:"attempt_no"`
-	Status     string             `json:"status"`
-	StartedAt  pgtype.Timestamptz `json:"started_at"`
-	FinishedAt pgtype.Timestamptz `json:"finished_at"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID                 pgtype.UUID        `json:"id"`
+	AgentID            pgtype.UUID        `json:"agent_id"`
+	AttemptNo          int32              `json:"attempt_no"`
+	Status             string             `json:"status"`
+	StartedAt          pgtype.Timestamptz `json:"started_at"`
+	FinishedAt         pgtype.Timestamptz `json:"finished_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
 }
 
 // Agent instance lifecycle. Owner: engine/runs. Profile is a role description, not a principal.
@@ -160,6 +162,33 @@ type FindingReviewHistory struct {
 	Reviewer   string             `json:"reviewer"`
 	Reason     string             `json:"reason"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	// Pre-decision revision; NULL only for legacy rows with unavailable source revision.
+	FromRevisionNo pgtype.Int4 `json:"from_revision_no"`
+	// Post-decision revision; NULL only for legacy rows with unavailable source revision.
+	ToRevisionNo pgtype.Int4 `json:"to_revision_no"`
+	Legacy       bool        `json:"legacy"`
+}
+
+// Immutable finding content/status snapshots. Owner: workspace/findings.
+type FindingRevision struct {
+	FindingID    pgtype.UUID        `json:"finding_id"`
+	RevisionNo   int32              `json:"revision_no"`
+	Title        string             `json:"title"`
+	Description  string             `json:"description"`
+	Severity     string             `json:"severity"`
+	Confidence   string             `json:"confidence"`
+	Status       string             `json:"status"`
+	ChangeReason string             `json:"change_reason"`
+	Actor        string             `json:"actor"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+// Immutable evidence membership snapshot for one finding revision.
+type FindingRevisionEvidence struct {
+	FindingID  pgtype.UUID `json:"finding_id"`
+	RevisionNo int32       `json:"revision_no"`
+	EvidenceID pgtype.UUID `json:"evidence_id"`
+	Role       string      `json:"role"`
 }
 
 // Verifier output. Owner: workspace/findings records it; verifier must not flip finding.status directly.
@@ -170,6 +199,9 @@ type FindingVerdict struct {
 	Reason     string             `json:"reason"`
 	ProducedBy string             `json:"produced_by"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	// Verified revision; NULL only for legacy rows with unavailable source revision.
+	RevisionNo pgtype.Int4 `json:"revision_no"`
+	Legacy     bool        `json:"legacy"`
 }
 
 type Hypothesis struct {
@@ -217,6 +249,27 @@ type ProjectMember struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+// Immutable report input snapshots and report publication lifecycle. Owner: workspace/reporting.
+type ReportRequest struct {
+	ID              pgtype.UUID `json:"id"`
+	RunID           pgtype.UUID `json:"run_id"`
+	TemplateID      string      `json:"template_id"`
+	TemplateVersion string      `json:"template_version"`
+	TemplateHash    string      `json:"template_hash"`
+	// Immutable JSON report input snapshot captured at request creation.
+	Snapshot       []byte             `json:"snapshot"`
+	Status         string             `json:"status"`
+	Version        int32              `json:"version"`
+	LeaseOwner     pgtype.Text        `json:"lease_owner"`
+	LeaseExpiresAt pgtype.Timestamptz `json:"lease_expires_at"`
+	// The single evidence artifact published for the completed report.
+	OutputArtifactID pgtype.UUID        `json:"output_artifact_id"`
+	FailureCode      string             `json:"failure_code"`
+	FailureMessage   string             `json:"failure_message"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Role struct {
 	ID          pgtype.UUID `json:"id"`
 	Name        string      `json:"name"`
@@ -230,14 +283,17 @@ type RolePermission struct {
 
 // Run lifecycle. Owner: engine/runs. budget_exhausted is distinct from completed.
 type Run struct {
-	ID        pgtype.UUID        `json:"id"`
-	ProjectID pgtype.UUID        `json:"project_id"`
-	Name      string             `json:"name"`
-	Status    string             `json:"status"`
-	Version   int32              `json:"version"`
-	CreatedBy string             `json:"created_by"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID                 pgtype.UUID        `json:"id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	Name               string             `json:"name"`
+	Status             string             `json:"status"`
+	Version            int32              `json:"version"`
+	CreatedBy          string             `json:"created_by"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	ScopeID            pgtype.UUID        `json:"scope_id"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
 }
 
 // Versioned engagement scope. Owner: platform/projects. New assets do not auto-extend scope.

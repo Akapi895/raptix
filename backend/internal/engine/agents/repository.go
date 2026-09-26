@@ -11,6 +11,7 @@ import (
 // generated store directly.
 type Repository interface {
 	CreateAttempt(ctx context.Context, p CreateAttemptParams) (Attempt, error)
+	CreateOrGetAttempt(ctx context.Context, p CreateAttemptParams) (CreateAttemptResult, error)
 	GetAttempt(ctx context.Context, id uuid.UUID) (Attempt, error)
 	ListAttemptsByAgent(ctx context.Context, agentID uuid.UUID) ([]Attempt, error)
 	FinishAttempt(ctx context.Context, p FinishAttemptParams) (Attempt, error)

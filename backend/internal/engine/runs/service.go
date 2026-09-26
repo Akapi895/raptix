@@ -53,23 +53,45 @@ var allowedAgentTransitions = map[AgentStatus]map[AgentStatus]bool{
 }
 
 // StartRun validates the input and creates a run in the queued state.
-func (s *Service) StartRun(ctx context.Context, projectID uuid.UUID, name, createdBy string) (Run, error) {
+func (s *Service) StartRun(ctx context.Context, projectID, scopeID uuid.UUID, name, createdBy string) (Run, error) {
+	result, err := s.startRun(ctx, projectID, scopeID, name, createdBy, "", "")
+	return result.Run, err
+}
+
+// StartIdempotentRun creates a run or returns the run from an identical prior
+// request key. Fingerprints are supplied by the trusted use case, not clients.
+func (s *Service) StartIdempotentRun(ctx context.Context, projectID, scopeID uuid.UUID, name, createdBy, requestKey, requestFingerprint string) (CreateRunResult, error) {
+	return s.startRun(ctx, projectID, scopeID, name, createdBy, requestKey, requestFingerprint)
+}
+
+func (s *Service) startRun(ctx context.Context, projectID, scopeID uuid.UUID, name, createdBy, requestKey, requestFingerprint string) (CreateRunResult, error) {
 	name = strings.TrimSpace(name)
 	if name == "" {
-		return Run{}, fmt.Errorf("run name must not be empty")
+		return CreateRunResult{}, fmt.Errorf("run name must not be empty")
 	}
 	if projectID == uuid.Nil {
-		return Run{}, fmt.Errorf("project id is required")
+		return CreateRunResult{}, fmt.Errorf("project id is required")
+	}
+	if scopeID == uuid.Nil {
+		return CreateRunResult{}, fmt.Errorf("scope id is required")
 	}
 	createdBy = strings.TrimSpace(createdBy)
 	if createdBy == "" {
-		return Run{}, fmt.Errorf("run creator must not be empty")
+		return CreateRunResult{}, fmt.Errorf("run creator must not be empty")
 	}
-	return s.repo.CreateRun(ctx, CreateRunParams{
-		ProjectID: projectID,
-		Name:      name,
-		Status:    RunQueued,
-		CreatedBy: createdBy,
+	requestKey = strings.TrimSpace(requestKey)
+	if requestKey == "" {
+		run, err := s.repo.CreateRun(ctx, CreateRunParams{
+			ProjectID: projectID, ScopeID: scopeID, Name: name, Status: RunQueued, CreatedBy: createdBy,
+		})
+		return CreateRunResult{Run: run, Created: err == nil}, err
+	}
+	if strings.TrimSpace(requestFingerprint) == "" {
+		return CreateRunResult{}, fmt.Errorf("request fingerprint is required with an idempotency key")
+	}
+	return s.repo.CreateOrGetRun(ctx, CreateRunParams{
+		ProjectID: projectID, ScopeID: scopeID, Name: name, Status: RunQueued, CreatedBy: createdBy,
+		RequestKey: requestKey, RequestFingerprint: requestFingerprint,
 	})
 }
 

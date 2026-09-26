@@ -17,6 +17,7 @@ import (
 	einoadapter "github.com/Akapi895/raptix/backend/internal/engine/llm/adapters/eino"
 	"github.com/Akapi895/raptix/backend/internal/infrastructure/database/filesystem"
 	"github.com/Akapi895/raptix/backend/internal/infrastructure/database/postgres"
+	"github.com/Akapi895/raptix/backend/internal/infrastructure/jobs"
 	"github.com/Akapi895/raptix/backend/internal/tools/registry"
 )
 
@@ -32,6 +33,7 @@ type App struct {
 	srv      *http.Server
 	requests *api.RequestTracker
 	services *Services
+	jobs     *jobs.Client
 
 	// baseCtx/baseCancel root every request context; on shutdown timeout
 	// baseCancel cancels in-flight requests before storage is closed.
@@ -118,8 +120,33 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 		return nil, fmt.Errorf("wire services: %w", err)
 	}
 
+	// Phase 8: the River worker adapter is created here and installed as the
+	// report enqueuer. It is started only when the server serves, and stopped
+	// before storage closes so an in-flight render cannot outlive the pool.
+	var jobsClient *jobs.Client
+	if services.Reporting != nil {
+		jobsClient, err = jobs.New(pool.DB(), services.Reporting, jobs.Config{MaxWorkers: cfg.Jobs.MaxWorkers}, log)
+		if err != nil {
+			baseCancel()
+			_ = fs.Close()
+			pool.Close()
+			return nil, fmt.Errorf("initialize jobs: %w", err)
+		}
+		services.SetReportEnqueuer(jobsClient)
+	}
+
 	requests := api.NewRequestTracker()
-	handler := api.Router(pool, log, requests)
+	authCtx, authCancel := context.WithTimeout(baseCtx, cfg.Database.ConnectTimeout)
+	auth, err := api.NewAuthenticator(authCtx, api.AuthConfig{Mode: cfg.Auth.Mode, Issuer: cfg.Auth.Issuer, Audience: cfg.Auth.Audience, DevelopmentPrincipal: cfg.Auth.DevelopmentPrincipal})
+	authCancel()
+	if err != nil {
+		baseCancel()
+		_ = fs.Close()
+		pool.Close()
+		return nil, fmt.Errorf("initialize API authentication: %w", err)
+	}
+	hub := api.NewHub(128)
+	handler := api.Router(pool, log, requests, services.HTTPUseCases(hub), auth, hub)
 	srv := &http.Server{
 		Addr:              cfg.Server.Addr,
 		Handler:           handler,
@@ -131,8 +158,8 @@ func New(cfg *Config, log *slog.Logger) (*App, error) {
 		cfg: cfg, log: log, pool: pool, fs: fs, content: contentLoader,
 		allTools: allTools, model: model,
 		srv: srv, requests: requests,
-		services: services,
-		baseCtx:  baseCtx, baseCancel: baseCancel,
+		services: services, jobs: jobsClient,
+		baseCtx: baseCtx, baseCancel: baseCancel,
 	}, nil
 }
 
@@ -213,6 +240,19 @@ func (a *App) serve(ctx context.Context, ln net.Listener) error {
 		done <- shutdownResult{storageSafe: true}
 	}()
 
+	if a.jobs != nil {
+		if err := a.jobs.Start(a.baseCtx); err != nil {
+			// Degraded but serving: reports cannot render until the River schema
+			// exists, which is a release migration step, not a startup action.
+			a.log.Error("jobs worker did not start; report rendering is unavailable", "error", err)
+		} else {
+			a.log.Info("jobs worker started")
+		}
+	}
+	if a.services != nil && a.cfg.Execution.ReconcileInterval > 0 {
+		a.services.StartPeriodicReconcile(a.baseCtx, a.cfg.Execution.ReconcileInterval, a.log)
+	}
+
 	a.log.Info("http server listening", "addr", ln.Addr().String())
 	serveErr := a.srv.Serve(ln)
 
@@ -242,9 +282,16 @@ type shutdownResult struct {
 	storageSafe bool
 }
 
-// closeStorage closes storage once. Only call after requests have stopped.
+// closeStorage stops background workers and closes storage once. Only call after
+// requests have stopped. Jobs are stopped before the pool closes so an in-flight
+// render cannot use a closed connection.
 func (a *App) closeStorage() {
 	a.closeOnce.Do(func() {
+		if a.jobs != nil {
+			stopCtx, cancel := context.WithTimeout(context.Background(), a.cfg.Server.ShutdownTimeout)
+			_ = a.jobs.Stop(stopCtx)
+			cancel()
+		}
 		if a.pool != nil {
 			a.pool.Close()
 		}

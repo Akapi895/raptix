@@ -1,0 +1,244 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raptix.local/contracts/events/v1.schema.json",
+  "title": "Raptix Phase 7A run SSE event",
+  "description": "Advisory run-progress event. It contains no evidence bytes, model conversation, raw tool output, tokens, or credentials. A snapshot is authoritative only at the time it was read; clients must re-read HTTP resources after a cursor gap.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "id", "type", "occurredAt", "runId", "data"],
+  "properties": {
+    "schemaVersion": { "const": "events/v1" },
+    "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]{1,64}:[1-9][0-9]*$" },
+    "type": {
+      "type": "string",
+      "enum": ["snapshot", "run.updated", "agent.updated", "attempt.updated", "finding.created", "finding.revised", "finding.reviewed", "verdict.recorded", "report.queued", "report.rendering", "report.completed", "report.failed", "run.cancelled", "heartbeat"]
+    },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "runId": { "$ref": "#/$defs/uuid" },
+    "data": {}
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "const": "snapshot" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/snapshotPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "run.updated" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/runPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "agent.updated" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/agentPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "attempt.updated" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/attemptPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "finding.created" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/findingPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "finding.revised" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/findingPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "finding.reviewed" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/findingPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "verdict.recorded" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/verdictPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "report.queued" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/reportPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "report.rendering" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/reportPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "report.completed" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/reportPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "report.failed" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/reportPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "run.cancelled" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/runPayload" } } }
+    },
+    {
+      "if": { "properties": { "type": { "const": "heartbeat" } }, "required": ["type"] },
+      "then": { "properties": { "data": { "$ref": "#/$defs/heartbeatPayload" } } }
+    }
+  ],
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "nullableTimestamp": { "oneOf": [{ "$ref": "#/$defs/timestamp" }, { "type": "null" }] },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "projectId", "scopeId", "name", "status", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "projectId": { "$ref": "#/$defs/uuid" },
+        "scopeId": { "$ref": "#/$defs/uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "status": { "enum": ["queued", "running", "paused", "cancelled", "completed", "budget_exhausted"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "task": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "runId", "name", "status", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "runId": { "$ref": "#/$defs/uuid" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "status": { "enum": ["queued", "running", "paused", "cancelled", "completed", "budget_exhausted"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "agent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "runId", "taskId", "profile", "status", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "runId": { "$ref": "#/$defs/uuid" },
+        "taskId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+        "profile": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "status": { "enum": ["paused", "running", "completed", "failed", "cancelled"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "agentId", "attemptNo", "status", "startedAt", "finishedAt", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "agentId": { "$ref": "#/$defs/uuid" },
+        "attemptNo": { "type": "integer", "minimum": 1 },
+        "status": { "enum": ["running", "succeeded", "failed", "timed_out", "cancelled"] },
+        "startedAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "finishedAt": { "$ref": "#/$defs/nullableTimestamp" },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "runId", "title", "description", "severity", "confidence", "status", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "runId": { "$ref": "#/$defs/uuid" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 512 },
+        "description": { "type": "string", "minLength": 1, "maxLength": 65536 },
+        "severity": { "enum": ["none", "low", "medium", "high", "critical"] },
+        "confidence": { "enum": ["low", "medium", "high"] },
+        "status": { "enum": ["draft", "reviewed", "confirmed", "rejected", "inconclusive"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "findingId", "verdict", "reason", "createdAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "findingId": { "$ref": "#/$defs/uuid" },
+        "verdict": { "enum": ["confirmed", "refuted", "inconclusive"] },
+        "reason": { "type": "string", "minLength": 1, "maxLength": 4096 },
+        "createdAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "runId", "templateId", "templateVersion", "templateHash", "status", "version", "createdAt", "updatedAt"],
+      "properties": {
+        "id": { "$ref": "#/$defs/uuid" },
+        "runId": { "$ref": "#/$defs/uuid" },
+        "templateId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "templateVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "templateHash": { "type": "string", "pattern": "^[0-9a-f]{64}$" },
+        "status": { "enum": ["queued", "rendering", "completed", "failed", "cancelled"] },
+        "version": { "type": "integer", "minimum": 1 },
+        "outputArtifactId": { "oneOf": [{ "$ref": "#/$defs/uuid" }, { "type": "null" }] },
+        "failureCode": { "type": "string", "maxLength": 128 },
+        "failureMessage": { "type": "string", "maxLength": 4096 },
+        "createdAt": { "$ref": "#/$defs/timestamp" },
+        "updatedAt": { "$ref": "#/$defs/timestamp" }
+      }
+    },
+    "reportPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["report"],
+      "properties": { "report": { "$ref": "#/$defs/report" } }
+    },
+    "snapshotPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run", "tasks", "agents"],
+      "properties": {
+        "run": { "$ref": "#/$defs/run" },
+        "tasks": { "type": "array", "items": { "$ref": "#/$defs/task" } },
+        "agents": { "type": "array", "items": { "$ref": "#/$defs/agent" } }
+      }
+    },
+    "runPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["run"],
+      "properties": { "run": { "$ref": "#/$defs/run" } }
+    },
+    "agentPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["agent"],
+      "properties": { "agent": { "$ref": "#/$defs/agent" } }
+    },
+    "attemptPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["attempt"],
+      "properties": {
+        "attempt": { "$ref": "#/$defs/attempt" },
+        "summary": { "type": "string", "maxLength": 16384 }
+      }
+    },
+    "findingPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["finding"],
+      "properties": { "finding": { "$ref": "#/$defs/finding" } }
+    },
+    "verdictPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verdict"],
+      "properties": { "verdict": { "$ref": "#/$defs/verdict" } }
+    },
+    "heartbeatPayload": {
+      "type": "object",
+      "additionalProperties": false,
+      "maxProperties": 0
+    }
+  }
+}

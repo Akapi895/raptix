@@ -31,6 +31,7 @@ func cleanEnv(t *testing.T) {
 	t.Helper()
 	for _, k := range []string{
 		"RAP_SERVER_ADDR", "RAP_SERVER_SHUTDOWN_TIMEOUT",
+		"RAP_AUTH_MODE", "RAP_AUTH_ISSUER", "RAP_AUTH_AUDIENCE", "RAP_AUTH_DEVELOPMENT_PRINCIPAL",
 		"RAP_DATABASE_URL", "RAP_DATABASE_MAX_CONNS", "RAP_DATABASE_CONNECT_TIMEOUT", "RAP_DATABASE_MIGRATION_LOCK_TIMEOUT",
 		"RAP_LOG_LEVEL", "RAP_ARTIFACT_ROOT", "RAP_CONTENT_ROOT", "RAP_CONTENT_SCHEMA_ROOT",
 		"RAP_EXECUTION_DEFAULT_TIMEOUT", "RAP_EXECUTION_MAX_OUTPUT_BYTES", "RAP_EXECUTION_MAX_INVOCATIONS_PER_RUN", "RAP_EXECUTION_RECONCILE_STALE_AFTER",
@@ -39,6 +40,20 @@ func cleanEnv(t *testing.T) {
 		"RAP_LLM_BASE_URL", "RAP_LLM_MODEL", "RAP_LLM_API_KEY", "RAP_LLM_TIMEOUT",
 	} {
 		t.Setenv(k, "")
+	}
+}
+
+func TestLoadConfigValidatesAuthModes(t *testing.T) {
+	cleanEnv(t)
+	if _, err := LoadConfig(writeConfig(t, "auth:\n  mode: oidc\n")); err == nil {
+		t.Fatal("OIDC mode without issuer/audience was accepted")
+	}
+	if _, err := LoadConfig(writeConfig(t, "auth:\n  mode: development\n  development_principal: ''\n")); err == nil {
+		t.Fatal("development mode without fixed principal was accepted")
+	}
+	cfg, err := LoadConfig(writeConfig(t, "auth:\n  mode: oidc\n  issuer: https://issuer.example\n  audience: raptix\n"))
+	if err != nil || cfg.Auth.Mode != "oidc" {
+		t.Fatalf("valid OIDC config: %#v %v", cfg.Auth, err)
 	}
 }
 

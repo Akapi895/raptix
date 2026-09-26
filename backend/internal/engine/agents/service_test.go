@@ -129,20 +129,21 @@ type harness struct {
 
 func newHarness(replies ...string) *harness {
 	agent := runs.AgentInstance{ID: uuid.New(), RunID: uuid.New(), Profile: "recon", Status: runs.AgentPaused, Version: 1}
+	scope := uuid.New()
 	fr := &fakeRuns{
-		run:   runs.Run{ID: agent.RunID, Status: runs.RunRunning},
+		run:   runs.Run{ID: agent.RunID, ScopeID: scope, Status: runs.RunRunning},
 		agent: agent,
 	}
 	model := &fakeModel{replies: replies}
 	exec := &fakeExec{result: output.Success(uuid.NewString(), "", "")}
 	builder := contextbuild.NewBuilder(&fakeSource{profile: reconProfile()}, contextbuild.Budget{MaxTokens: 4000})
 	svc := NewService(newMemRepo(), model, builder, exec, fr, &fakeGrants{ok: true}, &fakeResolver{available: map[string]bool{"http_probe": true}}, Config{MaxSteps: 5, DefaultTimeout: time.Second, Model: "test-model"}, nil)
-	return &harness{svc: svc, repo: svc.repo.(*memRepo), model: model, exec: exec, runs: fr, grants: svc.grants.(*fakeGrants), agent: agent, scope: uuid.New()}
+	return &harness{svc: svc, repo: svc.repo.(*memRepo), model: model, exec: exec, runs: fr, grants: svc.grants.(*fakeGrants), agent: agent, scope: scope}
 }
 
 func (h *harness) run(t *testing.T) AttemptResult {
 	t.Helper()
-	res, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, ScopeID: h.scope, Actor: "alice", Task: "probe the lab"})
+	res, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, Actor: "alice", Task: "probe the lab"})
 	if err != nil {
 		t.Fatalf("RunAgent: %v", err)
 	}
@@ -230,7 +231,7 @@ func TestRunAgentTimeoutMapsToTimedOut(t *testing.T) {
 	h := newHarness()
 	h.model.block = true
 	h.svc.cfg.DefaultTimeout = 20 * time.Millisecond
-	res, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, ScopeID: h.scope, Actor: "alice"})
+	res, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, Actor: "alice"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -245,7 +246,7 @@ func TestRunAgentTimeoutMapsToTimedOut(t *testing.T) {
 func TestRunAgentRejectsTerminalRun(t *testing.T) {
 	h := newHarness()
 	h.runs.run.Status = runs.RunCancelled
-	if _, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, ScopeID: h.scope, Actor: "alice"}); err == nil {
+	if _, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, Actor: "alice"}); err == nil {
 		t.Error("expected error for a cancelled run")
 	}
 }
@@ -253,7 +254,7 @@ func TestRunAgentRejectsTerminalRun(t *testing.T) {
 func TestRunAgentWithoutModel(t *testing.T) {
 	h := newHarness()
 	h.svc.model = nil
-	if _, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, ScopeID: h.scope, Actor: "alice"}); !errors.Is(err, ErrModelUnavailable) {
+	if _, err := h.svc.RunAgent(context.Background(), RunParams{AgentID: h.agent.ID, Actor: "alice"}); !errors.Is(err, ErrModelUnavailable) {
 		t.Errorf("err = %v, want ErrModelUnavailable", err)
 	}
 }
@@ -332,5 +333,25 @@ func TestRunAgentDoesNotOverwriteCancelledAttempt(t *testing.T) {
 	}
 	if got := h.runs.transitions; len(got) != 1 || got[0] != runs.AgentRunning {
 		t.Errorf("transitions = %v, want only transition to running", got)
+	}
+}
+
+func TestRunAgentRequestReplayDoesNotDispatchAgain(t *testing.T) {
+	h := newHarness(`{"action":"tool","capability":"http_probe","args":{}}`, `{"action":"final","summary":"done"}`)
+	p := RunParams{AgentID: h.agent.ID, Actor: "alice", RequestKey: "request-1", RequestFingerprint: "fingerprint-1"}
+	first, err := h.svc.RunAgent(context.Background(), p)
+	if err != nil || first.Attempt.Status != AttemptSucceeded {
+		t.Fatalf("first run = %+v, %v", first, err)
+	}
+	second, err := h.svc.RunAgent(context.Background(), p)
+	if err != nil || second.Attempt.ID != first.Attempt.ID {
+		t.Fatalf("replay = %+v, %v", second, err)
+	}
+	if len(h.exec.calls) != 1 {
+		t.Fatalf("dispatches = %d, want 1", len(h.exec.calls))
+	}
+	p.RequestFingerprint = "fingerprint-2"
+	if _, err := h.svc.RunAgent(context.Background(), p); err == nil {
+		t.Fatal("expected conflicting request fingerprint")
 	}
 }

@@ -12,18 +12,23 @@ import (
 
 type Querier interface {
 	CreateFinding(ctx context.Context, arg CreateFindingParams) (Finding, error)
+	CreateFindingRevision(ctx context.Context, arg CreateFindingRevisionParams) (FindingRevision, error)
+	CreateReviewHistory(ctx context.Context, arg CreateReviewHistoryParams) error
+	DeleteFindingEvidence(ctx context.Context, findingID pgtype.UUID) error
+	GetCurrentFindingRevision(ctx context.Context, findingID pgtype.UUID) (FindingRevision, error)
 	GetFinding(ctx context.Context, id pgtype.UUID) (Finding, error)
-	InsertVerdict(ctx context.Context, arg InsertVerdictParams) (FindingVerdict, error)
-	LinkFindingEvidence(ctx context.Context, arg LinkFindingEvidenceParams) error
+	GetFindingRevision(ctx context.Context, arg GetFindingRevisionParams) (FindingRevision, error)
+	InsertFindingEvidence(ctx context.Context, arg InsertFindingEvidenceParams) error
+	InsertVerdict(ctx context.Context, arg InsertVerdictParams) (InsertVerdictRow, error)
+	ListFindingRevisionEvidence(ctx context.Context, arg ListFindingRevisionEvidenceParams) ([]ListFindingRevisionEvidenceRow, error)
+	ListFindingRevisions(ctx context.Context, findingID pgtype.UUID) ([]FindingRevision, error)
 	ListFindingsByRun(ctx context.Context, runID pgtype.UUID) ([]Finding, error)
-	ListReviewHistory(ctx context.Context, findingID pgtype.UUID) ([]FindingReviewHistory, error)
-	ListVerdictsByFinding(ctx context.Context, findingID pgtype.UUID) ([]FindingVerdict, error)
-	// Atomically applies a finding status transition and records its review
-	// history in a single statement. from_status is read from the very row being
-	// updated (not supplied by the caller), so the history can never disagree with
-	// the pre-image. A stale version produces no updated row (optimistic lock) and
-	// therefore no history row.
-	TransitionFindingWithHistory(ctx context.Context, arg TransitionFindingWithHistoryParams) (TransitionFindingWithHistoryRow, error)
+	ListReviewHistory(ctx context.Context, findingID pgtype.UUID) ([]ListReviewHistoryRow, error)
+	ListVerdictsByFinding(ctx context.Context, findingID pgtype.UUID) ([]ListVerdictsByFindingRow, error)
+	NextFindingRevisionNo(ctx context.Context, findingID pgtype.UUID) (int32, error)
+	SnapshotFindingEvidence(ctx context.Context, arg SnapshotFindingEvidenceParams) error
+	UpdateFindingContent(ctx context.Context, arg UpdateFindingContentParams) (Finding, error)
+	UpdateFindingStatus(ctx context.Context, arg UpdateFindingStatusParams) (Finding, error)
 }
 
 var _ Querier = (*Queries)(nil)

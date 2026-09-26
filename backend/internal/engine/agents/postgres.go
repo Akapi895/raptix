@@ -38,7 +38,23 @@ func (r *Postgres) CreateAttempt(ctx context.Context, p CreateAttemptParams) (At
 	if err != nil {
 		return Attempt{}, fmt.Errorf("create attempt: %w", err)
 	}
-	return toAttempt(row), nil
+	return toCreateAttempt(row), nil
+}
+
+func (r *Postgres) CreateOrGetAttempt(ctx context.Context, p CreateAttemptParams) (CreateAttemptResult, error) {
+	row, err := r.q.CreateOrGetAttempt(ctx, storegen.CreateOrGetAttemptParams{
+		AgentID:            uuidToPG(p.AgentID),
+		RequestKey:         p.RequestKey,
+		RequestFingerprint: p.RequestFingerprint,
+	})
+	if err != nil {
+		return CreateAttemptResult{}, fmt.Errorf("create or get attempt: %w", err)
+	}
+	attempt := toCreateOrGetAttempt(row)
+	if attempt.RequestFingerprint != p.RequestFingerprint {
+		return CreateAttemptResult{}, &ErrRequestConflict{RequestKey: p.RequestKey}
+	}
+	return CreateAttemptResult{Attempt: attempt, Created: row.Created}, nil
 }
 
 func (r *Postgres) GetAttempt(ctx context.Context, id uuid.UUID) (Attempt, error) {
@@ -49,7 +65,7 @@ func (r *Postgres) GetAttempt(ctx context.Context, id uuid.UUID) (Attempt, error
 		}
 		return Attempt{}, err
 	}
-	return toAttempt(row), nil
+	return toGetAttempt(row), nil
 }
 
 func (r *Postgres) ListAttemptsByAgent(ctx context.Context, agentID uuid.UUID) ([]Attempt, error) {
@@ -59,7 +75,7 @@ func (r *Postgres) ListAttemptsByAgent(ctx context.Context, agentID uuid.UUID) (
 	}
 	out := make([]Attempt, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, toAttempt(row))
+		out = append(out, toListAttempt(row))
 	}
 	return out, nil
 }
@@ -79,7 +95,7 @@ func (r *Postgres) FinishAttempt(ctx context.Context, p FinishAttemptParams) (At
 		}
 		return Attempt{}, err
 	}
-	return toAttempt(row), nil
+	return toFinishAttempt(row), nil
 }
 
 func (r *Postgres) AppendMessage(ctx context.Context, p AppendMessageParams) (Message, error) {
@@ -133,16 +149,32 @@ func (r *Postgres) GetSnapshotByAgent(ctx context.Context, agentID uuid.UUID) (S
 	return toSnapshot(row), nil
 }
 
-func toAttempt(r storegen.AgentAttempt) Attempt {
+func toCreateAttempt(r storegen.CreateAttemptRow) Attempt {
+	return newAttempt(r.ID, r.AgentID, r.AttemptNo, r.Status, r.RequestKey, r.RequestFingerprint, r.StartedAt, r.FinishedAt, r.CreatedAt, r.UpdatedAt)
+}
+
+func toCreateOrGetAttempt(r storegen.CreateOrGetAttemptRow) Attempt {
+	return newAttempt(r.ID, r.AgentID, r.AttemptNo, r.Status, r.RequestKey, r.RequestFingerprint, r.StartedAt, r.FinishedAt, r.CreatedAt, r.UpdatedAt)
+}
+
+func toGetAttempt(r storegen.GetAttemptRow) Attempt {
+	return newAttempt(r.ID, r.AgentID, r.AttemptNo, r.Status, r.RequestKey, r.RequestFingerprint, r.StartedAt, r.FinishedAt, r.CreatedAt, r.UpdatedAt)
+}
+
+func toListAttempt(r storegen.ListAttemptsByAgentRow) Attempt {
+	return newAttempt(r.ID, r.AgentID, r.AttemptNo, r.Status, r.RequestKey, r.RequestFingerprint, r.StartedAt, r.FinishedAt, r.CreatedAt, r.UpdatedAt)
+}
+
+func toFinishAttempt(r storegen.FinishAttemptRow) Attempt {
+	return newAttempt(r.ID, r.AgentID, r.AttemptNo, r.Status, r.RequestKey, r.RequestFingerprint, r.StartedAt, r.FinishedAt, r.CreatedAt, r.UpdatedAt)
+}
+
+func newAttempt(id, agentID pgtype.UUID, attemptNo int32, status, requestKey, requestFingerprint string, startedAt, finishedAt, createdAt, updatedAt pgtype.Timestamptz) Attempt {
 	return Attempt{
-		ID:         pgToUUID(r.ID),
-		AgentID:    pgToUUID(r.AgentID),
-		AttemptNo:  int(r.AttemptNo),
-		Status:     AttemptStatus(r.Status),
-		StartedAt:  pgToTimePtr(r.StartedAt),
-		FinishedAt: pgToTimePtr(r.FinishedAt),
-		CreatedAt:  pgToTime(r.CreatedAt),
-		UpdatedAt:  pgToTime(r.UpdatedAt),
+		ID: idToUUID(id), AgentID: idToUUID(agentID), AttemptNo: int(attemptNo), Status: AttemptStatus(status),
+		RequestKey: requestKey, RequestFingerprint: requestFingerprint,
+		StartedAt: pgToTimePtr(startedAt), FinishedAt: pgToTimePtr(finishedAt),
+		CreatedAt: pgToTime(createdAt), UpdatedAt: pgToTime(updatedAt),
 	}
 }
 
@@ -187,6 +219,8 @@ func pgToUUID(u pgtype.UUID) uuid.UUID {
 	}
 	return u.Bytes
 }
+
+func idToUUID(u pgtype.UUID) uuid.UUID { return pgToUUID(u) }
 
 func pgToUUIDPtr(u pgtype.UUID) *uuid.UUID {
 	if !u.Valid {

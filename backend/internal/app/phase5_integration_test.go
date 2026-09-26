@@ -169,7 +169,7 @@ func TestPhase5AgentDataFlow(t *testing.T) {
 	})
 
 	res, err := a.services.RunAgent(ctx, RunAgentParams{
-		RunID: run.ID, TaskID: &task.ID, Profile: "recon", ScopeID: scope.ID, Actor: actor, Task: "probe the lab endpoint",
+		RunID: run.ID, TaskID: &task.ID, Profile: "recon", Actor: actor, Task: "probe the lab endpoint",
 	})
 	if err != nil {
 		t.Fatalf("RunAgent: %v", err)

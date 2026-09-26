@@ -69,34 +69,114 @@ func (q *Queries) CreateAgentInstance(ctx context.Context, arg CreateAgentInstan
 	return i, err
 }
 
+const createOrGetRun = `-- name: CreateOrGetRun :one
+INSERT INTO runs (project_id, scope_id, name, status, created_by, request_key, request_fingerprint)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (project_id, created_by, request_key) WHERE request_key <> ''
+DO UPDATE SET request_key = EXCLUDED.request_key
+RETURNING id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at, (xmax = 0) AS created
+`
+
+type CreateOrGetRunParams struct {
+	ProjectID          pgtype.UUID `json:"project_id"`
+	ScopeID            pgtype.UUID `json:"scope_id"`
+	Name               string      `json:"name"`
+	Status             string      `json:"status"`
+	CreatedBy          string      `json:"created_by"`
+	RequestKey         string      `json:"request_key"`
+	RequestFingerprint string      `json:"request_fingerprint"`
+}
+
+type CreateOrGetRunRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	ScopeID            pgtype.UUID        `json:"scope_id"`
+	Name               string             `json:"name"`
+	Status             string             `json:"status"`
+	Version            int32              `json:"version"`
+	CreatedBy          string             `json:"created_by"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	Created            bool               `json:"created"`
+}
+
+func (q *Queries) CreateOrGetRun(ctx context.Context, arg CreateOrGetRunParams) (CreateOrGetRunRow, error) {
+	row := q.db.QueryRow(ctx, createOrGetRun,
+		arg.ProjectID,
+		arg.ScopeID,
+		arg.Name,
+		arg.Status,
+		arg.CreatedBy,
+		arg.RequestKey,
+		arg.RequestFingerprint,
+	)
+	var i CreateOrGetRunRow
+	err := row.Scan(
+		&i.ID,
+		&i.ProjectID,
+		&i.ScopeID,
+		&i.Name,
+		&i.Status,
+		&i.Version,
+		&i.CreatedBy,
+		&i.RequestKey,
+		&i.RequestFingerprint,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Created,
+	)
+	return i, err
+}
+
 const createRun = `-- name: CreateRun :one
-INSERT INTO runs (project_id, name, status, created_by)
-VALUES ($1, $2, $3, $4)
-RETURNING id, project_id, name, status, version, created_by, created_at, updated_at
+INSERT INTO runs (project_id, scope_id, name, status, created_by)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at
 `
 
 type CreateRunParams struct {
 	ProjectID pgtype.UUID `json:"project_id"`
+	ScopeID   pgtype.UUID `json:"scope_id"`
 	Name      string      `json:"name"`
 	Status    string      `json:"status"`
 	CreatedBy string      `json:"created_by"`
 }
 
-func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (Run, error) {
+type CreateRunRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	ScopeID            pgtype.UUID        `json:"scope_id"`
+	Name               string             `json:"name"`
+	Status             string             `json:"status"`
+	Version            int32              `json:"version"`
+	CreatedBy          string             `json:"created_by"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) CreateRun(ctx context.Context, arg CreateRunParams) (CreateRunRow, error) {
 	row := q.db.QueryRow(ctx, createRun,
 		arg.ProjectID,
+		arg.ScopeID,
 		arg.Name,
 		arg.Status,
 		arg.CreatedBy,
 	)
-	var i Run
+	var i CreateRunRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
+		&i.ScopeID,
 		&i.Name,
 		&i.Status,
 		&i.Version,
 		&i.CreatedBy,
+		&i.RequestKey,
+		&i.RequestFingerprint,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -161,21 +241,38 @@ func (q *Queries) GetAgentInstance(ctx context.Context, id pgtype.UUID) (AgentIn
 }
 
 const getRun = `-- name: GetRun :one
-SELECT id, project_id, name, status, version, created_by, created_at, updated_at
+SELECT id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at
 FROM runs
 WHERE id = $1
 `
 
-func (q *Queries) GetRun(ctx context.Context, id pgtype.UUID) (Run, error) {
+type GetRunRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	ScopeID            pgtype.UUID        `json:"scope_id"`
+	Name               string             `json:"name"`
+	Status             string             `json:"status"`
+	Version            int32              `json:"version"`
+	CreatedBy          string             `json:"created_by"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetRun(ctx context.Context, id pgtype.UUID) (GetRunRow, error) {
 	row := q.db.QueryRow(ctx, getRun, id)
-	var i Run
+	var i GetRunRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
+		&i.ScopeID,
 		&i.Name,
 		&i.Status,
 		&i.Version,
 		&i.CreatedBy,
+		&i.RequestKey,
+		&i.RequestFingerprint,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -240,28 +337,45 @@ func (q *Queries) ListAgentInstancesByRun(ctx context.Context, runID pgtype.UUID
 }
 
 const listRunsByProject = `-- name: ListRunsByProject :many
-SELECT id, project_id, name, status, version, created_by, created_at, updated_at
+SELECT id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at
 FROM runs
 WHERE project_id = $1
 ORDER BY created_at DESC
 `
 
-func (q *Queries) ListRunsByProject(ctx context.Context, projectID pgtype.UUID) ([]Run, error) {
+type ListRunsByProjectRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	ScopeID            pgtype.UUID        `json:"scope_id"`
+	Name               string             `json:"name"`
+	Status             string             `json:"status"`
+	Version            int32              `json:"version"`
+	CreatedBy          string             `json:"created_by"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) ListRunsByProject(ctx context.Context, projectID pgtype.UUID) ([]ListRunsByProjectRow, error) {
 	rows, err := q.db.Query(ctx, listRunsByProject, projectID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Run
+	var items []ListRunsByProjectRow
 	for rows.Next() {
-		var i Run
+		var i ListRunsByProjectRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.ProjectID,
+			&i.ScopeID,
 			&i.Name,
 			&i.Status,
 			&i.Version,
 			&i.CreatedBy,
+			&i.RequestKey,
+			&i.RequestFingerprint,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -369,7 +483,7 @@ const transitionRun = `-- name: TransitionRun :one
 UPDATE runs
 SET status = $2, version = version + 1, updated_at = now()
 WHERE id = $1 AND version = $3
-RETURNING id, project_id, name, status, version, created_by, created_at, updated_at
+RETURNING id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at
 `
 
 type TransitionRunParams struct {
@@ -378,16 +492,33 @@ type TransitionRunParams struct {
 	Version int32       `json:"version"`
 }
 
-func (q *Queries) TransitionRun(ctx context.Context, arg TransitionRunParams) (Run, error) {
+type TransitionRunRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	ProjectID          pgtype.UUID        `json:"project_id"`
+	ScopeID            pgtype.UUID        `json:"scope_id"`
+	Name               string             `json:"name"`
+	Status             string             `json:"status"`
+	Version            int32              `json:"version"`
+	CreatedBy          string             `json:"created_by"`
+	RequestKey         string             `json:"request_key"`
+	RequestFingerprint string             `json:"request_fingerprint"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) TransitionRun(ctx context.Context, arg TransitionRunParams) (TransitionRunRow, error) {
 	row := q.db.QueryRow(ctx, transitionRun, arg.ID, arg.Status, arg.Version)
-	var i Run
+	var i TransitionRunRow
 	err := row.Scan(
 		&i.ID,
 		&i.ProjectID,
+		&i.ScopeID,
 		&i.Name,
 		&i.Status,
 		&i.Version,
 		&i.CreatedBy,
+		&i.RequestKey,
+		&i.RequestFingerprint,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

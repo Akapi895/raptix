@@ -19,10 +19,10 @@ type Executor interface {
 	InvokeCapability(ctx context.Context, p invocation.InvokeParams) (invocation.Invocation, *output.Result, error)
 }
 
-// FindingReader reads the finding under verification. Implemented by
-// workspace/findings.
+// FindingReader reads the immutable revision under verification. Implemented
+// by workspace/findings.
 type FindingReader interface {
-	GetFinding(ctx context.Context, id uuid.UUID) (findings.Finding, error)
+	GetCurrentRevision(ctx context.Context, findingID uuid.UUID) (findings.FindingRevision, error)
 }
 
 // VerdictWriter records a verdict. Implemented by workspace/findings, which
@@ -59,19 +59,20 @@ func (s *Service) Verify(ctx context.Context, p VerifyParams) (Result, error) {
 	if strings.TrimSpace(p.Actor) == "" {
 		return Result{}, fmt.Errorf("actor is required")
 	}
-	if _, err := s.reader.GetFinding(ctx, p.FindingID); err != nil {
+	revision, err := s.reader.GetCurrentRevision(ctx, p.FindingID)
+	if err != nil {
 		return Result{}, err
 	}
 
 	if len(p.Checks) == 0 {
-		return s.record(ctx, p.FindingID, findings.VerdictInconclusive, "no verification criteria apply to this finding", nil)
+		return s.record(ctx, p.FindingID, revision.RevisionNo, findings.VerdictInconclusive, "no verification criteria apply to this finding", nil)
 	}
 
 	confirmed, refuted := 0, 0
 	evidence := make([]uuid.UUID, 0)
 	reasons := make([]string, 0, len(p.Checks))
 	for i, check := range p.Checks {
-		outcome, reason, rawRef, err := s.runCheck(ctx, p, i, check)
+		outcome, reason, rawRef, err := s.runCheck(ctx, p, revision.RevisionNo, i, check)
 		if err != nil {
 			return Result{}, err
 		}
@@ -94,13 +95,13 @@ func (s *Service) Verify(ctx context.Context, p VerifyParams) (Result, error) {
 	case confirmed > 0:
 		verdict = findings.VerdictConfirmed
 	}
-	return s.record(ctx, p.FindingID, verdict, strings.Join(reasons, "; "), evidence)
+	return s.record(ctx, p.FindingID, revision.RevisionNo, verdict, strings.Join(reasons, "; "), evidence)
 }
 
 // runCheck re-runs one capability and classifies the result. A denied re-run is
 // inconclusive (permission changed), and a failed/timed-out re-run is
 // inconclusive unless the criterion explicitly refutes on that outcome.
-func (s *Service) runCheck(ctx context.Context, p VerifyParams, index int, check Check) (findings.Verdict, string, *uuid.UUID, error) {
+func (s *Service) runCheck(ctx context.Context, p VerifyParams, revisionNo, index int, check Check) (findings.Verdict, string, *uuid.UUID, error) {
 	if strings.TrimSpace(check.Capability) == "" {
 		return findings.VerdictInconclusive, "check has no capability", nil, nil
 	}
@@ -114,7 +115,7 @@ func (s *Service) runCheck(ctx context.Context, p VerifyParams, index int, check
 		Actor:          p.Actor,
 		Capability:     check.Capability,
 		Args:           check.Args,
-		IdempotencyKey: fmt.Sprintf("verify:%s:%d", p.FindingID, index),
+		IdempotencyKey: fmt.Sprintf("verify:%s:%d:%d", p.FindingID, revisionNo, index),
 	})
 	if err != nil {
 		return "", "", nil, fmt.Errorf("verify check %d: %w", index, err)
@@ -145,14 +146,15 @@ func (s *Service) runCheck(ctx context.Context, p VerifyParams, index int, check
 	}
 }
 
-func (s *Service) record(ctx context.Context, findingID uuid.UUID, verdict findings.Verdict, reason string, evidence []uuid.UUID) (Result, error) {
+func (s *Service) record(ctx context.Context, findingID uuid.UUID, revisionNo int, verdict findings.Verdict, reason string, evidence []uuid.UUID) (Result, error) {
 	if _, err := s.verdict.RecordVerdict(ctx, findings.InsertVerdictParams{
 		FindingID:  findingID,
+		RevisionNo: revisionNo,
 		Verdict:    verdict,
 		Reason:     reason,
 		ProducedBy: s.producer,
 	}); err != nil {
 		return Result{}, fmt.Errorf("record verdict: %w", err)
 	}
-	return Result{Verdict: verdict, Reason: reason, EvidenceIDs: evidence}, nil
+	return Result{RevisionNo: revisionNo, Verdict: verdict, Reason: reason, EvidenceIDs: evidence}, nil
 }

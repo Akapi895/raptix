@@ -27,6 +27,13 @@ type CancelRunResult struct {
 // invocations to cancelled (not yet dispatched) or unknown (may have had side
 // effects). The decision is recorded in the audit log.
 func (s *Services) CancelRun(ctx context.Context, runID uuid.UUID) (CancelRunResult, error) {
+	return s.CancelRunAs(ctx, runID, "")
+}
+
+// CancelRunAs cancels a run on behalf of an explicit actor. When actor is empty
+// the run's creator is recorded, so a system-initiated cancel stays traceable
+// while a transport-initiated cancel records the acting principal.
+func (s *Services) CancelRunAs(ctx context.Context, runID uuid.UUID, actor string) (CancelRunResult, error) {
 	if runID == uuid.Nil {
 		return CancelRunResult{}, fmt.Errorf("run id is required")
 	}
@@ -70,11 +77,13 @@ func (s *Services) CancelRun(ctx context.Context, runID uuid.UUID) (CancelRunRes
 		out.InvsUnknown = crep.Unknown
 	}
 
-	// Audit the decision (allow); actor defaults to the run's creator so a
-	// system-initiated cancel remains traceable.
-	actor := auditActor(run.CreatedBy)
+	// Audit the decision (allow). A transport caller supplies the acting
+	// principal; otherwise the run's creator is recorded.
+	if actor == "" {
+		actor = run.CreatedBy
+	}
 	if _, err := s.Audit.Record(ctx, audit.Record{
-		Actor:       actor,
+		Actor:       auditActor(actor),
 		Action:      "run.cancel",
 		Resource:    runID.String(),
 		Outcome:     audit.OutcomeAllowed,

@@ -1,0 +1,1104 @@
+// Raptix — Database Schema (dbdiagram.io)
+// Pre-deployment reference. Reflects backend/migrations/00001..00016 + River,
+// extended with the security-domain model and all integrity fixes.
+//
+// Owner per table is noted in the comment.
+//
+// Design invariants:
+//   - Single source of truth for each relationship (no circular FKs).
+//   - EVERY cross-run reference is DB-enforced by a composite FK
+//     (run_id, x_id) -> parent(run_id, id). Parent tables expose
+//     UNIQUE(run_id, id) (scopes: UNIQUE(project_id, id)) so PostgreSQL accepts
+//     the composite FKs. agent_attempts also carries run_id for this reason.
+//   - Scope pinning: tool_invocations.scope_id and policy_decisions.scope_id
+//     MUST equal runs.scope_id via FK (run_id, scope_id) -> runs(id, scope_id).
+//   - Evidence is immutable and run-attributed: artifacts.run_id is NOT NULL
+//     with ON DELETE RESTRICT. Runs are archived, not hard-deleted; hard-deleting
+//     a run with evidence is intentionally blocked.
+//   - tool_invocations does NOT store action_intent_id: the intent is reached
+//     via policy_decision_id -> policy_decisions.action_intent_id, preserving
+//     single source of truth.
+//   - credentials.status is a global lifecycle (active/expired/revoked/
+//     superseded); per-target validity lives only in credential_targets.status.
+//
+// dbdiagram.io cannot render composite FKs visually. Each composite FK is
+// written as paired column [ref: > parent.col] plus a Note; the SQL DDL must
+// add the single composite constraint referencing the parent UNIQUE key.
+//
+// IMPORTANT (migrations): partial/unique indexes shown in "Indexes" are
+// DESCRIPTIVE only. PostgreSQL DDL must create them explicitly, e.g.
+//   CREATE UNIQUE INDEX ... WHERE primary = true;
+// A plain UNIQUE(finding_id, scheme) would wrongly allow only one
+// classification per scheme instead of only one primary.
+
+Project raptix_db {
+  database_type: 'PostgreSQL'
+  Note: '''
+    Raptix — autonomous red-team platform schema.
+    Modules: platform/{projects,governance,audit,policy},
+    engine/{runs,agents,intent}, execution/{invocation,cancel},
+    workspace/{evidence,assessment,attack_graph,foothold,findings,reporting},
+    infrastructure/jobs (River).
+  '''
+}
+
+// ============================================================
+// platform/projects
+// ============================================================
+
+Table projects [headercolor: #4a86e8] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name text [not null]
+  slug text [unique, not null]
+  status text [not null, default: `'active'`, note: 'active | archived']
+  scope_version integer [not null, default: 0, note: 'monotonic counter for scope allocation']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Project metadata and lifecycle. Owner: platform/projects.'
+}
+
+Table project_members [headercolor: #4a86e8] {
+  project_id uuid [pk, ref: > projects.id, not null, note: 'ON DELETE CASCADE']
+  subject text [pk, not null, note: 'principal id (user/group)']
+  role_id uuid [ref: > roles.id, not null, note: 'ON DELETE RESTRICT']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Project membership. Owner: platform/projects. role_id connects to roles.'
+}
+
+Table scopes [headercolor: #4a86e8] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id, not null, note: 'ON DELETE CASCADE']
+  version integer [not null, default: 1, note: 'unique per project']
+  asset_types text[] [not null, default: `'{}'`, note: 'host | service | endpoint | ...']
+  include text[] [not null, default: `'{}'`]
+  exclude text[] [not null, default: `'{}'`]
+  expires_at timestamptz
+  approval_note text
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Versioned engagement scope. Owner: platform/projects. UNIQUE(project_id, version); UNIQUE(project_id, id) backs composite FKs.'
+  Indexes {
+    (project_id, version) [unique, name: 'scopes_project_version_uidx']
+    (project_id, id) [unique, name: 'scopes_project_id_uidx']
+  }
+}
+
+// ============================================================
+// platform/governance
+// ============================================================
+
+Table roles [headercolor: #9b6bcc] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name text [unique, not null, note: 'e.g. project_owner, reviewer']
+  description text [not null, default: `''`]
+}
+
+Table permissions [headercolor: #9b6bcc] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  name text [unique, not null, note: 'e.g. run.start, finding.review']
+  comment text [not null, default: `''`]
+}
+
+Table role_permissions [headercolor: #9b6bcc] {
+  role_id uuid [pk, ref: > roles.id, not null, note: 'ON DELETE CASCADE']
+  permission_id uuid [pk, ref: > permissions.id, not null, note: 'ON DELETE CASCADE']
+}
+
+// approvals: mutable approval lifecycle referencing the immutable
+// policy_decision that required approval. Non-unique policy_decision_id:
+// one decision may accumulate multiple approval attempts (superseded/reissued).
+
+Table approvals [headercolor: #9b6bcc] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  policy_decision_id uuid [
+    ref: > policy_decisions.id,
+    not null,
+    note: 'ON DELETE RESTRICT; immutable policy decision requiring approval'
+  ]
+  subject text [
+    not null,
+    note: 'principal or approval subject, if needed by governance'
+  ]
+  status text [
+    not null,
+    default: `'pending'`,
+    note: 'pending | approved | denied | superseded'
+  ]
+  decided_by text
+  decided_at timestamptz
+  reason text [not null, default: `''`]
+  created_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz
+  Note: 'Mutable approval lifecycle for an immutable policy decision. Owner: platform/governance.'
+  Indexes {
+    (policy_decision_id) [name: 'approvals_policy_decision_idx']
+    (policy_decision_id, status) [name: 'approvals_policy_status_idx']
+    (policy_decision_id, id) [unique, name: 'approvals_policy_id_uidx']
+  }
+}
+
+Table capability_grants [headercolor: #9b6bcc] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  subject text [not null, note: 'principal id']
+  scope_id uuid [ref: > scopes.id, not null, note: 'ON DELETE CASCADE']
+  capability text [not null, note: 'tool id or action']
+  granted_by text [not null, note: 'principal who granted']
+  created_at timestamptz [not null, default: `now()`]
+  revoked_at timestamptz
+  expires_at timestamptz
+  Note: 'Capability grants. Owner: platform/governance.'
+}
+
+// ============================================================
+// platform/policy
+// ============================================================
+//
+// Immutable policy verdict. scope_id pinned to the run's scope via
+// FK (run_id, scope_id) -> runs(id, scope_id).
+// UNIQUE(action_intent_id): each intent is evaluated at most once.
+
+Table policy_decisions [headercolor: #674ea7] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, scope_id) -> runs(id, scope_id)']
+  scope_id uuid [ref: > scopes.id, not null, note: 'ON DELETE RESTRICT; must equal runs.scope_id via (run_id, scope_id) -> runs(id, scope_id)']
+  action_intent_id uuid [ref: > action_intents.id, not null, note: 'ON DELETE CASCADE; UNIQUE; composite FK (run_id, action_intent_id) -> action_intents(run_id, id)']
+  actor text [not null, note: 'principal that requested the action (agent id or user)']
+  action text [not null, note: 'capability or high-level action, e.g. http_probe, run.high_risk']
+  resource text [not null, default: `''`, note: 'target asset/endpoint reference']
+  decision text [not null, note: 'allow | deny | require_approval']
+  risk_level text [not null, default: `'low'`, note: 'low | medium | high | critical']
+  rule_id text [not null, default: `''`, note: 'policy rule that matched']
+  reason text [not null, default: `''`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Immutable per-dispatch policy verdict. Owner: platform/policy. No back-reference to invocations or approvals.'
+  Indexes {
+    (action_intent_id) [unique, name: 'policy_decisions_intent_uidx']
+    (run_id, id) [unique, name: 'policy_decisions_run_id_uidx']
+    (run_id, created_at DESC) [name: 'policy_decisions_run_idx']
+    (actor, created_at DESC) [name: 'policy_decisions_actor_idx']
+    (decision, created_at DESC) [name: 'policy_decisions_decision_idx']
+  }
+}
+
+// ============================================================
+// platform/audit
+// ============================================================
+
+Table audit_records [headercolor: #cc3344] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  actor text [not null, note: 'principal id']
+  action text [not null, note: 'e.g. grant.capability, run.create']
+  resource text [not null, default: `''`, note: 'resource id/reference']
+  outcome text [not null, note: 'allowed | denied | error']
+  reason text [not null, default: `''`]
+  correlation text [not null, default: `''`, note: 'run/request correlation id']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Business audit history. Owner: platform/audit.'
+  Indexes {
+    (actor, created_at DESC) [name: 'audit_records_actor_idx']
+    (correlation) [name: 'audit_records_correlation_idx']
+    (resource) [name: 'audit_records_resource_idx']
+  }
+}
+
+// ============================================================
+// engine/runs
+// ============================================================
+
+Table runs [headercolor: #e69138] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  project_id uuid [ref: > projects.id, not null, note: 'ON DELETE CASCADE; composite FK (project_id, scope_id) -> scopes(project_id, id)']
+  scope_id uuid [ref: > scopes.id, not null, note: 'ON DELETE RESTRICT; must belong to project_id via (project_id, scope_id) -> scopes(project_id, id)']
+  name text [not null]
+  status text [not null, default: `'queued'`, note: 'queued | running | paused | cancelled | completed | failed | budget_exhausted | archived']
+  version integer [not null, default: 1, note: 'optimistic concurrency']
+  created_by text [not null]
+  request_key text [not null, default: `''`, note: 'idempotency key (Phase 7A)']
+  request_fingerprint text [not null, default: `''`, note: 'server-derived hash (Phase 7A)']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Run lifecycle. Owner: engine/runs. Archived, not hard-deleted (evidence retention).'
+  Indexes {
+    (id, scope_id) [unique, name: 'runs_id_scope_uidx']
+    (project_id, created_at DESC) [name: 'runs_project_idx']
+    (project_id, created_by, request_key) [unique, name: 'runs_project_request_key_uidx', note: 'WHERE request_key <> empty']
+  }
+}
+
+Table tasks [headercolor: #e69138] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  parent_task_id uuid [ref: > tasks.id, note: 'ON DELETE RESTRICT; composite FK (run_id, parent_task_id) -> tasks(run_id, id)']
+  name text [not null]
+  kind text [not null, default: `'generic'`, note: 'recon | exploit | post_exploit | report | generic | ...']
+  goal text [not null, default: `''`, note: 'semantic objective + success criteria for planner']
+  input jsonb [not null, default: `'{}'::jsonb`]
+  result jsonb [not null, default: `'{}'::jsonb`]
+  failure_reason text [not null, default: `''`]
+  priority smallint [not null, default: 0, note: 'higher = sooner']
+  status text [not null, default: `'queued'`, note: 'queued | running | paused | blocked | cancelled | completed | failed | budget_exhausted']
+  version integer [not null, default: 1]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Planner task with semantic goal. Owner: engine/runs. Assignment lives on agent_instances.task_id.'
+  Indexes {
+    (run_id, id) [unique, name: 'tasks_run_id_uidx']
+    (run_id) [name: 'tasks_run_idx']
+    (status, priority DESC, created_at) [name: 'tasks_queue_idx']
+  }
+}
+
+Table task_dependencies [headercolor: #e69138] {
+  task_id uuid [pk, ref: > tasks.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, task_id) -> tasks(run_id, id)']
+  depends_on uuid [pk, ref: > tasks.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, depends_on) -> tasks(run_id, id)']
+  run_id uuid [not null, note: 'ON DELETE CASCADE; same run as both tasks']
+  required boolean [not null, default: true]
+  Note: 'CHECK task_id <> depends_on. Both tasks must share run_id.'
+  Indexes {
+    (run_id) [name: 'task_dependencies_run_idx']
+  }
+}
+
+Table agent_instances [headercolor: #e69138] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  task_id uuid [ref: > tasks.id, note: 'ON DELETE RESTRICT; assignment; composite FK (run_id, task_id) -> tasks(run_id, id)']
+  parent_agent_id uuid [ref: > agent_instances.id, note: 'ON DELETE RESTRICT; multi-agent tree; composite FK (run_id, parent_agent_id) -> agent_instances(run_id, id)']
+  spawned_by_agent_id uuid [ref: > agent_instances.id, note: 'ON DELETE RESTRICT; explicit spawner; composite FK (run_id, spawned_by_agent_id) -> agent_instances(run_id, id)']
+  delegation_reason text [not null, default: `''`]
+  profile text [not null, note: 'agent profile name']
+  status text [not null, default: `'paused'`, note: 'paused | running | completed | failed | cancelled']
+  version integer [not null, default: 1]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Agent instance lifecycle. Owner: engine/runs. Parent/spawner must share run_id.'
+  Indexes {
+    (run_id, id) [unique, name: 'agent_instances_run_id_uidx']
+    (run_id) [name: 'agent_instances_run_idx']
+    (parent_agent_id) [name: 'agent_instances_parent_idx']
+    (task_id) [name: 'agent_instances_task_idx']
+  }
+}
+
+// ============================================================
+// engine/agents
+// ============================================================
+
+// agent_attempts carries run_id so action_intents and messages can enforce
+// same-run provenance with a composite FK.
+
+Table agent_attempts [headercolor: #ff9900] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE; enables same-run composite FKs']
+  agent_id uuid [ref: > agent_instances.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, agent_id) -> agent_instances(run_id, id)']
+  attempt_no integer [not null, default: 1]
+  status text [not null, default: `'running'`, note: 'running | succeeded | failed | timed_out | cancelled']
+  request_key text [not null, default: `''`, note: 'idempotency key (Phase 7A)']
+  request_fingerprint text [not null, default: `''`, note: 'server-derived hash (Phase 7A)']
+  started_at timestamptz
+  finished_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'One agent working attempt. Owner: engine/agents. run_id pins the owning run.'
+  Indexes {
+    (run_id, id) [unique, name: 'agent_attempts_run_id_uidx']
+    (agent_id, attempt_no) [unique]
+    (agent_id, attempt_no DESC) [name: 'agent_attempts_agent_idx']
+    (agent_id, request_key) [unique, name: 'agent_attempts_agent_request_key_uidx', note: 'WHERE request_key <> empty']
+  }
+}
+
+// agent_messages carries run_id so the invocation trace cannot cross runs.
+
+Table agent_messages [headercolor: #ff9900] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE; same run as the attempt and any invocation']
+  attempt_id uuid [ref: > agent_attempts.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, attempt_id) -> agent_attempts(run_id, id)']
+  seq integer [not null, note: 'CHECK seq >= 0']
+  role text [not null, note: 'system | user | assistant | tool']
+  content text [not null]
+  invocation_id uuid [ref: > tool_invocations.id, note: 'ON DELETE RESTRICT; composite FK (run_id, invocation_id) -> tool_invocations(run_id, id)']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Agent conversation turns. Owner: engine/agents. Invocation trace cannot cross runs.'
+  Indexes {
+    (run_id) [name: 'agent_messages_run_idx']
+    (attempt_id, seq) [unique]
+    (attempt_id, seq) [name: 'agent_messages_attempt_idx']
+  }
+}
+
+// agent_snapshots carries run_id for same-run provenance to the agent instance.
+
+Table agent_snapshots [headercolor: #ff9900] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  agent_id uuid [ref: > agent_instances.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, agent_id) -> agent_instances(run_id, id)']
+  profile_ref text [not null]
+  content_hash text [not null]
+  requested jsonb [not null, default: `'[]'::jsonb`]
+  granted jsonb [not null, default: `'{}'::jsonb`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Resolved content/capability snapshot. Owner: engine/agents.'
+  Indexes {
+    (run_id) [name: 'agent_snapshots_run_idx']
+    (agent_id, content_hash) [unique]
+  }
+}
+
+// ============================================================
+// engine/intent
+// ============================================================
+//
+// action_intents: agent-proposed action. No FK to policy_decisions
+// (single direction; policy_decisions.action_intent_id is the owner).
+// status is aggregate orchestration lifecycle; child records are authoritative.
+
+Table action_intents [headercolor: #d58512] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  task_id uuid [ref: > tasks.id, note: 'ON DELETE RESTRICT; composite FK (run_id, task_id) -> tasks(run_id, id)']
+  agent_attempt_id uuid [ref: > agent_attempts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, agent_attempt_id) -> agent_attempts(run_id, id)']
+  hypothesis_id uuid [ref: > hypotheses.id, note: 'ON DELETE RESTRICT; composite FK (run_id, hypothesis_id) -> hypotheses(run_id, id)']
+  target_asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, target_asset_id) -> assets(run_id, id)']
+  capability text [not null, note: 'requested capability, e.g. http_probe, nmap']
+  request jsonb [not null, default: `'{}'::jsonb`, note: 'sanitized args the agent wants to run']
+  reason text [not null, default: `''`, note: 'agent reasoning for proposing this action']
+  status text [not null, default: `'pending'`, note: 'aggregate lifecycle: pending | policy_decided | approved | denied | dispatched | completed | failed | cancelled']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Agent-proposed action. Owner: engine/intent. status is an aggregate lifecycle, not authoritative.'
+  Indexes {
+    (run_id, id) [unique, name: 'action_intents_run_id_uidx']
+    (run_id, created_at DESC) [name: 'action_intents_run_idx']
+    (agent_attempt_id) [name: 'action_intents_attempt_idx']
+    (status, created_at) [name: 'action_intents_status_idx']
+  }
+}
+
+// ============================================================
+// execution/invocation
+// ============================================================
+//
+// tool_invocations: NO action_intent_id (reached via policy_decision_id ->
+// policy_decisions.action_intent_id). scope_id pinned to run's scope.
+// raw/structured artifacts constrained to the same run.
+
+Table tool_invocations [headercolor: #38761d] {
+  id uuid [pk, default: `gen_random_uuid()`]
+
+  run_id uuid [
+    ref: > runs.id,
+    not null,
+    note: 'ON DELETE CASCADE; composite FK (run_id, scope_id) -> runs(id, scope_id)'
+  ]
+
+  task_id uuid [
+    ref: > tasks.id,
+    note: 'ON DELETE RESTRICT; composite FK (run_id, task_id) -> tasks(run_id, id)'
+  ]
+
+  scope_id uuid [
+    ref: > scopes.id,
+    not null,
+    note: 'ON DELETE RESTRICT; must equal runs.scope_id via (run_id, scope_id) -> runs(id, scope_id)'
+  ]
+
+  hypothesis_id uuid [
+    ref: > hypotheses.id,
+    note: 'ON DELETE RESTRICT; composite FK (run_id, hypothesis_id) -> hypotheses(run_id, id)'
+  ]
+
+  policy_decision_id uuid [
+    ref: > policy_decisions.id,
+    not null,
+    note: 'ON DELETE RESTRICT; every invocation requires a policy verdict; composite FK (run_id, policy_decision_id) -> policy_decisions(run_id, id)'
+  ]
+
+  approval_id uuid [
+    ref: > approvals.id,
+    note: 'ON DELETE RESTRICT; exact HITL approval; composite FK (policy_decision_id, approval_id) -> approvals(policy_decision_id, id)'
+  ]
+
+  actor text [not null]
+  capability text [not null]
+  capability_version text [not null, default: `''`]
+
+  status text [
+    not null,
+    default: `'pending'`,
+    note: 'pending | dispatched | running | succeeded | failed | timed_out | cancelled | unknown'
+  ]
+
+  request jsonb [not null, default: `'{}'::jsonb`, note: 'sanitized args']
+
+  raw_artifact_id uuid [
+    ref: > artifacts.id,
+    note: 'ON DELETE RESTRICT; composite FK (run_id, raw_artifact_id) -> artifacts(run_id, id)'
+  ]
+
+  structured_artifact_id uuid [
+    ref: > artifacts.id,
+    note: 'ON DELETE RESTRICT; composite FK (run_id, structured_artifact_id) -> artifacts(run_id, id)'
+  ]
+
+  result_execution text [
+    not null,
+    default: `'not_attempted'`,
+    note: 'not_attempted | success | failed | timed_out | cancelled'
+  ]
+
+  result_parse text [
+    not null,
+    default: `'not_attempted'`,
+    note: 'not_attempted | success | partial | failed'
+  ]
+
+  exit_code integer
+  error_code text [not null, default: `''`]
+  error_message text [not null, default: `''`]
+  idempotency_key text [not null]
+  version integer [not null, default: 1]
+
+  started_at timestamptz
+  finished_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: 'Tool invocation lifecycle. Owner: execution/invocation. Intent reached via policy_decision_id. approval_id records the exact HITL approval used when required.'
+
+  Indexes {
+    (run_id, id) [unique, name: 'tool_invocations_run_id_uidx']
+    (run_id, idempotency_key) [unique]
+    (run_id, created_at DESC) [name: 'tool_invocations_run_idx']
+    (status) [name: 'tool_invocations_status_idx']
+    (created_at) [name: 'tool_invocations_pending_stale_idx', note: 'WHERE status = pending']
+    (started_at) [name: 'tool_invocations_running_stale_idx', note: 'WHERE status IN (dispatched, running)']
+    (hypothesis_id) [name: 'tool_invocations_hypothesis_idx']
+    (policy_decision_id) [name: 'tool_invocations_policy_idx']
+    (approval_id) [name: 'tool_invocations_approval_idx']
+  }
+}
+
+// ============================================================
+// workspace/evidence
+// ============================================================
+//
+// Evidence retention: artifacts are immutable and run-attributed
+// (run_id NOT NULL, ON DELETE RESTRICT). Runs are archived, not hard-deleted.
+// UNIQUE(run_id, id) backs same-run composite FKs from every domain table.
+
+Table artifacts [headercolor: #0b5394] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE RESTRICT; origin run attribution is immutable; archive runs instead of deleting']
+  kind text [not null, note: 'raw | derived']
+  mime text [not null, default: `'application/octet-stream'`]
+  size bigint [not null, default: 0, note: 'CHECK size >= 0']
+  sha256 text [not null, note: 'CHECK sha256 ~ ^[0-9a-f]{64}$']
+  schema_version text [not null, default: `''`]
+  parser_version text [not null, default: `''`]
+  sensitivity text [not null, default: `'low'`, note: 'low | medium | high | secret']
+  storage_key text [not null, note: 'CHECK btrim(storage_key) <> empty']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Artifact metadata. Owner: workspace/evidence. Run-attributed and immutable; UNIQUE(run_id, id) backs composite FKs.'
+  Indexes {
+    (run_id, id) [unique, name: 'artifacts_run_id_uidx']
+    (run_id, created_at DESC) [name: 'artifacts_run_idx']
+    (sha256, created_at DESC, id DESC) [name: 'artifacts_sha256_idx']
+  }
+}
+
+// artifact_relations: canonical provenance DAG. No run_id; run is derived via
+// the artifacts. Survives run archiving along with its artifacts.
+
+Table artifact_relations [headercolor: #0b5394] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [
+    ref: > runs.id,
+    not null,
+    note: 'ON DELETE RESTRICT; provenance must remain within one run'
+  ]
+  source_artifact_id uuid [
+    ref: > artifacts.id,
+    not null,
+    note: 'ON DELETE RESTRICT; composite FK (run_id, source_artifact_id) -> artifacts(run_id, id)'
+  ]
+  target_artifact_id uuid [
+    ref: > artifacts.id,
+    not null,
+    note: 'ON DELETE RESTRICT; composite FK (run_id, target_artifact_id) -> artifacts(run_id, id)'
+  ]
+  relation_type text [
+    not null,
+    note: 'derived_from | merged_with | normalized_from | ...'
+  ]
+  properties jsonb [not null, default: `'{}'::jsonb`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Canonical same-run artifact provenance DAG. Owner: workspace/evidence.'
+  Indexes {
+    (run_id) [name: 'artifact_relations_run_idx']
+    (source_artifact_id) [name: 'artifact_relations_source_idx']
+    (target_artifact_id) [name: 'artifact_relations_target_idx']
+    (relation_type) [name: 'artifact_relations_type_idx']
+  }
+}
+
+// ============================================================
+// workspace/assessment
+// ============================================================
+
+Table assets [headercolor: #76a5af] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  kind text [not null, note: 'host | service | endpoint | parameter | technology | credential_target | ...']
+  name text [not null]
+  identity_key text [not null, default: `''`, note: 'stable canonical key, e.g. tcp://10.0.0.1:443, https://example.com/api/users']
+  epistemic_status text [not null, default: `'observed'`, note: 'candidate | observed | verified | refuted | stale']
+  confidence text [not null, default: `'medium'`, note: 'low | medium | high']
+  properties jsonb [not null, default: `'{}'::jsonb`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Attack-surface asset. Owner: workspace/assessment. UNIQUE(run_id, kind, identity_key); UNIQUE(run_id, id) backs composite FKs.'
+  Indexes {
+    (run_id, id) [unique, name: 'assets_run_id_uidx']
+    (run_id, created_at) [name: 'assets_run_idx']
+    (run_id, kind) [name: 'assets_run_kind_idx']
+    (run_id, kind, identity_key) [unique, name: 'assets_identity_uidx', note: 'WHERE identity_key <> empty']
+    (epistemic_status, confidence) [name: 'assets_epistemic_idx']
+  }
+}
+
+Table observations [headercolor: #76a5af] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, asset_id) -> assets(run_id, id)']
+  invocation_id uuid [ref: > tool_invocations.id, note: 'ON DELETE RESTRICT; composite FK (run_id, invocation_id) -> tool_invocations(run_id, id)']
+  summary text [not null]
+  detail text [not null, default: `''`]
+  evidence_id uuid [ref: > artifacts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, evidence_id) -> artifacts(run_id, id)']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Observed response/behavior. Owner: workspace/assessment. Evidence must share run_id.'
+  Indexes {
+    (run_id, id) [unique, name: 'observations_run_id_uidx']
+    (run_id, created_at) [name: 'observations_run_idx']
+    (invocation_id) [name: 'observations_invocation_idx']
+    (evidence_id) [name: 'observations_evidence_idx']
+  }
+}
+
+Table hypotheses [headercolor: #76a5af] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, asset_id) -> assets(run_id, id)']
+  title text [not null]
+  description text [not null, default: `''`]
+  status text [not null, default: `'open'`, note: 'open | investigating | confirmed | refuted | inconclusive']
+  created_at timestamptz [not null, default: `now()`]
+  Indexes {
+    (run_id, id) [unique, name: 'hypotheses_run_id_uidx']
+    (run_id) [name: 'hypotheses_run_idx']
+    (asset_id) [name: 'hypotheses_asset_idx']
+    (status) [name: 'hypotheses_status_idx']
+  }
+}
+
+Table hypothesis_observations [headercolor: #76a5af] {
+  hypothesis_id uuid [pk, ref: > hypotheses.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, hypothesis_id) -> hypotheses(run_id, id)']
+  observation_id uuid [pk, ref: > observations.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, observation_id) -> observations(run_id, id)']
+  run_id uuid [not null, note: 'ON DELETE CASCADE; same run as both sides']
+  role text [not null, note: 'supporting | refuting | context']
+  Note: 'CHECK role IN (supporting, refuting, context). Both sides must share run_id.'
+  Indexes {
+    (run_id) [name: 'hypothesis_observations_run_idx']
+    (observation_id) [name: 'hypothesis_observations_observation_idx']
+    (hypothesis_id, role) [name: 'hypothesis_observations_hyp_role_idx']
+  }
+}
+
+Table coverage_entries [headercolor: #76a5af] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  hypothesis_id uuid [ref: > hypotheses.id, note: 'ON DELETE RESTRICT; composite FK (run_id, hypothesis_id) -> hypotheses(run_id, id)']
+  asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, asset_id) -> assets(run_id, id)']
+  method text [not null]
+  outcome text [not null, note: 'attempted | not_attempted | inconclusive | verified_negative | verified_positive']
+  evidence_id uuid [ref: > artifacts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, evidence_id) -> artifacts(run_id, id)']
+  reason text [not null, default: `''`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Track what was checked. Owner: workspace/assessment.'
+  Indexes {
+    (run_id, created_at) [name: 'coverage_entries_run_idx']
+    (hypothesis_id) [name: 'coverage_entries_hypothesis_idx']
+    (evidence_id) [name: 'coverage_entries_evidence_idx']
+  }
+}
+
+// ============================================================
+// workspace/attack_graph
+// ============================================================
+
+Table asset_relations [headercolor: #b45f06] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  source_asset_id uuid [ref: > assets.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, source_asset_id) -> assets(run_id, id)']
+  target_asset_id uuid [ref: > assets.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, target_asset_id) -> assets(run_id, id)']
+  relation_type text [not null, note: 'HOSTS | RUNS_SERVICE | EXPOSES_ENDPOINT | RESOLVES_TO | AUTHENTICATES_TO | DEPENDS_ON | CONNECTS_TO | TRUSTS | PIVOTS_TO | ...']
+  status text [not null, default: `'observed'`, note: 'candidate | observed | verified | refuted | stale']
+  confidence text [not null, default: `'medium'`, note: 'low | medium | high']
+  properties jsonb [not null, default: `'{}'::jsonb`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Attack-graph edge with epistemic state. Owner: workspace/attack_graph. UNIQUE(run_id, source_asset_id, target_asset_id, relation_type).'
+  Indexes {
+    (run_id, id) [unique, name: 'asset_relations_run_id_uidx']
+    (run_id, source_asset_id, target_asset_id, relation_type) [unique, name: 'asset_relations_canonical_uidx']
+    (run_id, relation_type) [name: 'asset_relations_run_type_idx']
+    (source_asset_id) [name: 'asset_relations_source_idx']
+    (target_asset_id) [name: 'asset_relations_target_idx']
+    (status, confidence) [name: 'asset_relations_epistemic_idx']
+  }
+}
+
+Table asset_relation_evidence [headercolor: #b45f06] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  relation_id uuid [ref: > asset_relations.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, relation_id) -> asset_relations(run_id, id)']
+  evidence_id uuid [ref: > artifacts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, evidence_id) -> artifacts(run_id, id)']
+  invocation_id uuid [ref: > tool_invocations.id, note: 'ON DELETE RESTRICT; composite FK (run_id, invocation_id) -> tool_invocations(run_id, id)']
+  role text [not null, default: `'supporting'`, note: 'supporting | refuting | context']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Evidence sources for an asset relation. Owner: workspace/attack_graph.'
+  Indexes {
+    (run_id) [name: 'asset_relation_evidence_run_idx']
+    (relation_id) [name: 'asset_relation_evidence_relation_idx']
+    (evidence_id) [name: 'asset_relation_evidence_evidence_idx']
+  }
+}
+
+Table attack_paths [headercolor: #b45f06] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  objective text [not null, default: `''`, note: 'e.g. read /etc/passwd on internal-db']
+  from_asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, from_asset_id) -> assets(run_id, id)']
+  to_asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, to_asset_id) -> assets(run_id, id)']
+  status text [not null, default: `'candidate'`, note: 'candidate | feasible | executed | blocked | failed']
+  feasibility_score numeric [note: 'CHECK feasibility_score >= 0 AND feasibility_score <= 1']
+  root_finding_id uuid [ref: > findings.id, note: 'ON DELETE RESTRICT; composite FK (run_id, root_finding_id) -> findings(run_id, id)']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Planner-derived attack path aggregate. Owner: workspace/attack_graph.'
+  Indexes {
+    (run_id, id) [unique, name: 'attack_paths_run_id_uidx']
+    (run_id, status) [name: 'attack_paths_run_status_idx']
+    (from_asset_id) [name: 'attack_paths_from_idx']
+    (to_asset_id) [name: 'attack_paths_to_idx']
+  }
+}
+
+Table attack_path_steps [headercolor: #b45f06] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE; same run as the path and every referenced fact']
+  attack_path_id uuid [ref: > attack_paths.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, attack_path_id) -> attack_paths(run_id, id)']
+  step_no integer [not null, note: 'CHECK step_no > 0; 1-based ordering within the path']
+  source_asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, source_asset_id) -> assets(run_id, id)']
+  target_asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; composite FK (run_id, target_asset_id) -> assets(run_id, id)']
+  relation_id uuid [ref: > asset_relations.id, note: 'ON DELETE RESTRICT; composite FK (run_id, relation_id) -> asset_relations(run_id, id)']
+  finding_id uuid [ref: > findings.id, note: 'ON DELETE RESTRICT; composite FK (run_id, finding_id) -> findings(run_id, id)']
+  credential_id uuid [ref: > credentials.id, note: 'ON DELETE RESTRICT; composite FK (run_id, credential_id) -> credentials(run_id, id)']
+  session_id uuid [ref: > sessions.id, note: 'ON DELETE RESTRICT; composite FK (run_id, session_id) -> sessions(run_id, id)']
+  invocation_id uuid [ref: > tool_invocations.id, note: 'ON DELETE RESTRICT; composite FK (run_id, invocation_id) -> tool_invocations(run_id, id)']
+  technique text [not null, default: `''`, note: 'MITRE ATT&CK technique id, e.g. T1190']
+  status text [not null, default: `'planned'`, note: 'planned | executed | failed | blocked']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'One hop in an attack path. Owner: workspace/attack_graph. All referenced facts must share run_id.'
+  Indexes {
+    (run_id) [name: 'attack_path_steps_run_idx']
+    (attack_path_id, step_no) [unique]
+    (finding_id) [name: 'attack_path_steps_finding_idx']
+    (credential_id) [name: 'attack_path_steps_credential_idx']
+    (session_id) [name: 'attack_path_steps_session_idx']
+  }
+}
+
+// ============================================================
+// workspace/foothold
+// ============================================================
+
+Table sessions [headercolor: #8b0000] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  asset_id uuid [ref: > assets.id, not null, note: 'ON DELETE RESTRICT; composite FK (run_id, asset_id) -> assets(run_id, id)']
+  source_invocation_id uuid [ref: > tool_invocations.id, note: 'ON DELETE RESTRICT; composite FK (run_id, source_invocation_id) -> tool_invocations(run_id, id)']
+  credential_id uuid [ref: > credentials.id, note: 'ON DELETE RESTRICT; composite FK (run_id, credential_id) -> credentials(run_id, id)']
+  kind text [not null, note: 'shell | ssh | rdp | web_session | browser_session | api_session | database_session | vpn']
+  channel text [not null, default: `''`, note: 'protocol/transport, e.g. ssh/tcp, https']
+  principal text [not null, default: `''`, note: 'user/account the session runs as']
+  privilege_level text [not null, default: `'user'`, note: 'user | admin | root | system | ...']
+  status text [not null, default: `'open'`, note: 'open | idle | closed | lost | revoked']
+  opened_at timestamptz [not null, default: `now()`]
+  last_seen_at timestamptz [not null, default: `now()`]
+  expires_at timestamptz
+  closed_at timestamptz
+  metadata jsonb [not null, default: `'{}'::jsonb`]
+  Note: 'Live foothold/session state. Owner: workspace/foothold. credential/invocation must share run_id.'
+  Indexes {
+    (run_id, id) [unique, name: 'sessions_run_id_uidx']
+    (run_id, status) [name: 'sessions_run_status_idx']
+    (asset_id) [name: 'sessions_asset_idx']
+    (last_seen_at) [name: 'sessions_last_seen_idx', note: 'WHERE status IN (open, idle)']
+  }
+}
+
+// credentials.status is GLOBAL lifecycle only. Per-target validity lives
+// solely in credential_targets.status (a credential may be valid on one host,
+// invalid on another).
+
+Table credentials [headercolor: #8b0000] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  source_asset_id uuid [ref: > assets.id, note: 'ON DELETE RESTRICT; where found; composite FK (run_id, source_asset_id) -> assets(run_id, id)']
+  kind text [not null, note: 'password | api_key | cookie | bearer_token | oauth_token | ssh_key | certificate']
+  username text [not null, default: `''`]
+  secret_artifact_id uuid [ref: > artifacts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, secret_artifact_id) -> artifacts(run_id, id)']
+  source text [not null, default: `''`, note: 'leaked | brute_force | default | provided | pivoted | ...']
+  status text [not null, default: `'active'`, note: 'global lifecycle: active | expired | revoked | superseded']
+  expires_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Credential metadata. Owner: workspace/foothold. status is global lifecycle; per-target validity in credential_targets.'
+  Indexes {
+    (run_id, id) [unique, name: 'credentials_run_id_uidx']
+    (run_id, status) [name: 'credentials_run_status_idx']
+    (source_asset_id) [name: 'credentials_source_asset_idx']
+    (kind, username) [name: 'credentials_kind_user_idx']
+  }
+}
+
+// credential_targets: per-target validity. Both sides must share the
+// credential's run; evidence must share run_id.
+
+Table credential_targets [headercolor: #8b0000] {
+  credential_id uuid [pk, ref: > credentials.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, credential_id) -> credentials(run_id, id)']
+  asset_id uuid [pk, ref: > assets.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, asset_id) -> assets(run_id, id)']
+  run_id uuid [not null, note: 'ON DELETE CASCADE; same run as both sides']
+  status text [not null, default: `'unknown'`, note: 'unknown | valid | invalid | expired | revoked']
+  validated_at timestamptz
+  evidence_id uuid [ref: > artifacts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, evidence_id) -> artifacts(run_id, id)']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Credential valid_for asset. Owner: workspace/foothold. Validity lives only here.'
+  Indexes {
+    (run_id) [name: 'credential_targets_run_idx']
+    (asset_id, status) [name: 'credential_targets_asset_status_idx']
+    (evidence_id) [name: 'credential_targets_evidence_idx']
+  }
+}
+
+// ============================================================
+// workspace/findings
+// ============================================================
+
+Table findings [headercolor: #cc0000] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE']
+  title text [not null]
+  description text [not null, default: `''`]
+  severity text [not null, default: `'medium'`, note: 'none | low | medium | high | critical']
+  confidence text [not null, default: `'low'`, note: 'low | medium | high']
+  status text [not null, default: `'draft'`, note: 'draft | reviewed | confirmed | rejected | inconclusive']
+  version integer [not null, default: 1]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Finding aggregate. Owner: workspace/findings.'
+  Indexes {
+    (run_id, id) [unique, name: 'findings_run_id_uidx']
+    (run_id, created_at) [name: 'findings_run_idx']
+  }
+}
+
+// finding_evidence: evidence must share the finding's run.
+
+Table finding_evidence [headercolor: #cc0000] {
+  finding_id uuid [pk, ref: > findings.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, finding_id) -> findings(run_id, id)']
+  evidence_id uuid [pk, ref: > artifacts.id, not null, note: 'ON DELETE RESTRICT; composite FK (run_id, evidence_id) -> artifacts(run_id, id)']
+  run_id uuid [not null, note: 'ON DELETE CASCADE; same run as the finding']
+  role text [not null, default: `'supporting'`, note: 'supporting | refuting | context']
+  Note: 'Both sides must share run_id.'
+  Indexes {
+    (run_id) [name: 'finding_evidence_run_idx']
+    (evidence_id) [name: 'finding_evidence_evidence_idx']
+  }
+}
+
+// finding_assets: both sides must share the finding's run.
+
+Table finding_assets [headercolor: #cc0000] {
+  finding_id uuid [pk, ref: > findings.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, finding_id) -> findings(run_id, id)']
+  asset_id uuid [pk, ref: > assets.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, asset_id) -> assets(run_id, id)']
+  run_id uuid [not null, note: 'ON DELETE CASCADE; same run as both sides']
+  role text [not null, default: `'affected'`, note: 'affected | exploited | pivot | context']
+  Note: 'CHECK role IN (affected, exploited, pivot, context). Both sides must share run_id.'
+  Indexes {
+    (run_id) [name: 'finding_assets_run_idx']
+    (asset_id) [name: 'finding_assets_asset_idx']
+  }
+}
+
+// finding_revisions carries run_id so evidence references can enforce same-run.
+// PK stays (finding_id, revision_no); UNIQUE(run_id, finding_id, revision_no)
+// is the candidate key for finding_revision_evidence.
+
+Table finding_revisions [headercolor: #cc0000] {
+  finding_id uuid [pk, ref: > findings.id, not null, note: 'ON DELETE CASCADE; composite FK (run_id, finding_id) -> findings(run_id, id)']
+  revision_no integer [pk, not null, note: 'CHECK revision_no > 0']
+  run_id uuid [ref: > runs.id, not null, note: 'ON DELETE CASCADE; pinned to the finding run']
+  title text [not null]
+  description text [not null, default: `''`]
+  severity text [not null, note: 'none | low | medium | high | critical']
+  confidence text [not null, note: 'low | medium | high']
+  status text [not null, note: 'draft | reviewed | confirmed | rejected | inconclusive']
+  change_reason text [not null, default: `''`]
+  actor text [not null, default: `''`]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Immutable finding snapshots. Owner: workspace/findings. Trigger blocks UPDATE.'
+  Indexes {
+    (run_id, finding_id, revision_no) [unique, name: 'finding_revisions_run_key_uidx']
+    (finding_id, revision_no DESC, created_at DESC) [name: 'finding_revisions_finding_created_idx']
+  }
+}
+
+Table finding_revision_evidence [headercolor: #cc0000] {
+  finding_id uuid [pk, ref: > finding_revisions.finding_id, not null, note: 'Composite FK (run_id, finding_id, revision_no) -> finding_revisions']
+  revision_no integer [pk, ref: > finding_revisions.revision_no, not null, note: 'Composite FK (run_id, finding_id, revision_no) -> finding_revisions']
+  evidence_id uuid [pk, ref: > artifacts.id, not null, note: 'ON DELETE RESTRICT; composite FK (run_id, evidence_id) -> artifacts(run_id, id)']
+  run_id uuid [not null, note: 'ON DELETE CASCADE; same run as the revision']
+  role text [not null, note: 'supporting | refuting | context']
+  Note: 'Composite FK (run_id, finding_id, revision_no) -> finding_revisions. Trigger blocks UPDATE.'
+  Indexes {
+    (run_id) [name: 'finding_revision_evidence_run_idx']
+    (finding_id, revision_no) [name: 'finding_revision_evidence_revision_idx']
+  }
+}
+
+// finding_verdicts: revision_no NOT NULL (pre-production, no legacy rows).
+// Composite FK (finding_id, revision_no) -> finding_revisions.
+
+Table finding_verdicts [headercolor: #cc0000] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  finding_id uuid [ref: > findings.id, not null, note: 'ON DELETE CASCADE; also part of composite FK (finding_id, revision_no) -> finding_revisions']
+  revision_no integer [ref: > finding_revisions.revision_no, not null, note: 'Composite FK (finding_id, revision_no) -> finding_revisions']
+  verdict text [not null, note: 'confirmed | refuted | inconclusive']
+  reason text [not null, default: `''`]
+  produced_by text [not null, default: `''`, note: 'verifier id; does not change status']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Verifier output. Owner: workspace/findings. Composite FK (finding_id, revision_no) -> finding_revisions.'
+  Indexes {
+    (finding_id, created_at DESC, id DESC) [name: 'finding_verdicts_finding_idx']
+    (finding_id, revision_no, created_at DESC) [name: 'finding_verdicts_revision_idx']
+  }
+}
+
+// finding_review_history: from/to revision are NOT NULL (pre-production).
+
+Table finding_review_history [headercolor: #cc0000] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  finding_id uuid [ref: > findings.id, not null, note: 'ON DELETE CASCADE; also part of composite FKs for from/to revision']
+  from_status text [not null]
+  to_status text [not null]
+  reviewer text [not null]
+  reason text [not null, default: `''`]
+  from_revision_no integer [ref: > finding_revisions.revision_no, not null, note: 'Composite FK (finding_id, from_revision_no) -> finding_revisions']
+  to_revision_no integer [ref: > finding_revisions.revision_no, not null, note: 'Composite FK (finding_id, to_revision_no) -> finding_revisions']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Review history. Owner: workspace/findings. Composite FKs (finding_id, from/to_revision_no) -> finding_revisions.'
+  Indexes {
+    (finding_id, created_at DESC, id DESC) [name: 'finding_review_history_finding_idx']
+    (finding_id, to_revision_no, created_at DESC) [name: 'finding_review_history_to_revision_idx']
+  }
+}
+
+Table finding_classifications [headercolor: #cc0000] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  finding_id uuid [ref: > findings.id, not null, note: 'ON DELETE CASCADE']
+  scheme text [not null, note: 'CWE | OWASP | CAPEC | MITRE_ATTACK | WASC | CVSS | ...']
+  identifier text [not null, note: 'e.g. CWE-89, A03:2021, CAPEC-66, T1190']
+  primary boolean [not null, default: false, note: 'one primary classification per scheme']
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Typed vulnerability classification. Owner: workspace/findings. UNIQUE(finding_id, scheme, identifier); partial UNIQUE(finding_id, scheme) WHERE primary.'
+  Indexes {
+    (finding_id, scheme, identifier) [unique, name: 'finding_classifications_finding_scheme_id_uidx']
+    (scheme, identifier) [name: 'finding_classifications_scheme_id_idx']
+    (finding_id, scheme) [unique, name: 'finding_classifications_primary_uidx', note: 'WHERE primary = true']
+  }
+}
+
+// ============================================================
+// workspace/reporting
+// ============================================================
+
+Table report_requests [headercolor: #1c4587] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  run_id uuid [unique, ref: > runs.id, not null, note: 'ON DELETE CASCADE; one report per run']
+  template_id text [not null, note: 'CHECK template_id <> empty']
+  template_version text [not null, note: 'CHECK template_version <> empty']
+  template_hash text [not null, note: 'CHECK sha256 ~ ^[0-9a-f]{64}$']
+  snapshot jsonb [not null, note: 'CHECK jsonb_typeof = object; immutable input']
+  status text [not null, default: `'queued'`, note: 'queued | rendering | completed | failed | cancelled']
+  version integer [not null, default: 1]
+  lease_owner text [note: 'required when status = rendering']
+  lease_expires_at timestamptz [note: 'required when status = rendering']
+  output_artifact_id uuid [ref: > artifacts.id, note: 'ON DELETE RESTRICT; composite FK (run_id, output_artifact_id) -> artifacts(run_id, id)']
+  failure_code text [not null, default: `''`]
+  failure_message text [not null, default: `''`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+  Note: 'Immutable report input snapshots and publication lifecycle. Owner: workspace/reporting. Output artifact must share run_id.'
+  Indexes {
+    (status, lease_expires_at) [name: 'report_requests_claim_idx', note: 'WHERE status IN (queued, rendering)']
+  }
+}
+
+// ============================================================
+// infrastructure/jobs (River — managed by River client)
+// ============================================================
+
+Table river_job [headercolor: #666666] {
+  id bigint [pk]
+  name text [not null, note: 'job kind, e.g. report_render']
+  metadata jsonb [not null, default: `'{}'::jsonb`]
+  args jsonb [not null, note: 'job-specific payload (versioned)']
+  attempt smallint [not null, default: 0]
+  max_attempts smallint [not null]
+  queue text [not null, default: `'default'`]
+  priority smallint [not null, default: 1]
+  state text [not null, note: 'available | running | completed | failed | ...']
+  scheduled_at timestamptz [not null]
+  attempted_at timestamptz
+  finalized_at timestamptz
+  attempted_by text
+  errors jsonb [not null, default: `'[]'::jsonb`]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  Note: 'River job queue. Owner: infrastructure/jobs. Schema managed by River client.'
+}
+
+Table river_leader [headercolor: #666666] {
+  id text [pk]
+  elected_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  Note: 'River leader election.'
+}
+
+Table river_queue [headercolor: #666666] {
+  name text [pk]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  metadata jsonb [not null, default: `'{}'::jsonb`]
+  paused_at timestamptz
+  Note: 'River queue registry.'
+}
+
+Table river_migration [headercolor: #666666] {
+  version bigint [pk]
+  created_at timestamptz [not null]
+  Note: 'River migration tracking.'
+}
+
+Table river_notification [headercolor: #666666] {
+  id bigint [pk]
+  topic text [not null]
+  payload jsonb [not null, default: `'{}'::jsonb`]
+  created_at timestamptz [not null]
+  Note: 'River pub/sub notifications.'
+}
+
+// ============================================================
+// goose (migration tracking)
+// ============================================================
+
+Table goose_db_version [headercolor: #999999] {
+  id integer [pk]
+  version_id bigint [not null]
+  is_applied boolean [not null]
+  tstamp timestamptz [not null, default: `now()`]
+  Note: 'goose migration tracking.'
+}
+
+// ============================================================
+// Composite FK map (SQL DDL must add one constraint per row)
+// ============================================================
+//
+// Parent candidate keys: UNIQUE(run_id, id) on tasks, agent_instances,
+// agent_attempts, action_intents, policy_decisions, tool_invocations, artifacts,
+// assets, observations, hypotheses, findings, credentials, sessions,
+// asset_relations, attack_paths; UNIQUE(project_id, id) on scopes;
+// UNIQUE(id, scope_id) on runs; UNIQUE(run_id, finding_id, revision_no) on
+// finding_revisions.
+//
+// ON DELETE notes: composite FKs that include a NOT NULL run_id cannot use
+// ON DELETE SET NULL (PostgreSQL would null run_id). Optional references use
+// RESTRICT; owned children use CASCADE.
+//
+//   runs(project_id, scope_id)                    -> scopes(project_id, id)
+//   policy_decisions(run_id, scope_id)            -> runs(id, scope_id)
+//   policy_decisions(run_id, action_intent_id)    -> action_intents(run_id, id)
+//   tool_invocations(run_id, scope_id)            -> runs(id, scope_id)
+//   tool_invocations(run_id, task_id)             -> tasks(run_id, id)
+//   tool_invocations(run_id, hypothesis_id)       -> hypotheses(run_id, id)
+//   tool_invocations(run_id, policy_decision_id)  -> policy_decisions(run_id, id)
+//   tool_invocations(policy_decision_id, approval_id) -> approvals(policy_decision_id, id)
+//   tool_invocations(run_id, raw_artifact_id)     -> artifacts(run_id, id)
+//   tool_invocations(run_id, structured_artifact_id) -> artifacts(run_id, id)
+//   tasks(run_id, parent_task_id)                 -> tasks(run_id, id)
+//   task_dependencies(run_id, task_id)            -> tasks(run_id, id)
+//   task_dependencies(run_id, depends_on)         -> tasks(run_id, id)
+//   agent_instances(run_id, task_id)              -> tasks(run_id, id)
+//   agent_instances(run_id, parent_agent_id)      -> agent_instances(run_id, id)
+//   agent_instances(run_id, spawned_by_agent_id)  -> agent_instances(run_id, id)
+//   agent_attempts(run_id, agent_id)              -> agent_instances(run_id, id)
+//   agent_messages(run_id, attempt_id)            -> agent_attempts(run_id, id)
+//   agent_messages(run_id, invocation_id)         -> tool_invocations(run_id, id)
+//   agent_snapshots(run_id, agent_id)             -> agent_instances(run_id, id)
+//   action_intents(run_id, task_id)               -> tasks(run_id, id)
+//   action_intents(run_id, agent_attempt_id)      -> agent_attempts(run_id, id)
+//   action_intents(run_id, hypothesis_id)         -> hypotheses(run_id, id)
+//   action_intents(run_id, target_asset_id)       -> assets(run_id, id)
+//   observations(run_id, asset_id)                -> assets(run_id, id)
+//   observations(run_id, invocation_id)           -> tool_invocations(run_id, id)
+//   observations(run_id, evidence_id)             -> artifacts(run_id, id)
+//   hypotheses(run_id, asset_id)                  -> assets(run_id, id)
+//   hypothesis_observations(run_id, hypothesis_id)  -> hypotheses(run_id, id)
+//   hypothesis_observations(run_id, observation_id) -> observations(run_id, id)
+//   coverage_entries(run_id, hypothesis_id)       -> hypotheses(run_id, id)
+//   coverage_entries(run_id, asset_id)            -> assets(run_id, id)
+//   coverage_entries(run_id, evidence_id)         -> artifacts(run_id, id)
+//   asset_relations(run_id, source_asset_id)      -> assets(run_id, id)
+//   asset_relations(run_id, target_asset_id)      -> assets(run_id, id)
+//   asset_relation_evidence(run_id, relation_id)  -> asset_relations(run_id, id)
+//   asset_relation_evidence(run_id, evidence_id)  -> artifacts(run_id, id)
+//   asset_relation_evidence(run_id, invocation_id) -> tool_invocations(run_id, id)
+//   attack_paths(run_id, from_asset_id)           -> assets(run_id, id)
+//   attack_paths(run_id, to_asset_id)             -> assets(run_id, id)
+//   attack_paths(run_id, root_finding_id)         -> findings(run_id, id)
+//   attack_path_steps(run_id, attack_path_id)     -> attack_paths(run_id, id)
+//   attack_path_steps(run_id, source_asset_id)    -> assets(run_id, id)
+//   attack_path_steps(run_id, target_asset_id)    -> assets(run_id, id)
+//   attack_path_steps(run_id, relation_id)        -> asset_relations(run_id, id)
+//   attack_path_steps(run_id, finding_id)         -> findings(run_id, id)
+//   attack_path_steps(run_id, credential_id)      -> credentials(run_id, id)
+//   attack_path_steps(run_id, session_id)         -> sessions(run_id, id)
+//   attack_path_steps(run_id, invocation_id)      -> tool_invocations(run_id, id)
+//   sessions(run_id, asset_id)                    -> assets(run_id, id)
+//   sessions(run_id, source_invocation_id)        -> tool_invocations(run_id, id)
+//   sessions(run_id, credential_id)               -> credentials(run_id, id)
+//   credentials(run_id, source_asset_id)          -> assets(run_id, id)
+//   credentials(run_id, secret_artifact_id)       -> artifacts(run_id, id)
+//   credential_targets(run_id, credential_id)     -> credentials(run_id, id)
+//   credential_targets(run_id, asset_id)          -> assets(run_id, id)
+//   credential_targets(run_id, evidence_id)       -> artifacts(run_id, id)
+//   finding_evidence(run_id, finding_id)          -> findings(run_id, id)
+//   finding_evidence(run_id, evidence_id)         -> artifacts(run_id, id)
+//   finding_assets(run_id, finding_id)            -> findings(run_id, id)
+//   finding_assets(run_id, asset_id)              -> assets(run_id, id)
+//   finding_revisions(run_id, finding_id)         -> findings(run_id, id)
+//   finding_revision_evidence(run_id, finding_id, revision_no) -> finding_revisions(run_id, finding_id, revision_no)
+//   finding_revision_evidence(run_id, evidence_id) -> artifacts(run_id, id)
+//   report_requests(run_id, output_artifact_id)   -> artifacts(run_id, id)
+//   findings(run_id, id)                          -> (candidate key)
+//   finding_verdicts(finding_id, revision_no)     -> finding_revisions(finding_id, revision_no)
+//   finding_review_history(finding_id, from_revision_no) -> finding_revisions(finding_id, revision_no)
+//   finding_review_history(finding_id, to_revision_no)   -> finding_revisions(finding_id, revision_no)

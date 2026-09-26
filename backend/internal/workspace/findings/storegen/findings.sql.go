@@ -51,6 +51,123 @@ func (q *Queries) CreateFinding(ctx context.Context, arg CreateFindingParams) (F
 	return i, err
 }
 
+const createFindingRevision = `-- name: CreateFindingRevision :one
+INSERT INTO finding_revisions (
+    finding_id, revision_no, title, description, severity, confidence, status,
+    change_reason, actor
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+RETURNING finding_id, revision_no, title, description, severity, confidence, status,
+          change_reason, actor, created_at
+`
+
+type CreateFindingRevisionParams struct {
+	FindingID    pgtype.UUID `json:"finding_id"`
+	RevisionNo   int32       `json:"revision_no"`
+	Title        string      `json:"title"`
+	Description  string      `json:"description"`
+	Severity     string      `json:"severity"`
+	Confidence   string      `json:"confidence"`
+	Status       string      `json:"status"`
+	ChangeReason string      `json:"change_reason"`
+	Actor        string      `json:"actor"`
+}
+
+func (q *Queries) CreateFindingRevision(ctx context.Context, arg CreateFindingRevisionParams) (FindingRevision, error) {
+	row := q.db.QueryRow(ctx, createFindingRevision,
+		arg.FindingID,
+		arg.RevisionNo,
+		arg.Title,
+		arg.Description,
+		arg.Severity,
+		arg.Confidence,
+		arg.Status,
+		arg.ChangeReason,
+		arg.Actor,
+	)
+	var i FindingRevision
+	err := row.Scan(
+		&i.FindingID,
+		&i.RevisionNo,
+		&i.Title,
+		&i.Description,
+		&i.Severity,
+		&i.Confidence,
+		&i.Status,
+		&i.ChangeReason,
+		&i.Actor,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const createReviewHistory = `-- name: CreateReviewHistory :exec
+INSERT INTO finding_review_history (
+    finding_id, from_revision_no, to_revision_no, from_status, to_status,
+    reviewer, reason, legacy
+)
+VALUES ($1, $2, $3, $4, $5, $6, $7, false)
+`
+
+type CreateReviewHistoryParams struct {
+	FindingID      pgtype.UUID `json:"finding_id"`
+	FromRevisionNo pgtype.Int4 `json:"from_revision_no"`
+	ToRevisionNo   pgtype.Int4 `json:"to_revision_no"`
+	FromStatus     string      `json:"from_status"`
+	ToStatus       string      `json:"to_status"`
+	Reviewer       string      `json:"reviewer"`
+	Reason         string      `json:"reason"`
+}
+
+func (q *Queries) CreateReviewHistory(ctx context.Context, arg CreateReviewHistoryParams) error {
+	_, err := q.db.Exec(ctx, createReviewHistory,
+		arg.FindingID,
+		arg.FromRevisionNo,
+		arg.ToRevisionNo,
+		arg.FromStatus,
+		arg.ToStatus,
+		arg.Reviewer,
+		arg.Reason,
+	)
+	return err
+}
+
+const deleteFindingEvidence = `-- name: DeleteFindingEvidence :exec
+DELETE FROM finding_evidence WHERE finding_id = $1
+`
+
+func (q *Queries) DeleteFindingEvidence(ctx context.Context, findingID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteFindingEvidence, findingID)
+	return err
+}
+
+const getCurrentFindingRevision = `-- name: GetCurrentFindingRevision :one
+SELECT finding_id, revision_no, title, description, severity, confidence, status,
+       change_reason, actor, created_at
+FROM finding_revisions
+WHERE finding_id = $1
+ORDER BY revision_no DESC
+LIMIT 1
+`
+
+func (q *Queries) GetCurrentFindingRevision(ctx context.Context, findingID pgtype.UUID) (FindingRevision, error) {
+	row := q.db.QueryRow(ctx, getCurrentFindingRevision, findingID)
+	var i FindingRevision
+	err := row.Scan(
+		&i.FindingID,
+		&i.RevisionNo,
+		&i.Title,
+		&i.Description,
+		&i.Severity,
+		&i.Confidence,
+		&i.Status,
+		&i.ChangeReason,
+		&i.Actor,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getFinding = `-- name: GetFinding :one
 SELECT id, run_id, title, description, severity, confidence, status, version, created_at, updated_at
 FROM findings
@@ -75,53 +192,173 @@ func (q *Queries) GetFinding(ctx context.Context, id pgtype.UUID) (Finding, erro
 	return i, err
 }
 
-const insertVerdict = `-- name: InsertVerdict :one
-INSERT INTO finding_verdicts (finding_id, verdict, reason, produced_by)
-VALUES ($1, $2, $3, $4)
-RETURNING id, finding_id, verdict, reason, produced_by, created_at
+const getFindingRevision = `-- name: GetFindingRevision :one
+SELECT finding_id, revision_no, title, description, severity, confidence, status,
+       change_reason, actor, created_at
+FROM finding_revisions
+WHERE finding_id = $1 AND revision_no = $2
 `
 
-type InsertVerdictParams struct {
+type GetFindingRevisionParams struct {
 	FindingID  pgtype.UUID `json:"finding_id"`
-	Verdict    string      `json:"verdict"`
-	Reason     string      `json:"reason"`
-	ProducedBy string      `json:"produced_by"`
+	RevisionNo int32       `json:"revision_no"`
 }
 
-func (q *Queries) InsertVerdict(ctx context.Context, arg InsertVerdictParams) (FindingVerdict, error) {
-	row := q.db.QueryRow(ctx, insertVerdict,
-		arg.FindingID,
-		arg.Verdict,
-		arg.Reason,
-		arg.ProducedBy,
-	)
-	var i FindingVerdict
+func (q *Queries) GetFindingRevision(ctx context.Context, arg GetFindingRevisionParams) (FindingRevision, error) {
+	row := q.db.QueryRow(ctx, getFindingRevision, arg.FindingID, arg.RevisionNo)
+	var i FindingRevision
 	err := row.Scan(
-		&i.ID,
 		&i.FindingID,
-		&i.Verdict,
-		&i.Reason,
-		&i.ProducedBy,
+		&i.RevisionNo,
+		&i.Title,
+		&i.Description,
+		&i.Severity,
+		&i.Confidence,
+		&i.Status,
+		&i.ChangeReason,
+		&i.Actor,
 		&i.CreatedAt,
 	)
 	return i, err
 }
 
-const linkFindingEvidence = `-- name: LinkFindingEvidence :exec
+const insertFindingEvidence = `-- name: InsertFindingEvidence :exec
 INSERT INTO finding_evidence (finding_id, evidence_id, role)
 VALUES ($1, $2, $3)
-ON CONFLICT (finding_id, evidence_id) DO UPDATE SET role = EXCLUDED.role
 `
 
-type LinkFindingEvidenceParams struct {
+type InsertFindingEvidenceParams struct {
 	FindingID  pgtype.UUID `json:"finding_id"`
 	EvidenceID pgtype.UUID `json:"evidence_id"`
 	Role       string      `json:"role"`
 }
 
-func (q *Queries) LinkFindingEvidence(ctx context.Context, arg LinkFindingEvidenceParams) error {
-	_, err := q.db.Exec(ctx, linkFindingEvidence, arg.FindingID, arg.EvidenceID, arg.Role)
+func (q *Queries) InsertFindingEvidence(ctx context.Context, arg InsertFindingEvidenceParams) error {
+	_, err := q.db.Exec(ctx, insertFindingEvidence, arg.FindingID, arg.EvidenceID, arg.Role)
 	return err
+}
+
+const insertVerdict = `-- name: InsertVerdict :one
+INSERT INTO finding_verdicts (finding_id, revision_no, verdict, reason, produced_by, legacy)
+VALUES ($1, $2, $3, $4, $5, false)
+RETURNING id, finding_id, revision_no, verdict, reason, produced_by, created_at, legacy
+`
+
+type InsertVerdictParams struct {
+	FindingID  pgtype.UUID `json:"finding_id"`
+	RevisionNo pgtype.Int4 `json:"revision_no"`
+	Verdict    string      `json:"verdict"`
+	Reason     string      `json:"reason"`
+	ProducedBy string      `json:"produced_by"`
+}
+
+type InsertVerdictRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	FindingID  pgtype.UUID        `json:"finding_id"`
+	RevisionNo pgtype.Int4        `json:"revision_no"`
+	Verdict    string             `json:"verdict"`
+	Reason     string             `json:"reason"`
+	ProducedBy string             `json:"produced_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	Legacy     bool               `json:"legacy"`
+}
+
+func (q *Queries) InsertVerdict(ctx context.Context, arg InsertVerdictParams) (InsertVerdictRow, error) {
+	row := q.db.QueryRow(ctx, insertVerdict,
+		arg.FindingID,
+		arg.RevisionNo,
+		arg.Verdict,
+		arg.Reason,
+		arg.ProducedBy,
+	)
+	var i InsertVerdictRow
+	err := row.Scan(
+		&i.ID,
+		&i.FindingID,
+		&i.RevisionNo,
+		&i.Verdict,
+		&i.Reason,
+		&i.ProducedBy,
+		&i.CreatedAt,
+		&i.Legacy,
+	)
+	return i, err
+}
+
+const listFindingRevisionEvidence = `-- name: ListFindingRevisionEvidence :many
+SELECT evidence_id, role
+FROM finding_revision_evidence
+WHERE finding_id = $1 AND revision_no = $2
+ORDER BY evidence_id
+`
+
+type ListFindingRevisionEvidenceParams struct {
+	FindingID  pgtype.UUID `json:"finding_id"`
+	RevisionNo int32       `json:"revision_no"`
+}
+
+type ListFindingRevisionEvidenceRow struct {
+	EvidenceID pgtype.UUID `json:"evidence_id"`
+	Role       string      `json:"role"`
+}
+
+func (q *Queries) ListFindingRevisionEvidence(ctx context.Context, arg ListFindingRevisionEvidenceParams) ([]ListFindingRevisionEvidenceRow, error) {
+	rows, err := q.db.Query(ctx, listFindingRevisionEvidence, arg.FindingID, arg.RevisionNo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListFindingRevisionEvidenceRow
+	for rows.Next() {
+		var i ListFindingRevisionEvidenceRow
+		if err := rows.Scan(&i.EvidenceID, &i.Role); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listFindingRevisions = `-- name: ListFindingRevisions :many
+SELECT finding_id, revision_no, title, description, severity, confidence, status,
+       change_reason, actor, created_at
+FROM finding_revisions
+WHERE finding_id = $1
+ORDER BY revision_no DESC
+`
+
+func (q *Queries) ListFindingRevisions(ctx context.Context, findingID pgtype.UUID) ([]FindingRevision, error) {
+	rows, err := q.db.Query(ctx, listFindingRevisions, findingID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []FindingRevision
+	for rows.Next() {
+		var i FindingRevision
+		if err := rows.Scan(
+			&i.FindingID,
+			&i.RevisionNo,
+			&i.Title,
+			&i.Description,
+			&i.Severity,
+			&i.Confidence,
+			&i.Status,
+			&i.ChangeReason,
+			&i.Actor,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listFindingsByRun = `-- name: ListFindingsByRun :many
@@ -163,29 +400,46 @@ func (q *Queries) ListFindingsByRun(ctx context.Context, runID pgtype.UUID) ([]F
 }
 
 const listReviewHistory = `-- name: ListReviewHistory :many
-SELECT id, finding_id, from_status, to_status, reviewer, reason, created_at
+SELECT id, finding_id, from_revision_no, to_revision_no, from_status, to_status,
+       reviewer, reason, created_at, legacy
 FROM finding_review_history
 WHERE finding_id = $1
 ORDER BY created_at DESC, id DESC
 `
 
-func (q *Queries) ListReviewHistory(ctx context.Context, findingID pgtype.UUID) ([]FindingReviewHistory, error) {
+type ListReviewHistoryRow struct {
+	ID             pgtype.UUID        `json:"id"`
+	FindingID      pgtype.UUID        `json:"finding_id"`
+	FromRevisionNo pgtype.Int4        `json:"from_revision_no"`
+	ToRevisionNo   pgtype.Int4        `json:"to_revision_no"`
+	FromStatus     string             `json:"from_status"`
+	ToStatus       string             `json:"to_status"`
+	Reviewer       string             `json:"reviewer"`
+	Reason         string             `json:"reason"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	Legacy         bool               `json:"legacy"`
+}
+
+func (q *Queries) ListReviewHistory(ctx context.Context, findingID pgtype.UUID) ([]ListReviewHistoryRow, error) {
 	rows, err := q.db.Query(ctx, listReviewHistory, findingID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FindingReviewHistory
+	var items []ListReviewHistoryRow
 	for rows.Next() {
-		var i FindingReviewHistory
+		var i ListReviewHistoryRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FindingID,
+			&i.FromRevisionNo,
+			&i.ToRevisionNo,
 			&i.FromStatus,
 			&i.ToStatus,
 			&i.Reviewer,
 			&i.Reason,
 			&i.CreatedAt,
+			&i.Legacy,
 		); err != nil {
 			return nil, err
 		}
@@ -198,28 +452,41 @@ func (q *Queries) ListReviewHistory(ctx context.Context, findingID pgtype.UUID) 
 }
 
 const listVerdictsByFinding = `-- name: ListVerdictsByFinding :many
-SELECT id, finding_id, verdict, reason, produced_by, created_at
+SELECT id, finding_id, revision_no, verdict, reason, produced_by, created_at, legacy
 FROM finding_verdicts
 WHERE finding_id = $1
 ORDER BY created_at DESC, id DESC
 `
 
-func (q *Queries) ListVerdictsByFinding(ctx context.Context, findingID pgtype.UUID) ([]FindingVerdict, error) {
+type ListVerdictsByFindingRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	FindingID  pgtype.UUID        `json:"finding_id"`
+	RevisionNo pgtype.Int4        `json:"revision_no"`
+	Verdict    string             `json:"verdict"`
+	Reason     string             `json:"reason"`
+	ProducedBy string             `json:"produced_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	Legacy     bool               `json:"legacy"`
+}
+
+func (q *Queries) ListVerdictsByFinding(ctx context.Context, findingID pgtype.UUID) ([]ListVerdictsByFindingRow, error) {
 	rows, err := q.db.Query(ctx, listVerdictsByFinding, findingID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []FindingVerdict
+	var items []ListVerdictsByFindingRow
 	for rows.Next() {
-		var i FindingVerdict
+		var i ListVerdictsByFindingRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.FindingID,
+			&i.RevisionNo,
 			&i.Verdict,
 			&i.Reason,
 			&i.ProducedBy,
 			&i.CreatedAt,
+			&i.Legacy,
 		); err != nil {
 			return nil, err
 		}
@@ -231,62 +498,100 @@ func (q *Queries) ListVerdictsByFinding(ctx context.Context, findingID pgtype.UU
 	return items, nil
 }
 
-const transitionFindingWithHistory = `-- name: TransitionFindingWithHistory :one
-WITH prev AS (
-    SELECT findings.id, findings.status
-    FROM findings
-    WHERE findings.id = $1 AND findings.version = $3
-),
-updated AS (
-    UPDATE findings
-    SET status = $2, version = findings.version + 1, updated_at = now()
-    WHERE findings.id = $1 AND findings.version = $3
-    RETURNING findings.id, findings.run_id, findings.title, findings.description, findings.severity, findings.confidence, findings.status, findings.version, findings.created_at, findings.updated_at
-),
-inserted AS (
-    INSERT INTO finding_review_history (finding_id, from_status, to_status, reviewer, reason)
-    SELECT u.id, p.status, u.status, $4, $5
-    FROM updated u JOIN prev p ON p.id = u.id
-)
-SELECT u.id, u.run_id, u.title, u.description, u.severity, u.confidence, u.status, u.version, u.created_at, u.updated_at
-FROM updated u
+const nextFindingRevisionNo = `-- name: NextFindingRevisionNo :one
+SELECT COALESCE(MAX(revision_no), 0)::integer + 1 AS revision_no
+FROM finding_revisions
+WHERE finding_id = $1
 `
 
-type TransitionFindingWithHistoryParams struct {
-	ID       pgtype.UUID `json:"id"`
-	Status   string      `json:"status"`
-	Version  int32       `json:"version"`
-	Reviewer string      `json:"reviewer"`
-	Reason   string      `json:"reason"`
+func (q *Queries) NextFindingRevisionNo(ctx context.Context, findingID pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, nextFindingRevisionNo, findingID)
+	var revision_no int32
+	err := row.Scan(&revision_no)
+	return revision_no, err
 }
 
-type TransitionFindingWithHistoryRow struct {
-	ID          pgtype.UUID        `json:"id"`
-	RunID       pgtype.UUID        `json:"run_id"`
-	Title       string             `json:"title"`
-	Description string             `json:"description"`
-	Severity    string             `json:"severity"`
-	Confidence  string             `json:"confidence"`
-	Status      string             `json:"status"`
-	Version     int32              `json:"version"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+const snapshotFindingEvidence = `-- name: SnapshotFindingEvidence :exec
+INSERT INTO finding_revision_evidence (finding_id, revision_no, evidence_id, role)
+SELECT fe.finding_id, $2, fe.evidence_id, fe.role
+FROM finding_evidence AS fe
+WHERE fe.finding_id = $1
+`
+
+type SnapshotFindingEvidenceParams struct {
+	FindingID  pgtype.UUID `json:"finding_id"`
+	RevisionNo int32       `json:"revision_no"`
 }
 
-// Atomically applies a finding status transition and records its review
-// history in a single statement. from_status is read from the very row being
-// updated (not supplied by the caller), so the history can never disagree with
-// the pre-image. A stale version produces no updated row (optimistic lock) and
-// therefore no history row.
-func (q *Queries) TransitionFindingWithHistory(ctx context.Context, arg TransitionFindingWithHistoryParams) (TransitionFindingWithHistoryRow, error) {
-	row := q.db.QueryRow(ctx, transitionFindingWithHistory,
+func (q *Queries) SnapshotFindingEvidence(ctx context.Context, arg SnapshotFindingEvidenceParams) error {
+	_, err := q.db.Exec(ctx, snapshotFindingEvidence, arg.FindingID, arg.RevisionNo)
+	return err
+}
+
+const updateFindingContent = `-- name: UpdateFindingContent :one
+UPDATE findings
+SET title = $2,
+    description = $3,
+    severity = $4,
+    confidence = $5,
+    version = version + 1,
+    updated_at = now()
+WHERE id = $1 AND version = $6
+RETURNING id, run_id, title, description, severity, confidence, status, version, created_at, updated_at
+`
+
+type UpdateFindingContentParams struct {
+	ID          pgtype.UUID `json:"id"`
+	Title       string      `json:"title"`
+	Description string      `json:"description"`
+	Severity    string      `json:"severity"`
+	Confidence  string      `json:"confidence"`
+	Version     int32       `json:"version"`
+}
+
+func (q *Queries) UpdateFindingContent(ctx context.Context, arg UpdateFindingContentParams) (Finding, error) {
+	row := q.db.QueryRow(ctx, updateFindingContent,
 		arg.ID,
-		arg.Status,
+		arg.Title,
+		arg.Description,
+		arg.Severity,
+		arg.Confidence,
 		arg.Version,
-		arg.Reviewer,
-		arg.Reason,
 	)
-	var i TransitionFindingWithHistoryRow
+	var i Finding
+	err := row.Scan(
+		&i.ID,
+		&i.RunID,
+		&i.Title,
+		&i.Description,
+		&i.Severity,
+		&i.Confidence,
+		&i.Status,
+		&i.Version,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateFindingStatus = `-- name: UpdateFindingStatus :one
+UPDATE findings
+SET status = $2,
+    version = version + 1,
+    updated_at = now()
+WHERE id = $1 AND version = $3
+RETURNING id, run_id, title, description, severity, confidence, status, version, created_at, updated_at
+`
+
+type UpdateFindingStatusParams struct {
+	ID      pgtype.UUID `json:"id"`
+	Status  string      `json:"status"`
+	Version int32       `json:"version"`
+}
+
+func (q *Queries) UpdateFindingStatus(ctx context.Context, arg UpdateFindingStatusParams) (Finding, error) {
+	row := q.db.QueryRow(ctx, updateFindingStatus, arg.ID, arg.Status, arg.Version)
+	var i Finding
 	err := row.Scan(
 		&i.ID,
 		&i.RunID,

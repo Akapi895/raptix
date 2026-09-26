@@ -47,6 +47,24 @@ func TestAttemptNumberingAndFinish(t *testing.T) {
 	}
 }
 
+func TestCreateOrGetAttemptRejectsConflictingFingerprint(t *testing.T) {
+	repo := newMemRepo()
+	ctx := context.Background()
+	p := CreateAttemptParams{AgentID: uuid.New(), RequestKey: "request-1", RequestFingerprint: "fingerprint-1"}
+	first, err := repo.CreateOrGetAttempt(ctx, p)
+	if err != nil || !first.Created {
+		t.Fatalf("first create = %+v, %v", first, err)
+	}
+	second, err := repo.CreateOrGetAttempt(ctx, p)
+	if err != nil || second.Created || second.Attempt.ID != first.Attempt.ID {
+		t.Fatalf("replay = %+v, %v", second, err)
+	}
+	p.RequestFingerprint = "fingerprint-2"
+	if _, err := repo.CreateOrGetAttempt(ctx, p); err == nil {
+		t.Fatal("expected conflicting request fingerprint")
+	}
+}
+
 func TestAppendAndListMessages(t *testing.T) {
 	repo := newMemRepo()
 	ctx := context.Background()

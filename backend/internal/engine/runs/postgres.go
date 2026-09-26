@@ -38,6 +38,7 @@ type DBTX interface {
 func (r *Postgres) CreateRun(ctx context.Context, p CreateRunParams) (Run, error) {
 	row, err := r.q.CreateRun(ctx, storegen.CreateRunParams{
 		ProjectID: uuidToPG(p.ProjectID),
+		ScopeID:   uuidToPG(p.ScopeID),
 		Name:      p.Name,
 		Status:    string(p.Status),
 		CreatedBy: p.CreatedBy,
@@ -45,7 +46,27 @@ func (r *Postgres) CreateRun(ctx context.Context, p CreateRunParams) (Run, error
 	if err != nil {
 		return Run{}, fmt.Errorf("create run: %w", err)
 	}
-	return toRun(row), nil
+	return toCreateRun(row), nil
+}
+
+func (r *Postgres) CreateOrGetRun(ctx context.Context, p CreateRunParams) (CreateRunResult, error) {
+	row, err := r.q.CreateOrGetRun(ctx, storegen.CreateOrGetRunParams{
+		ProjectID:          uuidToPG(p.ProjectID),
+		ScopeID:            uuidToPG(p.ScopeID),
+		Name:               p.Name,
+		Status:             string(p.Status),
+		CreatedBy:          p.CreatedBy,
+		RequestKey:         p.RequestKey,
+		RequestFingerprint: p.RequestFingerprint,
+	})
+	if err != nil {
+		return CreateRunResult{}, fmt.Errorf("create or get run: %w", err)
+	}
+	run := toCreateOrGetRun(row)
+	if run.RequestFingerprint != p.RequestFingerprint {
+		return CreateRunResult{}, &ErrRequestConflict{RequestKey: p.RequestKey}
+	}
+	return CreateRunResult{Run: run, Created: row.Created}, nil
 }
 
 func (r *Postgres) GetRun(ctx context.Context, id uuid.UUID) (Run, error) {
@@ -56,7 +77,7 @@ func (r *Postgres) GetRun(ctx context.Context, id uuid.UUID) (Run, error) {
 		}
 		return Run{}, err
 	}
-	return toRun(row), nil
+	return toGetRun(row), nil
 }
 
 func (r *Postgres) TransitionRun(ctx context.Context, id uuid.UUID, version int, newStatus RunStatus) (Run, error) {
@@ -71,7 +92,7 @@ func (r *Postgres) TransitionRun(ctx context.Context, id uuid.UUID, version int,
 		}
 		return Run{}, err
 	}
-	return toRun(row), nil
+	return toTransitionRun(row), nil
 }
 
 func (r *Postgres) ListRunsByProject(ctx context.Context, projectID uuid.UUID) ([]Run, error) {
@@ -81,7 +102,7 @@ func (r *Postgres) ListRunsByProject(ctx context.Context, projectID uuid.UUID) (
 	}
 	out := make([]Run, 0, len(rows))
 	for _, row := range rows {
-		out = append(out, toRun(row))
+		out = append(out, toListRun(row))
 	}
 	return out, nil
 }
@@ -217,16 +238,32 @@ func (r *Postgres) ListAgentsByRun(ctx context.Context, runID uuid.UUID) ([]Agen
 	return out, nil
 }
 
-func toRun(r storegen.Run) Run {
+func toCreateRun(r storegen.CreateRunRow) Run {
+	return newRun(r.ID, r.ProjectID, r.ScopeID, r.Name, r.Status, r.Version, r.CreatedBy, r.RequestKey, r.RequestFingerprint, r.CreatedAt, r.UpdatedAt)
+}
+
+func toCreateOrGetRun(r storegen.CreateOrGetRunRow) Run {
+	return newRun(r.ID, r.ProjectID, r.ScopeID, r.Name, r.Status, r.Version, r.CreatedBy, r.RequestKey, r.RequestFingerprint, r.CreatedAt, r.UpdatedAt)
+}
+
+func toGetRun(r storegen.GetRunRow) Run {
+	return newRun(r.ID, r.ProjectID, r.ScopeID, r.Name, r.Status, r.Version, r.CreatedBy, r.RequestKey, r.RequestFingerprint, r.CreatedAt, r.UpdatedAt)
+}
+
+func toTransitionRun(r storegen.TransitionRunRow) Run {
+	return newRun(r.ID, r.ProjectID, r.ScopeID, r.Name, r.Status, r.Version, r.CreatedBy, r.RequestKey, r.RequestFingerprint, r.CreatedAt, r.UpdatedAt)
+}
+
+func toListRun(r storegen.ListRunsByProjectRow) Run {
+	return newRun(r.ID, r.ProjectID, r.ScopeID, r.Name, r.Status, r.Version, r.CreatedBy, r.RequestKey, r.RequestFingerprint, r.CreatedAt, r.UpdatedAt)
+}
+
+func newRun(id, projectID, scopeID pgtype.UUID, name, status string, version int32, createdBy, requestKey, requestFingerprint string, createdAt, updatedAt pgtype.Timestamptz) Run {
 	return Run{
-		ID:        pgToUUID(r.ID),
-		ProjectID: pgToUUID(r.ProjectID),
-		Name:      r.Name,
-		Status:    RunStatus(r.Status),
-		Version:   int(r.Version),
-		CreatedBy: r.CreatedBy,
-		CreatedAt: pgToTime(r.CreatedAt),
-		UpdatedAt: pgToTime(r.UpdatedAt),
+		ID: idToUUID(id), ProjectID: idToUUID(projectID), ScopeID: idToUUID(scopeID),
+		Name: name, Status: RunStatus(status), Version: int(version), CreatedBy: createdBy,
+		RequestKey: requestKey, RequestFingerprint: requestFingerprint,
+		CreatedAt: pgToTime(createdAt), UpdatedAt: pgToTime(updatedAt),
 	}
 }
 
@@ -273,6 +310,8 @@ func pgToUUID(u pgtype.UUID) uuid.UUID {
 	}
 	return u.Bytes
 }
+
+func idToUUID(u pgtype.UUID) uuid.UUID { return pgToUUID(u) }
 
 // pgToUUIDPtr maps a nullable pgtype.UUID to an optional uuid.
 func pgToUUIDPtr(u pgtype.UUID) *uuid.UUID {

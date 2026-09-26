@@ -1,0 +1,22 @@
+id: default
+version: "1"
+mime: text/markdown
+hash: 2d1c981d89081fed51d2a74577b817ee146d0aa6e45882bf3d11658bbda935ff
+body: |
+  # Security Assessment Report
+  
+  **Run:** {{ .run.name }}
+  **Status:** {{ .run.status }}
+  
+  ## Findings
+  {{ range .findings }}
+  ### {{ .revision.title }}
+  
+  - Severity: {{ .revision.severity }}
+  - Confidence: {{ .revision.confidence }}
+  - Status: {{ .revision.status }}
+  
+  {{ .revision.description }}
+  {{ else }}
+  No findings recorded.
+  {{ end }}

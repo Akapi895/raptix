@@ -8,9 +8,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Service enforces finding lifecycle and status transitions. It is the only
-// place that changes a finding's status; RecordVerdict records verification
-// output without altering status.
+// Service enforces finding lifecycle, revisions, and status transitions. It is
+// the only place that changes a finding's status; RecordVerdict records
+// verification output without altering status.
 type Service struct {
 	repo Repository
 }
@@ -30,47 +30,91 @@ var transitions = map[FindingStatus][]FindingStatus{
 
 // CreateFinding validates inputs and creates a new draft.
 func (s *Service) CreateFinding(ctx context.Context, p CreateFindingParams) (Finding, error) {
-	p.Title = strings.TrimSpace(p.Title)
-	if p.Title == "" {
-		return Finding{}, fmt.Errorf("finding title must not be empty")
+	if err := validateContent(&p.Title, p.Severity, p.Confidence); err != nil {
+		return Finding{}, err
 	}
-	switch p.Severity {
-	case SeverityNone, SeverityLow, SeverityMedium, SeverityHigh, SeverityCritical:
-	default:
-		return Finding{}, fmt.Errorf("invalid severity %q", p.Severity)
+	for i := range p.Evidence {
+		p.Evidence[i].Role = strings.TrimSpace(p.Evidence[i].Role)
 	}
-	switch p.Confidence {
-	case ConfidenceLow, ConfidenceMedium, ConfidenceHigh:
-	default:
-		return Finding{}, fmt.Errorf("invalid confidence %q", p.Confidence)
+	if err := validateEvidence(p.Evidence); err != nil {
+		return Finding{}, err
+	}
+	p.Reason = strings.TrimSpace(p.Reason)
+	p.Actor = strings.TrimSpace(p.Actor)
+	if p.Reason == "" {
+		p.Reason = "initial draft"
+	}
+	if p.Actor == "" {
+		p.Actor = "system"
 	}
 	return s.repo.CreateFinding(ctx, p)
 }
 
-// TransitionStatus is the only API that changes a finding's status. It moves to
-// the new status at the given version and records the review history step as
-// one atomic operation: the status/version change and its history row cannot
-// diverge, even on partial failure.
-func (s *Service) TransitionStatus(ctx context.Context, id uuid.UUID, version int, to FindingStatus, reviewer, reason string) (Finding, error) {
-	reviewer = strings.TrimSpace(reviewer)
-	if reviewer == "" {
-		return Finding{}, fmt.Errorf("finding reviewer must not be empty")
+// ReviseFinding replaces the mutable content and complete live evidence set at
+// ExpectedVersion, creating a new immutable revision without changing status.
+func (s *Service) ReviseFinding(ctx context.Context, p ReviseFindingParams) (Finding, error) {
+	if p.FindingID == uuid.Nil {
+		return Finding{}, fmt.Errorf("finding id is required")
 	}
-	current, err := s.repo.GetFinding(ctx, id)
+	if p.ExpectedVersion <= 0 {
+		return Finding{}, fmt.Errorf("expected finding version must be positive")
+	}
+	if err := validateContent(&p.Title, p.Severity, p.Confidence); err != nil {
+		return Finding{}, err
+	}
+	if err := validateRevisionMetadata(p.Reason, p.Actor); err != nil {
+		return Finding{}, err
+	}
+	for i := range p.Evidence {
+		p.Evidence[i].Role = strings.TrimSpace(p.Evidence[i].Role)
+	}
+	if err := validateEvidence(p.Evidence); err != nil {
+		return Finding{}, err
+	}
+	current, err := s.repo.GetFinding(ctx, p.FindingID)
 	if err != nil {
 		return Finding{}, err
 	}
-	// The legality check is evaluated against current.Status, so the caller's
-	// version must match the version it read. Otherwise a caller could pass a
-	// version that matches the database while its status view is stale, and the
-	// transition would bypass the table above.
-	if version != current.Version {
-		return Finding{}, &ErrOptimisticLock{ID: id}
+	if current.Version != p.ExpectedVersion {
+		return Finding{}, &ErrOptimisticLock{ID: p.FindingID}
 	}
-	if !canTransition(current.Status, to) {
-		return Finding{}, &ErrIllegalTransition{From: current.Status, To: to}
+	return s.repo.ReviseFinding(ctx, p)
+}
+
+// ReviewFinding is the only API that changes a finding's status. It records the
+// decision, status snapshot, and aggregate version change atomically.
+func (s *Service) ReviewFinding(ctx context.Context, p ReviewFindingParams) (Finding, error) {
+	if p.FindingID == uuid.Nil {
+		return Finding{}, fmt.Errorf("finding id is required")
 	}
-	return s.repo.TransitionFindingWithHistory(ctx, id, version, to, reviewer, reason)
+	if p.ExpectedVersion <= 0 {
+		return Finding{}, fmt.Errorf("expected finding version must be positive")
+	}
+	p.Reviewer = strings.TrimSpace(p.Reviewer)
+	if p.Reviewer == "" {
+		return Finding{}, fmt.Errorf("finding reviewer must not be empty")
+	}
+	if strings.TrimSpace(p.Reason) == "" {
+		return Finding{}, fmt.Errorf("finding review reason must not be empty")
+	}
+	current, err := s.repo.GetFinding(ctx, p.FindingID)
+	if err != nil {
+		return Finding{}, err
+	}
+	if current.Version != p.ExpectedVersion {
+		return Finding{}, &ErrOptimisticLock{ID: p.FindingID}
+	}
+	if !canTransition(current.Status, p.Status) {
+		return Finding{}, &ErrIllegalTransition{From: current.Status, To: p.Status}
+	}
+	return s.repo.ReviewFinding(ctx, p)
+}
+
+// TransitionStatus remains as a compatibility wrapper for ReviewFinding.
+func (s *Service) TransitionStatus(ctx context.Context, id uuid.UUID, version int, to FindingStatus, reviewer, reason string) (Finding, error) {
+	return s.ReviewFinding(ctx, ReviewFindingParams{
+		FindingID: id, ExpectedVersion: version, Status: to, Reviewer: reviewer, Reason: reason,
+	})
 }
 
 func canTransition(from, to FindingStatus) bool {
@@ -85,8 +129,12 @@ func canTransition(from, to FindingStatus) bool {
 // RecordVerdict stores a verifier-produced verdict. It deliberately does not
 // change the finding status; only TransitionStatus may do that.
 func (s *Service) RecordVerdict(ctx context.Context, p InsertVerdictParams) (FindingVerdict, error) {
+	p.ProducedBy = strings.TrimSpace(p.ProducedBy)
 	if p.ProducedBy == "" {
 		return FindingVerdict{}, fmt.Errorf("verdict producer must not be empty")
+	}
+	if p.RevisionNo <= 0 {
+		return FindingVerdict{}, fmt.Errorf("verified finding revision is required")
 	}
 	switch p.Verdict {
 	case VerdictConfirmed, VerdictRefuted, VerdictInconclusive:
@@ -96,23 +144,10 @@ func (s *Service) RecordVerdict(ctx context.Context, p InsertVerdictParams) (Fin
 	return s.repo.InsertVerdict(ctx, p)
 }
 
-// LinkEvidence associates an evidence artifact with a finding. An empty role
-// defaults to "supporting"; any other role must be one of the known values.
-// Re-linking the same evidence updates its role rather than failing.
+// LinkEvidence is retained only to make the removed unversioned mutation clear
+// to old callers. Use ReviseFinding with the complete evidence set instead.
 func (s *Service) LinkEvidence(ctx context.Context, findingID, evidenceID uuid.UUID, role string) error {
-	if findingID == uuid.Nil || evidenceID == uuid.Nil {
-		return fmt.Errorf("finding and evidence ids are required")
-	}
-	role = strings.TrimSpace(role)
-	if role == "" {
-		role = "supporting"
-	}
-	switch role {
-	case "supporting", "refuting", "context":
-	default:
-		return fmt.Errorf("invalid evidence role %q", role)
-	}
-	return s.repo.LinkEvidence(ctx, EvidenceLink{FindingID: findingID, EvidenceID: evidenceID, Role: role})
+	return fmt.Errorf("LinkEvidence is unsupported; use ReviseFinding with expected version and full evidence set")
 }
 
 // ListVerdicts returns the recorded verdicts for a finding (newest first).
@@ -128,4 +163,97 @@ func (s *Service) ListReviewHistory(ctx context.Context, findingID uuid.UUID) ([
 // GetFinding returns a finding by id.
 func (s *Service) GetFinding(ctx context.Context, id uuid.UUID) (Finding, error) {
 	return s.repo.GetFinding(ctx, id)
+}
+
+// ListFindingsByRun returns the current finding projections for a run. It does
+// not expose or modify immutable revisions.
+func (s *Service) ListFindingsByRun(ctx context.Context, runID uuid.UUID) ([]Finding, error) {
+	return s.repo.ListFindingsByRun(ctx, runID)
+}
+
+// GetCurrentRevision returns the immutable revision currently representing a finding.
+func (s *Service) GetCurrentRevision(ctx context.Context, findingID uuid.UUID) (FindingRevision, error) {
+	return s.repo.GetCurrentRevision(ctx, findingID)
+}
+
+// GetRevision returns one immutable finding revision and its evidence snapshot.
+func (s *Service) GetRevision(ctx context.Context, findingID uuid.UUID, revisionNo int) (FindingRevision, error) {
+	return s.repo.GetRevision(ctx, findingID, revisionNo)
+}
+
+// ListRevisions returns newest-first immutable finding revisions.
+func (s *Service) ListRevisions(ctx context.Context, findingID uuid.UUID) ([]FindingRevision, error) {
+	return s.repo.ListRevisions(ctx, findingID)
+}
+
+// GetReportInput returns the current immutable revision and only verdicts that
+// verify that revision. A report renderer copies this value into its own
+// immutable snapshot and never reads the live evidence projection.
+func (s *Service) GetReportInput(ctx context.Context, findingID uuid.UUID) (ReportInput, error) {
+	finding, err := s.repo.GetFinding(ctx, findingID)
+	if err != nil {
+		return ReportInput{}, err
+	}
+	revision, err := s.repo.GetCurrentRevision(ctx, findingID)
+	if err != nil {
+		return ReportInput{}, err
+	}
+	verdicts, err := s.repo.ListVerdicts(ctx, findingID)
+	if err != nil {
+		return ReportInput{}, err
+	}
+	currentVerdicts := make([]FindingVerdict, 0, len(verdicts))
+	for _, verdict := range verdicts {
+		if verdict.RevisionNo != nil && *verdict.RevisionNo == revision.RevisionNo {
+			currentVerdicts = append(currentVerdicts, verdict)
+		}
+	}
+	return ReportInput{Finding: finding, Revision: revision, Verdicts: currentVerdicts}, nil
+}
+
+func validateContent(title *string, severity Severity, confidence Confidence) error {
+	*title = strings.TrimSpace(*title)
+	if *title == "" {
+		return fmt.Errorf("finding title must not be empty")
+	}
+	switch severity {
+	case SeverityNone, SeverityLow, SeverityMedium, SeverityHigh, SeverityCritical:
+	default:
+		return fmt.Errorf("invalid severity %q", severity)
+	}
+	switch confidence {
+	case ConfidenceLow, ConfidenceMedium, ConfidenceHigh:
+	default:
+		return fmt.Errorf("invalid confidence %q", confidence)
+	}
+	return nil
+}
+
+func validateRevisionMetadata(reason, actor string) error {
+	if strings.TrimSpace(reason) == "" {
+		return fmt.Errorf("finding revision reason must not be empty")
+	}
+	if strings.TrimSpace(actor) == "" {
+		return fmt.Errorf("finding revision actor must not be empty")
+	}
+	return nil
+}
+
+func validateEvidence(evidence []EvidenceRef) error {
+	seen := make(map[uuid.UUID]struct{}, len(evidence))
+	for _, item := range evidence {
+		if item.EvidenceID == uuid.Nil {
+			return fmt.Errorf("finding evidence id is required")
+		}
+		if _, exists := seen[item.EvidenceID]; exists {
+			return fmt.Errorf("finding evidence %s is duplicated", item.EvidenceID)
+		}
+		seen[item.EvidenceID] = struct{}{}
+		switch strings.TrimSpace(item.Role) {
+		case "supporting", "refuting", "context":
+		default:
+			return fmt.Errorf("invalid evidence role %q", item.Role)
+		}
+	}
+	return nil
 }

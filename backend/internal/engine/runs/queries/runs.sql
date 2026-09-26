@@ -1,10 +1,17 @@
 -- name: CreateRun :one
-INSERT INTO runs (project_id, name, status, created_by)
-VALUES ($1, $2, $3, $4)
-RETURNING id, project_id, name, status, version, created_by, created_at, updated_at;
+INSERT INTO runs (project_id, scope_id, name, status, created_by)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at;
+
+-- name: CreateOrGetRun :one
+INSERT INTO runs (project_id, scope_id, name, status, created_by, request_key, request_fingerprint)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (project_id, created_by, request_key) WHERE request_key <> ''
+DO UPDATE SET request_key = EXCLUDED.request_key
+RETURNING id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at, (xmax = 0) AS created;
 
 -- name: GetRun :one
-SELECT id, project_id, name, status, version, created_by, created_at, updated_at
+SELECT id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at
 FROM runs
 WHERE id = $1;
 
@@ -12,10 +19,10 @@ WHERE id = $1;
 UPDATE runs
 SET status = $2, version = version + 1, updated_at = now()
 WHERE id = $1 AND version = $3
-RETURNING id, project_id, name, status, version, created_by, created_at, updated_at;
+RETURNING id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at;
 
 -- name: ListRunsByProject :many
-SELECT id, project_id, name, status, version, created_by, created_at, updated_at
+SELECT id, project_id, scope_id, name, status, version, created_by, request_key, request_fingerprint, created_at, updated_at
 FROM runs
 WHERE project_id = $1
 ORDER BY created_at DESC;

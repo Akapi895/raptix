@@ -11,11 +11,13 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	stdlib "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/pressly/goose/v3/lock"
 
 	"github.com/Akapi895/raptix/backend/internal/app"
+	"github.com/Akapi895/raptix/backend/internal/infrastructure/jobs"
 )
 
 func run(args []string) error {
@@ -82,6 +84,14 @@ func run(args []string) error {
 		return fmt.Errorf("init goose provider: %w", err)
 	}
 
+	// River owns its own schema and migrations. They run in the same release
+	// step as goose but are applied separately, never by the HTTP server.
+	pool, err := pgxpool.New(ctx, cfg.Database.URL)
+	if err != nil {
+		return fmt.Errorf("open jobs pool: %w", err)
+	}
+	defer pool.Close()
+
 	switch command {
 	case "up":
 		res, err := provider.Up(ctx)
@@ -93,7 +103,16 @@ func run(args []string) error {
 				fmt.Printf("  applied %s (%s)\n", r.Source.Path, r.Duration)
 			}
 		}
+		if err := jobs.Migrate(ctx, pool); err != nil {
+			return err
+		}
+		fmt.Println("  applied river migrations")
 	case "down":
+		// Reverse order: the queue schema is removed before application tables.
+		if err := jobs.MigrateDown(ctx, pool); err != nil {
+			return err
+		}
+		fmt.Println("  reverted one river migration")
 		res, err := provider.Down(ctx)
 		if err != nil {
 			return fmt.Errorf("goose down: %w", err)
@@ -117,6 +136,19 @@ func run(args []string) error {
 				continue
 			}
 			fmt.Printf("  %-20s %-8s %s\n", s.Source.Path, s.State, s.AppliedAt.Format("2006-01-02 15:04:05"))
+		}
+		ok, messages, err := jobs.Status(ctx, pool)
+		if err != nil {
+			return err
+		}
+		switch {
+		case ok:
+			fmt.Println("river migrations: applied")
+		default:
+			fmt.Println("river migrations: pending")
+			for _, message := range messages {
+				fmt.Printf("  %s\n", message)
+			}
 		}
 	}
 	return nil

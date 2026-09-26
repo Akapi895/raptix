@@ -3,6 +3,14 @@ server:
   addr: ":8080"
   shutdown_timeout: 10s
 
+auth:
+  # development = a single fixed principal for local use; oidc = verified Bearer
+  # JWT (issuer/audience/signature/expiry). Business endpoints are never open.
+  mode: "development"
+  development_principal: "development"
+  # issuer: ""   # required in oidc mode
+  # audience: "" # required in oidc mode
+
 database:
   url: "postgres://raptix:raptix@localhost:5432/raptix?sslmode=disable"
   max_conns: 10
@@ -25,6 +33,9 @@ execution:
   # How old a non-terminal invocation must be before startup reconcile marks
   # it unknown (after a crash). Override via RAP_EXECUTION_RECONCILE_STALE_AFTER.
   reconcile_stale_after: 5m
+  # Periodic reconcile cadence; 0 disables it (startup reconcile still runs).
+  # Override via RAP_EXECUTION_RECONCILE_INTERVAL.
+  reconcile_interval: 10m
 
 sandbox:
   # local = run command tools on the host (lab/dev); container = docker boundary.
@@ -39,6 +50,17 @@ agent:
   max_context_tokens: 16000
   default_timeout: 2m
   # model: falls back to llm.model when empty
+
+reporting:
+  # How long a report render lease is held before another worker may take over
+  # an interrupted render. Override via RAP_REPORTING_RENDER_LEASE.
+  render_lease: 2m
+
+jobs:
+  # In-process River worker pool size for background jobs. Override via
+  # RAP_JOBS_MAX_WORKERS. River's own schema is applied by cmd/migrate, never
+  # by the server on startup.
+  max_workers: 4
 
 llm:
   base_url: "https://stream-netmind.viettel.vn/aigw/ai/v1"

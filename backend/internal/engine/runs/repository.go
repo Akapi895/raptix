@@ -11,6 +11,7 @@ import (
 // generated store directly.
 type Repository interface {
 	CreateRun(ctx context.Context, p CreateRunParams) (Run, error)
+	CreateOrGetRun(ctx context.Context, p CreateRunParams) (CreateRunResult, error)
 	GetRun(ctx context.Context, id uuid.UUID) (Run, error)
 	TransitionRun(ctx context.Context, id uuid.UUID, version int, newStatus RunStatus) (Run, error)
 	ListRunsByProject(ctx context.Context, projectID uuid.UUID) ([]Run, error)
