@@ -594,6 +594,7 @@ def test_middleware_slot_enum_order_is_assembly_order():
         "subagent",
         "opplan",
         "kg",
+        "kg-autoingest",
         "event-log",
         "sandbox-notification",
         "opscontrol-notification",

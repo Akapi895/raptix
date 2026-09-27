@@ -214,6 +214,29 @@ def _make_kg(**_: Any):
         return None
 
 
+def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
+    import os
+
+    from decepticon.middleware.kg_autoingest import KGAutoIngestMiddleware
+    from decepticon.middleware.kg_internal.store import (
+        KGStore,
+        KGStoreConfigError,
+        KGStoreUnavailableError,
+    )
+
+    if sandbox is None or os.environ.get("DECEPTICON_KG_AUTOINGEST", "0").lower() not in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return None
+    try:
+        return KGAutoIngestMiddleware(store=KGStore.from_env(), sandbox=sandbox, role=role)
+    except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
+        logger.debug("KG auto-ingest slot skipped: %s", exc)
+        return None
+
+
 def _make_sandbox_notification(*, sandbox: Any = None, **_: Any):
     if sandbox is None:
         raise ValueError(
@@ -404,6 +427,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.SUBAGENT: _make_subagent,
     MiddlewareSlot.OPPLAN: _make_opplan,
     MiddlewareSlot.KG: _make_kg,
+    MiddlewareSlot.KG_AUTOINGEST: _make_kg_autoingest,
     MiddlewareSlot.EVENT_LOG: _make_event_log,
     MiddlewareSlot.SANDBOX_NOTIFICATION: _make_sandbox_notification,
     MiddlewareSlot.OPSCONTROL_NOTIFICATION: _make_opscontrol_notification,

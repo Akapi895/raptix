@@ -37,6 +37,7 @@ class MiddlewareSlot(StrEnum):
     SUBAGENT = "subagent"
     OPPLAN = "opplan"
     KG = "kg"
+    KG_AUTOINGEST = "kg-autoingest"
     EVENT_LOG = "event-log"
     SANDBOX_NOTIFICATION = "sandbox-notification"
     # ADR-0006: the orchestrator-only middleware that turns opscontrol
@@ -197,9 +198,9 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     # ── Standard read-only agent (Blue Cell — detection coverage, no bash) ──
     "blue_cell": _BASE_SLOTS,
     # ── Standard bash-executing specialists ──
-    "recon": _BASH_AGENT_SLOTS,
-    "exploit": _BASH_AGENT_SLOTS,
-    "postexploit": _BASH_AGENT_SLOTS,
+    "recon": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
     # Three OSS roles run the KG middleware — the persistent-graph use
     # cases the spec calls out
     # (docs/design/2026-06-03-kg-middleware-redesign.md § 4.10).
@@ -213,8 +214,8 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     "analyst": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
     "reverser": _BASH_AGENT_SLOTS,
     "contract_auditor": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
-    "cloud_hunter": _BASH_AGENT_SLOTS,
-    "ad_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
+    "cloud_hunter": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "ad_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "phisher": _BASH_AGENT_SLOTS,
     "mobile_operator": _BASH_AGENT_SLOTS,
     "wireless_operator": _BASH_AGENT_SLOTS,
