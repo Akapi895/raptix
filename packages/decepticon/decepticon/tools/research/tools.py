@@ -22,7 +22,7 @@ import os
 import re
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import defusedxml.ElementTree as ET
 from langchain_core.tools import tool
@@ -2230,6 +2230,87 @@ def kg_ingest_ffuf(path: str) -> str:
         )
 
 
+_GOBUSTER_DIR_RESULT = re.compile(
+    r"^(?P<path>/?[A-Za-z0-9._~/%-]+)\s+\(Status: (?P<status>\d{3})\)"
+    r"(?:\s+\[Size: (?P<size>\d+)\])?"
+)
+
+
+def _gobuster_hits(lines: list[str], base_url: str) -> list[tuple[str, int, int]]:
+    """Keep only directory-mode hits under the exact supplied web origin."""
+    root = urlparse(base_url)
+    hits: list[tuple[str, int, int]] = []
+    for line in lines:
+        match = _GOBUSTER_DIR_RESULT.match(line)
+        if match is None:
+            continue
+        discovered = match.group("path")
+        if ".." in discovered.split("/"):
+            continue
+        url = urljoin(base_url.rstrip("/") + "/", discovered.lstrip("/"))
+        parsed = urlparse(url)
+        if parsed.netloc.lower() != root.netloc.lower() or parsed.scheme != root.scheme:
+            continue
+        hits.append((url, int(match.group("status")), int(match.group("size") or 0)))
+    return hits
+
+
+@tool
+@kg_degrades
+def kg_ingest_gobuster(path: str, base_url: str) -> str:
+    """Ingest Gobuster `dir -o` text hits for an explicitly supplied web root."""
+    root = urlparse(base_url)
+    if (
+        root.scheme not in {"http", "https"}
+        or not root.hostname
+        or root.username is not None
+        or root.password is not None
+        or root.query
+        or root.fragment
+    ):
+        return _json({"error": "base_url must be an http(s) URL without userinfo"})
+    p = Path(path)
+    try:
+        if p.stat().st_size > 1_000_000:
+            return _json({"error": "gobuster output exceeds 1 MB"})
+        lines = p.read_text(encoding="utf-8").splitlines()
+    except (OSError, UnicodeError) as exc:
+        return _json({"error": f"failed to read gobuster output: {exc}"})
+
+    hits = _gobuster_hits(lines, base_url)
+    with graph_transaction() as graph:
+        count = 0
+        for url, status, length in hits:
+            host = _ensure_host_node(
+                graph, label=root.hostname, key=f"host::{root.hostname}", source="gobuster"
+            )
+            url_node = graph.upsert_node(
+                Node.make(
+                    NodeKind.URL,
+                    url,
+                    key=f"url::{url}",
+                    source="gobuster",
+                    status=status,
+                    length=length,
+                )
+            )
+            entry = graph.upsert_node(
+                Node.make(
+                    NodeKind.ENTRYPOINT,
+                    url,
+                    key=f"entrypoint::{url}",
+                    source="gobuster",
+                    host=root.hostname,
+                    status=status,
+                )
+            )
+            graph.upsert_edge(Edge.make(host.id, url_node.id, EdgeKind.EXPOSES, weight=0.5))
+            graph.upsert_edge(Edge.make(host.id, entry.id, EdgeKind.EXPOSES, weight=0.4))
+            graph.upsert_edge(Edge.make(entry.id, url_node.id, EdgeKind.EXPOSES, weight=0.3))
+            count += 1
+        return _json({"urls_added": count, "stats": graph.stats()})
+
+
 @tool
 @kg_degrades
 def kg_ingest_testssl(path: str, target: str = "") -> str:
@@ -2465,6 +2546,7 @@ RESEARCH_TOOLS = [
     kg_ingest_katana,
     kg_ingest_masscan,
     kg_ingest_ffuf,
+    kg_ingest_gobuster,
     kg_ingest_testssl,
     kg_ingest_crackmapexec,
     kg_ingest_asrep_hashes,

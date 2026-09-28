@@ -4,9 +4,12 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
+from langchain_core.messages import ToolMessage
 
+from decepticon.runtime.recording import RecordingMiddleware, ReplayMiddleware
 from decepticon.tools.research import tools as research_tools
 from decepticon_core.types.kg import KnowledgeGraph, NodeKind
 
@@ -174,6 +177,83 @@ class TestKgIngestFfuf:
         graph = fake.load_graph()
         urls = {n.label for n in graph.by_kind(NodeKind.URL)}
         assert "https://example.com/admin" in urls
+
+
+class TestKgIngestGobuster:
+    def test_directory_output_creates_scoped_url_entrypoints(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        fake = _configure_kg(monkeypatch, tmp_path)
+        output = tmp_path / "gobuster.txt"
+        output.write_text(
+            "admin                (Status: 301) [Size: 0]\n"
+            "/api (Status: 403) [Size: 123] [--> /login]\n"
+            "[+] Url: https://example.com/\n",
+            encoding="utf-8",
+        )
+        payload = json.loads(
+            research_tools.kg_ingest_gobuster.invoke(
+                {"path": str(output), "base_url": "https://example.com/"}
+            )
+        )
+        assert payload["urls_added"] == 2
+        graph = fake.load_graph()
+        assert {n.label for n in graph.by_kind(NodeKind.URL)} >= {
+            "https://example.com/admin",
+            "https://example.com/api",
+        }
+        assert len(graph.by_kind(NodeKind.ENTRYPOINT)) == 2
+
+    def test_other_modes_and_external_urls_are_not_accepted(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        fake = _configure_kg(monkeypatch, tmp_path)
+        output = tmp_path / "gobuster.txt"
+        output.write_text(
+            "evil.example.net 10.0.0.9\nhttps://evil.example.net/ (Status: 200) [Size: 3]\n",
+            encoding="utf-8",
+        )
+        payload = json.loads(
+            research_tools.kg_ingest_gobuster.invoke(
+                {"path": str(output), "base_url": "https://example.com/"}
+            )
+        )
+        assert payload["urls_added"] == 0
+        assert fake.graph.by_kind(NodeKind.URL) == []
+
+    def test_recorded_ingest_replays_without_duplicate_writes(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        fake = _configure_kg(monkeypatch, tmp_path)
+        output = tmp_path / "gobuster.txt"
+        output.write_text("/admin (Status: 200) [Size: 42]\n", encoding="utf-8")
+        args = {"path": str(output), "base_url": "https://example.com"}
+        request = SimpleNamespace(
+            tool=SimpleNamespace(name="kg_ingest_gobuster"), tool_call={"args": args}
+        )
+        transcript = tmp_path / "gobuster.jsonl"
+        recorder = RecordingMiddleware(path=transcript)
+
+        def run_ingest(_request):
+            return ToolMessage(
+                content=research_tools.kg_ingest_gobuster.invoke(args),
+                name="kg_ingest_gobuster",
+                tool_call_id="ingest-1",
+            )
+
+        recorded = recorder.wrap_tool_call(request, run_ingest)
+        assert recorder._sink is not None
+        recorder._sink.close()
+        assert len(fake.graph.by_kind(NodeKind.URL)) == 1
+
+        def fail_if_live(_request):
+            raise AssertionError("live ingest must not run on replay")
+
+        replayed = ReplayMiddleware(path=transcript, strict=True).wrap_tool_call(
+            request, fail_if_live
+        )
+        assert replayed.content == recorded.content
+        assert len(fake.graph.by_kind(NodeKind.URL)) == 1
 
 
 class TestKgIngestTestssl:
