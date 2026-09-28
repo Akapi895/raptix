@@ -6,7 +6,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
 from decepticon.runtime.recording import RecordingMiddleware, ReplayMiddleware
 from decepticon_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
@@ -157,6 +157,29 @@ async def test_oversized_scan_is_not_downloaded():
     assert store.writes == []
 
 
+async def test_busy_ingesters_do_not_hold_up_the_tool():
+    from decepticon.middleware.kg_autoingest import KGAutoIngestMiddleware
+
+    sandbox, store, result = _Sandbox(), _Store(), _result()
+    hook = KGAutoIngestMiddleware(store=store, sandbox=sandbox, role="recon")
+    assert hook._slots.acquire(blocking=False)
+    assert hook._slots.acquire(blocking=False)
+
+    async def handler(_request):
+        return result
+
+    try:
+        assert (
+            await hook.awrap_tool_call(_request("nmap -oX /workspace/scan.xml x"), handler)
+            is result
+        )
+        assert sandbox.downloaded == []
+        assert store.writes == []
+    finally:
+        hook._slots.release()
+        hook._slots.release()
+
+
 async def test_failed_scan_does_not_ingest_stale_output_file():
     from decepticon.middleware.kg_autoingest import KGAutoIngestMiddleware
 
@@ -196,3 +219,57 @@ async def test_recorded_tool_reply_can_be_replayed_into_autoingest(tmp_path: Pat
     assert returned.tool_call_id == result.tool_call_id
     assert store.writes[0]["engagement"] == "acme"
     assert any(node["kind"] == "Host" for node in store.writes[0]["observations"])
+
+
+async def test_replay_recon_turn_preserves_model_decisions_and_autoingests(tmp_path: Path):
+    from decepticon.middleware.kg_autoingest import KGAutoIngestMiddleware
+
+    record_path = tmp_path / "recon.jsonl"
+    request = _request("nmap -oX /workspace/scan.xml 10.0.0.1")
+    model = SimpleNamespace(name="recon-replay")
+    first = SimpleNamespace(
+        model=model,
+        system_message=None,
+        messages=[HumanMessage(content="scan the target")],
+        tools=[request.tool],
+    )
+    decision = AIMessage(
+        content="",
+        tool_calls=[{"name": "bash", "args": request.tool_call["args"], "id": "scan-1"}],
+    )
+    recorder = RecordingMiddleware(path=record_path)
+    recorder.wrap_model_call(first, lambda _request: decision)
+    reply = _result()
+    recorder.wrap_tool_call(request, lambda _request: reply)
+    second = SimpleNamespace(
+        model=model,
+        system_message=None,
+        messages=[*first.messages, decision, reply],
+        tools=[request.tool],
+    )
+    final = AIMessage(content="recon complete")
+    recorder.wrap_model_call(second, lambda _request: final)
+    assert recorder._sink is not None
+    recorder._sink.close()
+
+    replay = ReplayMiddleware(path=record_path, strict=True)
+
+    def live_model(_request):
+        raise AssertionError("live model was called")
+
+    first_reply = replay.wrap_model_call(first, live_model)
+    assert first_reply.tool_calls == decision.tool_calls
+    store = _Store()
+    hook = KGAutoIngestMiddleware(store=store, sandbox=_Sandbox(), role="recon")
+
+    async def live_tool(_request):
+        raise AssertionError("live scanner was called")
+
+    async def replay_tool(req):
+        return await replay.awrap_tool_call(req, live_tool)
+
+    tool_reply = await hook.awrap_tool_call(request, replay_tool)
+    assert tool_reply.content == reply.content
+    second.messages = [*first.messages, first_reply, tool_reply]
+    assert replay.wrap_model_call(second, live_model).content == final.content
+    assert store.writes[0]["engagement"] == "acme"

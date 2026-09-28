@@ -8,6 +8,7 @@ import os
 import posixpath
 import shlex
 import tempfile
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -60,6 +61,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
         self._store = store
         self._sandbox = sandbox
         self._role = role
+        self._slots = threading.BoundedSemaphore(value=2)
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
         result = await handler(request)
@@ -67,11 +69,19 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             return result
         try:
             await asyncio.wait_for(
-                asyncio.to_thread(self._ingest_result, request, result), timeout=_MAX_SECONDS
+                asyncio.to_thread(self._bounded_ingest, request, result), timeout=_MAX_SECONDS
             )
         except Exception as exc:
             log.debug("KG auto-ingest skipped: %s", exc)
         return result
+
+    def _bounded_ingest(self, request: Any, result: Any) -> None:
+        if not self._slots.acquire(blocking=False):
+            return
+        try:
+            self._ingest_result(request, result)
+        finally:
+            self._slots.release()
 
     def _ingest_result(self, request: Any, result: Any) -> None:
         if getattr(getattr(request, "tool", None), "name", None) != "bash":

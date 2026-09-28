@@ -28,7 +28,9 @@ legacy ingesters remain manual until their output and scoped write path are veri
 on a test engagement). The slot degrades
 when KG credentials or the sandbox are unavailable. The tool runs before ingestion;
 errors are logged at debug level and the exact tool result is returned unchanged.
-Cap file size and post-tool wait time. An auto-ingest write uses the trusted engagement
+Cap file size and post-tool wait time; at most two ingests per middleware instance
+may be in flight, including requests that outlive the wait timeout. An auto-ingest
+write uses the trusted engagement
 from agent state, never output text or a model-supplied engagement identifier.
 
 ## Consequences and verification
@@ -41,5 +43,6 @@ bytes are checked again; a concurrent file growth between checks may still cost 
 larger sandbox response, but the hook times out from the agent's point of view.
 
 T0 verifies successful ingestion, failure passthrough, flag and scope. T1 replays a
-recorded tool reply via `ReplayMiddleware` and checks KG observations and unchanged
-tool response. No exploit-execution or guardrail implementation changes are required.
+recorded model → scanner tool → model sequence via `ReplayMiddleware` and checks
+KG observations, unchanged tool response and unchanged model decisions. No
+exploit-execution or guardrail implementation changes are required.
