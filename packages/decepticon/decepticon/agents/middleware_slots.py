@@ -125,6 +125,29 @@ def _make_engagement_context(**_: Any):
     return EngagementContextMiddleware()
 
 
+def _make_tried_edges(*, role: str, **_: Any):
+    import os
+
+    if os.environ.get("DECEPTICON_KG_TRIED_EDGES", "0").strip().lower() not in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return None
+    from decepticon.middleware.kg_internal.store import (
+        KGStore,
+        KGStoreConfigError,
+        KGStoreUnavailableError,
+    )
+    from decepticon.middleware.tried_edges import TriedEdgesMiddleware
+
+    try:
+        return TriedEdgesMiddleware(store=KGStore.from_env(), role=role)
+    except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
+        logger.debug("tried-edge slot skipped: %s", exc)
+        return None
+
+
 def _make_roe_guardrail(*, role: str, **_: Any):
     """Build the RoE guardrail middleware with a per-engagement sink.
 
@@ -418,6 +441,7 @@ SlotFactory = Callable[..., Any]
 
 DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.ENGAGEMENT_CONTEXT: _make_engagement_context,
+    MiddlewareSlot.TRIED_EDGES: _make_tried_edges,
     MiddlewareSlot.ROE_GUARDRAIL: _make_roe_guardrail,
     MiddlewareSlot.HITL_APPROVAL: _make_hitl,
     MiddlewareSlot.UNTRUSTED_OUTPUT: _make_untrusted_output,

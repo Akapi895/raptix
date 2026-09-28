@@ -28,6 +28,7 @@ class MiddlewareSlot(StrEnum):
     """
 
     ENGAGEMENT_CONTEXT = "engagement-context"
+    TRIED_EDGES = "tried-edges"
     ROE_GUARDRAIL = "roe-guardrail"
     HITL_APPROVAL = "hitl-approval"
     UNTRUSTED_OUTPUT = "untrusted-output"
@@ -154,6 +155,7 @@ _TAIL_SLOTS: frozenset[MiddlewareSlot] = frozenset(
 # bash stdout. The quarantine envelope is cheap and has no false-
 # positive ceiling — it never blocks, it only annotates.
 _BASE_SLOTS: frozenset[MiddlewareSlot] = _TAIL_SLOTS | {
+    MiddlewareSlot.TRIED_EDGES,
     MiddlewareSlot.SKILLS,
     MiddlewareSlot.FILESYSTEM,
     MiddlewareSlot.UNTRUSTED_OUTPUT,
