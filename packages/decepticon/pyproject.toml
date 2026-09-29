@@ -160,6 +160,7 @@ enabled = ["standard", "plugins"]
 # Standard bundle — attached to the ``decepticon`` main agent.
 recon = "decepticon.agents.standard.recon:SUBAGENT_SPEC"
 exploit = "decepticon.agents.standard.exploit:SUBAGENT_SPEC"
+surface_exploit = "decepticon.agents.standard.surface_exploit:SUBAGENT_SPEC"
 analyst = "decepticon.agents.standard.analyst:SUBAGENT_SPEC"
 reverser = "decepticon.agents.standard.reverser:SUBAGENT_SPEC"
 contract_auditor = "decepticon.agents.standard.contract_auditor:SUBAGENT_SPEC"

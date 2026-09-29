@@ -80,5 +80,6 @@ Use [`template.md`](template.md) as the starting point.
 | [0016](0016-ingest-gobuster-directory-results.md) | Ingest Gobuster directory results | Proposed |
 | [0017](0017-defer-per-role-structure.md) | Defer an inert per-role structure knob | Proposed |
 | [0018](0018-recon-surface-inventory.md) | Normalize reconnaissance into a KG surface inventory | Accepted |
+| [0019](0019-parameterize-surface-exploit-cells.md) | Parameterize surface exploitation by coverage cell | Proposed |
 
 Keep this index in sync when you land a new ADR.

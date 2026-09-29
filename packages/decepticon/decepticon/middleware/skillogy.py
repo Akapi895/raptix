@@ -110,6 +110,7 @@ match. Use traverse for "what is related to this skill" questions.
 _PHASE_FOR_ROLE: dict[str, str] = {
     "recon": "reconnaissance",
     "exploit": "web-exploitation",
+    "surface_exploit": "web-exploitation",
     "postexploit": "post-exploit",
     "ad_operator": "active-directory",
     "cloud_hunter": "cloud",

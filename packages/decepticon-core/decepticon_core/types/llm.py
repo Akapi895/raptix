@@ -524,6 +524,7 @@ AGENT_TIERS: dict[str, Tier] = {
     # long context accumulation. Failure cost is mission-critical.
     "decepticon": Tier.HIGH,
     "exploit": Tier.HIGH,
+    "surface_exploit": Tier.HIGH,
     "exploiter": Tier.HIGH,
     "patcher": Tier.HIGH,
     "contract_auditor": Tier.HIGH,
@@ -558,6 +559,7 @@ AGENT_TEMPERATURES: dict[str, float] = {
     "soundwave": 0.4,
     "autohunt": 0.4,
     "exploit": 0.3,
+    "surface_exploit": 0.2,
     "exploiter": 0.2,
     "detector": 0.2,
     "verifier": 0.2,

@@ -15,6 +15,7 @@ from decepticon.agents.standard.cloud_hunter import create_cloud_hunter_agent
 from decepticon.agents.standard.contract_auditor import create_contract_auditor_agent
 from decepticon.agents.standard.decepticon import create_decepticon_agent
 from decepticon.agents.standard.exploit import create_exploit_agent
+from decepticon.agents.standard.surface_exploit import create_surface_exploit_agent
 from decepticon.agents.standard.forensicator import create_forensicator_agent
 from decepticon.agents.standard.ics_operator import create_ics_operator_agent
 from decepticon.agents.standard.iot_operator import create_iot_operator_agent
@@ -34,6 +35,7 @@ __all__ = [
     "create_soundwave_agent",
     "create_analyst_agent",
     "create_exploit_agent",
+    "create_surface_exploit_agent",
     "create_postexploit_agent",
     "create_decepticon_agent",
     "create_reverser_agent",

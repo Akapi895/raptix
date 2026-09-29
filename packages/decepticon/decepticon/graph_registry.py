@@ -35,6 +35,7 @@ STANDARD_GRAPHS: dict[str, str] = {
     "autohunt": "./decepticon/agents/standard/autohunt.py:graph",
     "soundwave": "./decepticon/agents/standard/soundwave.py:graph",
     "exploit": "./decepticon/agents/standard/exploit.py:graph",
+    "surface_exploit": "./decepticon/agents/standard/surface_exploit.py:graph",
     "postexploit": "./decepticon/agents/standard/postexploit.py:graph",
     "analyst": "./decepticon/agents/standard/analyst.py:graph",
     "reverser": "./decepticon/agents/standard/reverser.py:graph",

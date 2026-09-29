@@ -202,6 +202,7 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     # ── Standard bash-executing specialists ──
     "recon": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "surface_exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
     # Three OSS roles run the KG middleware — the persistent-graph use
     # cases the spec calls out
