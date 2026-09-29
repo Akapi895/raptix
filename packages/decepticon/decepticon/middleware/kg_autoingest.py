@@ -27,6 +27,8 @@ _SCANNERS = {
     "nmap": ("nmap_xml", "-oX"),
     "httpx": ("httpx_jsonl", "-o"),
     "nuclei": ("nuclei_jsonl", "-o"),
+    "katana": ("katana_jsonl", "-o"),
+    "arjun": ("arjun_json", "-oJ"),
 }
 
 
@@ -46,6 +48,10 @@ def _output(command: str) -> tuple[str, str] | None:
     if posixpath.basename(args[0]) == "nuclei" and not any(
         flag in args for flag in ("-jsonl", "-json")
     ):
+        return None
+    if posixpath.basename(args[0]) == "katana" and "-jsonl" not in args:
+        return None
+    if posixpath.basename(args[0]) == "arjun" and "-oJ" not in args:
         return None
     if args.count(output_flag) != 1:
         return None

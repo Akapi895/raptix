@@ -25,7 +25,7 @@ import json
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlparse
 
 import defusedxml.ElementTree as ET
 import yaml
@@ -469,6 +469,187 @@ def _adapt_httpx_jsonl(
     return {"parsed": parsed, "skipped": skipped, "records": records}
 
 
+def _surface_observations(
+    *,
+    url: str,
+    method: str,
+    source: str,
+    status: Any = None,
+) -> list[dict[str, Any]]:
+    """Build bounded, typed surface inventory observations from one URL."""
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return []
+    normalized_method = (method or "GET").upper()
+    endpoint_key = f"endpoint::{normalized_method}::{url}"
+    endpoint_props: dict[str, Any] = {
+        "method": normalized_method,
+        "url": url,
+        "path": parsed.path or "/",
+        "host": host,
+        "source": source,
+    }
+    if status is not None:
+        endpoint_props["status_code"] = status
+    observations: list[dict[str, Any]] = [
+        {
+            "kind": "Host",
+            "key": f"host::{host}",
+            "label": host,
+            "props": {"hostname": host, "source": source},
+            "edges_out": [{"to_key": endpoint_key, "kind": "HAS", "weight": 0.5}],
+        },
+        {
+            "kind": "Endpoint",
+            "key": endpoint_key,
+            "label": f"{normalized_method} {parsed.path or '/'}",
+            "props": endpoint_props,
+            "edges_out": [],
+        },
+    ]
+    for name, value in parse_qsl(parsed.query, keep_blank_values=True):
+        parameter_key = f"parameter::{endpoint_key}::query::{name}"
+        observations.append(
+            {
+                "kind": "Parameter",
+                "key": parameter_key,
+                "label": name,
+                "props": {
+                    "name": name,
+                    "location": "query",
+                    "value_hint": value[:128],
+                    "source": source,
+                },
+                "edges_out": [],
+            }
+        )
+        observations[1]["edges_out"].append({"to_key": parameter_key, "kind": "HAS", "weight": 1.0})
+    return observations
+
+
+def _adapt_katana_jsonl(
+    path: Path,
+    store: KGStore,
+    engagement: str,
+    created_by: str,
+    source_episode_id: str,
+) -> dict[str, Any]:
+    """Ingest Katana JSONL into Endpoint/Parameter surface inventory."""
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as exc:
+        return {"error": f"katana jsonl read failed: {exc}", "endpoints": 0}
+
+    observations: list[dict[str, Any]] = []
+    parsed = 0
+    skipped = 0
+    for raw in lines:
+        if not raw.strip():
+            continue
+        try:
+            row = json.loads(raw)
+        except json.JSONDecodeError:
+            skipped += 1
+            continue
+        if not isinstance(row, dict):
+            skipped += 1
+            continue
+        request: dict[str, Any] = {}
+        request_value = row.get("request")
+        if isinstance(request_value, dict):
+            request = request_value
+        url = str(row.get("endpoint") or request.get("endpoint") or row.get("url") or "")
+        if not url:
+            skipped += 1
+            continue
+        observations.extend(
+            _surface_observations(
+                url=url,
+                method=str(row.get("method") or request.get("method") or "GET"),
+                source="katana",
+                status=row.get("status_code") or row.get("status-code"),
+            )
+        )
+        parsed += 1
+    if not observations:
+        return {"parsed": parsed, "skipped": skipped, "endpoints": 0}
+    records = store.record_observations(
+        observations,
+        engagement=engagement,
+        created_by=created_by,
+        source_episode_id=source_episode_id,
+    )
+    return {"parsed": parsed, "skipped": skipped, "endpoints": parsed, "records": records}
+
+
+def _adapt_arjun_json(
+    path: Path,
+    store: KGStore,
+    engagement: str,
+    created_by: str,
+    source_episode_id: str,
+) -> dict[str, Any]:
+    """Ingest Arjun parameter discovery output into Parameter nodes."""
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        return {"error": f"arjun json parse failed: {exc}", "endpoints": 0}
+
+    rows = data if isinstance(data, list) else [data]
+    observations: list[dict[str, Any]] = []
+    endpoints = 0
+    parameters = 0
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        url = str(row.get("url") or row.get("target") or row.get("endpoint") or "")
+        if not url:
+            continue
+        base = _surface_observations(
+            url=url,
+            method=str(row.get("method") or "GET"),
+            source="arjun",
+        )
+        if not base:
+            continue
+        observations.extend(base)
+        endpoint_key = next(item["key"] for item in base if item["kind"] == "Endpoint")
+        discovered = row.get("params") or row.get("parameters") or []
+        if isinstance(discovered, dict):
+            discovered = list(discovered)
+        if not isinstance(discovered, list):
+            discovered = []
+        for name in discovered:
+            if not isinstance(name, str) or not name.strip():
+                continue
+            clean_name = name.strip()
+            parameter_key = f"parameter::{endpoint_key}::query::{clean_name}"
+            observations.append(
+                {
+                    "kind": "Parameter",
+                    "key": parameter_key,
+                    "label": clean_name,
+                    "props": {"name": clean_name, "location": "query", "source": "arjun"},
+                    "edges_out": [],
+                }
+            )
+            next(item for item in observations if item["key"] == endpoint_key)["edges_out"].append(
+                {"to_key": parameter_key, "kind": "HAS", "weight": 1.0}
+            )
+            parameters += 1
+        endpoints += 1
+    if not observations:
+        return {"endpoints": 0, "parameters": 0}
+    records = store.record_observations(
+        observations,
+        engagement=engagement,
+        created_by=created_by,
+        source_episode_id=source_episode_id,
+    )
+    return {"endpoints": endpoints, "parameters": parameters, "records": records}
+
+
 def _adapt_sarif(
     path: Path,
     store: KGStore,
@@ -742,6 +923,8 @@ register_adapter("api_spec", _adapt_api_spec)
 register_adapter("nmap_xml", _adapt_nmap_xml)
 register_adapter("nuclei_jsonl", _adapt_nuclei_jsonl)
 register_adapter("httpx_jsonl", _adapt_httpx_jsonl)
+register_adapter("katana_jsonl", _adapt_katana_jsonl)
+register_adapter("arjun_json", _adapt_arjun_json)
 register_adapter("sarif", _adapt_sarif)
 
 

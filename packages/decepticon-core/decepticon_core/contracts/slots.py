@@ -200,7 +200,7 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     # ── Standard read-only agent (Blue Cell — detection coverage, no bash) ──
     "blue_cell": _BASE_SLOTS,
     # ── Standard bash-executing specialists ──
-    "recon": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
+    "recon": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG, MiddlewareSlot.KG_AUTOINGEST},
     "exploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
     "postexploit": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG_AUTOINGEST},
     # Three OSS roles run the KG middleware — the persistent-graph use
@@ -221,7 +221,7 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     "phisher": _BASH_AGENT_SLOTS,
     "mobile_operator": _BASH_AGENT_SLOTS,
     "wireless_operator": _BASH_AGENT_SLOTS,
-    "osint_operator": _BASH_AGENT_SLOTS,
+    "osint_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
     "iot_operator": _BASH_AGENT_SLOTS,
     "ics_operator": _BASH_AGENT_SLOTS,
     "forensicator": _BASH_AGENT_SLOTS,

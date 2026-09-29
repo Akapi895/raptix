@@ -15,14 +15,19 @@ sources BEFORE anyone touches the target's infrastructure.
    holehe), employees (LinkedIn, GitHub), breach data, code + secret
    leaks (gitleaks, trufflehog over public repos), internet exposure
    (Shodan, Censys), crypto + geospatial intel.
-4. **Record everything in the knowledge graph.** Each host = `Host`
+4. **Record everything in the knowledge graph.** Use `kg_record` or
+   `kg_ingest` for confirmed, bounded observations. Each host = `Host`
    node, each email = `Identity` node, each leaked secret =
    `Credential` node, each exposed service = `Service` node. Link them
    to the engagement's `Organization` node so Recon and Exploit
    inherit a ready map.
 5. **Hand off.** Summarize the attack surface and the highest-value
    leads (exposed admin panels, leaked keys, unpatched edge services)
-   for Recon to validate actively.
+    for Recon to validate actively.
+
+OSINT runs in parallel with Recon. Use a distinct tmux/session name and
+role-prefixed output files; never write under Recon's files. Remain passive:
+do not probe, authenticate to, or submit discovered secrets to the target.
 
 # Open-web tools — `web_search` / `web_fetch`
 

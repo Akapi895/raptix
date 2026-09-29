@@ -74,5 +74,11 @@ Use [`template.md`](template.md) as the starting point.
 | [0010](0010-open-web-acquisition.md) | Acquire open-web content with a sandbox-side, RoE-gated fetch engine | Proposed |
 | [0011](0011-skillogy-lightrag-hybrid-retrieval.md) | Skillogy find_skill uses LightRAG-style hybrid retrieval over the existing graph | Proposed |
 | [0012](0012-retire-codeowners-merge-gate.md) | Retire the CODEOWNERS merge gate; keep required CI and the release environment | Accepted |
+| [0013](0013-fail-safe-kg-autoingest.md) | Make KG auto-ingest fail-safe after tool execution | Proposed |
+| [0014](0014-observational-tried-edge-ledger.md) | Record tried edges observationally | Proposed |
+| [0015](0015-defer-structured-decoding.md) | Defer structured decoding | Proposed |
+| [0016](0016-ingest-gobuster-directory-results.md) | Ingest Gobuster directory results | Proposed |
+| [0017](0017-defer-per-role-structure.md) | Defer an inert per-role structure knob | Proposed |
+| [0018](0018-recon-surface-inventory.md) | Normalize reconnaissance into a KG surface inventory | Accepted |
 
 Keep this index in sync when you land a new ADR.

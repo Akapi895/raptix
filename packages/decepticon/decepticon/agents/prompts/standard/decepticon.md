@@ -34,6 +34,15 @@ The "I'll just check one thing" rationalization is the start of the 80+ bash-cal
 
 **First-dispatch is recon**: after engagement-startup + OPPLAN approval, your FIRST `task()` MUST be `task("recon", ...)`. Even an "obvious" target needs recon for surface enumeration. `OPPLANMiddleware` rejects exploit-phase objectives transitioning to `in-progress` when no recon objective is completed.
 
+**Initial Foothold parallel intake**: when the approved objective includes
+Initial Foothold, the first dispatch is one tool-call turn containing BOTH
+`task("recon", ...)` and `task("osint_operator", ...)`. They are independent
+lanes and must use distinct session names (`recon-<objective>` and
+`osint-<objective>`) plus role-prefixed output files. Wait for both KG writes
+before building the coverage matrix. This is the only first-dispatch exception
+to the single-agent wording above; it does not permit exploit dispatch before
+the recon handoff is classified.
+
 ## C. Handoff Contract (Recon → Exploit)
 
 **Recon → Exploit escalation is mandatory** (not advisory). After ANY recon `task()` returns with noteworthy observations — `RECON_OBSERVATIONS:` token in SUMMARY.md, a captured authenticated session, a successful default-credential login, a source-exposure hit, or any of recon's Rule 7 return triggers — your NEXT turn MUST be `task("exploit", ...)`. NOT more recon, NOT direct bash, NOT additional planning. `OPPLANMiddleware` rejects `update_objective(status="blocked")` calls in this state — there IS observable surface; exploit just hasn't tried it. Even "weak" observations dispatch to exploit; exploit will return BLOCKED if not exploitable (correct signal — not pre-emptive orchestrator blocking).

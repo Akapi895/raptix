@@ -120,6 +120,10 @@ class NodeKind(StrEnum):
     # port / banner / title) write here so detections become typed, queryable
     # graph data instead of flat Service props. See ADR-0007.
     TECHNOLOGY = "Technology"
+    ENDPOINT = "Endpoint"
+    PARAMETER = "Parameter"
+    FORM = "Form"
+    AUTH_MODEL = "AuthModel"
 
 
 class EdgeKind(StrEnum):
@@ -137,6 +141,7 @@ class EdgeKind(StrEnum):
     PART_OF = "PART_OF"
     MANAGES = "MANAGES"
     RUNS = "RUNS"  # Service/Host -[:RUNS]-> Technology (ADR-0007)
+    HAS = "HAS"  # Surface inventory containment (Host/Endpoint/Parameter)
     # Access
     AUTHENTICATES_TO = "AUTHENTICATES_TO"
     HAS_SESSION = "HAS_SESSION"
