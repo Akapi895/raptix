@@ -295,6 +295,39 @@ class TestObjectiveExpand:
         )
         assert "not found" in _last_message(cmd)
 
+    def test_expand_preserves_surface_cell_owner_and_notes(
+        self, bag: _ToolBag, initial_state: dict
+    ) -> None:
+        s = _add(
+            bag,
+            initial_state,
+            title="Surface coverage",
+            phase=ObjectivePhase.INITIAL_ACCESS,
+            description="x",
+            acceptance_criteria=["c"],
+            priority=1,
+        )
+        s, _ = _expand(
+            bag,
+            s,
+            parent_id="OBJ-001",
+            children=[
+                {
+                    "title": "SQLi @ endpoint",
+                    "description": "one cell",
+                    "acceptance_criteria": ["evidence"],
+                    "owner": "surface_exploit",
+                    "notes": "cell_id=sqli::endpoint; session_name=se-test",
+                    "mitre": ["T1190"],
+                }
+            ],
+        )
+
+        child = s["objectives"][1]
+        assert child["owner"] == "surface_exploit"
+        assert child["notes"] == "cell_id=sqli::endpoint; session_name=se-test"
+        assert child["mitre"] == ["T1190"]
+
     def test_expand_completed_parent_rejected(self, bag: _ToolBag, initial_state: dict) -> None:
         s = _add(
             bag,

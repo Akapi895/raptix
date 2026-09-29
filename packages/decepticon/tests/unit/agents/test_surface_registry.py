@@ -4,7 +4,9 @@ from decepticon.agents.standard._surface_registry import (
     VULN_CLASSES,
     applicable_vuln_classes,
     build_coverage_matrix,
+    build_objective_expand_payload,
     session_name_for_cell,
+    surfaces_from_kg_inventory,
 )
 from decepticon_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
 
@@ -61,3 +63,33 @@ def test_surface_exploit_role_has_kg_and_autoingest() -> None:
         "open_redirect",
         "graphql",
     }
+
+
+def test_kg_inventory_and_objective_payload_are_deterministic() -> None:
+    rows = [
+        {
+            "key": "endpoint::GET::https://app.test/search",
+            "props_json": '{"url":"https://app.test/search","path":"/search"}',
+            "children": [
+                {
+                    "kind": "Parameter",
+                    "key": "parameter::q",
+                    "label": "q",
+                    "props_json": '{"name":"q","location":"query"}',
+                }
+            ],
+        }
+    ]
+
+    surfaces = surfaces_from_kg_inventory(rows)
+    cells = build_coverage_matrix(surfaces)
+    payload = build_objective_expand_payload("OBJ-001", cells)
+
+    assert [cell["cell_id"] for cell in cells] == [
+        "sqli::endpoint::GET::https://app.test/search",
+        "xss::endpoint::GET::https://app.test/search",
+    ]
+    assert payload["parent_id"] == "OBJ-001"
+    assert all(child["owner"] == "surface_exploit" for child in payload["children"])
+    assert all(child["mitre"] == ["T1190"] for child in payload["children"])
+    assert all("session_name=" in child["notes"] for child in payload["children"])

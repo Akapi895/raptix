@@ -185,6 +185,7 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     "decepticon": _BASE_SLOTS
     | {
         MiddlewareSlot.ENGAGEMENT_CONTEXT,
+        MiddlewareSlot.KG,
         MiddlewareSlot.SUBAGENT,
         MiddlewareSlot.OPPLAN,
         MiddlewareSlot.MODEL_OVERRIDE,

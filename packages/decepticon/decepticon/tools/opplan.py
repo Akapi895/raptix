@@ -943,8 +943,8 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
                 "c2_tier": parent.get("c2_tier", "interactive"),
                 "concessions": [],
                 "blocked_by": list(child.get("blocked_by") or []),
-                "owner": "",
-                "notes": "",
+                "owner": str(child.get("owner") or ""),
+                "notes": str(child.get("notes") or ""),
                 "parent_id": parent_id,
             }
             try:

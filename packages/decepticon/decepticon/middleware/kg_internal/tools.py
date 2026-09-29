@@ -25,10 +25,16 @@ from typing import Annotated, Any
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 
+from decepticon.agents.standard._surface_registry import (
+    build_coverage_matrix,
+    build_objective_expand_payload,
+    surfaces_from_kg_inventory,
+)
 from decepticon.middleware.kg_internal.ingest import ingest as _ingest_dispatch
 from decepticon.middleware.kg_internal.store import KGStore
 
 DEFAULT_KG_TOOLS = frozenset({"kg_record", "kg_ingest"})
+SURFACE_INVENTORY_TOOL = "kg_surface_inventory"
 
 _ENGAGEMENT_UNSET = (
     "kg_engagement is not set on agent state; middleware before_agent did not hydrate"
@@ -177,5 +183,51 @@ def build_kg_tools(
             return json.dumps(result)
 
         tools.append(kg_ingest)
+
+    if SURFACE_INVENTORY_TOOL in enabled_set:
+
+        @tool
+        def kg_surface_inventory(
+            state: Annotated[dict, InjectedState],
+            tool_call_id: Annotated[str, InjectedToolCallId] = "",
+        ) -> str:
+            """Read the bounded Endpoint inventory and derive coverage cells.
+
+            This is read-only. The returned ``objective_children`` are inputs
+            for the orchestrator's sequential ``objective_expand`` call.
+            """
+            engagement = _resolve_engagement(state)
+            if not engagement:
+                return _err(_ENGAGEMENT_UNSET)
+            try:
+                rows = store.execute_read(
+                    (
+                        "MATCH (e:Endpoint) WHERE e.engagement = $engagement "
+                        "OPTIONAL MATCH (e)-[r]->(child) "
+                        "WHERE r.engagement = $engagement "
+                        "  AND child.engagement = $engagement "
+                        "WITH e, collect(CASE WHEN child IS NULL THEN null ELSE "
+                        "{kind: head(labels(child)), key: child.key, label: child.label, "
+                        "props: properties(child)} END) AS children "
+                        "RETURN e.key AS key, properties(e) AS props, children "
+                        "ORDER BY e.key LIMIT $limit"
+                    ),
+                    {"limit": 500},
+                    engagement=engagement,
+                )
+                surfaces = surfaces_from_kg_inventory(rows)
+                cells = build_coverage_matrix(surfaces)
+                payload = build_objective_expand_payload("", cells)
+                return json.dumps(
+                    {
+                        "surfaces": surfaces,
+                        "cells": cells,
+                        "objective_children": payload["children"],
+                    }
+                )
+            except Exception as exc:  # noqa: BLE001 — surface read failures to the orchestrator
+                return _err(f"kg_surface_inventory failed: {exc}")
+
+        tools.append(kg_surface_inventory)
 
     return tools

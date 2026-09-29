@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass
 from typing import Any, Callable, Mapping
@@ -130,6 +131,66 @@ def _graphql(surface: Surface) -> bool:
     )
 
 
+def _decode_props(value: Any) -> dict[str, Any]:
+    if isinstance(value, Mapping):
+        return dict(value)
+    if isinstance(value, str):
+        try:
+            decoded = json.loads(value)
+        except (TypeError, ValueError):
+            return {}
+        return dict(decoded) if isinstance(decoded, Mapping) else {}
+    return {}
+
+
+def surfaces_from_kg_inventory(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize scoped Endpoint rows and their typed KG children."""
+    surfaces: list[dict[str, Any]] = []
+    for row in rows:
+        props = _decode_props(row.get("props_json", row.get("props")))
+        key = str(row.get("key") or props.get("url") or props.get("path") or "")
+        if not key:
+            continue
+        surface: dict[str, Any] = {"key": key, "props": props}
+        children = row.get("children") or row.get("related") or []
+        parameters: list[dict[str, Any]] = []
+        forms: list[dict[str, Any]] = []
+        technologies: list[dict[str, Any]] = []
+        for child in children if isinstance(children, list) else []:
+            if not isinstance(child, Mapping) or not child.get("key"):
+                continue
+            child_props = _decode_props(child.get("props_json", child.get("props")))
+            child_value = {
+                "key": str(child["key"]),
+                "label": str(child.get("label") or child["key"]),
+                "props": child_props,
+            }
+            kind = str(child.get("kind") or "").lower()
+            if kind == "parameter":
+                parameters.append(
+                    {
+                        **child_value,
+                        "name": child_props.get("name") or child_value["label"],
+                    }
+                )
+            elif kind == "form":
+                forms.append(child_value)
+            elif kind == "technology":
+                technologies.append(child_value)
+            elif kind == "authmodel":
+                surface["auth_model"] = (
+                    child_props.get("model") or child_props.get("name") or child_value["label"]
+                )
+        if parameters:
+            surface["parameters"] = sorted(parameters, key=lambda item: str(item["key"]))
+        if forms:
+            surface["forms"] = sorted(forms, key=lambda item: str(item["key"]))
+        if technologies:
+            surface["technologies"] = sorted(technologies, key=lambda item: str(item["key"]))
+        surfaces.append(surface)
+    return surfaces
+
+
 VULN_CLASS_REGISTRY: tuple[VulnClassSpec, ...] = (
     VulnClassSpec("sqli", "sqli", "T1190", ("http_request", "http_history"), _sqli),
     VulnClassSpec("xss", "xss", "T1190", ("http_request", "http_history"), _xss),
@@ -162,9 +223,14 @@ def session_name_for_cell(cell_id: str) -> str:
 def build_coverage_matrix(surfaces: list[Surface]) -> list[dict[str, Any]]:
     """Expand normalized surfaces into deterministic coverage cells."""
     cells: list[dict[str, Any]] = []
+    unique_surfaces: dict[str, Surface] = {}
     for surface in surfaces:
         props = _props(surface)
         surface_key = str(surface.get("key") or props.get("url") or props.get("path") or "surface")
+        unique_surfaces.setdefault(surface_key, surface)
+    for surface_key in sorted(unique_surfaces):
+        surface = unique_surfaces[surface_key]
+        props = _props(surface)
         for vuln_class in applicable_vuln_classes(surface):
             spec = VULN_CLASSES[vuln_class]
             cell_id = f"{vuln_class}::{surface_key}"
@@ -177,7 +243,41 @@ def build_coverage_matrix(surfaces: list[Surface]) -> list[dict[str, Any]]:
                     "mitre": spec.mitre,
                     "tool_hints": list(spec.tool_hints),
                     "session": session_name_for_cell(cell_id),
+                    "session_name": session_name_for_cell(cell_id),
                     "status": "pending",
                 }
             )
     return cells
+
+
+def build_objective_expand_payload(
+    parent_id: str, cells: list[Mapping[str, Any]]
+) -> dict[str, Any]:
+    """Render coverage cells as deterministic ``objective_expand`` children."""
+    children: list[dict[str, Any]] = []
+    for priority, cell in enumerate(cells, start=1):
+        cell_id = str(cell["cell_id"])
+        vuln_class = str(cell["vuln_class"])
+        surface_key = str(cell["surface_key"])
+        session_name = str(cell.get("session_name") or cell.get("session") or "")
+        mitre = cell.get("mitre", [])
+        mitre_list = [item.strip() for item in str(mitre).split(",") if item.strip()]
+        children.append(
+            {
+                "title": f"Surface exploit: {vuln_class} @ {surface_key}",
+                "phase": "initial-access",
+                "description": (
+                    f"Test coverage cell {cell_id} against exactly one normalized surface. "
+                    f"Use session {session_name} and load {cell['skill_path']}."
+                ),
+                "acceptance_criteria": [
+                    f"Use only the {vuln_class} methodology for {surface_key}.",
+                    "Record confirmed, ruled_out, or open_proof_gap evidence in the KG.",
+                ],
+                "priority": priority,
+                "mitre": mitre_list,
+                "owner": "surface_exploit",
+                "notes": f"cell_id={cell_id}; session_name={session_name}",
+            }
+        )
+    return {"parent_id": parent_id, "children": children}

@@ -207,7 +207,7 @@ def _make_opplan(*, backend: Any, **_: Any):
     return OPPLANMiddleware(backend=backend)
 
 
-def _make_kg(**_: Any):
+def _make_kg(*, role: str, **_: Any):
     """Conditional slot — returns None when the KGStore can't be built.
 
     Mirrors :func:`_make_model_fallback`: the agent factory keeps
@@ -226,7 +226,8 @@ def _make_kg(**_: Any):
     )
 
     try:
-        return KGMiddleware()
+        enabled_tools = {"kg_surface_inventory"} if role == "decepticon" else None
+        return KGMiddleware(enabled_tools=enabled_tools)
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         # ImportError covers the case where the optional ``neo4j``
         # driver isn't installed in the env that imports analyst.py
