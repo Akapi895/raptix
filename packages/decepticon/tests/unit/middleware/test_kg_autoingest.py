@@ -64,6 +64,7 @@ def test_autoingest_slot_only_on_network_roles():
     } == {
         "recon",
         "exploit",
+        "surface_exploit",
         "postexploit",
         "ad_operator",
         "cloud_hunter",
