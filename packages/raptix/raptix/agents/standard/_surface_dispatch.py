@@ -7,6 +7,7 @@ from collections.abc import Mapping, Sequence
 from typing import Any
 
 SURFACE_EXPLOIT_OWNER = "surface_exploit"
+DEFAULT_MAX_IN_FLIGHT = 3
 SURFACE_EXPLOIT_OUTCOME_STATUS = {
     "confirmed": "completed",
     "ruled_out": "completed",
@@ -26,9 +27,10 @@ def _priority(objective: Mapping[str, Any]) -> tuple[int, str]:
     return priority, str(objective.get("id", ""))
 
 
-def next_surface_exploit_dispatch(objectives: Sequence[Mapping[str, Any]]) -> dict[str, str] | None:
-    """Return the one highest-priority pending surface-exploit task payload."""
-    pending = sorted(
+def _pending_surface_exploit_cells(
+    objectives: Sequence[Mapping[str, Any]],
+) -> list[Mapping[str, Any]]:
+    return sorted(
         (
             objective
             for objective in objectives
@@ -37,10 +39,9 @@ def next_surface_exploit_dispatch(objectives: Sequence[Mapping[str, Any]]) -> di
         ),
         key=_priority,
     )
-    if not pending:
-        return None
 
-    objective = pending[0]
+
+def _surface_exploit_payload(objective: Mapping[str, Any]) -> dict[str, str]:
     title = str(objective.get("title", ""))
     description = str(objective.get("description", ""))
     notes = str(objective.get("notes", ""))
@@ -70,3 +71,28 @@ def next_surface_exploit_dispatch(objectives: Sequence[Mapping[str, Any]]) -> di
             "open_proof_gap, with KG evidence."
         ),
     }
+
+
+def next_surface_exploit_dispatch(objectives: Sequence[Mapping[str, Any]]) -> dict[str, str] | None:
+    """Return the one highest-priority pending surface-exploit task payload."""
+    pending = _pending_surface_exploit_cells(objectives)
+    if not pending:
+        return None
+    return _surface_exploit_payload(pending[0])
+
+
+def next_surface_exploit_batch(
+    objectives: Sequence[Mapping[str, Any]],
+    *,
+    max_in_flight: int = DEFAULT_MAX_IN_FLIGHT,
+) -> list[dict[str, str]]:
+    """Return a bounded, priority-ordered batch of pending surface-exploit cells."""
+    if max_in_flight < 1:
+        raise ValueError("max_in_flight must be at least one")
+    payloads = [
+        _surface_exploit_payload(objective)
+        for objective in _pending_surface_exploit_cells(objectives)[:max_in_flight]
+    ]
+    sessions = [payload["session_name"] for payload in payloads]
+    assert len(sessions) == len(set(sessions)), "surface-exploit batch requires distinct sessions"
+    return payloads
