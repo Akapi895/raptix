@@ -143,6 +143,7 @@ testpaths = [
 markers = [
     "asyncio: mark test as async (pytest-asyncio)",
     "slow: integration-style tests that hit wall-clock timeouts or otherwise take seconds; deselected from the PR fast lane",
+    "manual: explicitly triggered live-stack gates; never part of the regular CI suite",
 ]
 addopts = [
     "--strict-markers",
