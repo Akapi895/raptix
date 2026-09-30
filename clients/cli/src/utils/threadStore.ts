@@ -1,7 +1,7 @@
 /**
  * Thread persistence — query/update LangGraph threads via the SDK.
  *
- * Replaces the previous file-based storage (~/.decepticon/threads.json)
+ * Replaces the previous file-based storage (~/.raptix/threads.json)
  * with server-side thread metadata, so all clients (CLI, Web) share
  * the same thread list.
  */

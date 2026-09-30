@@ -63,7 +63,7 @@ export const AGENT_DISPLAY_CONFIG: Record<string, AgentDisplayMeta> = {
     description: "Main orchestrator — commands the full kill chain",
     role: "Orchestrator",
     color: "#ef4444",
-    imagePath: "/agents/decepticon.png",
+    imagePath: "/agents/raptix.png",
   },
   soundwave: {
     name: "Soundwave",

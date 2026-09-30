@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as fs from "fs/promises";
 import * as path from "path";
 
-const WORKSPACE = process.env.WORKSPACE_PATH ?? path.join(process.env.HOME ?? "", ".decepticon", "workspace");
+const WORKSPACE = process.env.WORKSPACE_PATH ?? path.join(process.env.HOME ?? "", ".raptix", "workspace");
 
 const FOLDERS = ["recon", "exploit", "post-exploit", "findings", "report"] as const;
 

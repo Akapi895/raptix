@@ -328,7 +328,7 @@ export function useAgent({
 
           case "engagement_ready": {
             // Soundwave finished writing the planning bundle. Flip the
-            // active assistant so the next submit() lands on decepticon.
+            // active assistant so the next submit() lands on raptix.
             // The current run continues to completion (soundwave's closing
             // message); thread handoff fires from handleStreamComplete.
             // Pure boolean signal — the engagement slug travels independently

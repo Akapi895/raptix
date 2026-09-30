@@ -79,7 +79,7 @@ export function AgentNode({ node, x, y, selected, onDragStart }: AgentNodeProps)
         <>
           {/* Orchestrator: image avatar */}
           <image
-            href="/agents/decepticon.png"
+            href="/agents/raptix.png"
             x={-r}
             y={-r}
             width={r * 2}
