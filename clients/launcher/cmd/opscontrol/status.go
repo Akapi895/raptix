@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	internal "github.com/PurpleAILAB/Decepticon/clients/launcher/internal/opscontrol"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/ui"
+	internal "github.com/Akapi895/raptix/clients/launcher/internal/opscontrol"
+	"github.com/Akapi895/raptix/clients/launcher/internal/ui"
 	"github.com/spf13/cobra"
 )
 

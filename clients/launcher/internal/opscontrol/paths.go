@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/config"
+	"github.com/Akapi895/raptix/clients/launcher/internal/config"
 )
 
 // StackName returns the value of DECEPTICON_STACK_NAME, sanitized to

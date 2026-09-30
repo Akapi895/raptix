@@ -10,9 +10,9 @@ import (
 	"strings"
 
 	"charm.land/huh/v2"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/compose"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/config"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/ui"
+	"github.com/Akapi895/raptix/clients/launcher/internal/compose"
+	"github.com/Akapi895/raptix/clients/launcher/internal/config"
+	"github.com/Akapi895/raptix/clients/launcher/internal/ui"
 	"github.com/spf13/cobra"
 )
 

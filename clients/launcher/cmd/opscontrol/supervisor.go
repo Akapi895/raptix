@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/config"
-	internal "github.com/PurpleAILAB/Decepticon/clients/launcher/internal/opscontrol"
+	"github.com/Akapi895/raptix/clients/launcher/internal/config"
+	internal "github.com/Akapi895/raptix/clients/launcher/internal/opscontrol"
 )
 
 // composeOverlayBody is the docker-compose overlay that bind-mounts

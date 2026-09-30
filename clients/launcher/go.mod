@@ -1,4 +1,4 @@
-module github.com/PurpleAILAB/Decepticon/clients/launcher
+module github.com/Akapi895/raptix/clients/launcher
 
 go 1.25.8
 

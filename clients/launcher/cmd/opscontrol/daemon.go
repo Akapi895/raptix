@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"syscall"
 
-	internal "github.com/PurpleAILAB/Decepticon/clients/launcher/internal/opscontrol"
+	internal "github.com/Akapi895/raptix/clients/launcher/internal/opscontrol"
 	"github.com/spf13/cobra"
 )
 

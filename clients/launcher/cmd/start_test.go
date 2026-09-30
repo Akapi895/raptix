@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/updater"
+	"github.com/Akapi895/raptix/clients/launcher/internal/updater"
 )
 
 // withProbeStubs swaps the WSL detection function variables for the

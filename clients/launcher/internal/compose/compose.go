@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/config"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/opscontrol"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/runtime"
+	"github.com/Akapi895/raptix/clients/launcher/internal/config"
+	"github.com/Akapi895/raptix/clients/launcher/internal/opscontrol"
+	"github.com/Akapi895/raptix/clients/launcher/internal/runtime"
 )
 
 // Compose wraps Docker Compose commands for Decepticon services.

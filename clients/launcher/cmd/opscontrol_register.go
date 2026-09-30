@@ -1,6 +1,6 @@
 package cmd
 
-import "github.com/PurpleAILAB/Decepticon/clients/launcher/cmd/opscontrol"
+import "github.com/Akapi895/raptix/clients/launcher/cmd/opscontrol"
 
 // Bridge the opscontrol subcommand tree into the launcher's rootCmd.
 // Kept in a separate file so cmd/start.go and cmd/stop.go can import

@@ -24,7 +24,7 @@ builds:
       - arm64
     ldflags:
       - -s -w
-      - -X github.com/PurpleAILAB/Decepticon/clients/launcher/cmd.version={{.Version}}
+      - -X github.com/Akapi895/raptix/clients/launcher/cmd.version={{.Version}}
 
 archives:
   - id: binaries
