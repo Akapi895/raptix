@@ -103,20 +103,32 @@ git tag pre-raptix-rename
 
 ## Phần 2 — Kiến trúc mục tiêu (thiết kế lại)
 
-Ngoài rename, áp dụng **3 cải tiến cấu trúc** đã thống nhất:
+Ngoài rename, các cải tiến cấu trúc — **đã cập nhật sau khi đọc mã thực tế**:
 
-1. **`decepticon/core/` → `raptix/foundation/`** — module hạ tầng xuyên suốt (config, logging,
-   schemas, streaming) hiện trùng tên khái niệm với package `decepticon-core`. Đổi thành
-   `foundation/` để hết nhầm. *(Đây là nguồn nhầm lẫn thật, khác với package `raptix-core`.)*
+1. **`raptix/core/` → `raptix/foundation/` — KHÔNG THỰC HIỆN (đảo ngược khuyến nghị ban đầu).**
+   > Khi triển khai mới phát hiện: `raptix/core/{config,logging,schemas}.py` **không phải** module
+   > hạ tầng — chúng là **shim deprecation** (`__getattr__` PEP 562 cảnh báo mỗi lần import) trỏ về
+   > `raptix_core.*`, và **sẽ bị xóa ở 2.0.0** (Phase‑1 core/framework/sdk split). Nội dung thật đã
+   > nằm ở `raptix_core`. Vì vậy đổi `core→foundation` sẽ **phá đúng các legacy import path mà lớp
+   > này tồn tại để giữ** (`raptix.core.config`, `raptix.core.schemas`, …) và phải đụng
+   > `compat/register_legacy_imports`. Sự "trùng tên khái niệm" tự biến mất khi 2.0.0 dọn `raptix/core/`.
+   > ⇒ Để nguyên; không đổi tên.
 
-2. **Gộp 3 thư mục "skill*" thành 1 namespace** `raptix/skills/`:
-   - `skills/*` (dữ liệu skill) → `skills/defs/`
-   - `skillogy/` (hệ build‑graph) → `skills/graph/`
-   - `skill_audit/` (kiểm định) → `skills/audit/`
+2. **Gộp 3 thư mục "skill*" thành 1 namespace** `raptix/skills/` — **TÁCH RA PR RIÊNG (chưa làm).**
+   - `skills/*` (dữ liệu skill) → `skills/defs/`; `skillogy/` → `skills/graph/`; `skill_audit/` → `skills/audit/`
+   > `skills/` gần như toàn **dữ liệu** (skill được nạp theo ĐƯỜNG DẪN, không phải import), nên việc
+   > gộp làm đổi path nạp skill và **bắt buộc** verify bằng `make audit-skills-strict` +
+   > `make check-skill-graph` (sinh lại `skills.cypher` từ STIX). Đây là concern riêng, làm ở PR sau.
 
-3. **`raptix/tools/` giữ PHẲNG + thêm `README.md` mục lục.**
+3. **`raptix/tools/` giữ PHẲNG + thêm `README.md` mục lục — ĐÃ LÀM.**
    > KHÔNG tách/di chuyển thư mục con của `tools/`, vì `AGENTS.md` cấm đụng `tools/bash/*`.
    > Tách một phần mà chừa `bash` sẽ không nhất quán. Cải tiến ở đây chỉ là **tài liệu**.
+
+> **Bài học codemod (đã sửa khi triển khai):** regex bảo vệ `decepticon\.(red|com|dev)` khớp NHẦM
+> `decepticon.com` bên trong `decepticon.compat` → module `decepticon.com*` không được đổi. Phải thêm
+> ranh giới từ: `decepticon\.(red|com|dev)\b`. Ngoài ra dotted‑rule `\bdecepticon\.` đổi nhầm
+> **filename** (`decepticon.md`/`.py` của agent) và **thuộc tính biến local** — phải loại trừ các
+> chuỗi này (agent files giữ tên, biến local giữ tên).
 
 ### 2.1. Vì sao cấu trúc 2 cấp `packages/raptix-core/raptix_core/` là ĐÚNG (đừng "sửa")
 
