@@ -18,9 +18,9 @@ All tests skip cleanly when the Neo4j stack is unreachable (see
 ``conftest.py``). Run live with::
 
     docker compose up -d neo4j
-    DECEPTICON_NEO4J_URI=bolt://localhost:7687 \
-    DECEPTICON_NEO4J_USER=neo4j \
-    DECEPTICON_NEO4J_PASSWORD=decepticon-graph \
+    RAPTIX_NEO4J_URI=bolt://localhost:7687 \
+    RAPTIX_NEO4J_USER=neo4j \
+    RAPTIX_NEO4J_PASSWORD=decepticon-graph \
     uv run pytest packages/raptix/tests/integration/kg/ -v
 """
 

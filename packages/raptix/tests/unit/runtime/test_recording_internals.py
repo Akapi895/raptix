@@ -153,7 +153,7 @@ def test_replay_skips_entries_missing_kind_or_hash(tmp_path: Path):
 
 
 def test_recording_disabled_is_passthrough(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_RUNTIME__RECORD_PATH", raising=False)
+    monkeypatch.delenv("RAPTIX_RUNTIME__RECORD_PATH", raising=False)
     rec = RecordingMiddleware()
     assert rec._sink is None
     out = rec.wrap_model_call(_model_request(), lambda _r: AIMessage(content="X"))
@@ -161,7 +161,7 @@ def test_recording_disabled_is_passthrough(monkeypatch: pytest.MonkeyPatch):
 
 
 def test_replay_disabled_is_passthrough(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_RUNTIME__REPLAY_PATH", raising=False)
+    monkeypatch.delenv("RAPTIX_RUNTIME__REPLAY_PATH", raising=False)
     rep = ReplayMiddleware()
     assert rep._replay is None
     out = rep.wrap_model_call(_model_request(), lambda _r: AIMessage(content="X"))
@@ -294,7 +294,7 @@ async def test_async_tool_roundtrip(tmp_path: Path):
 
 # ---------------------------------------------------------------- disabled (async/tool)
 async def test_recording_disabled_async_and_tool_passthrough(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_RUNTIME__RECORD_PATH", raising=False)
+    monkeypatch.delenv("RAPTIX_RUNTIME__RECORD_PATH", raising=False)
     rec = RecordingMiddleware()
 
     async def _m(_r):
@@ -309,7 +309,7 @@ async def test_recording_disabled_async_and_tool_passthrough(monkeypatch: pytest
 
 
 def test_replay_disabled_async_and_tool_passthrough(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_RUNTIME__REPLAY_PATH", raising=False)
+    monkeypatch.delenv("RAPTIX_RUNTIME__REPLAY_PATH", raising=False)
     rep = ReplayMiddleware()
     assert rep.wrap_tool_call(_tool_request(), lambda _r: "S") == "S"
 

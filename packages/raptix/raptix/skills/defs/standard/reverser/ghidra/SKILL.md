@@ -4,7 +4,7 @@ description: Deep binary analysis via Ghidra — headless analyzeHeadless or liv
 metadata:
   subdomain: reverse-engineering
   when_to_use: "ghidra deep binary analysis headless analyzeHeadless mcp bridge decompile xref function listing p-code"
-  upstream_ref: "NSA Ghidra reverse-engineering suite + Decepticon ghidra-mcp bridge (245 tools)"
+  upstream_ref: "NSA Ghidra reverse-engineering suite + Raptix ghidra-mcp bridge (245 tools)"
 ---
 
 # Ghidra Deep Analysis

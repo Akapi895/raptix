@@ -9,8 +9,8 @@ Contributions are welcome — whether you're a security researcher, AI engineer,
 **Prerequisites**: Docker, Docker Compose v2, and [uv](https://docs.astral.sh/uv/) (for Python tooling locally).
 
 ```bash
-git clone https://github.com/PurpleAILAB/Decepticon.git
-cd Decepticon
+git clone https://github.com/Akapi895/raptix.git
+cd Raptix
 
 # Copy and configure environment
 cp .env.example .env
@@ -42,7 +42,7 @@ skills/              # Skill library (SKILL.md files organized by kill chain pha
 clients/
 ├── cli/             # TypeScript/Ink terminal UI
 ├── web/             # Next.js 16 web dashboard
-└── shared/          # Shared streaming utilities (@decepticon/streaming)
+└── shared/          # Shared streaming utilities (@raptix/streaming)
 
 config/              # LiteLLM proxy config (litellm.yaml)
 containers/          # Dockerfile per service
@@ -89,13 +89,13 @@ Minimum Python version: **3.13**
 
 ### Activating plugin bundles
 
-Decepticon defaults to the lean `standard` bundle. To activate additional
+Raptix defaults to the lean `standard` bundle. To activate additional
 bundles (e.g. the `plugins` bundle that ships `vulnresearch`), use the
 4-tier hierarchy (highest precedence wins):
 
-1. **`DECEPTICON_PLUGINS` env var** — runtime override:
+1. **`RAPTIX_PLUGINS` env var** — runtime override:
    ```bash
-   DECEPTICON_PLUGINS=standard,plugins langgraph dev   # or "*" for all
+   RAPTIX_PLUGINS=standard,plugins langgraph dev   # or "*" for all
    ```
 2. **`.decepticon.toml` in CWD** — per-checkout opt-in:
    ```toml
@@ -114,7 +114,7 @@ The OSS repo itself ships with both bundles enabled via the project-level
 End-user installs that just `pip install decepticon` get the lean
 `standard`-only default (neo4j and other heavy features are opt-in extras,
 e.g. `decepticon[neo4j]`). Downstream Docker images override via
-`ENV DECEPTICON_PLUGINS=standard,vendor` to activate their own bundle.
+`ENV RAPTIX_PLUGINS=standard,vendor` to activate their own bundle.
 
 The OSS-shipped `langgraph.json` matches the lean default — it only
 lists the 10 `standard` graphs. To expose plugin graphs to LangGraph
@@ -153,7 +153,7 @@ make test-local      # pytest locally (requires: uv sync --dev)
 CLI tests run via `make quality-cli` (typecheck + build + vitest), or directly:
 
 ```bash
-npm run test --workspace=@decepticon/cli
+npm run test --workspace=@raptix/cli
 ```
 
 When adding a new agent or tool, add corresponding tests in `decepticon/tests/`.

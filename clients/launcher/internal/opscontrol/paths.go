@@ -14,7 +14,7 @@ import (
 	"github.com/Akapi895/raptix/clients/launcher/internal/config"
 )
 
-// StackName returns the value of DECEPTICON_STACK_NAME, sanitized to
+// StackName returns the value of RAPTIX_STACK_NAME, sanitized to
 // match the same `[a-z0-9-]{1,32}` shape we accept in compose object
 // names. Empty when the user has not opted into a named stack.
 //
@@ -22,7 +22,7 @@ import (
 // engagement-isolation dogfood install) coexist on the same host
 // without colliding socket/PID files or systemd unit names.
 func StackName() string {
-	name := strings.TrimSpace(os.Getenv("DECEPTICON_STACK_NAME"))
+	name := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
 	if name == "" {
 		return ""
 	}
@@ -46,7 +46,7 @@ func StackName() string {
 	return clean.String()
 }
 
-// stackSuffix returns ".stack2"-style suffix when DECEPTICON_STACK_NAME
+// stackSuffix returns ".stack2"-style suffix when RAPTIX_STACK_NAME
 // is set, empty otherwise. Used as a filename infix.
 func stackSuffix() string {
 	if s := StackName(); s != "" {
@@ -58,13 +58,13 @@ func stackSuffix() string {
 // HostSocketPath returns the host-side path of the opscontrol UDS.
 // ADR-0006 §1' specifies /var/run/decepticon-ops.sock for the
 // container-internal mount; the host path is rooted under
-// $DECEPTICON_HOME so rootless / WSL2 / Mac users do not need write
+// $RAPTIX_HOME so rootless / WSL2 / Mac users do not need write
 // access to /var/run. Compose maps the host path → the ADR-mandated
 // container path.
 //
-// Stack-scoped form (DECEPTICON_STACK_NAME=stack2):
+// Stack-scoped form (RAPTIX_STACK_NAME=stack2):
 //
-//	$DECEPTICON_HOME/run/ops.stack2.sock
+//	$RAPTIX_HOME/run/ops.stack2.sock
 func HostSocketPath() string {
 	return filepath.Join(config.DecepticonHome(), "run", "ops"+stackSuffix()+".sock")
 }
@@ -79,12 +79,12 @@ const ContainerSocketPath = "/var/run/decepticon-ops.sock"
 // `decepticon start` to detect whether a daemon is already running
 // and by `decepticon stop` to send SIGTERM.
 //
-// Stack-scoped form: $DECEPTICON_HOME/run/opscontrol.stack2.pid
+// Stack-scoped form: $RAPTIX_HOME/run/opscontrol.stack2.pid
 func PIDFilePath() string {
 	return filepath.Join(config.DecepticonHome(), "run", "opscontrol"+stackSuffix()+".pid")
 }
 
-// EnsureRunDir creates $DECEPTICON_HOME/run with mode 0700. Idempotent.
+// EnsureRunDir creates $RAPTIX_HOME/run with mode 0700. Idempotent.
 // Used by both the launcher (before spawning the daemon) and the
 // daemon itself (before binding the socket).
 func EnsureRunDir() error {
@@ -107,19 +107,19 @@ func ServiceUnitName() string {
 // workloads spawn INTO that project alongside any services the user
 // already manages there (vendor-dev compose stack, plugin-managed
 // projects, etc.) rather than into a separate "decepticon" project.
-const ComposeProjectEnv = "DECEPTICON_COMPOSE_PROJECT"
+const ComposeProjectEnv = "RAPTIX_COMPOSE_PROJECT"
 
 // ComposeProjectName returns the docker compose `-p PROJECT` value
 // the launcher AND the daemon must both pass on every compose call.
 //
 // Resolution order:
 //
-//  1. DECEPTICON_COMPOSE_PROJECT env — explicit user override. Use
+//  1. RAPTIX_COMPOSE_PROJECT env — explicit user override. Use
 //     this to target an existing compose project (e.g. set
-//     DECEPTICON_COMPOSE_PROJECT=decepticon-vendor-dev so ops_start("ad")
+//     RAPTIX_COMPOSE_PROJECT=decepticon-vendor-dev so ops_start("ad")
 //     adds bhce to the running vendor-dev stack rather than spinning
 //     up its own decepticon-* containers).
-//  2. Stack-name fallback — "decepticon[-${DECEPTICON_STACK_NAME}]".
+//  2. Stack-name fallback — "decepticon[-${RAPTIX_STACK_NAME}]".
 //     Stable, deterministic, never hardcoded into the binary.
 //
 // The point of having a single helper called from both sides is that
@@ -144,9 +144,9 @@ func ComposeProjectName() string {
 // should run with. Both the launcher's Compose wrapper and the
 // daemon's DockerComposeBackend pass this slice to exec.Cmd so the
 // two never disagree on container_name interpolation
-// (DECEPTICON_STACK_NAME) or project name (DECEPTICON_COMPOSE_PROJECT).
+// (RAPTIX_STACK_NAME) or project name (RAPTIX_COMPOSE_PROJECT).
 //
-// Why this matters: compose interpolates ${DECEPTICON_STACK_NAME} into
+// Why this matters: compose interpolates ${RAPTIX_STACK_NAME} into
 // the container_name field of every service. If the launcher process
 // has it unset and the daemon process has it set (via the
 // --env-file fallback), the two write DIFFERENT container_name values
@@ -163,7 +163,7 @@ func ComposeProjectName() string {
 func ComposeCommandEnv() []string {
 	env := os.Environ()
 	for _, key := range []string{
-		"DECEPTICON_STACK_NAME",
+		"RAPTIX_STACK_NAME",
 		ComposeProjectEnv,
 	} {
 		if _, ok := os.LookupEnv(key); !ok {
@@ -177,7 +177,7 @@ func ComposeCommandEnv() []string {
 	// activation is the launcher's `--profile cli` and the daemon's
 	// `--profile <workload>`. Force COMPOSE_PROFILES="" in every
 	// compose subprocess so a pre-ADR-0006 install's
-	// `COMPOSE_PROFILES=c2-sliver` in $DECEPTICON_HOME/.env does not
+	// `COMPOSE_PROFILES=c2-sliver` in $RAPTIX_HOME/.env does not
 	// silently bleed into every up/stop/config call -- if it does,
 	// compose merges that c2-sliver into the daemon's "ad" call and
 	// the launcher's "cli" call alike, the resulting config-hash

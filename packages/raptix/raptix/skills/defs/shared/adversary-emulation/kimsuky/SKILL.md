@@ -194,11 +194,11 @@ Kimsuky (MITRE ATT&CK **G0094**) is a DPRK-based cyber-espionage group attribute
 | PHProxy | (open source) | Modified web proxy for AitM | Public |
 | certutil / schtasks / mshta / rundll32 / regsvr32 | S0160 / S0111 / built-in | LOLBins | Built-in |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never run credential-harvesting, social-engineering, or financial-theft techniques outside an explicitly sanctioned scope.
 
-Map Kimsuky's signature plays to Decepticon's own capabilities:
+Map Kimsuky's signature plays to Raptix's own capabilities:
 
 - **Initial access — social engineering & credential phishing (T1598.003, T1566.001, T1566.002, T1684.001, T1204.004).** This is Kimsuky's defining capability. Use the phishing/credential-harvest skill to set up **lookalike login pages** (Google, Naver, Kakao) with DMARC-abusing sender spoofing. Build a multi-stage correspondence chain: initial benign emails impersonating a journalist/researcher → rapport-building exchanges → delivery of credential link or weaponized attachment. Stage **ClickFix-style lures** that instruct the victim to copy-paste PowerShell commands. Deploy web beacons in reconnaissance emails to profile targets (IP, user-agent, email client) before payload delivery.
 - **Weaponized documents & LNK execution (T1566.001, T1204.002, T1027.012, T1036.007).** With the payload-builder skill, create **HWP/Word documents with malicious macros** themed around Korean Peninsula policy topics (nuclear talks, sanctions, defense cooperation). Build **double-extension LNK files** (.pdf.lnk) with padded target fields to obscure embedded PowerShell. Stage CHM-based infection chains. Deliver inside ZIP archives matching Kimsuky's packaging pattern.

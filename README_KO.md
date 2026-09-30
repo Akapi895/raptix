@@ -2,23 +2,23 @@
 [![한국어](https://img.shields.io/badge/Language-한국어-red?style=for-the-badge)](README_KO.md)
 
 <div align="center">
-  <img src="assets/logo_banner.png" alt="Decepticon Logo">
+  <img src="assets/logo_banner.png" alt="Raptix Logo">
 </div>
 
-<h1 align="center">Decepticon — 자율 레드팀 에이전트</h1>
+<h1 align="center">Raptix — 자율 레드팀 에이전트</h1>
 
 <p align="center"><i>"또 AI 해킹 툴이야? nmap 돌리고 리포트 쓰는 거 아니야?"</i></p>
 
 <div align="center">
 
-<a href="https://github.com/PurpleAILAB/Decepticon/blob/main/LICENSE">
-  <img src="https://img.shields.io/github/license/PurpleAILAB/Decepticon?style=for-the-badge&color=blue" alt="License: Apache 2.0">
+<a href="https://github.com/Akapi895/raptix/blob/main/LICENSE">
+  <img src="https://img.shields.io/github/license/Akapi895/raptix?style=for-the-badge&color=blue" alt="License: Apache 2.0">
 </a>
-<a href="https://github.com/PurpleAILAB/Decepticon/stargazers">
-  <img src="https://img.shields.io/github/stars/PurpleAILAB/Decepticon?style=for-the-badge&color=yellow" alt="Stargazers">
+<a href="https://github.com/Akapi895/raptix/stargazers">
+  <img src="https://img.shields.io/github/stars/Akapi895/raptix?style=for-the-badge&color=yellow" alt="Stargazers">
 </a>
-<a href="https://github.com/PurpleAILAB/Decepticon/graphs/contributors">
-  <img src="https://img.shields.io/github/contributors/PurpleAILAB/Decepticon?style=for-the-badge&color=orange" alt="Contributors">
+<a href="https://github.com/Akapi895/raptix/graphs/contributors">
+  <img src="https://img.shields.io/github/contributors/Akapi895/raptix?style=for-the-badge&color=orange" alt="Contributors">
 </a>
 
 <br/>
@@ -46,7 +46,7 @@
 
 <div align="center">
 
-### ☁️ 직접 설치하기 번거롭다면? **Decepticon이 클라우드에서 라이브로 돌아갑니다.**
+### ☁️ 직접 설치하기 번거롭다면? **Raptix이 클라우드에서 라이브로 돌아갑니다.**
 
 Docker 설치 없이 — 브라우저에서 바로 자율 레드팀 엔게이지먼트를 실행하세요.
 
@@ -79,13 +79,13 @@ pip install decepticon              # 코어 SDK
 pip install "decepticon[neo4j]"     # + 지식그래프 공격체인 도구
 ```
 
-`decepticon` 은 **클라이언트 SDK** 입니다 — 에이전트 팩토리·미들웨어·도구·스킬을 담고 있고, LLM 호출과 샌드박스 실행은 런타임 서비스로 HTTP 라우팅합니다 (`DECEPTICON_LLM__PROXY_URL`, `SANDBOX_URL`). 에이전트를 실제로 돌리려면 그 서비스들이 필요합니다 — 위 Docker 스택을 쓰거나 URL 을 직접 가리키세요. 팩토리 오버라이드 surface, 선언적 `PluginBundle` 플러그인, 안전 게이트는 **[라이브러리로서의 Decepticon](docs/library-usage.md)** 참고.
+`decepticon` 은 **클라이언트 SDK** 입니다 — 에이전트 팩토리·미들웨어·도구·스킬을 담고 있고, LLM 호출과 샌드박스 실행은 런타임 서비스로 HTTP 라우팅합니다 (`RAPTIX_LLM__PROXY_URL`, `SANDBOX_URL`). 에이전트를 실제로 돌리려면 그 서비스들이 필요합니다 — 위 Docker 스택을 쓰거나 URL 을 직접 가리키세요. 팩토리 오버라이드 surface, 선언적 `PluginBundle` 플러그인, 안전 게이트는 **[라이브러리로서의 Raptix](docs/library-usage.md)** 참고.
 
 ---
 
-## 💖 Decepticon 후원
+## 💖 Raptix 후원
 
-[![Sponsor](https://img.shields.io/badge/후원하기-Decepticon-red?style=for-the-badge&logo=github)](https://github.com/sponsors/PurpleCHOIms)
+[![Sponsor](https://img.shields.io/badge/후원하기-Raptix-red?style=for-the-badge&logo=github)](https://github.com/sponsors/PurpleCHOIms)
 
 AI 기반 위협 환경에 맞선 **공격형 백신**을 지향하고 있습니다. 자율 레드팀이 더 강한 방어로 이어진다고 믿으신다면 후원으로 함께해 주세요.
 
@@ -94,7 +94,7 @@ AI 기반 위협 환경에 맞선 **공격형 백신**을 지향하고 있습니
 ## 벤치마크
 
 <div align="center">
-  <img src="assets/benchmark/decepticon_donut.png" alt="Decepticon — XBOW pass rate 102/104 (98.08%)" width="560">
+  <img src="assets/benchmark/decepticon_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
 </div>
 
 | 벤치마크 | 난이도 | 통과율 |
@@ -109,23 +109,23 @@ AI 기반 위협 환경에 맞선 **공격형 백신**을 지향하고 있습니
 
 ---
 
-## Decepticon이란?
+## Raptix이란?
 
-AI + 해킹 도구들은 대부분 nmap 돌리고 리포트 출력하는 데모입니다. Decepticon은 다릅니다.
+AI + 해킹 도구들은 대부분 nmap 돌리고 리포트 출력하는 데모입니다. Raptix은 다릅니다.
 
-**Decepticon은 전문 자율 레드팀 에이전트입니다.** 실제 공격자처럼 현실적인 공격 체인을 실행합니다 — 정찰, 초기 침투, 권한 상승, 횡이동, C2 — 스캐너가 아닌 실제 공격자의 방식으로.
+**Raptix은 전문 자율 레드팀 에이전트입니다.** 실제 공격자처럼 현실적인 공격 체인을 실행합니다 — 정찰, 초기 침투, 권한 상승, 횡이동, C2 — 스캐너가 아닌 실제 공격자의 방식으로.
 
-더 중요한 것은: 스크립트 키디와 레드티머를 구분하는 전문성을 갖추고 있다는 점입니다. 첫 번째 패킷이 나가기 전에 Decepticon은 완전한 인게이지먼트 패키지 — **RoE**, **ConOps**, **디컨플릭션 플랜**, MITRE ATT&CK 매핑이 포함된 **OPPLAN** — 을 생성하고, 모든 행동은 그 규칙 안에서만 동작합니다.
+더 중요한 것은: 스크립트 키디와 레드티머를 구분하는 전문성을 갖추고 있다는 점입니다. 첫 번째 패킷이 나가기 전에 Raptix은 완전한 인게이지먼트 패키지 — **RoE**, **ConOps**, **디컨플릭션 플랜**, MITRE ATT&CK 매핑이 포함된 **OPPLAN** — 을 생성하고, 모든 행동은 그 규칙 안에서만 동작합니다.
 
 → **[인게이지먼트 워크플로 상세](docs/engagement-workflow.md)**
 
 ---
 
-## 왜 Decepticon인가?
+## 왜 Raptix인가?
 
-**체크리스트 스캔이 아닌 실제 킬체인.** Decepticon은 OPPLAN을 읽고 열린 경로를 통해 목표를 추적합니다 — 피벗, 적응, 기술 체이닝.
+**체크리스트 스캔이 아닌 실제 킬체인.** Raptix은 OPPLAN을 읽고 열린 경로를 통해 목표를 추적합니다 — 피벗, 적응, 기술 체이닝.
 
-**진짜 인터랙티브 셸.** 실제 공격 도구들은 인터랙티브합니다 (`msfconsole`, `sliver-client`, `evil-winrm`). Decepticon은 영구 tmux 세션에서 명령을 실행하고 인터랙티브 프롬프트를 자동 감지합니다 — 도구가 프롬프트를 띄우면 우회책 없이 후속 명령을 보냅니다.
+**진짜 인터랙티브 셸.** 실제 공격 도구들은 인터랙티브합니다 (`msfconsole`, `sliver-client`, `evil-winrm`). Raptix은 영구 tmux 세션에서 명령을 실행하고 인터랙티브 프롬프트를 자동 감지합니다 — 도구가 프롬프트를 띄우면 우회책 없이 후속 명령을 보냅니다.
 
 **하드닝된 샌드박스 격리.** 모든 명령은 운영 네트워크(`sandbox-net`)의 Kali Linux 샌드박스에서 실행되며, 관리망(`decepticon-net`)과 분리되어 있습니다. LangGraph는 Docker 소켓으로 샌드박스를 제어합니다. → **[아키텍처](docs/architecture.md)**
 
@@ -136,7 +136,7 @@ AI + 해킹 도구들은 대부분 nmap 돌리고 리포트 출력하는 데모�
 ## 아키텍처
 
 <div align="center">
-  <img src="assets/decepticon_infra.svg" alt="Decepticon Infrastructure" width="680">
+  <img src="assets/decepticon_infra.svg" alt="Raptix Infrastructure" width="680">
 </div>
 
 두 개의 네트워크로 분리된 설계 — 관리 서비스(LiteLLM, PostgreSQL, LangGraph, Web)는 `decepticon-net`, 샌드박스 / C2 서버 / 타깃은 `sandbox-net`. Neo4j는 양 네트워크에 듀얼-홈으로 두어 관리망의 에이전트가 샌드박스 내부에서 기록한 발견 사항을 영속화할 수 있게 합니다.
@@ -188,15 +188,15 @@ Tier 기반 자격증명-aware 폴백 체인. 사용 가능한 자격증명을 �
 | Neo4j 지식 그래프 | [지식 그래프](docs/knowledge-graph.md) |
 | 엔드투엔드 인게이지먼트 워크플로 | [인게이지먼트 워크플로](docs/engagement-workflow.md) |
 | 공격형 백신 루프 | [공격형 백신](docs/offensive-vaccine.md) |
-| Decepticon 기여하기 | [기여 가이드](docs/contributing.md) |
+| Raptix 기여하기 | [기여 가이드](docs/contributing.md) |
 
 ---
 
 ## 기여하기
 
 ```bash
-git clone https://github.com/PurpleAILAB/Decepticon.git
-cd Decepticon
+git clone https://github.com/Akapi895/raptix.git
+cd Raptix
 make dev     # 핫 리로드로 시작
 make cli     # 인터랙티브 CLI 열기 (별도 터미널)
 ```
@@ -224,5 +224,5 @@ make cli     # 인터랙티브 CLI 열기 (별도 터미널)
 ---
 
 <div align="center">
-  <img src="assets/main.png" alt="Decepticon">
+  <img src="assets/main.png" alt="Raptix">
 </div>

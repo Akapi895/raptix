@@ -162,11 +162,11 @@ APT10 (MITRE ATT&CK **G0045**) is a long-running Chinese cyber-espionage group a
 | esentutl | S0404 | LOLBin (data copy, NTFS attribute access) | Built-in |
 | Ping | S0097 | LOLBin (host discovery) | Built-in |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never run destructive actions outside an explicitly sanctioned, isolated lab.
 
-Map APT10's signature plays to Decepticon's own capabilities:
+Map APT10's signature plays to Raptix's own capabilities:
 
 - **Initial access — MSP supply-chain pivot (T1199, T1078, T1566.001).** APT10's defining play is the **Cloud Hopper model**: compromise an MSP, harvest shared credentials, and pivot into downstream client networks. Use the phishing/credential-harvest skill to spearphish MSP administrators with macro-laden Office documents and LNK lures. Once inside the MSP, enumerate shared credentials and RDP/VPN access to client environments — this MSP→client pivot chain is the signature APT10 initial-access pattern.
 - **DLL side-loading (T1574.001).** APT10's most consistent evasion technique. Use the payload-builder skill to craft DLL side-loading chains: place a malicious DLL alongside a legitimate, signed executable (e.g., a renamed legitimate application) so the legitimate process loads the attacker DLL. Emulate the PlugX/RedLeaves/UPPERCUT side-loading pattern — this is the technique to prioritize for detection validation.

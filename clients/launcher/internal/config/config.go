@@ -26,9 +26,9 @@ type Config struct {
 	Env  map[string]string
 }
 
-// DecepticonHome returns the resolved DECEPTICON_HOME path.
+// DecepticonHome returns the resolved RAPTIX_HOME path.
 func DecepticonHome() string {
-	if h := os.Getenv("DECEPTICON_HOME"); h != "" {
+	if h := os.Getenv("RAPTIX_HOME"); h != "" {
 		return h
 	}
 	home, err := os.UserHomeDir()
@@ -348,7 +348,7 @@ func ValidateAPIKeys(env map[string]string) error {
 // at a fixed absolute path (rather than under ~/.config/<dir>/<file>).
 // When set, ConfigDir / TokenFile are ignored.
 type subscriptionMethod struct {
-	Toggle                string   // DECEPTICON_AUTH_<X> boolean enabling this path
+	Toggle                string   // RAPTIX_AUTH_<X> boolean enabling this path
 	TokenEnvs             []string // env vars that satisfy the path on their own
 	ConfigDir             string   // ~/.config/<dir>/<token file> fallback
 	TokenFile             string   // token file name; defaults to tokens.json
@@ -361,31 +361,31 @@ type subscriptionMethod struct {
 
 var oauthSubscriptions = map[string]subscriptionMethod{
 	"chatgpt": {
-		Toggle:                "DECEPTICON_AUTH_CHATGPT",
+		Toggle:                "RAPTIX_AUTH_CHATGPT",
 		AbsolutePath:          ".codex/auth.json",
 		Label:                 "ChatGPT",
 		AllowInteractiveLogin: true,
 	},
 	"gemini": {
-		Toggle:    "DECEPTICON_AUTH_GEMINI",
+		Toggle:    "RAPTIX_AUTH_GEMINI",
 		TokenEnvs: []string{"GEMINI_ACCESS_TOKEN", "GEMINI_SESSION_COOKIES"},
 		ConfigDir: "gemini",
 		Label:     "Gemini Advanced",
 	},
 	"copilot": {
-		Toggle:    "DECEPTICON_AUTH_COPILOT",
+		Toggle:    "RAPTIX_AUTH_COPILOT",
 		TokenEnvs: []string{"COPILOT_ACCESS_TOKEN", "COPILOT_REFRESH_TOKEN"},
 		ConfigDir: "copilot",
 		Label:     "Copilot Pro",
 	},
 	"grok": {
-		Toggle:    "DECEPTICON_AUTH_GROK",
+		Toggle:    "RAPTIX_AUTH_GROK",
 		TokenEnvs: []string{"GROK_ACCESS_TOKEN", "GROK_SESSION_TOKEN"},
 		ConfigDir: "grok",
 		Label:     "SuperGrok",
 	},
 	"perplexity": {
-		Toggle:    "DECEPTICON_AUTH_PERPLEXITY",
+		Toggle:    "RAPTIX_AUTH_PERPLEXITY",
 		TokenEnvs: []string{"PERPLEXITY_ACCESS_TOKEN", "PERPLEXITY_SESSION_TOKEN"},
 		ConfigDir: "perplexity",
 		Label:     "Perplexity Pro",
@@ -395,14 +395,14 @@ var oauthSubscriptions = map[string]subscriptionMethod{
 // ValidateAuth ensures at least one valid AuthMethod is configured.
 //
 // OAuth paths:
-//   - DECEPTICON_AUTH_CLAUDE_CODE=true requires a parseable
+//   - RAPTIX_AUTH_CLAUDE_CODE=true requires a parseable
 //     ~/.claude/.credentials.json. LiteLLM mounts that file read-only.
-//   - DECEPTICON_AUTH_<X>=true (CHATGPT, GEMINI, COPILOT, GROK,
+//   - RAPTIX_AUTH_<X>=true (CHATGPT, GEMINI, COPILOT, GROK,
 //     PERPLEXITY) is satisfied by a token env var or a token file at its
 //     mounted token directory. ChatGPT uses LiteLLM native OAuth and is
 //     allowed through so LiteLLM can run its device-code login flow.
 //
-// Local LLM path: ollama_local in DECEPTICON_AUTH_PRIORITY (or any
+// Local LLM path: ollama_local in RAPTIX_AUTH_PRIORITY (or any
 // OLLAMA_API_BASE configured) is treated as a valid credential. Ollama
 // reachability is probed separately at startup (start.go).
 //
@@ -415,7 +415,7 @@ var oauthSubscriptions = map[string]subscriptionMethod{
 // if all fail, the OAuth error is surfaced first because that was the
 // user's explicit choice.
 func ValidateAuth(env map[string]string) error {
-	claudeOAuth := isTruthy(Get(env, "DECEPTICON_AUTH_CLAUDE_CODE", ""))
+	claudeOAuth := isTruthy(Get(env, "RAPTIX_AUTH_CLAUDE_CODE", ""))
 	ollamaErr := validateOllamaCredentials(env)
 	apiErr := ValidateAPIKeys(env)
 
@@ -459,7 +459,7 @@ func ValidateAuth(env map[string]string) error {
 // the local-Ollama auth method (via the priority list or by setting
 // OLLAMA_API_BASE without any other API key).
 func hasOllamaSelected(env map[string]string) bool {
-	priority := strings.ToLower(strings.TrimSpace(env["DECEPTICON_AUTH_PRIORITY"]))
+	priority := strings.ToLower(strings.TrimSpace(env["RAPTIX_AUTH_PRIORITY"]))
 	for _, m := range strings.Split(priority, ",") {
 		if strings.TrimSpace(m) == "ollama_local" {
 			return true
@@ -469,7 +469,7 @@ func hasOllamaSelected(env map[string]string) bool {
 }
 
 // validateOllamaCredentials accepts the Ollama path when the user has
-// either listed ollama_local in DECEPTICON_AUTH_PRIORITY or set
+// either listed ollama_local in RAPTIX_AUTH_PRIORITY or set
 // OLLAMA_API_BASE directly. Ollama itself has no API key — the
 // only required signal is the base URL pointing at a running instance.
 //
@@ -738,7 +738,7 @@ func BackfillEnvFromEmbed(envPath string) ([]string, error) {
 // occurrence in place (preserving surrounding lines and comments) or
 // appending the line when the key is absent. Unlike AppendEnvLine it
 // overwrites an existing value, so it is the right primitive for a
-// migration that must change a setting (e.g. flipping DECEPTICON_TELEMETRY
+// migration that must change a setting (e.g. flipping RAPTIX_TELEMETRY
 // after a re-consent prompt).
 func SetEnvKey(path, key, value string) error {
 	data, err := os.ReadFile(path)

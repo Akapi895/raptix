@@ -46,7 +46,7 @@ for verb in get list create delete patch update; do
 done > /tmp/verbs.txt
 ```
 
-Decepticon ingest:
+Raptix ingest:
 ```
 k8s_audit("/tmp/can_cluster.txt")
 ```

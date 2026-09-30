@@ -2,7 +2,7 @@
 
 We invoke each @tool through its ``.invoke`` hook (LangChain tool
 interface) and parse the JSON it returns. Cache is pointed at
-``tmp_path`` via the ``DECEPTICON_REFERENCES_ROOT`` env var so no real
+``tmp_path`` via the ``RAPTIX_REFERENCES_ROOT`` env var so no real
 filesystem state is touched.
 """
 

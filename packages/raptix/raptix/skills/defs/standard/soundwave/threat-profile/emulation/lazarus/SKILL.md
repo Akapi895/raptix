@@ -22,7 +22,7 @@ metadata:
 - Target is a cryptocurrency exchange, DeFi protocol, cross-chain bridge, wallet provider, or
   a fintech/blockchain firm and the client wants the full DPRK money-theft kill chain tested.
 - The engagement spans both the **enterprise estate** (devs, build pipeline, cloud) and the
-  **smart-contract surface** — Decepticon's contract-audit lane is what makes this actor a
+  **smart-contract surface** — Raptix's contract-audit lane is what makes this actor a
   good fit (see `../../references/apt-groups.md`).
 
 ## ThreatProfile seed (`plan/threat-profile.json`)

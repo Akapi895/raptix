@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-04
 **Status:** Draft — review required before implementation
-**Scope:** AD_TOOLS (`packages/decepticon/decepticon/tools/ad/`) migration from the legacy `_state` shim + in-memory `KnowledgeGraph` to direct `KGStore.record_observations` calls.
+**Scope:** AD_TOOLS (`packages/raptix/raptix/tools/ad/`) migration from the legacy `_state` shim + in-memory `KnowledgeGraph` to direct `KGStore.record_observations` calls.
 **Out of scope:** Slither / smart-contract auditor migration (see companion RFC `2026-06-04-slither-kgstore-mapping.md`).
 
 ---
@@ -11,10 +11,10 @@
 
 After PR #549 ("retire legacy Neo4jStore, route _state through KGStore") the AD operator's BloodHound ingestion still works — but through the legacy `_state` compat shim. The shim translates the old `KnowledgeGraph` `_load → mutate → _save` pattern into `KGStore.record_observations` calls behind the scenes, so the tool code in `tools/ad/bloodhound.py` did not need to change. That gets us off the deleted `Neo4jStore` class, but it leaves four real gaps:
 
-1. **Schema fidelity** — Decepticon's `NodeKind` enum has 6 AD-relevant kinds (`USER`, `HOST`, `GROUP`, `DOMAIN`, plus `GROUP` reused for GPO/OU). BHCE 5.x emits **13 distinct node kinds** plus `LocalGroup` (User, Computer, Group, Domain, GPO, OU, Container, CertTemplate, EnterpriseCA, RootCA, AIACA, NTAuthStore, IssuancePolicy). Collapsing them to 6 loses the type information the BloodHound chain analysis depends on.
-2. **Trust modelling** — BHCE 5.x replaced the single `TrustedBy` edge with **4 distinct edges** based on `TrustType` + `IsTransitive`: `SameForestTrust`, `CrossForestTrust`, `AbuseTGTDelegation`, `SpoofSIDHistory`. The current Decepticon mapping collapses all of them to `EdgeKind.ENABLES`. Path planners cannot distinguish a benign parent-child trust from an exploitable cross-forest trust.
-3. **Implicit edges not synthesised** — BloodHound's `PrimaryGroupSID` is a property on User/Computer, not a separate edge. SharpHound expects ingest to synthesise the corresponding `MEMBER_OF` edge. Decepticon's ingest currently skips this, so primary-group membership is invisible to the path planner.
-4. **Post-process edges absent** — `Owns`, `AdminTo`, `CanRDP`, `CanPSRemote`, `ExecuteDCOM`, ADCS `ESC1/3/4/6a/6b/9a/9b/10a/10b/13`, `GoldenCert`, `SyncLAPSPassword`, `DCSync`, `CoerceAndRelayNTLMTo*`, `CoerceToTGT`, `HasTrustKeys`, `SyncedToEntraUser` / `SyncedToADUser` are all **server-computed** in BHCE — raw collector data does not contain them. Decepticon imports the raw graph only, so none of these edges exist. The AD operator is one strand removed from being able to reason about ADCS or coercion paths.
+1. **Schema fidelity** — Raptix's `NodeKind` enum has 6 AD-relevant kinds (`USER`, `HOST`, `GROUP`, `DOMAIN`, plus `GROUP` reused for GPO/OU). BHCE 5.x emits **13 distinct node kinds** plus `LocalGroup` (User, Computer, Group, Domain, GPO, OU, Container, CertTemplate, EnterpriseCA, RootCA, AIACA, NTAuthStore, IssuancePolicy). Collapsing them to 6 loses the type information the BloodHound chain analysis depends on.
+2. **Trust modelling** — BHCE 5.x replaced the single `TrustedBy` edge with **4 distinct edges** based on `TrustType` + `IsTransitive`: `SameForestTrust`, `CrossForestTrust`, `AbuseTGTDelegation`, `SpoofSIDHistory`. The current Raptix mapping collapses all of them to `EdgeKind.ENABLES`. Path planners cannot distinguish a benign parent-child trust from an exploitable cross-forest trust.
+3. **Implicit edges not synthesised** — BloodHound's `PrimaryGroupSID` is a property on User/Computer, not a separate edge. SharpHound expects ingest to synthesise the corresponding `MEMBER_OF` edge. Raptix's ingest currently skips this, so primary-group membership is invisible to the path planner.
+4. **Post-process edges absent** — `Owns`, `AdminTo`, `CanRDP`, `CanPSRemote`, `ExecuteDCOM`, ADCS `ESC1/3/4/6a/6b/9a/9b/10a/10b/13`, `GoldenCert`, `SyncLAPSPassword`, `DCSync`, `CoerceAndRelayNTLMTo*`, `CoerceToTGT`, `HasTrustKeys`, `SyncedToEntraUser` / `SyncedToADUser` are all **server-computed** in BHCE — raw collector data does not contain them. Raptix imports the raw graph only, so none of these edges exist. The AD operator is one strand removed from being able to reason about ADCS or coercion paths.
 
 This RFC scopes what a faithful BloodHound → KGStore mapping needs and proposes a phased migration that preserves the ability to land each piece in a reviewable PR.
 
@@ -153,7 +153,7 @@ This is the load-bearing decision the implementation depends on. Two options.
 - ADCS modelling is honest: `:ADCertTemplate` is a real Neo4j label, not an `:Entrypoint` overload.
 
 **Cons**
-- `decepticon-core` enum churn. Every existing `MATCH (u:User)` query in `chain.py` / `health.py` / agents needs to also match `:ADUser`, or run a one-shot migration to relabel old data.
+- `raptix-core` enum churn. Every existing `MATCH (u:User)` query in `chain.py` / `health.py` / agents needs to also match `:ADUser`, or run a one-shot migration to relabel old data.
 - V001 / V002 migration in `KGStore` must add composite-unique constraints + indexes for each new label (~13 new constraints).
 - More NodeKind values means more places in agent prompts / skills that may need to be updated to mention them.
 
@@ -162,7 +162,7 @@ This is the load-bearing decision the implementation depends on. Two options.
 Keep `NodeKind` unchanged. Differentiate AD-origin nodes via a `bh_type` property (`bh_type="User"` / `"Computer"` / etc.).
 
 **Pros**
-- Zero `decepticon-core` change; the 549 cleanup stays clean.
+- Zero `raptix-core` change; the 549 cleanup stays clean.
 - `chain.py` Cypher works unchanged for AD/non-AD queries.
 - Existing tests untouched.
 
@@ -184,7 +184,7 @@ Each step lands as a separate PR. Steps later than 4.1 depend on earlier ones be
 
 ### 4.1 `NodeKind` / `EdgeKind` extension
 
-- `decepticon-core/types/kg.py`: add 13 AD node kinds + `AD_LOCAL_GROUP`.
+- `raptix-core/types/kg.py`: add 13 AD node kinds + `AD_LOCAL_GROUP`.
 - Add edge kinds: 4-way Trust (`SAME_FOREST_TRUST` / `CROSS_FOREST_TRUST` / `ABUSE_TGT_DELEGATION` / `SPOOF_SID_HISTORY`), `ALLOWED_TO_DELEGATE`, `ALLOWED_TO_ACT`, `HAS_SID_HISTORY`, `GP_LINK`, `PUBLISHED_TO`, `HOSTS_CA_SERVICE`, `OID_GROUP_LINK`, `ROOT_CA_FOR`, `ISSUED_SIGNED_BY`, `TRUSTED_FOR_NTAUTH`, `ADCS_ESC1` … `ADCS_ESC13` (placeholders for community-collector parity), `GOLDEN_CERT`, `SYNC_LAPS_PASSWORD`, `DCSYNC`, `COERCE_AND_RELAY_NTLM_TO_ADCS` / `LDAP` / `LDAPS` / `SMB`, `COERCE_TO_TGT`, `HAS_TRUST_KEYS`, `SYNCED_TO_ENTRA_USER`, `SYNCED_TO_AD_USER`, `DUMP_SMSA_PASSWORD`, `MEMBER_OF_LOCAL_GROUP`, `WRITE_SPN`, `READ_LAPS_PASSWORD`, `READ_GMSA_PASSWORD`, `ADD_KEY_CREDENTIAL_LINK`, `ALL_EXTENDED_RIGHTS`, `FORCE_CHANGE_PASSWORD`, `MANAGE_CA`, `MANAGE_CERTIFICATES`, `GET_CHANGES`, `GET_CHANGES_ALL`, `OWNS_LIMITED_RIGHTS`, `WRITE_OWNER_LIMITED_RIGHTS`, `WRITE_DACL`, `WRITE_OWNER`.
 - KGStore `V003__bloodhound_schema.cypher` migration: composite `(key, engagement) UNIQUE` constraint per new label + label-scoped indexes for hot props (`Aces.RightName`, `Trusts.TrustType`, etc.).
 

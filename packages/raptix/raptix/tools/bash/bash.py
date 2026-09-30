@@ -312,13 +312,13 @@ def _workspace_path_from_config(config: RunnableConfig | None) -> str:
         if normalized != "/workspace":
             return normalized
 
-    env_workspace = os.environ.get("DECEPTICON_WORKSPACE_PATH")
+    env_workspace = os.environ.get("RAPTIX_WORKSPACE_PATH")
     if env_workspace:
         normalized = SandboxBase._normalize_workspace_path(env_workspace)
         if normalized != "/workspace":
             return normalized
 
-    env_slug = os.environ.get("DECEPTICON_ENGAGEMENT")
+    env_slug = os.environ.get("RAPTIX_ENGAGEMENT")
     if env_slug:
         normalized = SandboxBase._normalize_workspace_path(f"/workspace/{env_slug}")
         if normalized != "/workspace":

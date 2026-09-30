@@ -37,7 +37,7 @@ diec /tmp/sample           # CLI for DIE
 yara -r /opt/yara-rules/packers/ /tmp/sample
 ```
 
-Decepticon helper:
+Raptix helper:
 ```
 bin_packer("/tmp/sample")
 ```

@@ -63,10 +63,10 @@ Set the deployed URL as the default endpoint so the next release collects from
 opted-in users. In `clients/launcher/internal/config/env.example`:
 
 ```ini
-DECEPTICON_TELEMETRY_ENDPOINT=https://decepticon-telemetry-gateway.<account>.workers.dev/v1/telemetry
+RAPTIX_TELEMETRY_ENDPOINT=https://decepticon-telemetry-gateway.<account>.workers.dev/v1/telemetry
 ```
 
-(Leave `DECEPTICON_TELEMETRY=off` — users opt in via the onboard wizard.) Commit,
+(Leave `RAPTIX_TELEMETRY=off` — users opt in via the onboard wizard.) Commit,
 then tag the release as usual. From that release on, users who pick `basic` or
 `research` at onboard will send identifier-masked telemetry to your gateway.
 

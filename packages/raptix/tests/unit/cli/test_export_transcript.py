@@ -81,7 +81,7 @@ def test_export_to_output_file(tmp_path: Path) -> None:
 
 def test_workspace_defaults_to_env(tmp_path: Path, monkeypatch, capsys) -> None:
     _seed_engagement(tmp_path)
-    monkeypatch.setenv("DECEPTICON_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_WORKSPACE", str(tmp_path))
 
     rc = export_main(["eng-1"])
 

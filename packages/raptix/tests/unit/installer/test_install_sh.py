@@ -32,7 +32,7 @@ resolve_stable_soaked
         encoding="utf-8",
     )
     env = os.environ | {
-        "DECEPTICON_STABLE_SOAK_DAYS": "7",
+        "RAPTIX_STABLE_SOAK_DAYS": "7",
         "RELEASES_JSON": json.dumps(releases),
     }
 

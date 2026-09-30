@@ -1,6 +1,6 @@
 # decepticon-example-agent
 
-A Decepticon plugin (agent) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin (agent) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -15,7 +15,7 @@ via the ``decepticon.agents`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 

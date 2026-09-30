@@ -13,15 +13,15 @@ COPY clients/shared/streaming/package.json clients/shared/streaming/
 ARG VERSION=0.0.0
 RUN sed -i 's/"version": "[^"]*"/"version": "'"$VERSION"'"/' clients/cli/package.json
 
-RUN npm ci --workspace=@decepticon/cli
+RUN npm ci --workspace=@raptix/cli
 
 # Copy CLI and shared source and build. Build the shared workspace first
-# so the CLI's tsc compile + runtime both resolve `@decepticon/streaming`
+# so the CLI's tsc compile + runtime both resolve `@raptix/streaming`
 # to its emitted dist/ (its package.json main points at dist/index.js).
 COPY clients/shared/ clients/shared/
 COPY clients/cli/ clients/cli/
-RUN npm run build --workspace=@decepticon/streaming
-RUN npm run build --workspace=@decepticon/cli
+RUN npm run build --workspace=@raptix/streaming
+RUN npm run build --workspace=@raptix/cli
 
 # ── Stage 2: Runtime ──────────────────────────────────────────────
 FROM node:24-slim
@@ -59,7 +59,7 @@ COPY --from=builder /app/clients/shared/streaming/package.json ./clients/shared/
 COPY --from=builder /app/clients/shared/streaming/dist ./clients/shared/streaming/dist
 COPY --from=builder /app/clients/cli/dist ./dist
 
-ENV DECEPTICON_API_URL=http://langgraph:2024
+ENV RAPTIX_API_URL=http://langgraph:2024
 ENV NODE_ENV=production
 
 # No HEALTHCHECK — CLI is an interactive TTY app with no HTTP surface.

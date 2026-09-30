@@ -1,6 +1,6 @@
 # Benchmark Framework
 
-Modular benchmark framework for the Decepticon main agent.
+Modular benchmark framework for the Raptix main agent.
 Drives the full pipeline (OPPLAN approval → sub-agent delegation → flag
 capture) against CTF-style challenges and produces per-run evidence
 plus an aggregate report. The default provider wraps the XBOW

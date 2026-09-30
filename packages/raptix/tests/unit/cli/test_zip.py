@@ -91,7 +91,7 @@ def test_workspace_falls_back_to_env(tmp_path: Path, monkeypatch) -> None:
     ws = tmp_path / "ws"
     _seed_engagement(ws)
     archive = tmp_path / "acme.zip"
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(ws))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(ws))
 
     rc = zip_main(["export", "acme-2026", "-o", str(archive)])
 
@@ -100,7 +100,7 @@ def test_workspace_falls_back_to_env(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_missing_workspace_is_config_error(tmp_path: Path, monkeypatch, capsys) -> None:
-    monkeypatch.delenv("DECEPTICON_ENGAGEMENT_WORKSPACE", raising=False)
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT_WORKSPACE", raising=False)
 
     rc = zip_main(["export", "acme-2026", "-o", str(tmp_path / "x.zip")])
 

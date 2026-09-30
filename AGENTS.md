@@ -1,4 +1,4 @@
-# Decepticon agent notes
+# Raptix agent notes
 
 Read [`CLAUDE.md`](CLAUDE.md), [`CONTRIBUTING_AGENT.md`](CONTRIBUTING_AGENT.md), and
 [`docs/QUALITY_BAR.md`](docs/QUALITY_BAR.md) for contributor rules: one concern per PR,
@@ -8,20 +8,20 @@ and no AI co-author trailers. The Incalmo section below applies only to that ini
 ## Where changes belong
 
 - Root `pyproject.toml` is an unpublished uv workspace (Python 3.13), not the package to
-  edit for runtime features. `packages/decepticon-core` owns contracts (no LangChain,
-  LangGraph, HTTP or FastAPI imports); `packages/decepticon` owns agents, middleware,
-  tools and runtime; `packages/decepticon-sdk` exposes the plugin-author API. Do not
+  edit for runtime features. `packages/raptix-core` owns contracts (no LangChain,
+  LangGraph, HTTP or FastAPI imports); `packages/raptix` owns agents, middleware,
+  tools and runtime; `packages/raptix-sdk` exposes the plugin-author API. Do not
   import upward from core or reach into framework internals from SDK plugins.
-- `langgraph.json` maps graph names to `packages/decepticon/decepticon/agents/standard/`
+- `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.decepticon.plugins]`.
 - Node workspaces are rooted in `package.json` (`clients/*`, `clients/shared/*`). Build
-  `@decepticon/streaming` before CLI typecheck/build or Web build; both consume its `dist/`.
+  `@raptix/streaming` before CLI typecheck/build or Web build; both consume its `dist/`.
   For Web edits also follow `clients/web/AGENTS.md` (Next's installed docs matter).
 
 ## Run from repo root
 
 - `uv sync --dev --locked`; focused Python test: `uv run pytest
-  packages/decepticon/tests/path/test_x.py::test_name` or `make test-local ARGS="path::test"`.
+  packages/raptix/tests/path/test_x.py::test_name` or `make test-local ARGS="path::test"`.
 - `make ci-lint` then `make ci-test` is the Python PR lane: Ruff + format +
   errors-only basedpyright, then `pytest -n auto -q -m "not slow"`. `make quality`
   also checks CLI and Web; `make quality-strict` includes the 60% coverage gate.

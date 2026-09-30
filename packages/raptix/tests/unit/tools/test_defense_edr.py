@@ -61,9 +61,9 @@ class TestPushDefenderXdrDetectionSuccess:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:DEF_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEF_TOKEN", "tok")
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_SLUG", "eng1")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_SLUG", "eng1")
         captured: dict = {}
 
         def fake_post(url, *, headers, data, timeout):  # type: ignore[no-untyped-def]
@@ -97,9 +97,9 @@ class TestPushDefenderXdrDetectionSuccess:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:DEF_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEF_TOKEN", "tok")
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_SLUG", "eng1")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_SLUG", "eng1")
         captured: dict = {}
 
         def fake_post(url, *, headers, data, timeout):  # type: ignore[no-untyped-def]
@@ -117,9 +117,9 @@ class TestPushDefenderXdrDetectionSuccess:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:DEF_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEF_TOKEN", "tok")
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_SLUG", "eng1")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_SLUG", "eng1")
         captured: dict = {}
 
         def fake_post(url, *, headers, data, timeout):  # type: ignore[no-untyped-def]
@@ -139,7 +139,7 @@ class TestPushDefenderXdrDetectionErrorBranches:
     def test_missing_conops_returns_error(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_defender_xdr_detection("myrule", _YARA_RULE_NO_META)
         assert "error" in result
         assert "conops" in result["error"].lower() or "conops.json" in result["error"].lower()
@@ -148,7 +148,7 @@ class TestPushDefenderXdrDetectionErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_defender_xdr_detection("myrule", _YARA_RULE_NO_META)
         assert result == {"error": "ConOps.blue_team.defender missing ``auth``"}
 
@@ -156,7 +156,7 @@ class TestPushDefenderXdrDetectionErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:UNSET_VAR_XYZ"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.delenv("UNSET_VAR_XYZ", raising=False)
         result = push_defender_xdr_detection("myrule", _YARA_RULE_NO_META)
         assert "error" in result
@@ -166,7 +166,7 @@ class TestPushDefenderXdrDetectionErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:DEF_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEF_TOKEN", "tok")
         monkeypatch.setitem(sys.modules, "requests", None)  # type: ignore[call-overload]
         result = push_defender_xdr_detection("myrule", _YARA_RULE_INDICATOR_NO_TAGS)
@@ -176,7 +176,7 @@ class TestPushDefenderXdrDetectionErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:DEF_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEF_TOKEN", "tok")
 
         def boom(*args, **kwargs):  # type: ignore[no-untyped-def]
@@ -191,7 +191,7 @@ class TestPushDefenderXdrDetectionErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_defender_conops(tmp_path, {"auth": "oauth:DEF_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEF_TOKEN", "tok")
 
         def fake_post(url, *, headers, data, timeout):  # type: ignore[no-untyped-def]
@@ -214,9 +214,9 @@ class TestPushCrowdstrikeIoaSuccess:
         _write_crowdstrike_conops(
             tmp_path, {"url": "https://cs.example/", "auth": "oauth:CS_TOKEN"}
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_SLUG", "eng1")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_SLUG", "eng1")
         captured: dict = {}
 
         def fake_post(url, *, headers, data, timeout):  # type: ignore[no-untyped-def]
@@ -244,7 +244,7 @@ class TestPushCrowdstrikeIoaSuccess:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
         yara = (
             "\nrule t {\n"
@@ -285,7 +285,7 @@ class TestPushCrowdstrikeIoaSuccess:
         expected_cs_type: str,
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
         yara = (
             "\nrule t {\n"
@@ -310,7 +310,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
     def test_missing_conops_returns_error(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_crowdstrike_ioa(_YARA_RULE_WITH_META)
         assert "error" in result
 
@@ -318,7 +318,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_crowdstrike_ioa(_YARA_RULE_WITH_META)
         assert result == {"error": "ConOps.blue_team.crowdstrike missing ``url`` or ``auth``"}
 
@@ -326,7 +326,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_crowdstrike_ioa(_YARA_RULE_WITH_META)
         assert result == {"error": "ConOps.blue_team.crowdstrike missing ``url`` or ``auth``"}
 
@@ -336,7 +336,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         _write_crowdstrike_conops(
             tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_UNSET_XYZ"}
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.delenv("CS_UNSET_XYZ", raising=False)
         result = push_crowdstrike_ioa(_YARA_RULE_WITH_META)
         assert "error" in result
@@ -346,7 +346,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
         result = push_crowdstrike_ioa(_YARA_RULE_NO_META)
         assert "error" in result
@@ -356,7 +356,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
         yara = '\nrule t {\n  meta:\n    indicator_type = "sha256"\n  condition: true\n}\n'
         result = push_crowdstrike_ioa(yara)
@@ -367,7 +367,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
         yara = (
             "\nrule t {\n"
@@ -386,7 +386,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
         monkeypatch.setitem(sys.modules, "requests", None)  # type: ignore[call-overload]
         result = push_crowdstrike_ioa(_YARA_RULE_WITH_META)
@@ -396,7 +396,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
 
         def boom(*args, **kwargs):  # type: ignore[no-untyped-def]
@@ -410,7 +410,7 @@ class TestPushCrowdstrikeIoaErrorBranches:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         _write_crowdstrike_conops(tmp_path, {"url": "https://cs.example", "auth": "oauth:CS_TOKEN"})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cstok")
 
         def fake_post(url, *, headers, data, timeout):  # type: ignore[no-untyped-def]

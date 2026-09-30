@@ -4,7 +4,7 @@ description: Stage 4 patch generation playbook. Minimal diffs for validated find
 metadata:
   subdomain: orchestration
   when_to_use: "patcher stage 4 patch generation minimal diff validated finding patch_verify pipeline"
-  upstream_ref: "Decepticon vulnresearch pipeline — stage 4 patcher role"
+  upstream_ref: "Raptix vulnresearch pipeline — stage 4 patcher role"
 ---
 
 # Patcher Skill

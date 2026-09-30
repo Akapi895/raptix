@@ -1,6 +1,6 @@
 # decepticon-example-tool
 
-A Decepticon plugin (tool) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin (tool) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -15,7 +15,7 @@ via the ``decepticon.tools`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 

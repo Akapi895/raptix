@@ -2,7 +2,7 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-29
-- **Deciders:** Decepticon maintainers
+- **Deciders:** Raptix maintainers
 - **Related:** `docs/adr/0007-ai-surface-technology-node.md`, `docs/adr/0013-fail-safe-kg-autoingest.md`, `summary/impl-plan-recon.md`
 
 ## Context

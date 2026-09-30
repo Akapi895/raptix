@@ -282,7 +282,7 @@ def test_load_subagents_factory_is_lazy():
 
 # ---------------------------------------------------------------------------
 # Bundle activation — 4-tier hierarchy
-#   1 (highest) DECEPTICON_PLUGINS env var
+#   1 (highest) RAPTIX_PLUGINS env var
 #   2           .raptix.toml [plugins].enabled
 #   3           pyproject.toml [tool.raptix.plugins].enabled
 #   4 (lowest)  hardcoded ``DEFAULT_BUNDLES``
@@ -410,7 +410,7 @@ def test_is_bundle_enabled_wildcard_passes_everything(monkeypatch, tmp_path):
 
 
 def test_load_subagents_filters_by_default_bundle(monkeypatch, tmp_path):
-    """With default DECEPTICON_PLUGINS=standard, only standard specs returned."""
+    """With default RAPTIX_PLUGINS=standard, only standard specs returned."""
     monkeypatch.delenv(plugin_loader.PLUGINS_ENV_VAR, raising=False)
     monkeypatch.chdir(tmp_path)
     specs = [

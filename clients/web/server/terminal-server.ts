@@ -210,15 +210,15 @@ wss.on("connection", async (ws: WebSocket, req) => {
     ...process.env as Record<string, string>,
     TERM: "xterm-256color",
     FORCE_COLOR: "1",
-    DECEPTICON_ASSISTANT_ID: agentId,
-    DECEPTICON_ENGAGEMENT: engagementSlug,
-    DECEPTICON_WORKSPACE_PATH: engagementSlug ? `/workspace/${engagementSlug}` : "/workspace",
-    DECEPTICON_API_URL: LANGGRAPH_API_URL,
-    DECEPTICON_TARGET_TYPE: targetType,
-    DECEPTICON_TARGET: targetValue,
-    DECEPTICON_AUTHORIZATION_CONFIRMED: authorizationConfirmed ? "true" : "false",
+    RAPTIX_ASSISTANT_ID: agentId,
+    RAPTIX_ENGAGEMENT: engagementSlug,
+    RAPTIX_WORKSPACE_PATH: engagementSlug ? `/workspace/${engagementSlug}` : "/workspace",
+    RAPTIX_API_URL: LANGGRAPH_API_URL,
+    RAPTIX_TARGET_TYPE: targetType,
+    RAPTIX_TARGET: targetValue,
+    RAPTIX_AUTHORIZATION_CONFIRMED: authorizationConfirmed ? "true" : "false",
   };
-  if (threadId) env.DECEPTICON_THREAD_ID = threadId;
+  if (threadId) env.RAPTIX_THREAD_ID = threadId;
 
   let term: pty.IPty;
   try {

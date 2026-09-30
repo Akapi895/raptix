@@ -127,6 +127,6 @@ class TestApplyClaude4Compat:
         assert once == twice
 
     def test_env_disable(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_CLAUDE4_COMPAT", "0")
+        monkeypatch.setenv("RAPTIX_CLAUDE4_COMPAT", "0")
         prompt = "Red Team Recon engagement."
         assert apply_claude4_compat(prompt, "claude-opus-4-7") == prompt

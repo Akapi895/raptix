@@ -8,10 +8,10 @@
 #   irm https://decepticon.red/install.ps1 | iex
 #
 # Environment variables:
-#   DECEPTICON_VERSION   — install a specific version (default: latest)
-#   DECEPTICON_HOME      — install directory (default: %USERPROFILE%\.decepticon)
+#   RAPTIX_VERSION   — install a specific version (default: latest)
+#   RAPTIX_HOME      — install directory (default: %USERPROFILE%\.decepticon)
 #   SKIP_PULL            — set to "true" to skip the Docker image pull
-#   DECEPTICON_SKIP_VERIFY — set to "1" to opt out of checksum verification
+#   RAPTIX_SKIP_VERIFY — set to "1" to opt out of checksum verification
 # ─────────────────────────────────────────────────────────────────────
 
 Set-StrictMode -Version Latest
@@ -64,7 +64,7 @@ function Get-Arch {
 
 # ── Version resolution ───────────────────────────────────────────────
 function Resolve-Version {
-    if ($env:DECEPTICON_VERSION) { return $env:DECEPTICON_VERSION }
+    if ($env:RAPTIX_VERSION) { return $env:RAPTIX_VERSION }
     Write-Info 'Fetching latest version...'
     try {
         $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" `
@@ -72,7 +72,7 @@ function Resolve-Version {
         return ($rel.tag_name -replace '^v', '')
     } catch {
         Write-Err 'Could not resolve a release version automatically.'
-        Write-Err "Set DECEPTICON_VERSION explicitly from https://github.com/$Repo/releases"
+        Write-Err "Set RAPTIX_VERSION explicitly from https://github.com/$Repo/releases"
         exit 1
     }
 }
@@ -84,8 +84,8 @@ function Assert-Sha256 {
     param($Path, $Expected, $Label)
     if (-not $Expected) {
         Write-Err "Integrity check failed: no checksum recorded for $Label."
-        if ($env:DECEPTICON_SKIP_VERIFY -eq '1') {
-            Write-Warn '  -> skipping verification (DECEPTICON_SKIP_VERIFY=1).'
+        if ($env:RAPTIX_SKIP_VERIFY -eq '1') {
+            Write-Warn '  -> skipping verification (RAPTIX_SKIP_VERIFY=1).'
             return
         }
         exit 1
@@ -110,7 +110,7 @@ function Main {
 
     $version    = Resolve-Version
     $arch       = Get-Arch
-    $installDir = if ($env:DECEPTICON_HOME) { $env:DECEPTICON_HOME } else { Join-Path $env:USERPROFILE '.decepticon' }
+    $installDir = if ($env:RAPTIX_HOME) { $env:RAPTIX_HOME } else { Join-Path $env:USERPROFILE '.decepticon' }
     $binDir     = Join-Path $installDir 'bin'
 
     Write-Info "Installing Decepticon $version  (windows/$arch)"
@@ -127,13 +127,13 @@ function Main {
     Invoke-WebRequest -Uri "$rawBase/config/litellm.yaml" -OutFile (Join-Path $installDir 'config\litellm.yaml')
 
     # Verify config files against the release-pinned manifest.
-    if ($env:DECEPTICON_SKIP_VERIFY -ne '1') {
+    if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
         $manifestPath = Join-Path $installDir '.config-checksums.txt'
         try {
             Invoke-WebRequest -Uri "$ReleaseBase/v$version/config-checksums.txt" -OutFile $manifestPath
         } catch {
             Write-Err "Failed to download config-checksums.txt for v$version (pre-1.0.27 release?)."
-            Write-Err 'Install a newer release or set DECEPTICON_SKIP_VERIFY=1 to opt out.'
+            Write-Err 'Install a newer release or set RAPTIX_SKIP_VERIFY=1 to opt out.'
             exit 1
         }
         Write-Info 'Verifying configuration files against release manifest...'
@@ -158,7 +158,7 @@ function Main {
         Write-Err "No launcher binary for windows/$arch in v$version."
         exit 1
     }
-    if ($env:DECEPTICON_SKIP_VERIFY -ne '1') {
+    if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
         $sumsPath = Join-Path $env:TEMP 'decepticon-checksums.txt'
         try {
             Invoke-WebRequest -Uri "$ReleaseBase/v$version/checksums.txt" -OutFile $sumsPath
@@ -170,7 +170,7 @@ function Main {
             Remove-Item $sumsPath -ErrorAction SilentlyContinue
             Assert-Sha256 $binaryPath $expected $binaryName
         } catch {
-            Write-Err 'Failed to verify launcher binary; set DECEPTICON_SKIP_VERIFY=1 to opt out.'
+            Write-Err 'Failed to verify launcher binary; set RAPTIX_SKIP_VERIFY=1 to opt out.'
             exit 1
         }
     }
@@ -191,8 +191,8 @@ function Main {
         Write-Host ''
         Write-Info 'Pulling Docker images (this may take a few minutes)...'
         Push-Location $installDir
-        $env:DECEPTICON_VERSION = $version
-        $env:DECEPTICON_HOME    = $installDir
+        $env:RAPTIX_VERSION = $version
+        $env:RAPTIX_HOME    = $installDir
         try { docker compose --profile cli pull } catch { Write-Warn 'Warning: failed to pull some images - run "decepticon update" later.' }
         Pop-Location
     }

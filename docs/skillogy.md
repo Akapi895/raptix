@@ -1,6 +1,6 @@
 # Skillogy
 
-Skillogy is Decepticon's knowledge-graph-backed skill discovery system. It replaces text-matching autoload with a typed Neo4j graph built at CI time and exposed to agents through five tools. Skills are still authored as `SKILL.md` files — Skillogy is the discovery layer on top of them.
+Skillogy is Raptix's knowledge-graph-backed skill discovery system. It replaces text-matching autoload with a typed Neo4j graph built at CI time and exposed to agents through five tools. Skills are still authored as `SKILL.md` files — Skillogy is the discovery layer on top of them.
 
 > **Status**: v0.1 design — see [docs/design/skillogy.md](design/skillogy.md) for the full specification.
 >
@@ -33,7 +33,7 @@ MITRE STIX v19.1 ┼─► graph_builder ─► skills/.graph/skills.cypher
 AssetType seed ──┘                    (checked into repo, reviewable in PR diff)
 ```
 
-A Python pipeline (`packages/decepticon/decepticon/graph_builder/`) parses every `SKILL.md` frontmatter, imports the pinned MITRE STIX bundle, seeds asset type / phase / agent / MoC nodes, runs an LLM pass to infer prerequisite and applicability edges, validates the result with SHACL-like Cypher rules, and emits a deterministic Cypher dump. The dump is checked into the repo so changes show up in PR diffs.
+A Python pipeline (`packages/raptix/raptix/graph_builder/`) parses every `SKILL.md` frontmatter, imports the pinned MITRE STIX bundle, seeds asset type / phase / agent / MoC nodes, runs an LLM pass to infer prerequisite and applicability edges, validates the result with SHACL-like Cypher rules, and emits a deterministic Cypher dump. The dump is checked into the repo so changes show up in PR diffs.
 
 ### Runtime (agent)
 
@@ -62,7 +62,7 @@ The agent's system prompt no longer carries a 4 KB catalog. It sees a tiny navig
 | `:Tool` | External tool | `nmap`, `sqlmap`, `bloodhound` |
 | `:Phase` | Kill-chain phase | `reconnaissance`, `initial-access`, `lateral-movement` |
 | `:MoC` | Map-of-Concepts navigation category | `web-exploitation`, `ad-attacks`, `cloud-pivot` |
-| `:Agent` | Decepticon specialist agent | `soundwave`, `recon`, `exploit`, `decepticon` |
+| `:Agent` | Raptix specialist agent | `soundwave`, `recon`, `exploit`, `decepticon` |
 | `:RoEConstraint` | Explicit Rules-of-Engagement constraint | `no-data-exfil`, `scope-internal-only` |
 
 ---
@@ -101,7 +101,7 @@ Every LLM-inferred edge carries `confidence`, `provenance`, `justification`, `in
 |---|---|
 | `(:Service)-[:IS_OF]->(:AssetType)` | DetectionRule when a service is discovered |
 | `(:Credential)-[:REALIZES]->(:Capability)` | Post-exploit when a credential is verified |
-| `(:Agent)-[:OBTAINS]->(:Capability)` | Startup, e.g. Decepticon obtains `ai-provider-access` (T1588.007) |
+| `(:Agent)-[:OBTAINS]->(:Capability)` | Startup, e.g. Raptix obtains `ai-provider-access` (T1588.007) |
 
 These bridges let `find_skill` reason over engagement state without leaving Neo4j.
 
@@ -147,7 +147,7 @@ The reasoning path makes every routing decision auditable. RoE-violating skills 
 Skillogy pins **MITRE ATT&CK Enterprise v19.1** (released 2026-05-12). The STIX bundle URL is hard-coded; bumping the version is an explicit PR. Two v19 changes are handled by the importer:
 
 - **Defense Evasion split** — `TA0005` was renamed to "Stealth"; new tactic `TA0112` "Defense Impairment" was introduced. STIX consumers that only check IDs silently mis-interpret. The importer applies a known-rename map.
-- **AI-adversary techniques** (relevant because Decepticon *is* an AI attacker):
+- **AI-adversary techniques** (relevant because Raptix *is* an AI attacker):
   - `T1682` — Query Public AI Services
   - `T1683.001` — Generate Content: Written Content (mapped to Soundwave's planning artifacts)
   - `T1588.007` — Obtain Capabilities: AI (mapped to LLMFactory)
@@ -191,7 +191,7 @@ Plugin SDK authors are unaffected at every step.
 ## Source Code Layout (planned)
 
 ```
-packages/decepticon/decepticon/
+packages/raptix/raptix/
 ├── middleware/
 │   ├── skills.py              # legacy SkillsMiddleware (kept until deprecation)
 │   └── skillogy.py            # NEW — SkillogyMiddleware

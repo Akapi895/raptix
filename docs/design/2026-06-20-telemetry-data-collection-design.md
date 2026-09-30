@@ -3,7 +3,7 @@
 > Branch: `claude/decepticon-telemetry-research-5comvf` (2026-06-20).
 > Goal: give maintainers visibility into **what users ask the agents to do and
 > what the agents actually do**, without ever exfiltrating engagement-sensitive
-> content (targets, credentials, client data). Decepticon is a red-team test
+> content (targets, credentials, client data). Raptix is a red-team test
 > harness, so the privacy bar is higher than for a normal dev tool — prompts and
 > tool I/O routinely contain real target IPs, credentials, and client material
 > covered by NDA / Rules of Engagement.
@@ -27,7 +27,7 @@
 
 ## 1. Current state (what already exists)
 
-Decepticon already has the lower half of a telemetry stack — it is local and
+Raptix already has the lower half of a telemetry stack — it is local and
 deliberately content-free:
 
 | Layer | Location | Behavior |
@@ -146,7 +146,7 @@ After sanitization, with zero personal/client data:
 
 ## 6. Why not LangSmith as the collection channel?
 
-Decepticon is LangGraph+LangChain, so LangSmith auto-traces the full agent run
+Raptix is LangGraph+LangChain, so LangSmith auto-traces the full agent run
 with one env var (`LANGSMITH_TRACING=true`). Lowest *dev effort* — but wrong tool
 for *maintainer collection from OSS users*:
 
@@ -172,9 +172,9 @@ Opt-in (security/sensitive tool → opt-out is too risky):
 #   "Send anonymous usage stats? Prompt text / targets / credentials are
 #    NEVER transmitted. Details: TELEMETRY.md  [y/N]"
 
-DECEPTICON_TELEMETRY=off|basic|extended   # off / Tier A / Tier A+B
+RAPTIX_TELEMETRY=off|basic|extended   # off / Tier A / Tier A+B
 DO_NOT_TRACK=1                            # standard; forces off
-DECEPTICON_TELEMETRY_ENDPOINT=...         # users may self-route
+RAPTIX_TELEMETRY_ENDPOINT=...         # users may self-route
 ```
 
 - Tiered consent (Tier A only / through B / later ③).

@@ -7,7 +7,7 @@ You MUST respond in English for all operator-facing prose.
   blocks, file paths, command output) stay in their original technical
   form — do not translate identifiers, file names, command flags, or
   schema field names.
-- This policy is overridden at runtime by the DECEPTICON_LANGUAGE
+- This policy is overridden at runtime by the RAPTIX_LANGUAGE
   environment variable. When set to a non-English ISO 639-1 code,
   all operator-facing prose switches to that language automatically.
 </LANGUAGE_POLICY>

@@ -1,6 +1,6 @@
 # Neo4j Attack-Graph Refactor — Research Notes
 
-> **Scope**: Reference material for the two-part refactor of Decepticon's
+> **Scope**: Reference material for the two-part refactor of Raptix's
 > Neo4j-based attack-graph subsystem. Part A narrows `KnowledgeGraph` usage
 > to the analyst agent only. Part B replaces `graph_transaction()` with
 > per-operation Cypher calls and introduces a KG middleware that owns the
@@ -22,7 +22,7 @@ deadlock retry.
 
 Neo4j uses **pessimistic record-level locking** — locks are acquired
 automatically when a transaction touches a node or relationship. The lock
-types relevant to Decepticon are:
+types relevant to Raptix are:
 
 | Lock type | Acquired when |
 |-----------|---------------|
@@ -77,7 +77,7 @@ Neo4j uses shared degree locks rather than exclusive locks — relevant to
 - [DeadlockDetectedException KB](https://neo4j.com/developer/kb/explanation-of-error-deadlockdetectedexception-forseticlient-0-cant-acquire-exclusivelock/)
 - [Neo4j Python Driver — Managed Transactions](https://github.com/neo4j/neo4j-python-driver/blob/6.x/docs/source/api.md)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Remove `threading.Lock` from `graph_transaction()`. Replace every tool's
 load–mutate–save cycle with direct `session.execute_write(tx_fn)` calls that
@@ -158,7 +158,7 @@ YIELD index, sourceNode, targetNode, totalCost, nodeIds, costs, path
 - [GDS Dijkstra Source-Target — Neo4j GDS Docs](https://neo4j.com/docs/graph-data-science/current/algorithms/dijkstra-source-target/)
 - [GDS Introduction / License](https://neo4j.com/docs/graph-data-science/current/introduction/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 **Keep `apoc.algo.dijkstra`** for attack-chain planning. The live-graph
 requirement (freshness > throughput) and Community Edition constraint make GDS
@@ -179,7 +179,7 @@ per-engagement databases vs. composite indexes on `(engagement, kind)`.
 Three patterns in use across the ecosystem:
 
 **A. Shared database, `engagement` property on every node and relationship**
-(current Decepticon approach)
+(current Raptix approach)
 
 - Every node carries `n.engagement = $engagement`; every edge carries
   `r.engagement = $engagement`.
@@ -213,7 +213,7 @@ Three patterns in use across the ecosystem:
 - [GraphAware Neo4j 4 Multi-tenancy](https://graphaware.com/blog/multi-tenancy-neo4j/)
 - [Cypher Manual — Index Syntax](https://neo4j.com/docs/cypher-manual/current/indexes/syntax/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Stay on option A (single DB + engagement property) for Community Edition.
 Add composite range indexes for the highest-traffic filter combinations:
@@ -295,7 +295,7 @@ sub-millisecond latency, this is acceptable.
 - [Neo4j Native Vector Data Type blog](https://neo4j.com/blog/developer/introducing-neo4j-native-vector-data-type/)
 - [Vector search with filters (2026.01 preview)](https://medium.com/neo4j/vector-search-with-filters-in-neo4j-v2026-01-preview-1559829b099d)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 The Neo4j vector index is viable for Skillogy Phase 1b (embedding-based skill
 search) if skills are stored as `Skill` nodes in the attack graph. This
@@ -359,7 +359,7 @@ used inside an explicit transaction (auto-commit only).
 - [Cypher Manual — CALL subqueries in transactions](https://neo4j.com/docs/cypher-manual/current/clauses/clause-composition)
 - [5 Tips for Fast Batched Updates (Michael Hunger)](https://medium.com/neo4j/5-tips-tricks-for-fast-batched-updates-of-graph-structures-with-neo4j-and-cypher-73c7f693c8cc)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Keep `UNWIND $rows MERGE` in `batch_upsert_nodes` / `batch_upsert_edges` as
 the primary write path. Add a `_BATCH_CHUNK = 500` constant and chunk the list
@@ -382,7 +382,7 @@ Neo4j Community 5.x schema changes that are **online (no downtime)**:
 - `CREATE INDEX IF NOT EXISTS` / `DROP INDEX` — online, runs in background.
 - `CREATE CONSTRAINT IF NOT EXISTS` — online, but the constraint population
   phase locks the affected label until the population scan completes. For large
-  existing datasets this can be slow; for Decepticon's engagement-scale graphs
+  existing datasets this can be slow; for Raptix's engagement-scale graphs
   (<10K nodes) it is effectively instant.
 - Adding new node labels via MERGE/SET — always additive, no migration needed.
 - Adding new relationship types — additive, no migration needed.
@@ -412,7 +412,7 @@ but it is in APOC Extended (community-only support), not APOC Core.
 - [neo4j-migrations docs](https://michael-simons.github.io/neo4j-migrations/4.0.1/)
 - [APOC Migration Guide](https://neo4j.com/docs/apoc/current/migration-guide/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Adopt `neo4j-migrations` as the schema migration tool. The current
 `Neo4jStore.ensure_schema()` method works for fresh databases but provides
@@ -466,7 +466,7 @@ ON EACH [n.label, n.fqdn, n.ip, n.product];
 Queried via `CALL db.index.fulltext.queryNodes('node_label_text', $q)`.
 Useful for the analyst agent's "find node by description" operations.
 
-**Recommended index set for the Decepticon attack graph**:
+**Recommended index set for the Raptix attack graph**:
 
 ```cypher
 -- Uniqueness constraints (already in ensure_schema(), keep as-is)
@@ -494,7 +494,7 @@ ON EACH [n.label, n.ip, n.fqdn, n.url, n.product, n.cve_id];
 - [Full-text indexes — Cypher Manual](https://neo4j.com/docs/cypher-manual/current/indexes/semantic-indexes/full-text-indexes/)
 - [Index configuration — Operations Manual](https://neo4j.com/docs/operations-manual/current/performance/index-configuration/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Add the engagement-scoped composite indexes to `V002__engagement_indexes.cypher`
 and update `ensure_schema()` to include the full-text index. The existing
@@ -562,7 +562,7 @@ upgraded to a cluster.
 - [Performance recommendations — Python Driver Manual](https://neo4j.com/docs/python-manual/current/performance/)
 - [Neo4j Driver Best Practices](https://neo4j.com/blog/developer/neo4j-driver-best-practices/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 `Neo4jStore.__init__` already creates the driver correctly (one per store
 instance). The store is a singleton managed by `_state.py`. The problem is
@@ -614,7 +614,7 @@ the plan should show `NodeIndexSeek` using the composite index.
 - [Performance recommendations — Python Driver Manual](https://neo4j.com/docs/python-manual/current/performance/)
 - [Bolt thread pool — Operations Manual](https://neo4j.com/docs/operations-manual/current/performance/bolt-thread-pool-configuration/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 1. Parameterize `max_depth`, `top_k`, and `max_cost` in `plan_chains()` —
    they are currently f-string interpolated, causing a plan cache miss on
@@ -680,7 +680,7 @@ using a property (`kind = $kind`) instead.
 - [Protecting against Cypher Injection — Neo4j KB](https://neo4j.com/developer/kb/protecting-against-cypher-injection/)
 - [Cypher Dynamism blog](https://neo4j.com/blog/developer/cypher-dynamism/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Current code is **largely safe** because dynamic label interpolation uses only
 `NodeKind`/`EdgeKind` enum values (closed sets validated at construction).
@@ -690,7 +690,7 @@ Three actions needed:
    why string interpolation is safe (closed enum, not user input).
 2. The `query_custom()` method takes arbitrary Cypher from callers — ensure
    callers pass agent-constructed Cypher only, never user-supplied strings.
-3. If Decepticon ever supports user-defined custom relationship types (plugin
+3. If Raptix ever supports user-defined custom relationship types (plugin
    edge kinds), add an allowlist validation gate before any interpolation.
 
 ---
@@ -737,12 +737,12 @@ Configuration map fields:
 | Goal | Reachability / exploration | Weighted shortest path |
 | Output | All paths up to maxLevel | Single/N cheapest paths |
 | Weight handling | None (BFS/DFS only) | `weightPropertyName` on edge |
-| Use in Decepticon | `impact_analysis()` | `plan_chains()` |
+| Use in Raptix | `impact_analysis()` | `plan_chains()` |
 | Relationship filter | Same string format | Same string format |
 
 **The `_ATTACK_REL_TYPES` injection surface**: both procedures receive
 `relTypesAndDirections` as a **Cypher string**, not a list parameter. This
-string cannot be a `$param` in APOC's current API. Decepticon's approach of
+string cannot be a `$param` in APOC's current API. Raptix's approach of
 building this string from a closed `EdgeKind` enum at module load time is the
 correct mitigation. If attack relationship types ever become runtime-
 configurable (e.g. engagement-specific custom edge kinds from a plugin), an
@@ -752,7 +752,7 @@ allowlist gate must be added before the string is constructed.
 - [apoc.path.expandConfig — APOC Core Docs](https://neo4j.com/docs/apoc/current/overview/apoc.path/apoc.path.expandConfig/)
 - [apoc.algo.dijkstra — APOC Core Docs](https://neo4j.com/docs/apoc/current/overview/apoc.algo/apoc.algo.dijkstra/)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 The split in `chain.py` is correct: `apoc.algo.dijkstra` for
 cost-minimization (chain planning), `apoc.path.expandConfig` for reachability
@@ -808,7 +808,7 @@ Parallel execution of batches. Not available in Neo4j 5.24.
 - [Cypher Manual — CALL subqueries](https://neo4j.com/docs/cypher-manual/current/clauses/clause-composition)
 - [Cypher Manual — DELETE with CALL](https://neo4j.com/docs/cypher-manual/current/clauses/delete)
 
-### Recommendation for Decepticon
+### Recommendation for Raptix
 
 Rewrite `promote_chain()` to use a single `CALL { }` subquery that creates
 the `AttackPath` node and all its edges atomically. This eliminates the
@@ -864,7 +864,7 @@ graph. Its schema migration story is split accordingly:
   multi-agent write pattern — BloodHound's ingest is single-pipeline, not
   multi-agent.
 
-**Takeaway for Decepticon**: The PostgreSQL-for-state + Neo4j-for-graph split
+**Takeaway for Raptix**: The PostgreSQL-for-state + Neo4j-for-graph split
 is a proven architecture. BloodHound's versioned-file migration approach for
 PostgreSQL is directly relevant to the `ensure_schema()` problem.
 
@@ -888,7 +888,7 @@ Okta, and 30+ others) into Neo4j using a **staged sequential sync** model:
 - No multi-writer concurrency — Cartography is a single-process scanner that
   runs sequentially.
 
-**The `update_tag` pattern** is directly applicable to Decepticon's
+**The `update_tag` pattern** is directly applicable to Raptix's
 `updated_at` field: after an agent completes an engagement objective, a sweep
 could prune nodes that were not touched in the last N minutes (or N turns).
 
@@ -909,9 +909,9 @@ Relationship types: `USES_TECHNIQUE`, `RELATED_TO`, `EXPLOITS_WEAKNESS`,
 `HAS_WEAKNESS`, `HAS_VULNERABILITY`.
 
 BRON is a **static import** — it does not handle concurrent writes or live
-updates. Its value to Decepticon is the **schema pattern**: ATT&CK Techniques
+updates. Its value to Raptix is the **schema pattern**: ATT&CK Techniques
 mapping to CVEs via Weaknesses is exactly the `Technique → CVE → Vulnerability`
-chain Decepticon's `decepticon_core/types/kg.py` models. BRON validates that
+chain Raptix's `decepticon_core/types/kg.py` models. BRON validates that
 this is the correct graph topology for offensive intelligence.
 
 **Sources**:
@@ -926,7 +926,7 @@ this is the correct graph topology for offensive intelligence.
 - 8–114× faster than Neo4j on read-heavy workloads in Memgraph's own
   benchmarks (note: vendor benchmarks; treat as directional).
 - No built-in sharding; single-node only.
-- For Decepticon's engagement-scale graphs (<10K nodes), the in-memory model
+- For Raptix's engagement-scale graphs (<10K nodes), the in-memory model
   fits entirely in RAM — this is a genuine advantage.
 - The operational model is different (no page cache, pure RAM), which changes
   memory sizing requirements.
@@ -939,7 +939,7 @@ this is the correct graph topology for offensive intelligence.
   100K node / 2.4M edge graphs).
 - No Bolt protocol; requires a different driver.
 
-**Verdict for Decepticon**:
+**Verdict for Raptix**:
 - Switching to Memgraph would be low-friction (Cypher + Bolt compatible) but
   introduces operational risk for a Community-licensed production system.
 - Kuzu's archival status makes it unsuitable as a dependency.

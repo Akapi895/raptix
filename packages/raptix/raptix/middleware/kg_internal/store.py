@@ -66,18 +66,18 @@ class KGStoreConfig:
 
     @classmethod
     def from_env(cls) -> KGStoreConfig:
-        uri = os.environ.get("DECEPTICON_NEO4J_URI", "").strip()
-        user = os.environ.get("DECEPTICON_NEO4J_USER", "").strip()
-        password = os.environ.get("DECEPTICON_NEO4J_PASSWORD", "").strip()
-        database = os.environ.get("DECEPTICON_NEO4J_DATABASE", "neo4j").strip() or "neo4j"
+        uri = os.environ.get("RAPTIX_NEO4J_URI", "").strip()
+        user = os.environ.get("RAPTIX_NEO4J_USER", "").strip()
+        password = os.environ.get("RAPTIX_NEO4J_PASSWORD", "").strip()
+        database = os.environ.get("RAPTIX_NEO4J_DATABASE", "neo4j").strip() or "neo4j"
 
         missing: list[str] = []
         if not uri:
-            missing.append("DECEPTICON_NEO4J_URI")
+            missing.append("RAPTIX_NEO4J_URI")
         if not user:
-            missing.append("DECEPTICON_NEO4J_USER")
+            missing.append("RAPTIX_NEO4J_USER")
         if not password:
-            missing.append("DECEPTICON_NEO4J_PASSWORD")
+            missing.append("RAPTIX_NEO4J_PASSWORD")
         if missing:
             raise KGStoreConfigError("KGStore missing required env vars: " + ", ".join(missing))
 

@@ -61,7 +61,7 @@ class EngagementContextState(AgentState):
     ]
     # Per-run language override. When set via config.configurable.language,
     # the middleware appends a LANGUAGE_POLICY SystemMessage that supersedes
-    # the prompt-time DECEPTICON_LANGUAGE env policy. Multi-tenant launchers
+    # the prompt-time RAPTIX_LANGUAGE env policy. Multi-tenant launchers
     # (multi-tenant) need different orgs to receive different language outputs from
     # the same container, which the env-based path cannot deliver.
     # All launcher-/harness-set channels below carry a reducer so an
@@ -466,7 +466,7 @@ class EngagementContextMiddleware(AgentMiddleware):
         # Per-run language override. Multi-tenant launchers (web) inject
         # the org's selected language via config.configurable.language; we
         # append the same LANGUAGE_POLICY block the prompt builder would have
-        # produced if DECEPTICON_LANGUAGE were set, but per-run rather than
+        # produced if RAPTIX_LANGUAGE were set, but per-run rather than
         # per-container. Because this is a later SystemMessage, it supersedes
         # the prompt-time policy without needing to reach into the cached
         # static prompt.

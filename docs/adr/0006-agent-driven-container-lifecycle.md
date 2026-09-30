@@ -150,7 +150,7 @@ the spawned services bind to.  Workloads marked **`(future)`** are
 reserved in the allowlist but their compose services are not yet
 shipped; adding one is a `(profile, services)` tuple in
 `docker-compose.yml` + one entry in the daemon's allowlist + (if the
-service is a Decepticon-built image) one row in
+service is a Raptix-built image) one row in
 `.github/workflows/release.yml`'s docker matrix.
 
 | Workload | Driven by | Compose profile | Services | Network |
@@ -205,7 +205,7 @@ data, not decisions.  Extension steps for an OSS workload:
 1. Add the `(profile, services)` tuple to `docker-compose.yml` under
    the appropriate compose profile, choosing `sandbox-net` vs
    `decepticon-net` per the network-placement rule above.
-2. If the workload includes a Decepticon-built image, add the matrix
+2. If the workload includes a Raptix-built image, add the matrix
    row to `.github/workflows/release.yml`.
 3. Add the workload name string to the daemon-side allowlist (default
    `(ad, c2-sliver, c2-havoc, reversing, phishing, mobile, wireless,
@@ -281,7 +281,7 @@ matches what §1'/§5' prescribe.
   per-user (or per-robot) Fly apps... each containing isolated Fly
   Machines"* because *"a compromised user environment can reach
   every other Machine if consolidated."*  The per-app isolation maps
-  directly to Decepticon's per-engagement Spot VM tier. [3]
+  directly to Raptix's per-engagement Spot VM tier. [3]
 
 The `Backend` Protocol surface (§5') and the `(workload,
 lifecycle_op)` tuple (§2) match prescribed least-privilege patterns
@@ -413,7 +413,7 @@ is amended (separate docs PR) to:
   `decepticon-net` has the same effective control over the host
   docker daemon as one that reaches langgraph directly with the
   socket bound — the hop count to host root is identical.  The
-  Decepticon-side precedent (ADR-0001, PR #236, PR #263 retiring the
+  Raptix-side precedent (ADR-0001, PR #236, PR #263 retiring the
   equivalent pattern for command execution) and the external
   validation cited in §6 converge on host-binary daemon + Unix
   socket as the correct alternative.  M1' is preserved in this list

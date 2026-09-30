@@ -1,10 +1,10 @@
 """Telemetry consent + configuration resolution.
 
 The PRODUCT default is opt-out: the launcher's onboard wizard asks for consent
-(default yes) and the shipped ``.env`` template defaults ``DECEPTICON_TELEMETRY``
+(default yes) and the shipped ``.env`` template defaults ``RAPTIX_TELEMETRY``
 to ``research``, so consenting users collect by default while ``DO_NOT_TRACK`` and
 ``decepticon-cli telemetry off`` always force it off. This module is the
-fail-SAFE floor: when ``DECEPTICON_TELEMETRY`` is unset (e.g. standalone library
+fail-SAFE floor: when ``RAPTIX_TELEMETRY`` is unset (e.g. standalone library
 use, never onboarded), it resolves to ``off`` — the value, not the absence,
 turns telemetry on. Resolution is pure and side-effect-free *except*
 :func:`install_id`, which lazily mints a random UUID the first time telemetry is
@@ -12,9 +12,9 @@ actually enabled.
 
 Environment surface (documented in ``TELEMETRY.md``):
 
-* ``DECEPTICON_TELEMETRY``          ``off`` | ``basic`` | ``research`` (template default ``research``; unset → ``off``)
+* ``RAPTIX_TELEMETRY``          ``off`` | ``basic`` | ``research`` (template default ``research``; unset → ``off``)
 * ``DO_NOT_TRACK``                  truthy → forces ``off`` (standard)
-* ``DECEPTICON_TELEMETRY_ENDPOINT`` gateway URL; unset → effectively ``off``
+* ``RAPTIX_TELEMETRY_ENDPOINT`` gateway URL; unset → effectively ``off``
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ def resolve_mode(env: dict[str, str] | None = None) -> TelemetryMode:
     e = env if env is not None else dict(os.environ)
     if _truthy(e.get("DO_NOT_TRACK")):
         return TelemetryMode.OFF
-    raw = (e.get("DECEPTICON_TELEMETRY") or "off").strip().lower()
+    raw = (e.get("RAPTIX_TELEMETRY") or "off").strip().lower()
     try:
         return TelemetryMode(raw)
     except ValueError:
@@ -58,7 +58,7 @@ def resolve_mode(env: dict[str, str] | None = None) -> TelemetryMode:
 
 
 def _home(env: dict[str, str]) -> Path:
-    raw = env.get("DECEPTICON_HOME") or "~/.decepticon"
+    raw = env.get("RAPTIX_HOME") or "~/.decepticon"
     return Path(raw).expanduser()
 
 
@@ -125,7 +125,7 @@ def install_id(env: dict[str, str] | None = None) -> str:
     """Return the persistent anonymous install id, minting one on first use.
 
     A random UUID (never machine/IP derived) stored under
-    ``$DECEPTICON_HOME/telemetry/install_id``. If the path is unwritable we fall
+    ``$RAPTIX_HOME/telemetry/install_id``. If the path is unwritable we fall
     back to an ephemeral id so telemetry degrades rather than crashes.
     """
     e = env if env is not None else dict(os.environ)
@@ -174,11 +174,11 @@ def resolve_config(env: dict[str, str] | None = None) -> TelemetryConfig:
     # CTF traffic that is indistinguishable from real engagements downstream.
     if _truthy(e.get("DO_NOT_TRACK")) or _truthy(e.get("BENCHMARK_MODE")) or is_opted_out(e):
         mode = TelemetryMode.OFF
-    elif (e.get("DECEPTICON_TELEMETRY") or "").strip():
+    elif (e.get("RAPTIX_TELEMETRY") or "").strip():
         mode = resolve_mode(e)
     else:
         mode = persisted_mode(e) or TelemetryMode.OFF
-    endpoint = (e.get("DECEPTICON_TELEMETRY_ENDPOINT") or "").strip() or None
+    endpoint = (e.get("RAPTIX_TELEMETRY_ENDPOINT") or "").strip() or None
     # Only mint/read an install id when telemetry is actually on — keeps OFF
     # purely side-effect-free.
     iid = (
@@ -191,7 +191,7 @@ def resolve_config(env: dict[str, str] | None = None) -> TelemetryConfig:
         mode=mode,
         endpoint=endpoint,
         install_id=iid,
-        version=e.get("DECEPTICON_VERSION") or _detect_version(),
+        version=e.get("RAPTIX_VERSION") or _detect_version(),
         os_name=sys_map.get(platform.system(), "linux"),
         arch=_arch(),
         py_version=platform.python_version(),

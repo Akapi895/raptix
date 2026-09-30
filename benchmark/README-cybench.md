@@ -1,6 +1,6 @@
 # Cybench provider
 
-Adapter that runs the Decepticon main agent against
+Adapter that runs the Raptix main agent against
 [Cybench](https://cybench.github.io/) — Stanford's professional-CTF
 benchmark (ICLR 2025; 40 tasks curated from 4 recent competitions:
 HackTheBox, Sekai, Glacier, HKCert). Cybench is the field's de-facto
@@ -83,5 +83,5 @@ XBOW's).
 - **No live-verified end-to-end run in this change.** The provider's pure
   / file-IO surface (task discovery, flag extraction, format derivation,
   evaluation) is covered by
-  `packages/decepticon/tests/unit/benchmark/test_cybench_provider.py`;
+  `packages/raptix/tests/unit/benchmark/test_cybench_provider.py`;
   the Docker lifecycle needs the upstream suite + a live daemon.

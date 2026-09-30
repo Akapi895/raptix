@@ -1,6 +1,6 @@
 # decepticon-example-middleware
 
-A Decepticon plugin (middleware) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin (middleware) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -15,7 +15,7 @@ via the ``decepticon.middleware`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 

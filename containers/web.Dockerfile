@@ -61,9 +61,9 @@ WORKDIR /app/clients/web
 
 # Build the shared streaming workspace first — its package.json main
 # points at dist/index.js, so the Next build's import resolution will
-# fail with "Module not found: @decepticon/streaming" otherwise.
+# fail with "Module not found: @raptix/streaming" otherwise.
 WORKDIR /app
-RUN npm run build --workspace=@decepticon/streaming
+RUN npm run build --workspace=@raptix/streaming
 WORKDIR /app/clients/web
 
 RUN npx prisma generate

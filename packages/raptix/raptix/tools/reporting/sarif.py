@@ -24,7 +24,7 @@ SARIF_SCHEMA = (
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
 )
 DRIVER_NAME = "Decepticon"
-DRIVER_INFORMATION_URI = "https://github.com/PurpleAILAB/Decepticon"
+DRIVER_INFORMATION_URI = "https://github.com/Akapi895/raptix"
 
 _DEFAULT_INCLUDE_KINDS: tuple[NodeKind, ...] = (NodeKind.VULNERABILITY, NodeKind.FINDING)
 _RULE_ID_SAFE = re.compile(r"[^A-Za-z0-9_.\-:]+")

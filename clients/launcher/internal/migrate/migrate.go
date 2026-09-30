@@ -35,7 +35,7 @@ import (
 )
 
 // ackFileName is the JSON record of interactive migrations the user has
-// already been through, stored inside DECEPTICON_HOME.
+// already been through, stored inside RAPTIX_HOME.
 const ackFileName = ".migrations.json"
 
 // Ctx is the shared state threaded through every step.

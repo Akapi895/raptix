@@ -136,11 +136,11 @@ def test_kg_degrades_returns_graceful_message_when_store_unavailable() -> None:
 
     @state.kg_degrades
     def raises() -> str:
-        raise KGStoreConfigError("KGStore missing required env vars: DECEPTICON_NEO4J_URI")
+        raise KGStoreConfigError("KGStore missing required env vars: RAPTIX_NEO4J_URI")
 
     out = json.loads(raises())
     assert out["error"] == "knowledge_graph_unavailable"
-    assert "DECEPTICON_NEO4J_URI" in out["detail"]
+    assert "RAPTIX_NEO4J_URI" in out["detail"]
 
     @state.kg_degrades
     def ok() -> str:

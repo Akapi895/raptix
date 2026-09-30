@@ -14,7 +14,7 @@ class TestDecepticonConfig:
         assert config.llm.proxy_api_key == "sk-decepticon-master"
 
     def test_env_override(self, monkeypatch):
-        monkeypatch.setenv("DECEPTICON_DEBUG", "true")
+        monkeypatch.setenv("RAPTIX_DEBUG", "true")
         config = DecepticonConfig()
         assert config.debug is True
 

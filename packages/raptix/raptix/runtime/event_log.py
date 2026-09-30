@@ -48,7 +48,7 @@ def _env_float(name: str, default: float) -> float:
     return v if v > 0 else default
 
 
-LOCK_ACQUIRE_TIMEOUT_S: float = _env_float("DECEPTICON_EVENT_LOG_LOCK_TIMEOUT_S", 10.0)
+LOCK_ACQUIRE_TIMEOUT_S: float = _env_float("RAPTIX_EVENT_LOG_LOCK_TIMEOUT_S", 10.0)
 _LOCK_RETRY_INITIAL_SLEEP_S: float = 0.01
 _LOCK_RETRY_MAX_SLEEP_S: float = 1.0
 

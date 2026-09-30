@@ -139,7 +139,7 @@ raptix-mcp = "raptix.mcp_server.__main__:main"
 # registration with no main-agent edits required.
 #
 # Bundle activation — controlled by a 4-tier hierarchy (highest wins):
-#   1. DECEPTICON_PLUGINS env var (e.g. "standard,plugins,vendor" or "*")
+#   1. RAPTIX_PLUGINS env var (e.g. "standard,plugins,vendor" or "*")
 #   2. .raptix.toml: [plugins] enabled = [...]
 #   3. pyproject.toml: [tool.raptix.plugins] enabled = [...]
 #   4. Default: ["standard"]
@@ -151,7 +151,7 @@ raptix-mcp = "raptix.mcp_server.__main__:main"
 # automatically activates both bundles instead of forcing every
 # developer to remember the env var. End-user OSS installs that DON'T
 # clone this repo see the hardcoded ``["standard"]`` default; downstream
-# images override via ``ENV DECEPTICON_PLUGINS=standard,vendor``.
+# images override via ``ENV RAPTIX_PLUGINS=standard,vendor``.
 
 [tool.raptix.plugins]
 enabled = ["standard", "plugins"]
@@ -184,8 +184,8 @@ patcher = "raptix.agents.plugins.patcher:SUBAGENT_SPEC"
 exploiter = "raptix.agents.plugins.exploiter:SUBAGENT_SPEC"
 
 [project.urls]
-Homepage = "https://github.com/PurpleAILAB/Decepticon"
-Repository = "https://github.com/PurpleAILAB/Decepticon"
+Homepage = "https://github.com/Akapi895/raptix"
+Repository = "https://github.com/Akapi895/raptix"
 
 [build-system]
 requires = ["hatchling"]

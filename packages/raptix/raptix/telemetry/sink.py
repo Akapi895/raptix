@@ -344,11 +344,11 @@ def get_sink() -> TelemetrySink:
     """Return the process telemetry sink, building it from env on first use.
 
     Returns a shared disabled no-op sink when telemetry is off, so callers can
-    wire it unconditionally. Set ``DECEPTICON_TELEMETRY_DISABLE_SINK`` to force
+    wire it unconditionally. Set ``RAPTIX_TELEMETRY_DISABLE_SINK`` to force
     the no-op (used by tests).
     """
     global _SINGLETON
-    if os.environ.get("DECEPTICON_TELEMETRY_DISABLE_SINK"):
+    if os.environ.get("RAPTIX_TELEMETRY_DISABLE_SINK"):
         return _DISABLED
     if _SINGLETON is None:
         config = resolve_config()

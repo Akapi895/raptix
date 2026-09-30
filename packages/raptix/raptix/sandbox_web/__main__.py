@@ -30,7 +30,7 @@ _INLINE_CONTENT_LIMIT = 15_000
 
 
 def _workspace() -> str | None:
-    return os.environ.get("DECEPTICON_WORKSPACE_PATH")
+    return os.environ.get("RAPTIX_WORKSPACE_PATH")
 
 
 def _build_scope_check(workspace: str | None) -> ScopeCheck | None:

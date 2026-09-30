@@ -119,7 +119,7 @@ def test_arjun_adapter_records_discovered_parameters(tmp_path: Path) -> None:
 async def test_katana_autoingest_replay_writes_inventory_without_live_tool(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_KG_AUTOINGEST", "1")
+    monkeypatch.setenv("RAPTIX_KG_AUTOINGEST", "1")
     content = (
         json.dumps({"endpoint": "https://app.example.test/search?q=one", "method": "GET"}) + "\n"
     ).encode()

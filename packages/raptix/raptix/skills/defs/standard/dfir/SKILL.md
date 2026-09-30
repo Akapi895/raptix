@@ -15,7 +15,7 @@ metadata:
 
 # Forensicator / DFIR Skill Catalog
 
-Decepticon emits attacks AND detection rules. This catalog feeds the
+Raptix emits attacks AND detection rules. This catalog feeds the
 detection rules back through real forensic artifacts to confirm they fire
 — closing the Offensive Vaccine loop on the operations side.
 

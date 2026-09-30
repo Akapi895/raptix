@@ -66,7 +66,7 @@ at the virtual prefix `/skills/`. The tree has three roots:
 | `/skills/standard/phisher/` | Phisher | Lure deconfliction and phishing operations |
 | `/skills/standard/mobile/` | MobileOperator | Android / iOS application attacks |
 | `/skills/standard/wireless/` | WirelessOperator | Wireless / RF attacks |
-| `/skills/standard/decepticon/` | Decepticon | Core orchestration procedures (engagement lifecycle, kill-chain analysis, final report) |
+| `/skills/standard/decepticon/` | Raptix | Core orchestration procedures (engagement lifecycle, kill-chain analysis, final report) |
 | `/skills/plugins/scanner/` | Scanner | Vulnerability scanning, automated tool integration |
 | `/skills/plugins/exploiter/` | Exploiter | PoC generation, CVE reproduction, weaponization |
 | `/skills/plugins/verifier/` | Verifier | Multi-method vulnerability confirmation |
@@ -229,7 +229,7 @@ One-line description of the skill's core role and principles.
 2. Write `SKILL.md` with frontmatter and body following the format above
 3. Add `references/` docs for content over 100 lines
 4. Add `scripts/` for any automation the agent should execute
-5. Restart Decepticon — `SkillsMiddleware` discovers skills at agent boot
+5. Restart Raptix — `SkillsMiddleware` discovers skills at agent boot
 
 The skill is automatically available to agents whose source paths include your skill's parent directory. No registration required.
 
@@ -245,7 +245,7 @@ plugins (scanner, exploiter, detector, verifier, patcher) additionally pull
 
 | Agent (role) | Skill sources |
 |-------|--------------|
-| Decepticon (`decepticon`) | `/skills/standard/decepticon/`, `/skills/shared/` |
+| Raptix (`decepticon`) | `/skills/standard/decepticon/`, `/skills/shared/` |
 | Soundwave (`soundwave`) | `/skills/standard/soundwave/`, `/skills/shared/` |
 | Recon (`recon`) | `/skills/standard/recon/`, `/skills/shared/` |
 | Exploit (`exploit`) | `/skills/standard/exploit/`, `/skills/shared/` |

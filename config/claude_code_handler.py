@@ -246,8 +246,8 @@ REQUIRED_BETAS = [
 # ``max_tokens``, so the default output cap below is generous enough for
 # reasoning + tool calls (the prior 4096 default truncated adaptive thinking
 # before it could emit tool_use, yielding empty ``max_tokens``-stopped turns).
-# Per-model env override: ``DECEPTICON_CLAUDE_EFFORT_<MODEL>`` where <MODEL> is
-# the slug upper-cased with -/. → _ (e.g. DECEPTICON_CLAUDE_EFFORT_CLAUDE_SONNET_5=high).
+# Per-model env override: ``RAPTIX_CLAUDE_EFFORT_<MODEL>`` where <MODEL> is
+# the slug upper-cased with -/. → _ (e.g. RAPTIX_CLAUDE_EFFORT_CLAUDE_SONNET_5=high).
 _REASONING_EFFORT_DEFAULTS: dict[str, str] = {
     "claude-opus-4-8": "xhigh",
     "claude-opus-4-7": "xhigh",
@@ -277,7 +277,7 @@ def _reasoning_params(actual_model: str, opts: dict[str, Any]) -> dict[str, Any]
     for the reasoning models in ``_REASONING_EFFORT_DEFAULTS``. Effort accepts
     the Anthropic-native ``output_config.effort`` or the OpenAI-style
     ``reasoning_effort`` alias, falling back to the per-model default
-    (env-overridable via ``DECEPTICON_CLAUDE_EFFORT_<MODEL>``). Effort is only
+    (env-overridable via ``RAPTIX_CLAUDE_EFFORT_<MODEL>``). Effort is only
     emitted when thinking is on — it controls thinking depth. Returns the keys
     to merge into the request body ( ``{}`` when the model isn't a reasoner and
     the caller passed nothing).
@@ -298,9 +298,7 @@ def _reasoning_params(actual_model: str, opts: dict[str, Any]) -> dict[str, Any]
         effort = output_config.get("effort")
     effort = effort or opts.get("reasoning_effort")
     if not effort and actual_model in _REASONING_EFFORT_DEFAULTS:
-        env_key = (
-            "DECEPTICON_CLAUDE_EFFORT_" + actual_model.replace("-", "_").replace(".", "_").upper()
-        )
+        env_key = "RAPTIX_CLAUDE_EFFORT_" + actual_model.replace("-", "_").replace(".", "_").upper()
         effort = os.environ.get(env_key, _REASONING_EFFORT_DEFAULTS[actual_model])
     if effort:
         out["output_config"] = {"effort": effort}

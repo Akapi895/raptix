@@ -29,10 +29,10 @@ PROVIDER_EXTRA_PARAMS = _module.PROVIDER_EXTRA_PARAMS
 
 def test_collect_requested_models_includes_global_and_role_overrides() -> None:
     env = {
-        "DECEPTICON_MODEL": "openrouter/anthropic/claude-3.7-sonnet",
-        "DECEPTICON_MODEL_FALLBACK": "groq/llama-3.3-70b-versatile",
-        "DECEPTICON_MODEL_RECON": "ollama_chat/qwen2.5-coder:32b",
-        "DECEPTICON_MODEL_RECON_FALLBACK": "openai/gpt-4.1-mini",
+        "RAPTIX_MODEL": "openrouter/anthropic/claude-3.7-sonnet",
+        "RAPTIX_MODEL_FALLBACK": "groq/llama-3.3-70b-versatile",
+        "RAPTIX_MODEL_RECON": "ollama_chat/qwen2.5-coder:32b",
+        "RAPTIX_MODEL_RECON_FALLBACK": "openai/gpt-4.1-mini",
     }
 
     assert collect_requested_models(env) == {
@@ -80,7 +80,7 @@ def test_build_model_entry_ollama_chat_default_when_env_unset(monkeypatch) -> No
     LiteLLM's ``os.environ/<NAME>`` syntax resolves an unset env var to
     an empty string, which would silently 404 every Ollama request. The
     dynamic config writer pins a sensible default at write time so
-    operators who run ``DECEPTICON_LITELLM_MODELS=ollama_chat/<m>``
+    operators who run ``RAPTIX_LITELLM_MODELS=ollama_chat/<m>``
     without going through the launcher onboard wizard still reach the
     host Ollama instance on macOS, Linux, and WSL2.
     """
@@ -147,16 +147,16 @@ def test_validate_model_name_rejects_other_subscription_prefixes() -> None:
 
 
 def test_merge_dynamic_models_allows_subscription_model_override() -> None:
-    """A user setting ``DECEPTICON_MODEL=auth/gpt-5.4-mini`` together with
-    ``DECEPTICON_AUTH_CHATGPT=true`` must succeed — the subscription path
+    """A user setting ``RAPTIX_MODEL=auth/gpt-5.4-mini`` together with
+    ``RAPTIX_AUTH_CHATGPT=true`` must succeed — the subscription path
     injects the route first, and the API-key validator is skipped because
     the model is already present in the model_list.
     """
     merged = merge_dynamic_models(
         {"model_list": [], "litellm_settings": {"fallbacks": []}},
         {
-            "DECEPTICON_AUTH_CHATGPT": "true",
-            "DECEPTICON_MODEL": "auth/gpt-5.4-mini",
+            "RAPTIX_AUTH_CHATGPT": "true",
+            "RAPTIX_MODEL": "auth/gpt-5.4-mini",
         },
     )
     names = {entry["model_name"] for entry in merged["model_list"]}
@@ -177,14 +177,14 @@ def test_validate_model_name_rejects_legacy_ollama_with_remediation() -> None:
 
 def test_merge_dynamic_models_rejects_invalid_env_model() -> None:
     with pytest.raises(ValueError, match="provider/model"):
-        merge_dynamic_models({"model_list": []}, {"DECEPTICON_MODEL": "gpt-4.1"})
+        merge_dynamic_models({"model_list": []}, {"RAPTIX_MODEL": "gpt-4.1"})
 
 
 def test_merge_dynamic_models_rejects_legacy_ollama_env() -> None:
     with pytest.raises(ValueError, match="ollama_chat/"):
         merge_dynamic_models(
             {"model_list": []},
-            {"DECEPTICON_MODEL_RECON": "ollama/qwen2.5-coder:32b"},
+            {"RAPTIX_MODEL_RECON": "ollama/qwen2.5-coder:32b"},
         )
 
 
@@ -216,8 +216,8 @@ def test_merge_dynamic_models_keeps_existing_entries_and_appends_missing() -> No
         ]
     }
     env = {
-        "DECEPTICON_MODEL": "openai/gpt-4.1",
-        "DECEPTICON_MODEL_RECON": "mistral/mistral-large-latest",
+        "RAPTIX_MODEL": "openai/gpt-4.1",
+        "RAPTIX_MODEL_RECON": "mistral/mistral-large-latest",
     }
 
     merged = merge_dynamic_models(config, env)
@@ -231,7 +231,7 @@ def test_merge_dynamic_models_keeps_existing_entries_and_appends_missing() -> No
 def test_merge_dynamic_models_registers_only_supported_chatgpt_oauth_routes() -> None:
     merged = merge_dynamic_models(
         {"model_list": [], "litellm_settings": {"fallbacks": []}},
-        {"DECEPTICON_AUTH_CHATGPT": "true"},
+        {"RAPTIX_AUTH_CHATGPT": "true"},
     )
 
     # User-facing model_name stays ``auth/gpt-*`` for consistency with
@@ -251,7 +251,7 @@ def test_merge_dynamic_models_registers_only_supported_chatgpt_oauth_routes() ->
         "auth/gpt-5.4-mini": {"model": "codex-oauth/oauth-gpt-5.4-mini"},
         # Code-heavy override route. Registered alongside the tier
         # defaults so per-agent env overrides like
-        # ``DECEPTICON_MODEL_PATCHER=auth/gpt-5.3-codex`` work without a
+        # ``RAPTIX_MODEL_PATCHER=auth/gpt-5.3-codex`` work without a
         # yaml edit. The ``oauth-`` slug sentinel is required because
         # ``gpt-5.3-codex`` is in ``open_ai_chat_completion_models``.
         "auth/gpt-5.3-codex": {"model": "codex-oauth/oauth-gpt-5.3-codex"},
@@ -279,7 +279,7 @@ def test_build_model_entry_routes_llamacpp_to_openai_with_custom_base() -> None:
 
     assert entry["model_name"] == "llamacpp/qwen2.5-coder-7b-instruct-q4_k_m", (
         "model_name must be the agent-facing alias unchanged — per-role "
-        "DECEPTICON_MODEL_<ROLE> overrides depend on this passthrough"
+        "RAPTIX_MODEL_<ROLE> overrides depend on this passthrough"
     )
     assert entry["litellm_params"] == {
         "model": "openai/qwen2.5-coder-7b-instruct-q4_k_m",
@@ -325,7 +325,7 @@ def test_build_model_entry_routes_gateway_to_openai_with_api_base() -> None:
 
     assert entry["model_name"] == "opencode/claude-opus-4-6", (
         "model_name must stay the agent-facing alias unchanged — per-role "
-        "DECEPTICON_MODEL_<ROLE> overrides depend on this passthrough"
+        "RAPTIX_MODEL_<ROLE> overrides depend on this passthrough"
     )
     assert entry["litellm_params"] == {
         "model": "openai/claude-opus-4-6",
@@ -379,7 +379,7 @@ def test_merge_dynamic_models_registers_gateway_override() -> None:
     """A per-role gateway override flows through merge → build_model_entry."""
     merged = merge_dynamic_models(
         {"model_list": [], "litellm_settings": {"fallbacks": []}},
-        {"DECEPTICON_MODEL_PATCHER": "zenmux/anthropic/claude-opus-4.6"},
+        {"RAPTIX_MODEL_PATCHER": "zenmux/anthropic/claude-opus-4.6"},
     )
     entries = {e["model_name"]: e["litellm_params"] for e in merged["model_list"]}
     assert entries["zenmux/anthropic/claude-opus-4.6"] == {
@@ -405,7 +405,7 @@ def test_merge_dynamic_models_tolerates_null_model_list() -> None:
 def test_merge_dynamic_models_tolerates_null_litellm_settings() -> None:
     """A bare ``litellm_settings:`` key parses to ``None``; injecting a
     subscription route must not call ``.setdefault`` on ``None``."""
-    merged = merge_dynamic_models({"litellm_settings": None}, {"DECEPTICON_AUTH_CHATGPT": "true"})
+    merged = merge_dynamic_models({"litellm_settings": None}, {"RAPTIX_AUTH_CHATGPT": "true"})
     assert isinstance(merged["litellm_settings"], dict)
     names = [e.get("model_name", "") for e in merged["model_list"]]
     assert any(n.startswith("auth/gpt") for n in names)
@@ -621,7 +621,7 @@ def test_github_copilot_rejected_as_oauth() -> None:
 def test_unsupported_provider_error_mentions_count_and_docs() -> None:
     with pytest.raises(ValueError, match="providers are supported") as exc:
         validate_model_name("totally-made-up/model")
-    assert "DECEPTICON_LITELLM_MODELS" in str(exc.value)
+    assert "RAPTIX_LITELLM_MODELS" in str(exc.value)
     assert str(len(ALLOWED_DYNAMIC_PROVIDERS)) in str(exc.value)
 
 

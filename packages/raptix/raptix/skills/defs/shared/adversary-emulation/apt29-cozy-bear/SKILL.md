@@ -1,6 +1,6 @@
 ---
 name: apt29-cozy-bear
-description: "Adversary-emulation profile for APT29 (Cozy Bear / Midnight Blizzard / NOBELIUM / The Dukes), Russia's SVR-attributed cyber-espionage group, mapping its ATT&CK TTPs to Decepticon emulation tooling."
+description: "Adversary-emulation profile for APT29 (Cozy Bear / Midnight Blizzard / NOBELIUM / The Dukes), Russia's SVR-attributed cyber-espionage group, mapping its ATT&CK TTPs to Raptix emulation tooling."
 allowed-tools: Bash Read Write
 metadata:
   subdomain: adversary-emulation
@@ -11,7 +11,7 @@ metadata:
 
 # APT29 (Cozy Bear, Midnight Blizzard, NOBELIUM, The Dukes) — Adversary Emulation Profile
 
-APT29 (MITRE ATT&CK **G0016**; also tracked as Cozy Bear, Midnight Blizzard, NOBELIUM, The Dukes, CozyDuke, UNC2452, Dark Halo, NobleBaron, YTTRIUM, Blue Kitsune, IRON RITUAL/IRON HEMLOCK) is a Russian state-sponsored cyber-espionage group attributed by multiple governments to Russia's Foreign Intelligence Service (SVR). Active since at least 2008, it is among the most operationally disciplined intrusion sets on record: it favors patient, stealthy, long-dwell access against high-value strategic targets, custom and living-off-the-land tooling, rigorous operational security (residential-proxy infrastructure, anti-forensic indicator removal, low-and-slow authentication attacks), and a sustained pivot toward cloud and identity-plane attacks (Microsoft 365 / Entra ID, OAuth, federation). It is best known for the 2015–2016 DNC intrusion, the 2020 SolarWinds Orion supply-chain compromise, and the 2024 Microsoft corporate-email breach. This profile teaches Decepticon to emulate APT29's signature TTPs so an authorized red team can exercise the blue cell against a realistic, identity-and-cloud-centric espionage adversary.
+APT29 (MITRE ATT&CK **G0016**; also tracked as Cozy Bear, Midnight Blizzard, NOBELIUM, The Dukes, CozyDuke, UNC2452, Dark Halo, NobleBaron, YTTRIUM, Blue Kitsune, IRON RITUAL/IRON HEMLOCK) is a Russian state-sponsored cyber-espionage group attributed by multiple governments to Russia's Foreign Intelligence Service (SVR). Active since at least 2008, it is among the most operationally disciplined intrusion sets on record: it favors patient, stealthy, long-dwell access against high-value strategic targets, custom and living-off-the-land tooling, rigorous operational security (residential-proxy infrastructure, anti-forensic indicator removal, low-and-slow authentication attacks), and a sustained pivot toward cloud and identity-plane attacks (Microsoft 365 / Entra ID, OAuth, federation). It is best known for the 2015–2016 DNC intrusion, the 2020 SolarWinds Orion supply-chain compromise, and the 2024 Microsoft corporate-email breach. This profile teaches Raptix to emulate APT29's signature TTPs so an authorized red team can exercise the blue cell against a realistic, identity-and-cloud-centric espionage adversary.
 
 ## Attribution & motivation
 
@@ -109,7 +109,7 @@ APT29 (MITRE ATT&CK **G0016**; also tracked as Cozy Bear, Midnight Blizzard, NOB
 - **Identity / cloud tooling (custom + public):** AADInternals (S0677) for Entra ID / federation abuse and SAML-token operations; custom .NET utilities to extract ADFS token-signing certificates for Golden SAML.
 - **Commodity / dual-use (public):** Cobalt Strike (S0154) BEACON, Impacket (S0357), Mimikatz, BloodHound (S0521), AdFind (S0552), sdelete, ipconfig (S0100), and other living-off-the-land binaries.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized use only.** Execute these TTPs strictly within the documented rules of engagement, target scope, and time window of a signed authorization. Do not touch out-of-scope tenants, accounts, or third parties.
 

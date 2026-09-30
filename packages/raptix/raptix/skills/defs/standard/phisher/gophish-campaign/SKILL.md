@@ -46,7 +46,7 @@ curl -sk -H "$H" -H 'Content-Type: application/json' $API/smtp/ -d '{
 curl -sk -H "$H" -H 'Content-Type: application/json' $API/groups/ -d '{
   "name":"wave1","targets":[{"email":"alice@acme.example","first_name":"Alice","last_name":"R"}]}'
 
-# 3. Email template (include the X-Decepticon-Eng header + opt-out URL)
+# 3. Email template (include the X-Raptix-Eng header + opt-out URL)
 curl -sk -H "$H" -H 'Content-Type: application/json' $API/templates/ -d '{
   "name":"sso-migration","subject":"Action needed: SSO re-enrollment",
   "html":"<a href=\"{{.URL}}\">Re-enroll</a> {{.Tracker}}"}'

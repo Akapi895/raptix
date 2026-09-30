@@ -29,7 +29,7 @@ were). We did not run the controlled experiment to separate them,
 because the decision does not turn on which is true. Under the first
 reading the gate blocked nothing. Under the second it blocked only PRs
 that the owner did not author, and #686 — authored by the other
-collaborator, touching `packages/decepticon/pyproject.toml` and
+collaborator, touching `packages/raptix/pyproject.toml` and
 `uv.lock`, code owner auto-requested — still merged with zero approving
 reviews. Either way the "Green CI + 1 owner approval" gate that
 ADR-0002 recorded, that `docs/COWORK.md §4.3` described, and that the PR

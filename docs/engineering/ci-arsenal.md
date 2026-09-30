@@ -1,11 +1,11 @@
 ---
 title: CI/CD Pipeline
-description: The workflows that gate every Decepticon change — build/test, security, supply-chain, and release.
+description: The workflows that gate every Raptix change — build/test, security, supply-chain, and release.
 ---
 
 # CI/CD Pipeline
 
-Decepticon's CI/CD is deliberately **small and high-signal**. Each tool earns
+Raptix's CI/CD is deliberately **small and high-signal**. Each tool earns
 its place by catching a class of bug nothing else catches; redundant and
 style-only checks run locally in pre-commit instead of burning CI minutes.
 
@@ -53,7 +53,7 @@ gitleaks) run locally in pre-commit instead.
 
 ## Custom Semgrep rules
 
-`/.semgrep/decepticon-rules.yml` enforces Decepticon-specific invariants that
+`/.semgrep/decepticon-rules.yml` enforces Raptix-specific invariants that
 public rule packs can't express:
 
 | Rule | What it catches |

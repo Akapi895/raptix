@@ -32,8 +32,8 @@ _CRED_ENV = (
     "CENSYS_API_ID",
     "CENSYS_API_SECRET",
     "ZOOMEYE_API_KEY",
-    "DECEPTICON_OSINT_SCOPE",
-    "DECEPTICON_OSINT_CATALOG",
+    "RAPTIX_OSINT_SCOPE",
+    "RAPTIX_OSINT_CATALOG",
 )
 
 
@@ -192,7 +192,7 @@ class TestMockCatalog:
         }
         f = tmp_path / "catalog.json"
         f.write_text(json.dumps(catalog), encoding="utf-8")
-        monkeypatch.setenv("DECEPTICON_OSINT_CATALOG", str(f))
+        monkeypatch.setenv("RAPTIX_OSINT_CATALOG", str(f))
         out = _load_mock_catalog("target.test")
         assert out["open_ports"] == [{"port": 8080, "transport": "tcp"}]
         assert out["dns_records"][0]["value"] == "198.51.100.9"
@@ -202,7 +202,7 @@ class TestMockCatalog:
     ) -> None:
         f = tmp_path / "broken.json"
         f.write_text("{not json", encoding="utf-8")
-        monkeypatch.setenv("DECEPTICON_OSINT_CATALOG", str(f))
+        monkeypatch.setenv("RAPTIX_OSINT_CATALOG", str(f))
         out = _load_mock_catalog("example.com")
         # Falls back to the deterministic synthesized catalog.
         assert {"port": 443, "transport": "tcp"} in out["open_ports"]
@@ -239,7 +239,7 @@ class TestToolScope:
     async def test_out_of_scope_refused_without_egress(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_OSINT_SCOPE", "*.example.com")
+        monkeypatch.setenv("RAPTIX_OSINT_SCOPE", "*.example.com")
 
         def _explode(*_a: Any, **_k: Any) -> Any:
             raise AssertionError("no network egress allowed for out-of-scope target")
@@ -252,7 +252,7 @@ class TestToolScope:
         assert data["scope_patterns"] == ["*.example.com"]
 
     async def test_in_scope_wildcard_allowed(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_OSINT_SCOPE", "*.example.com")
+        monkeypatch.setenv("RAPTIX_OSINT_SCOPE", "*.example.com")
         raw = await osint_enrich.ainvoke({"domain": "api.example.com"})
         data = json.loads(raw)
         assert data["in_scope"] is True
@@ -261,7 +261,7 @@ class TestToolScope:
     async def test_refusal_is_logged(
         self, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_OSINT_SCOPE", "example.com")
+        monkeypatch.setenv("RAPTIX_OSINT_SCOPE", "example.com")
         # The "decepticon" root logger sets propagate=False, so let caplog's
         # handler see records by re-enabling propagation for the duration.
         monkeypatch.setattr(logging.getLogger("raptix"), "propagate", True)

@@ -14,7 +14,7 @@ Decepticon's graph manifest is split into two bundles by
   - ``standard``: official OSS agents (decepticon + 9 specialists).
     Always loaded at startup.
   - ``plugins``: vulnresearch family (orchestrator + 5 specialists).
-    Off by default. Activated either via ``DECEPTICON_PLUGINS`` env
+    Off by default. Activated either via ``RAPTIX_PLUGINS`` env
     (next-restart) or this API (immediately).
 
 Endpoints
@@ -32,7 +32,7 @@ Persistence
 -----------
 This API is **runtime-only** in this iteration. Bundles re-enabled here
 do NOT persist across ``decepticon restart`` — for permanent activation
-set ``DECEPTICON_PLUGINS=standard,plugins`` in ``~/.decepticon/.env``.
+set ``RAPTIX_PLUGINS=standard,plugins`` in ``~/.decepticon/.env``.
 A future iteration will add a state file so the API also persists.
 """
 
@@ -220,7 +220,7 @@ async def disable_bundle(
             status_code=400,
             detail=(
                 "'standard' bundle cannot be disabled — it carries the "
-                "core orchestrator. Set DECEPTICON_PLUGINS at startup to "
+                "core orchestrator. Set RAPTIX_PLUGINS at startup to "
                 "ship a custom baseline."
             ),
         )

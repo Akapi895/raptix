@@ -97,7 +97,7 @@ func (c *Compose) baseArgs() []string {
 	// `-p` is explicit so the launcher's project name matches what the
 	// opscontrol daemon uses on its own compose calls (DockerComposeBackend
 	// reads the same helper). Without `-p`, compose defaults to the
-	// sanitized basename of $DECEPTICON_HOME — that agrees by accident in
+	// sanitized basename of $RAPTIX_HOME — that agrees by accident in
 	// normal flows but breaks the moment any caller passes a different
 	// `-p` (CI, manual debugging, …) and produces a "container_name in
 	// use by another project" conflict on the next ops_start.
@@ -105,7 +105,7 @@ func (c *Compose) baseArgs() []string {
 	args = append(args, "-f", c.ComposeFile, "--env-file", c.EnvFile)
 	// ADR-0006 Sprint 1: include the opscontrol overlay only when
 	// the file exists AND the host socket has been bound. Attaching
-	// the overlay without DECEPTICON_OPSCONTROL_SOCK_HOST exported
+	// the overlay without RAPTIX_OPSCONTROL_SOCK_HOST exported
 	// would mount /dev/null into langgraph (the old `:-/dev/null`
 	// fallback in the overlay) — that's a wiring bug masquerading
 	// as a "daemon unreachable" diagnostic at agent runtime,
@@ -114,7 +114,7 @@ func (c *Compose) baseArgs() []string {
 	// fallback (no service manager + spawn failed) keeps the overlay
 	// out so the boot doesn't silently regress to the broken state.
 	if override := filepath.Join(c.Home, "docker-compose.opscontrol.yml"); fileExists(override) &&
-		os.Getenv("DECEPTICON_OPSCONTROL_SOCK_HOST") != "" {
+		os.Getenv("RAPTIX_OPSCONTROL_SOCK_HOST") != "" {
 		args = append(args, "-f", override)
 	}
 	return args
@@ -126,21 +126,21 @@ func fileExists(path string) bool {
 }
 
 // ContainerName builds the docker container name for a Decepticon
-// service, mirroring the “${DECEPTICON_STACK_NAME:+-${DECEPTICON_STACK_NAME}}“
+// service, mirroring the “${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}“
 // template used by docker-compose.yml (#216). Unset/empty → today's
 // “decepticon-<svc>“ name verbatim; “stack2“ → “decepticon-stack2-<svc>“.
 // Keeps the Go launcher and YAML naming convention in lockstep so
 // “docker exec“/“logs“/“stop“ resolve the right container in
 // dual-stack runs.
 func ContainerName(svc string) string {
-	stack := strings.TrimSpace(os.Getenv("DECEPTICON_STACK_NAME"))
+	stack := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
 	if stack == "" {
 		return "decepticon-" + svc
 	}
 	return "decepticon-" + stack + "-" + svc
 }
 
-// readVersion returns the installed version from $DECEPTICON_HOME/.version,
+// readVersion returns the installed version from $RAPTIX_HOME/.version,
 // or an empty string if the file is missing or unreadable. The launcher
 // (install + explicit update) is the single writer; compose falls back to
 // :stable (the conservative default channel tag) when the marker is absent.
@@ -152,7 +152,7 @@ func (c *Compose) readVersion() string {
 	return strings.TrimSpace(string(data))
 }
 
-// composeEnv returns the parent environment with DECEPTICON_VERSION pinned
+// composeEnv returns the parent environment with RAPTIX_VERSION pinned
 // from the .version file plus any runtime-derived env (DOCKER_HOST for
 // Podman, etc.). docker compose treats the process environment as
 // higher precedence than --env-file, so this overrides any stale value the
@@ -166,7 +166,7 @@ func (c *Compose) composeEnv() []string {
 	// opscontrol.ComposeCommandEnv() for the rationale.
 	env := opscontrol.ComposeCommandEnv()
 	if v := c.readVersion(); v != "" {
-		env = append(env, "DECEPTICON_VERSION="+imageTag(v))
+		env = append(env, "RAPTIX_VERSION="+imageTag(v))
 	}
 	// Inject DOCKER_HOST for Podman so nested Docker-API clients in
 	// containers (testcontainers, kubectl-with-docker-shim) find the
@@ -201,7 +201,7 @@ func (c *Compose) run(args []string, interactive bool) error {
 // re-implement HTTP polling.
 //
 // `--wait-timeout` is the single user-facing patience knob. Override via
-// DECEPTICON_STARTUP_TIMEOUT_SECONDS for slower hardware. Default 600s
+// RAPTIX_STARTUP_TIMEOUT_SECONDS for slower hardware. Default 600s
 // covers most environments after measuring 136s LiteLLM cold start in CI.
 func (c *Compose) Up(profiles ...string) error {
 	args := []string{}
@@ -213,9 +213,9 @@ func (c *Compose) Up(profiles ...string) error {
 }
 
 // startupTimeoutSeconds returns the --wait-timeout value as a string.
-// User override via DECEPTICON_STARTUP_TIMEOUT_SECONDS; falls back to 600s.
+// User override via RAPTIX_STARTUP_TIMEOUT_SECONDS; falls back to 600s.
 func startupTimeoutSeconds() string {
-	if v := os.Getenv("DECEPTICON_STARTUP_TIMEOUT_SECONDS"); v != "" {
+	if v := os.Getenv("RAPTIX_STARTUP_TIMEOUT_SECONDS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			return strconv.Itoa(n)
 		}
@@ -246,10 +246,10 @@ func (c *Compose) Pull(version string) error {
 	cmd := exec.Command(c.Runtime.Bin, append(c.baseArgs(), "pull")...)
 	// Base off composeEnv so the stack-name + runtime injections apply
 	// here too; an explicit version arg overrides the .version-derived
-	// DECEPTICON_VERSION (later entries win in the child process env).
+	// RAPTIX_VERSION (later entries win in the child process env).
 	env := c.composeEnv()
 	if version != "" {
-		env = append(env, "DECEPTICON_VERSION="+imageTag(version))
+		env = append(env, "RAPTIX_VERSION="+imageTag(version))
 	}
 	cmd.Env = env
 	cmd.Stdout = os.Stdout
@@ -340,7 +340,7 @@ func (c *Compose) RemoveOrphanedCLI() {
 	// Anchor the filter to the stack naming convention used by ContainerName
 	// so we don't accidentally match unrelated containers. Use the detected
 	// runtime binary (docker / podman / nerdctl) and its env.
-	stack := strings.TrimSpace(os.Getenv("DECEPTICON_STACK_NAME"))
+	stack := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
 	prefix := "decepticon"
 	if stack != "" {
 		prefix = "decepticon-" + stack

@@ -4,7 +4,7 @@ description: Root pointer for the binary reversing lane. Covers triage, Radare2 
 metadata:
   subdomain: reverse-engineering
   when_to_use: "reverser binary reversing triage strings packer unpack rop ghidra firmware VMProtect VMP2 Themida virtualized protectors overview routing"
-  upstream_ref: "Decepticon reverser lane catalog — Ghidra, Radare2, Back Engineering VMProtect/Themida research, AFL++, libFuzzer, binwalk, and binary triage tooling"
+  upstream_ref: "Raptix reverser lane catalog — Ghidra, Radare2, Back Engineering VMProtect/Themida research, AFL++, libFuzzer, binwalk, and binary triage tooling"
   capability_contract:
     lane: reverse-engineering
     scope: isolated-lab

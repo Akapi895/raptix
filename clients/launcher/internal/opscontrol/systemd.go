@@ -15,7 +15,7 @@ import (
 // User-level (not system-level) is intentional: the daemon runs as
 // the operator's UID, talks to the docker socket as the same user
 // (which is the only context that has docker group membership in
-// most OSS installs), and writes only to $DECEPTICON_HOME — there is
+// most OSS installs), and writes only to $RAPTIX_HOME — there is
 // nothing root-only about the lifecycle.
 type SystemdManager struct {
 	UnitName string // e.g. "decepticon-opscontrol" or "decepticon-opscontrol-stack2"
@@ -246,7 +246,7 @@ func (s *SystemdManager) Stop() error {
 //   - ProtectSystem=full keeps /usr, /boot, /efi read-only without
 //     touching /etc (docker-cli reads /etc/docker/, /etc/resolv.conf,
 //     etc.). `strict` was tried and broke docker-cli reads in WSL2.
-//   - ProtectHome=read-only + ReadWritePaths=$DECEPTICON_HOME narrows
+//   - ProtectHome=read-only + ReadWritePaths=$RAPTIX_HOME narrows
 //     the home write surface to just the data directory without
 //     blocking docker-cli reads of ~/.docker/config.json etc.
 //
@@ -262,9 +262,9 @@ func (s *SystemdManager) Stop() error {
 func (s *SystemdManager) renderUnit(spec InstallSpec) string {
 	stackEnv := ""
 	if spec.StackName != "" {
-		stackEnv = fmt.Sprintf("Environment=DECEPTICON_STACK_NAME=%s\n", spec.StackName)
+		stackEnv = fmt.Sprintf("Environment=RAPTIX_STACK_NAME=%s\n", spec.StackName)
 	}
-	// WorkingDirectory MUST be $DECEPTICON_HOME because compose's
+	// WorkingDirectory MUST be $RAPTIX_HOME because compose's
 	// config-hash mixes the project working dir into the per-container
 	// label. Without this the daemon spawns containers with
 	// `com.docker.compose.project.working_dir=/` and the launcher's
@@ -273,13 +273,13 @@ func (s *SystemdManager) renderUnit(spec InstallSpec) string {
 	// forcing `compose up` to mark every existing container "Recreate"
 	// on the next ops_start.
 	//
-	// EnvironmentFile pulls $DECEPTICON_HOME/.env so the daemon's
+	// EnvironmentFile pulls $RAPTIX_HOME/.env so the daemon's
 	// compose subprocess sees the same interpolation env (image tags,
 	// ports, passwords, …) the launcher saw. The leading `-` keeps
 	// install tolerant of `.env` not existing yet.
 	return fmt.Sprintf(`[Unit]
 Description=Decepticon opscontrol daemon (ADR-0006)
-Documentation=https://github.com/PurpleAILAB/Decepticon/blob/main/docs/adr/0006-agent-driven-container-lifecycle.md
+Documentation=https://github.com/Akapi895/raptix/blob/main/docs/adr/0006-agent-driven-container-lifecycle.md
 After=network-online.target
 Wants=network-online.target
 
@@ -288,7 +288,7 @@ Type=simple
 ExecStart=%s opscontrol daemon
 WorkingDirectory=%s
 EnvironmentFile=-%s/.env
-Environment=DECEPTICON_HOME=%s
+Environment=RAPTIX_HOME=%s
 %sRestart=on-failure
 RestartSec=5s
 NoNewPrivileges=true

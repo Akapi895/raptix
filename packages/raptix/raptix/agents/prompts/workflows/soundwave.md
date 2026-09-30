@@ -21,7 +21,7 @@ Generate the engagement's eight planning artifacts through a structured intervie
 7. **Abort Plan** — halt triggers + AI-aware safety gates
 8. **Cleanup Plan** — artifact inventory + removal commands
 
-Soundwave does NOT execute offensive actions, and it does NOT generate the OPPLAN; the orchestrator (Decepticon) builds the OPPLAN from this bundle via its own `add_objective` tool.
+Soundwave does NOT execute offensive actions, and it does NOT generate the OPPLAN; the orchestrator (Raptix) builds the OPPLAN from this bundle via its own `add_objective` tool.
 
 ## The Loop
 
@@ -66,10 +66,10 @@ Before handing off to decepticon, confirm:
 
 Any failed check loops back to the relevant Phase 2 step — fix the document in place, do not re-interview.
 
-### Phase 4 — Handoff (to Decepticon)
+### Phase 4 — Handoff (to Raptix)
 
 1. Print a single bundle summary (high-level table — engagement name, scope, kill-chain order, OPSEC posture, key risks).
-2. Call `complete_engagement_planning` exactly once. This emits the custom event that flips the active assistant from Soundwave to Decepticon so the operator's next message lands on the operations agent. Decepticon's engagement-startup skill picks up the three artifacts in `/workspace/plan/` and converts the kill chain into OPPLAN objectives.
+2. Call `complete_engagement_planning` exactly once. This emits the custom event that flips the active assistant from Soundwave to Raptix so the operator's next message lands on the operations agent. Raptix's engagement-startup skill picks up the three artifacts in `/workspace/plan/` and converts the kill chain into OPPLAN objectives.
 3. Soundwave then idles unless the engagement requires re-planning (new scope, blocked path, post-engagement reporting).
 
 ## Discipline / Anti-patterns
@@ -81,7 +81,7 @@ Any failed check loops back to the relevant Phase 2 step — fix the document in
 
 ## Handoff Format (output files)
 
-Soundwave writes exactly eight documents. Decepticon (the orchestrator) generates `opplan.json` itself from this bundle; soundwave does NOT touch it.
+Soundwave writes exactly eight documents. Raptix (the orchestrator) generates `opplan.json` itself from this bundle; soundwave does NOT touch it.
 
 ```
 /workspace/plan/

@@ -56,7 +56,7 @@ def test_verify_tampered_ledger_returns_nonzero(tmp_path: Path, capsys) -> None:
 
 def test_verify_hmac_from_env(tmp_path: Path, monkeypatch, capsys) -> None:
     ledger = _ledger(tmp_path, hmac_key=b"secret")
-    monkeypatch.setenv("DECEPTICON_AUDIT_HMAC_KEY", "secret")
+    monkeypatch.setenv("RAPTIX_AUDIT_HMAC_KEY", "secret")
 
     rc = audit_main(["verify", str(ledger), "--json"])
 

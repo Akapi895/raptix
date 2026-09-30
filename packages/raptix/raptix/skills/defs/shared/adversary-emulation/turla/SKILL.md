@@ -211,11 +211,11 @@ Turla (MITRE ATT&CK **G0010**) is one of the most sophisticated and long-running
 | certutil | S0160 | LOLBin (decode, download, certificate install) | Built-in |
 | Net / nbtstat / netstat / Reg / Systeminfo / Tasklist | S0039 / S0102 / S0104 / S0075 / S0096 / S0057 | LOLBins | Built-in |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never deploy kernel rootkits or destructive capabilities outside an explicitly sanctioned, isolated lab environment.
 
-Map Turla's signature plays to Decepticon's own capabilities:
+Map Turla's signature plays to Raptix's own capabilities:
 
 - **Initial access — watering hole + spearphishing (T1189, T1566.001, T1566.002).** Use the phishing skill to craft targeted spearphishing emails with links to fake Adobe or legitimate-looking download pages (Mosquito pattern); use the payload-builder to create JavaScript-based droppers (KOPILUWAK pattern). For watering hole emulation, stage payloads on compromised WordPress-like infrastructure to simulate Turla's preferred initial access chain.
 - **Persistence — Exchange Transport Agent / email-based C2 (T1505.002, T1071.003, T1114.002).** Where Exchange is in scope, emulate LightNeuron by deploying a Transport Agent that intercepts email flow — this is Turla's most distinctive persistence mechanism. Alternatively, deploy Outlook add-in persistence (LunarMail pattern, T1137.006) for environments where Exchange agent access is unavailable.

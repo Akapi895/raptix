@@ -23,9 +23,9 @@ The graph encodes these progressions as weighted paths, where edge weight repres
 - **BRON**: Links ATT&CK tactics → techniques → CVEs → CWEs → CAPEC patterns in a unified graph.
 - **MITRE ATT&CK Navigator**: Tactic → technique mapping, but not a graph DB.
 
-### Decepticon's Extension
+### Raptix's Extension
 
-Decepticon extends BloodHound's proven approach beyond AD to cover:
+Raptix extends BloodHound's proven approach beyond AD to cover:
 - Web application vulnerabilities (SSRF, SQLi, IDOR, SSTI, XSS)
 - Cloud infrastructure (AWS IAM, K8s RBAC, Terraform state)
 - Smart contracts (reentrancy, oracle manipulation, flash loan)

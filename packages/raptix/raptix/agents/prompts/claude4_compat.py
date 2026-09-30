@@ -52,7 +52,7 @@ except ImportError:  # pragma: no cover - yaml ships as a Decepticon runtime dep
 # parents[0]=prompts  [1]=agents  [2]=decepticon  [3]=repo_root
 _CONFIG_PATH: Final[Path] = Path(__file__).resolve().parents[3] / "config" / "claude4_compat.yaml"
 
-_ENV_DISABLE: Final[str] = "DECEPTICON_CLAUDE4_COMPAT"
+_ENV_DISABLE: Final[str] = "RAPTIX_CLAUDE4_COMPAT"
 
 _FALLBACK_TERM_MAP: Final[dict[str, str]] = {
     "Recon": "Discovery",
@@ -166,7 +166,7 @@ def _compat_disabled() -> bool:
 def apply_claude4_compat(prompt: str, model: str | None) -> str:
     """Transform ``prompt`` for Claude 4.x compatibility.
 
-    No-op for non-Claude-4 models or when ``DECEPTICON_CLAUDE4_COMPAT`` is
+    No-op for non-Claude-4 models or when ``RAPTIX_CLAUDE4_COMPAT`` is
     set to ``0`` / ``false`` / ``off``. Safe to call unconditionally.
     """
     if _compat_disabled() or not is_claude4_family(model):

@@ -128,7 +128,7 @@ def test_skillogy_phase_values_are_seeded_phases():
 
 def test_every_standard_graph_has_a_skillogy_phase():
     """Each standard agent must map to a Skillogy phase, else it loses
-    phase-scoped skill retrieval under ``DECEPTICON_USE_SKILLOGY``."""
+    phase-scoped skill retrieval under ``RAPTIX_USE_SKILLOGY``."""
     missing = sorted(set(STANDARD_GRAPHS) - set(_PHASE_FOR_ROLE))
     assert not missing, f"standard agents missing a _PHASE_FOR_ROLE mapping: {missing}"
 

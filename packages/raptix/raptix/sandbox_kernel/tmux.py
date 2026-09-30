@@ -176,7 +176,7 @@ _PROXY_ENV_KEYS: frozenset[str] = frozenset(
         "all_proxy",
     }
 )
-_DECEPTICON_ENV_PREFIX = "DECEPTICON_"
+_RAPTIX_ENV_PREFIX = "RAPTIX_"
 
 # Defense-in-depth: even though only allowlisted names reach the renderer,
 # we still validate the resulting key against the POSIX shell variable
@@ -192,7 +192,7 @@ def _allowed_passthrough_env() -> dict[str, str]:
 
     * Proxy variables (upper- and lower-case): ``HTTPS_PROXY``, ``HTTP_PROXY``,
       ``NO_PROXY``, ``ALL_PROXY`` and their lowercase counterparts.
-    * Any variable whose name starts with ``DECEPTICON_``.
+    * Any variable whose name starts with ``RAPTIX_``.
 
     No other parent environment variables are forwarded. Values are returned
     verbatim and must be shell-quoted before injection (see
@@ -200,7 +200,7 @@ def _allowed_passthrough_env() -> dict[str, str]:
     """
     out: dict[str, str] = {}
     for key, value in os.environ.items():
-        if key in _PROXY_ENV_KEYS or key.startswith(_DECEPTICON_ENV_PREFIX):
+        if key in _PROXY_ENV_KEYS or key.startswith(_RAPTIX_ENV_PREFIX):
             out[key] = value
     return out
 
@@ -548,12 +548,12 @@ class TmuxSessionManager:
         if cached_alive:
             # Do NOT re-sync passthrough env here. initialize() runs on EVERY
             # non-input execute(), and _sync_passthrough_env() sends an
-            # ``export DECEPTICON_… HTTP_PROXY=…`` line as its own command —
+            # ``export RAPTIX_… HTTP_PROXY=…`` line as its own command —
             # which produces its OWN PS1 completion marker. execute() captures
             # ``baseline`` immediately after initialize(), before that marker
             # lands, so it is excluded from ``initial_count``; the poll loop
             # then fires on the EXPORT's marker, not the user command's, and
-            # _extract_output() returns the stray ``export DECEPTICON_SKIP_BOOT
+            # _extract_output() returns the stray ``export RAPTIX_SKIP_BOOT
             # =1`` + command echo BEFORE the real output appears (observed:
             # ``whois``/network commands returning only their echoed input).
             # A cached-alive session was always synced at creation (below) and

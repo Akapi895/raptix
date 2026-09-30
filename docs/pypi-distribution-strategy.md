@@ -6,7 +6,7 @@
 
 ## TL;DR
 
-A downstream product is **not a fork** of Decepticon — it is a
+A downstream product is **not a fork** of Raptix — it is a
 downstream Python package that depends on the OSS `decepticon` core and
 extends it through entry-point plugin groups (`decepticon.bundles`,
 `decepticon.subagents`, `decepticon.skills`, …). Today that downstream
@@ -30,12 +30,12 @@ a real version-stamping flow, and supply-chain hardening.
   `version` field is a `0.0.0` sentinel stamped with the git tag at Docker
   build time (`pyproject.toml:1-7`) — there is no published-version flow.
 - **A downstream product layers on via entry-points.** The vendor bundle
-  (`bundle="vendor"`) is activated with `DECEPTICON_PLUGINS=standard,vendor`
+  (`bundle="vendor"`) is activated with `RAPTIX_PLUGINS=standard,vendor`
   (`pyproject.toml:111-123`, `decepticon/plugin_loader.py:527-529`). The
   OSS default stays lean (`["standard"]`); downstream images opt their bundle in.
 - **The only documented way for a downstream product to consume the core is a git pin.**
   `docs/library-usage.md:383-393` recommends
-  `decepticon @ git+https://github.com/PurpleAILAB/Decepticon.git@v1.x.y`
+  `decepticon @ git+https://github.com/Akapi895/raptix.git@v1.x.y`
   and states: *"PyPI publication is on the roadmap once the public API
   surface is stable enough to commit to."*
 - `docs/contributing.md:114` already assumes the end state:

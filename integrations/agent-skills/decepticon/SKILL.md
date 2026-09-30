@@ -1,25 +1,25 @@
 ---
 name: decepticon
-description: "Drive Decepticon — an autonomous multi-agent red-team framework — over MCP to run authorized penetration tests and bug-bounty engagements end to end, then watch and steer them live from chat. Launch an engagement against a target, poll its transcript to narrate progress, send messages to refocus it, and pull findings as SARIF. Use when the user asks to run a pentest/red-team engagement, hunt a bug bounty, do recon, exploit/scan a host, web app, API, network, cloud, Active Directory, mobile app, or smart contract WITH Decepticon — or to check/resume a running engagement or report what Decepticon found. Triggers: run a decepticon engagement, pentest this with decepticon, bug bounty, recon this target, red team this, scan this host, resume the engagement, what did decepticon find, decepticon status. Do NOT use for ad-hoc local tool runs (running nmap/sqlmap/ffuf directly) when no Decepticon server is involved — this drives the Decepticon orchestrator, not raw tools."
+description: "Drive Raptix — an autonomous multi-agent red-team framework — over MCP to run authorized penetration tests and bug-bounty engagements end to end, then watch and steer them live from chat. Launch an engagement against a target, poll its transcript to narrate progress, send messages to refocus it, and pull findings as SARIF. Use when the user asks to run a pentest/red-team engagement, hunt a bug bounty, do recon, exploit/scan a host, web app, API, network, cloud, Active Directory, mobile app, or smart contract WITH Raptix — or to check/resume a running engagement or report what Raptix found. Triggers: run a decepticon engagement, pentest this with decepticon, bug bounty, recon this target, red team this, scan this host, resume the engagement, what did decepticon find, decepticon status. Do NOT use for ad-hoc local tool runs (running nmap/sqlmap/ffuf directly) when no Raptix server is involved — this drives the Raptix orchestrator, not raw tools."
 version: 2.0.0
 license: Apache-2.0
 metadata:
-  homepage: "https://github.com/PurpleAILAB/Decepticon"
+  homepage: "https://github.com/Akapi895/raptix"
   hermes:
     tags: [decepticon, red-teaming, penetration-testing, bug-bounty, mcp, autonomous-agents, recon, exploitation, sarif]
     related_skills: [pentest-recon, offensive-reporting, reconnaissance]
 ---
 
-# Decepticon engagements (over MCP)
+# Raptix engagements (over MCP)
 
-Drive **Decepticon** — an autonomous multi-agent red-team framework — as if its
+Drive **Raptix** — an autonomous multi-agent red-team framework — as if its
 CLI were in this chat. Run an authorized engagement end to end (recon →
 exploitation → post-exploitation → reporting) across web, API, network, Active
 Directory, cloud, mobile, smart-contract, and binary targets, then **watch it
 progress and steer it as it runs**.
 
 You interact through the `decepticon_*` MCP tools (listed below). The heavy
-work runs inside the Decepticon server; you are the operator at the console.
+work runs inside the Raptix server; you are the operator at the console.
 
 ## Mental model — read this first
 
@@ -46,12 +46,12 @@ work runs inside the Decepticon server; you are the operator at the console.
 
 ## Prerequisites (verify on first failure)
 
-- A Decepticon **LangGraph server** must be running and reachable
-  (`DECEPTICON_API_URL`, default `http://localhost:2024`). If a tool errors with
+- A Raptix **LangGraph server** must be running and reachable
+  (`RAPTIX_API_URL`, default `http://localhost:2024`). If a tool errors with
   a connection failure, tell the user to start it (`langgraph dev` or the Docker
   stack) — don't retry blindly.
 - The `decepticon` MCP server must be registered and launched with
-  `DECEPTICON_SKIP_BOOT=1` (fast start). See the integration docs.
+  `RAPTIX_SKIP_BOOT=1` (fast start). See the integration docs.
 
 ## Tools
 
@@ -117,7 +117,7 @@ Full parameters, defaults, clamps, and return schemas are in
 
 ## Errors & recovery
 
-- **Connection failure** → the Decepticon server isn't up at `DECEPTICON_API_URL`.
+- **Connection failure** → the Raptix server isn't up at `RAPTIX_API_URL`.
   Ask the user to start it; don't loop.
 - **`findings_available=false` for a while** → normal early on; keep watching the
   transcript and report progress.

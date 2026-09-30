@@ -160,7 +160,7 @@ _session: HTTPSession | None = None
 def _get_session() -> HTTPSession:
     global _session
     if _session is None:
-        verify_env = os.environ.get("DECEPTICON_HTTP_VERIFY_TLS", "").strip().lower()
+        verify_env = os.environ.get("RAPTIX_HTTP_VERIFY_TLS", "").strip().lower()
         verify_tls = verify_env in {"1", "true", "yes", "on"}
         _session = HTTPSession(verify=verify_tls)
     return _session

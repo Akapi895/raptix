@@ -33,7 +33,7 @@ _CONOPS_FILENAMES = ("conops.json", "ConOps.json", "rules-of-engagement/conops.j
 
 
 def _resolve_workspace() -> Path:
-    return Path(os.environ.get("DECEPTICON_ENGAGEMENT_WORKSPACE") or "/workspace")
+    return Path(os.environ.get("RAPTIX_ENGAGEMENT_WORKSPACE") or "/workspace")
 
 
 def _load_conops() -> dict[str, Any]:
@@ -102,7 +102,7 @@ def resolve_auth_value(auth_spec: str) -> str:
 
 def engagement_slug() -> str:
     """Return the engagement slug used to tag pushed rules."""
-    slug = os.environ.get("DECEPTICON_ENGAGEMENT_SLUG", "")
+    slug = os.environ.get("RAPTIX_ENGAGEMENT_SLUG", "")
     if slug:
         return slug
     try:

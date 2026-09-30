@@ -41,21 +41,21 @@ from raptix.tools.references.fetch import (
 
 class TestDefaultCacheRoot:
     def test_returns_home_based_path_without_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("DECEPTICON_REFERENCES_ROOT", raising=False)
+        monkeypatch.delenv("RAPTIX_REFERENCES_ROOT", raising=False)
         result = _default_cache_root()
         assert result == Path.home() / ".decepticon" / "references"
 
     def test_env_override_takes_precedence(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_REFERENCES_ROOT", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_REFERENCES_ROOT", str(tmp_path))
         result = _default_cache_root()
         assert result == tmp_path
 
     def test_env_override_returns_path_object(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_REFERENCES_ROOT", str(tmp_path / "custom"))
+        monkeypatch.setenv("RAPTIX_REFERENCES_ROOT", str(tmp_path / "custom"))
         result = _default_cache_root()
         assert isinstance(result, Path)
         assert result == tmp_path / "custom"

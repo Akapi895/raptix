@@ -2,7 +2,7 @@
 
 Opt-in bridge so Decepticon agents can use tools exposed by external
 MCP servers (e.g. Kali MCP server, HexStrike). Activation is purely
-env-driven (``DECEPTICON_MCP__SERVERS``) and requires the optional
+env-driven (``RAPTIX_MCP__SERVERS``) and requires the optional
 ``langchain-mcp-adapters`` package to be installed separately —
 nothing in this subpackage is imported at framework start-up.
 

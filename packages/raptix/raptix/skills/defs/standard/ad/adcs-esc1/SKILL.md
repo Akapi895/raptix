@@ -27,7 +27,7 @@ certipy find -u USER@DOM -p 'PASS' -dc-ip DC_IP -json \
   -output /tmp/adcs.json
 ```
 
-Decepticon ingest:
+Raptix ingest:
 ```
 adcs_audit("/tmp/adcs.json")
 ```

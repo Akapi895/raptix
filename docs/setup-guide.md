@@ -52,12 +52,12 @@ Native Windows is supported alongside WSL2 — choose whichever fits your toolch
 
 ### WSL2 notes
 
-Decepticon runs end-to-end on WSL2 with two valid Docker setups:
+Raptix runs end-to-end on WSL2 with two valid Docker setups:
 
 1. **Docker Desktop with WSL2 backend** (the common path) — Docker Desktop registers `host.docker.internal` automatically.
-2. **Native Docker inside the WSL distro** (no Docker Desktop) — Decepticon's `docker-compose.yml` adds the `host.docker.internal:host-gateway` mapping itself, so containers reach the host either way.
+2. **Native Docker inside the WSL distro** (no Docker Desktop) — Raptix's `docker-compose.yml` adds the `host.docker.internal:host-gateway` mapping itself, so containers reach the host either way.
 
-The default `OLLAMA_API_BASE=http://host.docker.internal:11434` is the right value in **all** environments — including the case where Ollama runs *inside* the same WSL distro as Decepticon. From inside a container, `localhost` is the container itself, so it can never reach Ollama on the host. Use `host.docker.internal`.
+The default `OLLAMA_API_BASE=http://host.docker.internal:11434` is the right value in **all** environments — including the case where Ollama runs *inside* the same WSL distro as Raptix. From inside a container, `localhost` is the container itself, so it can never reach Ollama on the host. Use `host.docker.internal`.
 
 Ollama must additionally listen on all interfaces — the default `127.0.0.1` binding is invisible to containers. Launch it with:
 
@@ -66,7 +66,7 @@ OLLAMA_HOST=0.0.0.0:11434 ollama serve
 ```
 
 Other WSL caveats:
-- Install Decepticon under your WSL home (`~/.decepticon`), not on a Windows-mounted drive (`/mnt/c/...`) — bind-mounted I/O across the boundary is much slower.
+- Install Raptix under your WSL home (`~/.decepticon`), not on a Windows-mounted drive (`/mnt/c/...`) — bind-mounted I/O across the boundary is much slower.
 - WSL2 mirrored networking (Windows 11 22H2+) collapses the *Windows host ↔ WSL distro* split, but Docker bridge networks remain isolated. The `host.docker.internal` requirement still applies.
 
 #### WSL2 + Ollama troubleshooting flowchart
@@ -192,12 +192,12 @@ This downloads the `decepticon` CLI binary for your platform and places it in yo
 
 ### Using Podman instead of Docker
 
-Decepticon detects Podman 4.4+ automatically. The launcher prefers Docker when both are available; set `DECEPTICON_CONTAINER_RUNTIME=podman` to force Podman:
+Raptix detects Podman 4.4+ automatically. The launcher prefers Docker when both are available; set `RAPTIX_CONTAINER_RUNTIME=podman` to force Podman:
 
 ```bash
 # Linux (rootless Podman, recommended)
 systemctl --user enable --now podman.socket          # enable the API socket
-export DECEPTICON_CONTAINER_RUNTIME=podman           # force Podman selection
+export RAPTIX_CONTAINER_RUNTIME=podman           # force Podman selection
 decepticon start                                      # launcher detects + uses podman compose
 ```
 
@@ -213,7 +213,7 @@ Rootless Podman caveats:
 ### Using nerdctl
 
 ```bash
-export DECEPTICON_CONTAINER_RUNTIME=nerdctl
+export RAPTIX_CONTAINER_RUNTIME=nerdctl
 decepticon start
 ```
 
@@ -225,12 +225,12 @@ Requires nerdctl ≥ 0.16 (built-in compose) and a running containerd (`containe
 — launcher onboard wizard, engagement picker, compose up, health checks,
 and the CLI all execute exactly as the `curl | bash` install path. The
 launcher and every service image come from the current checkout (tag
-`:dev`), with an isolated `$DECEPTICON_HOME` under `.dogfood/` so your
+`:dev`), with an isolated `$RAPTIX_HOME` under `.dogfood/` so your
 real `~/.decepticon` is untouched.
 
 ```bash
-git clone https://github.com/PurpleAILAB/Decepticon.git
-cd Decepticon
+git clone https://github.com/Akapi895/raptix.git
+cd Raptix
 make dogfood
 ```
 
@@ -244,7 +244,7 @@ decepticon version
 
 ## Authentication Methods
 
-Decepticon supports three authentication modes. Choose one during `decepticon onboard`.
+Raptix supports three authentication modes. Choose one during `decepticon onboard`.
 
 ### API Keys
 
@@ -260,7 +260,7 @@ decepticon onboard
 Or edit `~/.decepticon/.env` directly:
 
 ```bash
-DECEPTICON_AUTH_PRIORITY=anthropic_api,openai_api
+RAPTIX_AUTH_PRIORITY=anthropic_api,openai_api
 ANTHROPIC_API_KEY=sk-ant-api03-...
 OPENAI_API_KEY=sk-proj-...
 ```
@@ -328,19 +328,19 @@ default fallback chain; pick a specific route at runtime with `/model`
 
 > Cloudflare's base URL is per-account — set it to your gateway's
 > OpenAI-compat `…/compat` path. Qianfan model ids drift; override per
-> role with `DECEPTICON_MODEL_<ROLE>` if a default 404s.
+> role with `RAPTIX_MODEL_<ROLE>` if a default 404s.
 
 ---
 
 ### Local LLM (Ollama)
 
-Run Decepticon offline against a local Ollama server — no cloud API
+Run Raptix offline against a local Ollama server — no cloud API
 billing, no key.
 
 **Setup:**
 
 1. Install Ollama on your host: <https://ollama.com/download>.
-2. Pull a tool-capable model — Decepticon agents always call tools, so
+2. Pull a tool-capable model — Raptix agents always call tools, so
    the chosen model **must** advertise the `tools` capability. Known
    working families: Qwen3-Coder, Llama 3.3, DeepSeek-R1, Mistral
    Small 3, Hermes-3:
@@ -348,7 +348,7 @@ billing, no key.
    ollama pull qwen3-coder:30b
    ollama show qwen3-coder:30b   # capabilities should include "tools"
    ```
-3. Start the Ollama server bound to all interfaces so the Decepticon
+3. Start the Ollama server bound to all interfaces so the Raptix
    container can reach it (the default `127.0.0.1` binding only accepts
    host-side connections):
    ```bash
@@ -367,7 +367,7 @@ billing, no key.
    - `OLLAMA_MODEL` — the wizard probes your running Ollama at the
      default URL, lists every pulled model whose `/api/show`
      capabilities include `tools`, and presents that filtered list as
-     the only valid choice. You cannot type a tag manually: Decepticon
+     the only valid choice. You cannot type a tag manually: Raptix
      agents always emit tool calls, so a non-tool-capable model would
      break on the first request. If the wizard finds nothing
      tool-capable (or cannot reach Ollama), it refuses to write `.env`
@@ -385,11 +385,11 @@ billing, no key.
   startup (`config/litellm_dynamic_config.py`). No yaml edit needed.
 - `ollama_chat/` (not `ollama/`) routes to Ollama's `/api/chat`
   endpoint — the only one that supports tool/function calling, which
-  every Decepticon agent depends on.
+  every Raptix agent depends on.
 - The `ollama_local` AuthMethod collapses HIGH/MID/LOW tiers to the
   same model — local hardware can't usually run three different models
   in parallel. Mix with cloud providers if you want tier degradation:
-  set `DECEPTICON_AUTH_PRIORITY=ollama_local,anthropic_api` to lead
+  set `RAPTIX_AUTH_PRIORITY=ollama_local,anthropic_api` to lead
   with local and fall back to Anthropic on local-side errors.
 
 **Per-role overrides:**
@@ -398,8 +398,8 @@ If you do have the GPU headroom, override individual agents to
 different Ollama models without touching yaml:
 
 ```bash
-DECEPTICON_MODEL_DECEPTICON=ollama_chat/qwen3-coder:30b   # HIGH agents
-DECEPTICON_MODEL_RECON=ollama_chat/llama3.2:3b             # LOW agents
+RAPTIX_MODEL_DECEPTICON=ollama_chat/qwen3-coder:30b   # HIGH agents
+RAPTIX_MODEL_RECON=ollama_chat/llama3.2:3b             # LOW agents
 ```
 
 The dynamic config registrar picks these up at startup.
@@ -438,7 +438,7 @@ cat ~/.claude/.credentials.json
 # Should contain claudeAiOauth.accessToken starting with sk-ant-oat01-
 ```
 
-3. Configure Decepticon to use OAuth:
+3. Configure Raptix to use OAuth:
 
 ```bash
 decepticon onboard
@@ -450,9 +450,9 @@ decepticon onboard
 Or edit `~/.decepticon/.env`:
 
 ```bash
-DECEPTICON_AUTH_PRIORITY=anthropic_oauth,anthropic_api
-DECEPTICON_AUTH_CLAUDE_CODE=true
-DECEPTICON_MODEL_PROFILE=eco
+RAPTIX_AUTH_PRIORITY=anthropic_oauth,anthropic_api
+RAPTIX_AUTH_CLAUDE_CODE=true
+RAPTIX_MODEL_PROFILE=eco
 ```
 
 4. Launch:
@@ -498,7 +498,7 @@ Use your ChatGPT Pro, Plus, or Team subscription instead of OpenAI API billing.
 
 **Setup:**
 
-1. Configure Decepticon:
+1. Configure Raptix:
 
 ```bash
 decepticon onboard
@@ -509,7 +509,7 @@ decepticon onboard
 Or edit `~/.decepticon/.env`:
 
 ```bash
-DECEPTICON_AUTH_CHATGPT=true
+RAPTIX_AUTH_CHATGPT=true
 ```
 
 2. Launch:
@@ -520,11 +520,11 @@ decepticon
 
 **How it works:**
 
-- Decepticon exposes ChatGPT subscription models as `auth/gpt-5.5`
+- Raptix exposes ChatGPT subscription models as `auth/gpt-5.5`
   and `auth/gpt-5.4`.
-- LiteLLM dynamic config maps those aliases through Decepticon's custom
+- LiteLLM dynamic config maps those aliases through Raptix's custom
   `auth/` handler (`codex_chatgpt_handler`) only when
-  `DECEPTICON_AUTH_CHATGPT=true`.
+  `RAPTIX_AUTH_CHATGPT=true`.
 - `docker-compose.yml` mounts the host's Codex CLI credential file
   (`~/.codex/auth.json`) into the LiteLLM container at
   `/root/.codex/auth.json` (read-write, so the in-container refresh path
@@ -555,7 +555,7 @@ Use your Google One AI Premium subscription ($20/mo).
 2. Configure:
 
 ```bash
-DECEPTICON_AUTH_GEMINI=true
+RAPTIX_AUTH_GEMINI=true
 GEMINI_ACCESS_TOKEN=<your-google-oauth-token>
 ```
 
@@ -578,7 +578,7 @@ Use your Copilot Pro subscription ($20/mo) for GPT-4o/o1 access.
 2. Configure:
 
 ```bash
-DECEPTICON_AUTH_COPILOT=true
+RAPTIX_AUTH_COPILOT=true
 COPILOT_ACCESS_TOKEN=eyJ...your-ms-token
 ```
 
@@ -602,7 +602,7 @@ Use your X Premium+ subscription for Grok-3 access.
 2. Configure:
 
 ```bash
-DECEPTICON_AUTH_GROK=true
+RAPTIX_AUTH_GROK=true
 GROK_SESSION_TOKEN=your-x-auth-token
 ```
 
@@ -620,7 +620,7 @@ Use your Perplexity Pro subscription ($20/mo) for Sonar Pro access.
 2. Configure:
 
 ```bash
-DECEPTICON_AUTH_PERPLEXITY=true
+RAPTIX_AUTH_PERPLEXITY=true
 PERPLEXITY_SESSION_TOKEN=your-session-token
 ```
 
@@ -664,12 +664,12 @@ Complete list of all supported LLM providers and their pre-configured models:
 
 **Adding models not in the static config:**
 
-Set `DECEPTICON_MODEL` or `DECEPTICON_LITELLM_MODELS` and Decepticon auto-generates the LiteLLM route at container startup:
+Set `RAPTIX_MODEL` or `RAPTIX_LITELLM_MODELS` and Raptix auto-generates the LiteLLM route at container startup:
 
 ```bash
-DECEPTICON_MODEL_PROFILE=custom
-DECEPTICON_MODEL=openrouter/anthropic/claude-3.7-sonnet
-DECEPTICON_LITELLM_MODELS=groq/llama-3.3-70b-versatile,together/deepseek-ai/DeepSeek-R1
+RAPTIX_MODEL_PROFILE=custom
+RAPTIX_MODEL=openrouter/anthropic/claude-3.7-sonnet
+RAPTIX_LITELLM_MODELS=groq/llama-3.3-70b-versatile,together/deepseek-ai/DeepSeek-R1
 ```
 
 ---
@@ -681,20 +681,20 @@ DECEPTICON_LITELLM_MODELS=groq/llama-3.3-70b-versatile,together/deepseek-ai/Deep
 | `eco` | Production engagements — balanced mix | $$ |
 | `max` | High-value targets — Opus everywhere | $$$$ |
 | `test` | Development and CI — Haiku only | $ |
-| `custom` | Bring your own model via `DECEPTICON_MODEL` | Varies |
+| `custom` | Bring your own model via `RAPTIX_MODEL` | Varies |
 
 Set in `~/.decepticon/.env`:
 
 ```bash
-DECEPTICON_MODEL_PROFILE=eco
+RAPTIX_MODEL_PROFILE=eco
 ```
 
 Per-role overrides (any profile):
 
 ```bash
-DECEPTICON_MODEL_RECON=ollama_chat/qwen3-coder:30b
-DECEPTICON_MODEL_EXPLOIT=anthropic/claude-opus-4-7
-DECEPTICON_MODEL_EXPLOIT_TEMPERATURE=0.2
+RAPTIX_MODEL_RECON=ollama_chat/qwen3-coder:30b
+RAPTIX_MODEL_EXPLOIT=anthropic/claude-opus-4-7
+RAPTIX_MODEL_EXPLOIT_TEMPERATURE=0.2
 ```
 
 See [Models](models.md) for the full role-to-model mapping.
@@ -740,7 +740,7 @@ decepticon stop             # Stop all services, keep data
 decepticon status           # Show running services
 decepticon logs [service]   # Follow service logs
 decepticon update           # Explicitly refresh config/images and upgrade when available
-decepticon remove           # Uninstall Decepticon completely
+decepticon remove           # Uninstall Raptix completely
 decepticon --version        # Show installed version
 ```
 
@@ -768,8 +768,8 @@ Complete walkthrough from zero to a running autonomous engagement, covering ever
 curl -fsSL https://decepticon.red/install | bash
 
 # Or from source
-git clone https://github.com/PurpleAILAB/Decepticon.git
-cd Decepticon
+git clone https://github.com/Akapi895/raptix.git
+cd Raptix
 make install
 ```
 
@@ -833,7 +833,7 @@ Once running, you have:
 **Option A — Terminal CLI:**
 
 ```bash
-# Decepticon shows the engagement picker after launch
+# Raptix shows the engagement picker after launch
 # Select "New engagement" → type a slug → Soundwave starts interviewing you
 ```
 
@@ -877,10 +877,10 @@ mapping) from the bundle — Soundwave does not write it.
 
 ### Step 7: Autonomous Execution
 
-After you approve the OPPLAN, Decepticon takes over:
+After you approve the OPPLAN, Raptix takes over:
 
 ```
-Decepticon (Orchestrator)
+Raptix (Orchestrator)
 ├── Reads OPPLAN objectives
 ├── Dispatches to specialist agents:
 │   ├── Recon → port scan, service enum, OSINT
@@ -942,7 +942,7 @@ decepticon           # Shows engagement picker → select existing
 
 ```bash
 decepticon stop
-# Edit ~/.decepticon/.env → change DECEPTICON_AUTH_PRIORITY, DECEPTICON_AUTH_* toggles, or API keys
+# Edit ~/.decepticon/.env → change RAPTIX_AUTH_PRIORITY, RAPTIX_AUTH_* toggles, or API keys
 decepticon
 ```
 
@@ -979,11 +979,11 @@ GEMINI_API_KEY=AIza...
 
 ### Hybrid Auth (OAuth + API Keys)
 
-Set `DECEPTICON_AUTH_CLAUDE_CODE=true` to route Anthropic models through Claude Code OAuth while keeping API-key fallbacks active. The `DECEPTICON_AUTH_PRIORITY` list controls order:
+Set `RAPTIX_AUTH_CLAUDE_CODE=true` to route Anthropic models through Claude Code OAuth while keeping API-key fallbacks active. The `RAPTIX_AUTH_PRIORITY` list controls order:
 
 ```bash
-DECEPTICON_AUTH_PRIORITY=anthropic_oauth,anthropic_api,openai_api,google_api
-DECEPTICON_AUTH_CLAUDE_CODE=true      # Primary: Claude via OAuth (auth/* in LiteLLM)
+RAPTIX_AUTH_PRIORITY=anthropic_oauth,anthropic_api,openai_api,google_api
+RAPTIX_AUTH_CLAUDE_CODE=true      # Primary: Claude via OAuth (auth/* in LiteLLM)
 ANTHROPIC_API_KEY=sk-ant-...          # Fallback: Anthropic API
 OPENAI_API_KEY=sk-proj-...            # Fallback: GPT via API key
 GEMINI_API_KEY=AIza...                # Fallback: Gemini via API key
@@ -1009,7 +1009,7 @@ WEB_PORT=3000         # Dashboard
 ### Debug Mode
 
 ```bash
-DECEPTICON_DEBUG=true
+RAPTIX_DEBUG=true
 ```
 
 ---
@@ -1030,7 +1030,7 @@ cat ~/.claude/.credentials.json | python3 -c "import sys,json; d=json.load(sys.s
 
 **ChatGPT OAuth: missing or expired auth**
 
-The Decepticon `auth/` ChatGPT handler reads the Codex CLI credential
+The Raptix `auth/` ChatGPT handler reads the Codex CLI credential
 store at `~/.codex/auth.json`. If the file is missing or the refresh
 token is rejected, run `codex login` on the host and retry. The handler
 picks up the refreshed file automatically (no container restart needed).

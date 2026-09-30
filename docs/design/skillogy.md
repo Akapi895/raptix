@@ -29,7 +29,7 @@
 
 ## TL;DR
 
-Skillogy replaces Decepticon's flat, text-matching skill catalog with a **typed Neo4j knowledge graph** built at CI time and exposed to agents through five MCP-style tools. Skills, MITRE techniques, asset types, capabilities, agents, and Map-of-Concepts (MoC) categories become first-class graph nodes connected by typed edges. The LLM remains in autonomous control — it just calls a smarter set of tools.
+Skillogy replaces Raptix's flat, text-matching skill catalog with a **typed Neo4j knowledge graph** built at CI time and exposed to agents through five MCP-style tools. Skills, MITRE techniques, asset types, capabilities, agents, and Map-of-Concepts (MoC) categories become first-class graph nodes connected by typed edges. The LLM remains in autonomous control — it just calls a smarter set of tools.
 
 Skill source files (`SKILL.md`) are unchanged. They continue to be the ground truth and trust boundary; the graph is a **discovery layer** that points to them.
 
@@ -39,7 +39,7 @@ Skill source files (`SKILL.md`) are unchanged. They continue to be the ground tr
 
 ### 1.1 Current skill system
 
-`SkillsMiddleware` ([packages/decepticon/decepticon/middleware/skills.py](../../packages/decepticon/decepticon/middleware/skills.py)) implements three-stage progressive disclosure:
+`SkillsMiddleware` ([packages/raptix/raptix/middleware/skills.py](../../packages/raptix/raptix/middleware/skills.py)) implements three-stage progressive disclosure:
 
 | Stage | What loads | Token cost | Trigger |
 |---|---|---|---|
@@ -55,7 +55,7 @@ The agent picks a skill by matching the natural-language `description` and `meta
 |---|---|
 | Native LLM tool selection drops to ~49 % at 100 + tools | Opus 4 measurements; RAG-MCP study |
 | Vector RAG over flat tool list degrades to near-random past 100 entries | RAG-MCP |
-| `when_to_use` is a comma-separated keyword string — no ranking, no relations | [packages/decepticon/decepticon/skills/standard/recon/passive-recon/SKILL.md](../../packages/decepticon/decepticon/skills/standard/recon/passive-recon/SKILL.md) frontmatter |
+| `when_to_use` is a comma-separated keyword string — no ranking, no relations | [packages/raptix/raptix/skills/standard/recon/passive-recon/SKILL.md](../../packages/raptix/raptix/skills/standard/recon/passive-recon/SKILL.md) frontmatter |
 | Routing skills (e.g. `exploit/web/SKILL.md`) hand-list 30 + sub-skills; adding a sub-skill requires editing the parent | `skills/standard/exploit/web/SKILL.md` |
 | Catalog injected at every agent boot — ~4 KB even before any tool call | Measured |
 | No machine-readable relation between skills (prereq, composes-with, substitutes, forbidden) | Frontmatter schema |
@@ -169,7 +169,7 @@ RoE seed ──────────────┤                    └ ma
                        └─────────────────────────────────────────┘
 ```
 
-Decepticon already runs Neo4j on `sandbox-net` for the attack graph (see [docs/knowledge-graph.md](../knowledge-graph.md) and [docs/design/attack-graph-schema.md](attack-graph-schema.md)). The skill graph adds new node labels in the same database and adds a small number of bridge edges between the two.
+Raptix already runs Neo4j on `sandbox-net` for the attack graph (see [docs/knowledge-graph.md](../knowledge-graph.md) and [docs/design/attack-graph-schema.md](attack-graph-schema.md)). The skill graph adds new node labels in the same database and adds a small number of bridge edges between the two.
 
 ---
 
@@ -188,7 +188,7 @@ Decepticon already runs Neo4j on `sandbox-net` for the attack graph (see [docs/k
 | `:Tool` | External tool referenced by a skill | `name` (e.g. `nmap`, `sqlmap`), `category`, `os[]` | frontmatter `allowed-tools` |
 | `:Phase` | Kill-chain phase | `name` (e.g. `reconnaissance`), `kill_chain_order`, `mitre_tactic`, `kind` (`offensive` / `meta`) | seed |
 | `:MoC` | Map-of-Concepts category for navigation / disclosure | `name` (e.g. `web-exploitation`), `description`, `parent_phase` | seed + computed |
-| `:Agent` | Decepticon specialist agent | `name` (e.g. `soundwave`, `recon`), `role`, `description`, `code_path` | seed |
+| `:Agent` | Raptix specialist agent | `name` (e.g. `soundwave`, `recon`), `role`, `description`, `code_path` | seed |
 | `:RoEConstraint` | Explicit Rules-of-Engagement constraint | `name` (e.g. `no-data-exfil`), `description` | seed |
 
 ### 4.2 Edge types
@@ -238,7 +238,7 @@ All inferred edges carry: `confidence` (0–1), `provenance`, `justification` (t
 ATT&CK v19 (April 2026) is the largest structural change in years and **must be handled correctly** by the STIX importer:
 
 1. **Defense Evasion split** — `TA0005` was renamed to **"Stealth"** (same STIX ID, new meaning). A new tactic `TA0112` "Defense Impairment" was introduced. STIX consumers that only look at IDs will silently mis-interpret skill mappings.
-2. **New AI-adversary techniques** (relevant to Decepticon itself, since Decepticon *is* an AI attacker):
+2. **New AI-adversary techniques** (relevant to Raptix itself, since Raptix *is* an AI attacker):
    - `T1682` — Query Public AI Services
    - `T1683` / `T1683.001` (Written Content) / `T1683.002` (A/V Content) — Generate Content
    - `T1588.007` — Obtain Capabilities: Artificial Intelligence
@@ -248,7 +248,7 @@ Mapping policy:
 - All MITRE IDs in `metadata.mitre_attack` MUST be `T\d{4}(\.\d{3})?` — never `TA0xxx`.
 - `:Skill {kind: 'offensive'}` MUST have `≥ 1` `IMPLEMENTS` edge after build (validator rule).
 - `:Skill {kind: 'reporting' | 'analytic'}` is exempt from MITRE mapping.
-- The framework itself (`:Agent {name: 'decepticon'}`) `OBTAINS` `:Capability {name: 'ai-provider-access', mitre: 'T1588.007'}` — captures the fact that Decepticon acquires AI capability as attack infrastructure.
+- The framework itself (`:Agent {name: 'decepticon'}`) `OBTAINS` `:Capability {name: 'ai-provider-access', mitre: 'T1588.007'}` — captures the fact that Raptix acquires AI capability as attack infrastructure.
 - Soundwave (`:Agent {name: 'soundwave'}`) `IMPLEMENTS` `:SubTechnique {id: 'T1683.001'}` — captures AI-generated planning artifacts authorizing social engineering.
 
 The STIX importer pins the bundle version explicitly:
@@ -341,7 +341,7 @@ Backward chaining: returns one or more skill sequences that reach `target_capabi
 
 ## 6. SkillogyMiddleware
 
-Replaces `SkillsMiddleware`. Lives at `packages/decepticon/decepticon/middleware/skillogy.py`.
+Replaces `SkillsMiddleware`. Lives at `packages/raptix/raptix/middleware/skillogy.py`.
 
 ```python
 class SkillogyMiddleware(BaseMiddleware):
@@ -404,12 +404,12 @@ About 300 tokens. The agent doesn't see the 146-skill catalog; it sees the *navi
 
 ## 7. Build Pipeline
 
-A new Python package `graph_builder/` under `packages/decepticon/` (alongside `middleware/`, `agents/`, `skills/`).
+A new Python package `graph_builder/` under `packages/raptix/` (alongside `middleware/`, `agents/`, `skills/`).
 
 ### 7.1 Module layout
 
 ```
-packages/decepticon/decepticon/graph_builder/
+packages/raptix/raptix/graph_builder/
 ├── __init__.py
 ├── build_skill_graph.py       # entry point — orchestrates the 12 stages below
 ├── extract_frontmatter.py     # SKILL.md → :Skill + explicit edges
@@ -669,7 +669,7 @@ Skillogy ships behind a feature flag during transition.
 | 4 | Default flip | If benchmark passes, `skillogy` becomes the default; `SkillsMiddleware` enters deprecation |
 | 5 | Remove | After one release cycle, delete `SkillsMiddleware` |
 
-`SKILL.md` authoring is unchanged across all steps. Plugin authors are unaffected — `decepticon-sdk` continues to read frontmatter the same way; the graph build just sees their files too.
+`SKILL.md` authoring is unchanged across all steps. Plugin authors are unaffected — `raptix-sdk` continues to read frontmatter the same way; the graph build just sees their files too.
 
 ---
 

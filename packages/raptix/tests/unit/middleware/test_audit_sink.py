@@ -31,7 +31,7 @@ class TestPostInitHmacKeyEnvFallback:
     def test_env_key_used_when_hmac_key_none(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_AUDIT_HMAC_KEY", "env-secret")
+        monkeypatch.setenv("RAPTIX_AUDIT_HMAC_KEY", "env-secret")
         sink = RoEAuditSink(path=tmp_path / "a.jsonl")
         assert sink.hmac_key == b"env-secret"
         sink.append({"event": "x"})
@@ -41,7 +41,7 @@ class TestPostInitHmacKeyEnvFallback:
     def test_env_key_absent_hmac_key_stays_none(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.delenv("DECEPTICON_AUDIT_HMAC_KEY", raising=False)
+        monkeypatch.delenv("RAPTIX_AUDIT_HMAC_KEY", raising=False)
         sink = RoEAuditSink(path=tmp_path / "a.jsonl")
         assert sink.hmac_key is None
         stamped = sink.append({"event": "x"})
@@ -50,7 +50,7 @@ class TestPostInitHmacKeyEnvFallback:
     def test_explicit_hmac_key_not_overridden_by_env(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_AUDIT_HMAC_KEY", "env-secret")
+        monkeypatch.setenv("RAPTIX_AUDIT_HMAC_KEY", "env-secret")
         sink = RoEAuditSink(path=tmp_path / "a.jsonl", hmac_key=b"explicit-key")
         assert sink.hmac_key == b"explicit-key"
 

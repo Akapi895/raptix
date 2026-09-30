@@ -71,7 +71,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
         result = await handler(request)
-        if os.environ.get("DECEPTICON_KG_AUTOINGEST", "0").lower() not in {"1", "true", "yes"}:
+        if os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {"1", "true", "yes"}:
             return result
         try:
             await asyncio.wait_for(

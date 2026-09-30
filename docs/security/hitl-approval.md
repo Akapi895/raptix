@@ -13,27 +13,27 @@ intercepts tool calls that match a declarative policy, pauses the run,
 and applies the operator's decision.
 
 It is **opt-in and off by default**: the slot factory returns nothing
-unless `DECEPTICON_HITL__ENABLED` is truthy, so default engagements never
+unless `RAPTIX_HITL__ENABLED` is truthy, so default engagements never
 freeze waiting on a human.
 
 Source of record:
-[`middleware/hitl.py`](../../packages/decepticon/decepticon/middleware/hitl.py)
+[`middleware/hitl.py`](../../packages/raptix/raptix/middleware/hitl.py)
 (middleware, policy, transports) and
-[`agents/middleware_slots.py`](../../packages/decepticon/decepticon/agents/middleware_slots.py)
+[`agents/middleware_slots.py`](../../packages/raptix/raptix/agents/middleware_slots.py)
 (the opt-in slot factory).
 
 ## Enabling it
 
-`DECEPTICON_HITL__ENABLED` controls the slot. Any value other than the
+`RAPTIX_HITL__ENABLED` controls the slot. Any value other than the
 falsy set — `""`, `0`, `false`, `no`, `off` (case-insensitive) — enables
 the gate. When enabled, the factory builds the middleware with
 `DEFAULT_HIGH_IMPACT_POLICY`, `transport=None`, the engagement id from
-`DECEPTICON_ENGAGEMENT_ID` (default `default-engagement`), and the
+`RAPTIX_ENGAGEMENT_ID` (default `default-engagement`), and the
 agent's role as `agent_name`.
 
 With `transport=None`, the middleware resolves a transport **per
 request** from `state["workspace_path"]` (falling back to
-`DECEPTICON_WORKSPACE_PATH`, then `/workspace`). The resolved transport is
+`RAPTIX_WORKSPACE_PATH`, then `/workspace`). The resolved transport is
 a [`FileBackedApprovalTransport`](#transports) writing
 `<workspace>/approvals/requests.jsonl` and
 `<workspace>/approvals/decisions.jsonl` — a contract shared with the web
@@ -117,7 +117,7 @@ The middleware does not hardcode any event-log format; it talks to an
 ## See also
 
 - [Security Controls](./security-controls.md) — the runtime-guard
-  knob/default table, including `DECEPTICON_HITL__ENABLED`.
+  knob/default table, including `RAPTIX_HITL__ENABLED`.
 - [RoE Machine Enforcement](./roe-machine-enforcement.md) — the gate
   below HITL; operator approval cannot override an RoE refusal.
 - [Audit Ledger](./audit-ledger.md) — the append-only record of RoE

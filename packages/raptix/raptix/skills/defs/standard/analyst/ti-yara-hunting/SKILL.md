@@ -54,7 +54,7 @@ yr check /workspace/rules/suspect.yar
 ```yara
 rule Malware_FamilyName_Variant {
     meta:
-        author      = "Decepticon TI"
+        author      = "Raptix TI"
         date        = "2025-01-01"
         description = "Detects FamilyName variant based on unique strings"
         hash        = "e3b0c44298fc1c149afbf4c8996fb924..."
@@ -181,7 +181,7 @@ for s in pe.sections:
 ```yara
 rule APT_Backdoor_ObservedBehavior {
     meta:
-        author      = "Decepticon TI"
+        author      = "Raptix TI"
         date        = "2025-01-01"
         description = "Backdoor observed during engagement — drops to %TEMP%, "
                       "contacts C2 over HTTPS, exfiltrates via DNS TXT"
@@ -230,7 +230,7 @@ python3 /opt/yarGen/yarGen.py \
   -m /workspace/samples/campaign_x/ \
   -o /workspace/rules/campaign_x.yar \
   --excludegood \
-  -a "Decepticon TI" \
+  -a "Raptix TI" \
   -r "https://engagement-reference"
 
 # AI-assisted mode (v0.24.0+) — generates expanded string set with AI prompt

@@ -4,7 +4,7 @@ description: Stage 1 broad-spectrum scanner playbook. Sharded sweep over very la
 metadata:
   subdomain: orchestration
   when_to_use: "scanner stage 1 broad spectrum codebase sweep candidate sharded pipeline"
-  upstream_ref: "Decepticon vulnresearch pipeline — stage 1 scanner role"
+  upstream_ref: "Raptix vulnresearch pipeline — stage 1 scanner role"
 ---
 
 # Scanner Skill

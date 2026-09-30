@@ -506,7 +506,7 @@ class HTTPSandbox(BaseSandbox):
         The sandbox folds in its locally-discovered management plane and
         loads the nftables connect-allowlist by default for an enforcing
         policy (the operator can opt out sandbox-side via
-        ``DECEPTICON_EGRESS_DISABLE``). The returned dict reports whether
+        ``RAPTIX_EGRESS_DISABLE``). The returned dict reports whether
         the ruleset was applied. See ``raptix.middleware.egress`` for
         the policy compiler.
         """

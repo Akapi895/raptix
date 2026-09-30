@@ -92,7 +92,7 @@ const telemetryConsentBlurb = "" +
 	"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n" +
 	"Never sent at any tier: raw prompts, real target IPs/hosts, credentials.\n" +
 	"Your IP is dropped at the gateway.\n\n" +
-	"You can change this anytime: set DECEPTICON_TELEMETRY=off (or basic) in\n" +
+	"You can change this anytime: set RAPTIX_TELEMETRY=off (or basic) in\n" +
 	"~/.decepticon/.env, run `decepticon-cli telemetry off`, or DO_NOT_TRACK=1."
 
 func applyTelemetryReconsent(c *Ctx) (string, error) {
@@ -115,20 +115,20 @@ func applyTelemetryReconsent(c *Ctx) (string, error) {
 	if !consent {
 		mode = "off"
 	}
-	if err := config.SetEnvKey(c.EnvPath, "DECEPTICON_TELEMETRY", mode); err != nil {
+	if err := config.SetEnvKey(c.EnvPath, "RAPTIX_TELEMETRY", mode); err != nil {
 		return "", err
 	}
-	c.Env["DECEPTICON_TELEMETRY"] = mode
+	c.Env["RAPTIX_TELEMETRY"] = mode
 
 	if consent {
 		return "Telemetry: research tier enabled (identifiers masked). " +
-			"Disable anytime with DECEPTICON_TELEMETRY=off or DO_NOT_TRACK=1.", nil
+			"Disable anytime with RAPTIX_TELEMETRY=off or DO_NOT_TRACK=1.", nil
 	}
 	return "Telemetry: kept off.", nil
 }
 
 // hasOptOutMarker mirrors the Python config's persistent opt-out marker at
-// $DECEPTICON_HOME/telemetry/opt_out (decepticon_core/.../telemetry).
+// $RAPTIX_HOME/telemetry/opt_out (decepticon_core/.../telemetry).
 func hasOptOutMarker(home string) bool {
 	_, err := os.Stat(filepath.Join(home, "telemetry", "opt_out"))
 	return err == nil

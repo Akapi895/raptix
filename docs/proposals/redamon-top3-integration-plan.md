@@ -7,8 +7,8 @@ each PR is **1 logical concern, ≤ 400 runtime lines, ≤ 10 files**, with a re
 verification statement. File paths below were confirmed against the current `main` tree.
 
 > **Prerequisite that shapes everything:** the AI-surface cluster needs a `Technology` KG node kind.
-> KG node kinds live in `packages/decepticon-core/decepticon_core/types/kg.py` and are exercised by
-> `packages/decepticon-core/tests/test_public_api_stability.py` + `test_kg_detection_types.py` —
+> KG node kinds live in `packages/raptix-core/raptix_core/types/kg.py` and are exercised by
+> `packages/raptix-core/tests/test_public_api_stability.py` + `test_kg_detection_types.py` —
 > i.e. a **public-type-surface change**. `types/**` is *not* in `.github/CODEOWNERS` today (only
 > `contracts/**`, `protocols/**`, `registry/**` are), so it may self-merge on green — but because it
 > is load-bearing public API, it should land via a short **ADR** (`docs/adr/**`, which *is*
@@ -18,10 +18,10 @@ verification statement. File paths below were confirmed against the current `mai
 
 ## A. AI-surface discovery cluster (proposal items 1–4)
 
-**Why first:** closes Decepticon's single biggest categorical blind spot — the `llm-redteam` plugin
+**Why first:** closes Raptix's single biggest categorical blind spot — the `llm-redteam` plugin
 can attack Ollama/vLLM/LangChain/MLflow targets it currently cannot *find*. Pure-Python regex
 catalogs ported from `redamon/recon/helpers/ai_signal_catalog.py`; they drop into the existing
-`kg_ingest_*` fan-in in `packages/decepticon/decepticon/tools/research/tools.py`.
+`kg_ingest_*` fan-in in `packages/raptix/raptix/tools/research/tools.py`.
 
 | PR | Concern | Files (≈) | Tier | CODEOWNERS-gated? |
 |----|---------|-----------|------|-------------------|
@@ -49,7 +49,7 @@ that gap is declared explicitly in the PR body per QUALITY_BAR §Wired-end-to-en
 **Why:** the biggest recon→exploit handoff gap for web. Turns a flat URL dump into vuln-class-tagged
 targets (`file_params`→LFI, `command_params`→RCE, `redirect_params`→SSRF) the chain planner can weight.
 Port **only** `redamon/recon/main_recon_modules/resource_enum/classification.py` — *not* Redamon's
-`ThreadPoolExecutor` scheduler (conflicts with Decepticon's bash-tmux/`task()` parallelism).
+`ThreadPoolExecutor` scheduler (conflicts with Raptix's bash-tmux/`task()` parallelism).
 
 | PR | Concern | Files (≈) | Tier | Gated? |
 |----|---------|-----------|------|--------|
@@ -66,7 +66,7 @@ land on URL nodes and a high-risk param raises an objective.
 
 **Why:** the biggest operator-control gap — steer a long autonomous run without kill/restart.
 Reuses the proven `before_model` injection seam (the notifications middleware;
-`packages/decepticon/.../middleware` + `tests/unit/middleware/test_notifications.py`). Use a
+`packages/raptix/.../middleware` + `tests/unit/middleware/test_notifications.py`). Use a
 **file-backed per-engagement inbox with a byte-offset cursor** (mirror `FileBackedApprovalTransport`),
 **not** Redamon's in-process `asyncio.Queue` (wrong fit for the LangGraph Platform thread/run model).
 

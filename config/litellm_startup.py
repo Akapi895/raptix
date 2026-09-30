@@ -60,8 +60,8 @@ def _replace_config_arg() -> None:
     """Append env-requested model routes to the LiteLLM config before boot.
 
     Also injects subscription OAuth routes (auth/gpt-*) when the
-    corresponding ``DECEPTICON_AUTH_*`` flag is enabled, even if no
-    ``DECEPTICON_MODEL*`` override is set. Without this second branch a
+    corresponding ``RAPTIX_AUTH_*`` flag is enabled, even if no
+    ``RAPTIX_MODEL*`` override is set. Without this second branch a
     user who only enabled ChatGPT subscription auth would never see
     ``auth/gpt-*`` registered and every request would 400.
     """

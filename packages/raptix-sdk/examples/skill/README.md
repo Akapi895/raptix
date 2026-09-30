@@ -1,6 +1,6 @@
 # decepticon-example-skill
 
-A Decepticon plugin (skill) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin (skill) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -15,7 +15,7 @@ via the ``decepticon.skills`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 

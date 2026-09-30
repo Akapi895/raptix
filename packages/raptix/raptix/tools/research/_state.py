@@ -297,7 +297,7 @@ def kg_degrades(fn: Callable[..., str]) -> Callable[..., str]:
     graceful message instead of raising.
 
     The KG middleware *slot* (:func:`raptix.agents.middleware_slots._make_kg`)
-    already degrades when ``DECEPTICON_NEO4J_*`` is unset, but agents such as
+    already degrades when ``RAPTIX_NEO4J_*`` is unset, but agents such as
     ``osint_operator`` import the ``kg_*`` tools DIRECTLY into their tool set,
     bypassing that guard — so a call would raise ``KGStoreConfigError`` from
     ``get_store()`` and surface as a hard tool error. This mirrors the slot

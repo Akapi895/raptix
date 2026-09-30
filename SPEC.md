@@ -1,10 +1,10 @@
 # SPEC
 
 ## §G GOAL
-Port selected Strix v1.5.0 capabilities into Decepticon without parallel architecture.
+Port selected Strix v1.5.0 capabilities into Raptix without parallel architecture.
 
 ## §C CONSTRAINTS
-- Reuse Decepticon plugin, role, KG, reporting, LLM, sandbox contracts.
+- Reuse Raptix plugin, role, KG, reporting, LLM, sandbox contracts.
 - ∀ API operation, dependency finding, container → engagement-scoped + provenance-tagged.
 - API import ! parse-only; network actions remain RoE + egress-gated.
 - No second plugin manager, skill store, graph schema, UI server, or agent loop.
@@ -15,16 +15,16 @@ Port selected Strix v1.5.0 capabilities into Decepticon without parallel archite
 - tool: API spec/collection import → compact JSON inventory + KG observations.
 - tool: `cve_enrich_dependencies` → repo-relative manifest path, chain, reachability evidence.
 - report: finding severity → demonstrated-impact ceiling + evidence level.
-- env: `DECEPTICON_LLM_EXTRA_HEADERS` → JSON object, optional OpenAI-compatible request headers.
-- env: `DECEPTICON_LLM_DISABLE_STREAMING` → opt-in non-streaming OpenAI-compatible calls.
+- env: `RAPTIX_LLM_EXTRA_HEADERS` → JSON object, optional OpenAI-compatible request headers.
+- env: `RAPTIX_LLM_DISABLE_STREAMING` → opt-in non-streaming OpenAI-compatible calls.
 - runtime: dynamic container → engagement/run identity label; teardown selects matching label.
 
 ## §R RESEARCH
 id|topic|finding|src
 R1|Strix v1.5.0|Adds API spec/Postman targets, dependency reachability evidence, impact-calibrated severity, LLM compatibility controls, run labels|https://github.com/usestrix/strix/releases/tag/v1.5.0
-R2|SCA baseline|`cve_enrich_dependencies` parses 4 manifest forms, ranks OSV/NVD/EPSS/KEV results, but lacks manifest provenance + reachability ladder|https://github.com/PurpleAILAB/Decepticon/blob/main/packages/decepticon/decepticon/tools/research/tools.py#L558-L684
-R3|extension contracts|Plugins, roles, skills, middleware, KG ingesters already first-class; new features ! extend nearest contract|https://github.com/PurpleAILAB/Decepticon/tree/main/packages/decepticon-core/decepticon_core
-R4|license|Strix + Decepticon Apache-2.0|https://github.com/usestrix/strix/blob/v1.5.0/LICENSE
+R2|SCA baseline|`cve_enrich_dependencies` parses 4 manifest forms, ranks OSV/NVD/EPSS/KEV results, but lacks manifest provenance + reachability ladder|https://github.com/Akapi895/raptix/blob/main/packages/raptix/raptix/tools/research/tools.py#L558-L684
+R3|extension contracts|Plugins, roles, skills, middleware, KG ingesters already first-class; new features ! extend nearest contract|https://github.com/Akapi895/raptix/tree/main/packages/raptix-core/raptix_core
+R4|license|Strix + Raptix Apache-2.0|https://github.com/usestrix/strix/blob/v1.5.0/LICENSE
 
 ## §V INVARIANTS
 V1: ∀ imported API op → engagement + source provenance; import sends no network request.

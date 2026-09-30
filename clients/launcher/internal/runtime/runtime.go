@@ -4,7 +4,7 @@
 // `Runtime().Bin compose ...` without caring which one is installed.
 //
 // Selection order (first hit wins):
-//  1. $DECEPTICON_CONTAINER_RUNTIME explicit override ("docker", "podman", "nerdctl")
+//  1. $RAPTIX_CONTAINER_RUNTIME explicit override ("docker", "podman", "nerdctl")
 //  2. `docker` on $PATH and `docker info` succeeds (real Docker, Lima/Colima/Rancher Desktop docker shim)
 //  3. `podman` on $PATH and `podman info` succeeds (rootless or rootful Podman 4+)
 //  4. `nerdctl` on $PATH and `nerdctl info` succeeds (containerd-native)
@@ -54,16 +54,16 @@ type Runtime struct {
 // so the caller can render an installation hint.
 func Detect() (Runtime, error) {
 	// 1. Explicit override
-	if forced := strings.ToLower(strings.TrimSpace(os.Getenv("DECEPTICON_CONTAINER_RUNTIME"))); forced != "" {
+	if forced := strings.ToLower(strings.TrimSpace(os.Getenv("RAPTIX_CONTAINER_RUNTIME"))); forced != "" {
 		switch forced {
 		case "docker", "podman", "nerdctl":
 			r, err := probe(forced)
 			if err != nil {
-				return Runtime{}, fmt.Errorf("DECEPTICON_CONTAINER_RUNTIME=%s requested but unusable: %w", forced, err)
+				return Runtime{}, fmt.Errorf("RAPTIX_CONTAINER_RUNTIME=%s requested but unusable: %w", forced, err)
 			}
 			return r, nil
 		default:
-			return Runtime{}, fmt.Errorf("DECEPTICON_CONTAINER_RUNTIME=%q is not one of docker|podman|nerdctl", forced)
+			return Runtime{}, fmt.Errorf("RAPTIX_CONTAINER_RUNTIME=%q is not one of docker|podman|nerdctl", forced)
 		}
 	}
 
@@ -143,7 +143,7 @@ func podmanSocket() string {
 		return "/run/podman/podman.sock"
 	}
 	// macOS Podman Desktop uses a different path; user can override via
-	// DECEPTICON_DOCKER_HOST if needed.
+	// RAPTIX_DOCKER_HOST if needed.
 	return ""
 }
 

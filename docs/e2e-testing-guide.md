@@ -45,8 +45,8 @@ Manual testing procedures for verifying the LLM gateway features.
 ### Steps
 1. Set a custom model and matching provider key in your environment file:
    ```bash
-   DECEPTICON_MODEL_PROFILE=custom
-   DECEPTICON_MODEL=openrouter/anthropic/claude-3.7-sonnet
+   RAPTIX_MODEL_PROFILE=custom
+   RAPTIX_MODEL=openrouter/anthropic/claude-3.7-sonnet
    OPENROUTER_API_KEY=sk-or-v1-...
    ```
 2. Start services: `make dev`
@@ -65,7 +65,7 @@ Manual testing procedures for verifying the LLM gateway features.
 
 ### Troubleshooting
 - 401: Check the provider-specific API key variable (`OPENROUTER_API_KEY`, `GROQ_API_KEY`, etc.)
-- 404: Check `DECEPTICON_MODEL` uses LiteLLM `provider/model` format
+- 404: Check `RAPTIX_MODEL` uses LiteLLM `provider/model` format
 
 
 ## Scenario 3: OpenAI-Compatible Gateway or Local Model
@@ -76,17 +76,17 @@ Manual testing procedures for verifying the LLM gateway features.
 ### Steps
 1. Configure a custom gateway:
    ```bash
-   DECEPTICON_MODEL_PROFILE=custom
-   DECEPTICON_MODEL=custom/qwen3-coder
+   RAPTIX_MODEL_PROFILE=custom
+   RAPTIX_MODEL=custom/qwen3-coder
    CUSTOM_OPENAI_API_BASE=https://gateway.example.test/v1
    CUSTOM_OPENAI_API_KEY=...
    ```
 2. Or configure Ollama (always `ollama_chat/`, never `ollama/` —
    the legacy `ollama/` provider hits `/api/generate` and does not
-   support tool calling, which every Decepticon agent depends on):
+   support tool calling, which every Raptix agent depends on):
    ```bash
-   DECEPTICON_MODEL_PROFILE=custom
-   DECEPTICON_MODEL=ollama_chat/llama3.2
+   RAPTIX_MODEL_PROFILE=custom
+   RAPTIX_MODEL=ollama_chat/llama3.2
    OLLAMA_API_BASE=http://host.docker.internal:11434
    ```
 3. Start services and call the selected model through LiteLLM.
@@ -107,7 +107,7 @@ Manual testing procedures for verifying the LLM gateway features.
   container can reach it: `OLLAMA_HOST=0.0.0.0:11434 ollama serve`
 - A tool-capable model pulled (`ollama pull qwen3-coder:30b` or
   similar) — verify with `ollama show <model>` that the listed
-  capabilities include `tools`. Decepticon agents always emit tool
+  capabilities include `tools`. Raptix agents always emit tool
   calls, so a tool-incapable model fails on the first request.
 
 ### Steps
@@ -117,8 +117,8 @@ Manual testing procedures for verifying the LLM gateway features.
    ```
 2. Set in `.env` (always `ollama_chat/`, never `ollama/`):
    ```
-   DECEPTICON_MODEL_PROFILE=custom
-   DECEPTICON_MODEL=ollama_chat/llama3.2
+   RAPTIX_MODEL_PROFILE=custom
+   RAPTIX_MODEL=ollama_chat/llama3.2
    OLLAMA_API_BASE=http://host.docker.internal:11434
    ```
 3. Start services: `make dev`
@@ -178,13 +178,13 @@ Manual testing procedures for verifying the LLM gateway features.
 ### Steps
 1. Set a primary and fallback model in `.env`:
    ```bash
-   DECEPTICON_MODEL_PROFILE=custom
-   DECEPTICON_MODEL=openrouter/provider-that-will-fail
-   DECEPTICON_MODEL_FALLBACK=openai/gpt-4.1
+   RAPTIX_MODEL_PROFILE=custom
+   RAPTIX_MODEL=openrouter/provider-that-will-fail
+   RAPTIX_MODEL_FALLBACK=openai/gpt-4.1
    OPENAI_API_KEY=sk-...
    ```
 2. Start services.
-3. Make a request through Decepticon that uses the configured role.
+3. Make a request through Raptix that uses the configured role.
 4. Verify fallback activates to the API-key model.
 
 ### Expected
@@ -192,12 +192,12 @@ Manual testing procedures for verifying the LLM gateway features.
 - Logs show retry/fallback behavior without printing API keys
 
 ### Troubleshooting
-- If fallback doesn't activate: Check `router_settings.num_retries` in `config/litellm.yaml` and the model assignment in `DECEPTICON_MODEL*` variables
+- If fallback doesn't activate: Check `router_settings.num_retries` in `config/litellm.yaml` and the model assignment in `RAPTIX_MODEL*` variables
 
 
 ## Scenario 7: Authorized OAuth / Subscription Use
 
-Decepticon does not require consumer subscription/OAuth tokens for custom model routing. For production, prefer official provider APIs, organization-approved OAuth integrations, or your own OpenAI-compatible gateway. Do not configure tokens in ways that bypass provider entitlements or terms.
+Raptix does not require consumer subscription/OAuth tokens for custom model routing. For production, prefer official provider APIs, organization-approved OAuth integrations, or your own OpenAI-compatible gateway. Do not configure tokens in ways that bypass provider entitlements or terms.
 
 
 ## Security Verification

@@ -15,7 +15,7 @@ from raptix_core.types.kg import KnowledgeGraph, NodeKind
 async def test_cve_enrichment_records_workspace_evidence(tmp_path: Path, monkeypatch) -> None:
     manifest = tmp_path / "requirements.txt"
     manifest.write_text("flask==2.0.0\n", encoding="utf-8")
-    monkeypatch.setenv("DECEPTICON_WORKSPACE_PATH", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_WORKSPACE_PATH", str(tmp_path))
     graph = KnowledgeGraph()
 
     @contextmanager

@@ -57,7 +57,7 @@ if TYPE_CHECKING:
 #   {skills_locations} — `**Decepticon Skills**: /skills/standard/recon/` style headers
 #   {skills_list}      — catalog of sub-skills grouped by subdomain
 
-DECEPTICON_SKILLS_PROMPT = """
+RAPTIX_SKILLS_PROMPT = """
 <SKILLS>
 ## Red Team Knowledge Base — Progressive Disclosure
 
@@ -143,7 +143,7 @@ class SkillsMiddleware(BaseSkillsMiddleware):
 
     def __init__(self, *, backend: Any, sources: list[str]) -> None:
         super().__init__(backend=backend, sources=sources)
-        self.system_prompt_template = DECEPTICON_SKILLS_PROMPT
+        self.system_prompt_template = RAPTIX_SKILLS_PROMPT
         self.tools = [build_load_skill_tool(backend, self.sources)]
 
     # ── modify_request: render the skills catalog ─────────────────────────────

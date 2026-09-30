@@ -7,7 +7,7 @@
   - **Tier-mapped API keys** (works out of the box): Anthropic, OpenAI, Google Gemini, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM
   - **Local LLM**: Ollama (`OLLAMA_API_BASE` + `OLLAMA_MODEL`)
   - **Subscription OAuth** (no per-token billing): Claude Max/Pro/Team, ChatGPT Pro/Plus/Team, Gemini Advanced, Microsoft Copilot Pro, xAI SuperGrok, Perplexity Pro
-  - **Other providers** (Groq, Cohere, Together, Fireworks, Perplexity API, Azure, AWS Bedrock, Replicate, custom OpenAI-compatible gateway): supported via `DECEPTICON_MODEL` / `DECEPTICON_LITELLM_MODELS` ad-hoc registration
+  - **Other providers** (Groq, Cohere, Together, Fireworks, Perplexity API, Azure, AWS Bedrock, Replicate, custom OpenAI-compatible gateway): supported via `RAPTIX_MODEL` / `RAPTIX_LITELLM_MODELS` ad-hoc registration
 
 That's it. Everything else runs inside containers.
 
@@ -60,7 +60,7 @@ From the terminal UI, run `/web` (or `/web up`) to start the dashboard. It is th
 
 ## First Real Engagement
 
-1. Launch Decepticon (`decepticon`). To use the browser UI, run `/web` and open <http://localhost:3000>.
+1. Launch Raptix (`decepticon`). To use the browser UI, run `/web` and open <http://localhost:3000>.
 2. The **Soundwave** agent interviews you to define the engagement:
    - Target scope (IP range, URL, Git repo, file upload, or local path)
    - Threat actor profile
@@ -69,7 +69,7 @@ From the terminal UI, run `/web` (or `/web up`) to start the dashboard. It is th
 4. The orchestrator builds the OPPLAN from the bundle — you review and approve it
 5. The autonomous loop begins
 
-> **Important**: Only run Decepticon against systems you own or have explicit written authorization to test. See the disclaimer in the main README.
+> **Important**: Only run Raptix against systems you own or have explicit written authorization to test. See the disclaimer in the main README.
 
 ---
 
@@ -103,4 +103,4 @@ decepticon kg-health     # Diagnose the Neo4j knowledge graph
 | Model profiles and fallback chain | [Models](models.md) |
 | Engagement workflow (RoE → Execution) | [Engagement Workflow](engagement-workflow.md) |
 | Web dashboard features | [Web Dashboard](web-dashboard.md) |
-| Contributing to Decepticon | [Contributing](contributing.md) |
+| Contributing to Raptix | [Contributing](contributing.md) |

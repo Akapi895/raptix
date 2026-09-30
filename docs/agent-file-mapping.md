@@ -2,8 +2,8 @@
 
 > Authoritative mapping of **which agent / which skill is instructed to write
 > which file**, extracted verbatim from the agent system prompts
-> (`packages/decepticon/decepticon/agents/prompts/standard/*.md`) and the
-> skill catalogs (`packages/decepticon/decepticon/skills/**/SKILL.md`).
+> (`packages/raptix/raptix/agents/prompts/standard/*.md`) and the
+> skill catalogs (`packages/raptix/raptix/skills/**/SKILL.md`).
 >
 > This is a *literal* inventory of the instructions as written — not a
 > normative spec. Where the prompts and skills disagree on a path, both are
@@ -37,7 +37,7 @@ summarizes the trigger; "Cite" is the prompt line.
 
 ### Orchestration tier
 
-#### Decepticon (orchestrator) — `agents/prompts/standard/decepticon.md`
+#### Raptix (orchestrator) — `agents/prompts/standard/decepticon.md`
 
 No bash; writes only via workspace file tools and OPPLAN CRUD.
 
@@ -285,6 +285,6 @@ item below records the original conflict and its **Resolution**.
 
 ### Source files
 
-- Agent prompts: `packages/decepticon/decepticon/agents/prompts/standard/*.md`
-- Skills: `packages/decepticon/decepticon/skills/{shared,standard,benchmark}/**/SKILL.md`
-- Schemas: `packages/decepticon-core/decepticon_core/types/`
+- Agent prompts: `packages/raptix/raptix/agents/prompts/standard/*.md`
+- Skills: `packages/raptix/raptix/skills/{shared,standard,benchmark}/**/SKILL.md`
+- Schemas: `packages/raptix-core/raptix_core/types/`

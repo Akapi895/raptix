@@ -534,7 +534,7 @@ class TestClaudeReasoningParams:
         assert out["output_config"] == {"effort": "high"}
 
     def test_env_override(self, monkeypatch) -> None:
-        monkeypatch.setenv("DECEPTICON_CLAUDE_EFFORT_CLAUDE_SONNET_5", "high")
+        monkeypatch.setenv("RAPTIX_CLAUDE_EFFORT_CLAUDE_SONNET_5", "high")
         out = claude._reasoning_params("claude-sonnet-5", {})
         assert out["output_config"] == {"effort": "high"}
 
@@ -570,5 +570,5 @@ class TestCodexReasoningBody:
         assert body["reasoning"] == {"effort": "xhigh"}
 
     def test_env_effort_override(self, monkeypatch) -> None:
-        monkeypatch.setenv("DECEPTICON_GPT_EFFORT", "low")
+        monkeypatch.setenv("RAPTIX_GPT_EFFORT", "low")
         assert self._body({})["reasoning"] == {"effort": "low"}

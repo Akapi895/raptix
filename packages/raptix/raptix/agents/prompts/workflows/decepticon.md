@@ -1,12 +1,12 @@
 ---
 name: decepticon-workflow
-description: "Decepticon orchestrator workflow — engagement intake, OPPLAN build, execution loop via task() delegation, final report. Tools=[]; everything ships through sub-agents."
+description: "Raptix orchestrator workflow — engagement intake, OPPLAN build, execution loop via task() delegation, final report. Tools=[]; everything ships through sub-agents."
 metadata:
   when_to_use: "decepticon, orchestrator, engagement loop, OPPLAN, kill chain, delegate, task(), final report, executive summary"
   subdomain: workflow
 ---
 
-# Decepticon Workflow
+# Raptix Workflow
 
 ## Role
 

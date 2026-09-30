@@ -112,11 +112,11 @@ SideWinder (MITRE ATT&CK **G0121**) is a suspected Indian state-sponsored cyber-
 | Koadic | S0250 | Post-exploitation framework (COM-based) | Public |
 | Cobalt Strike | S0154 | Post-exploitation framework (deployed via WarHawk) | Public (commercial) |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. SideWinder's techniques are designed for stealth and persistence — ensure all implant infrastructure is properly scoped and can be decommissioned cleanly.
 
-Map SideWinder's signature plays to Decepticon's own capabilities:
+Map SideWinder's signature plays to Raptix's own capabilities:
 
 - **Initial access — spearphishing with themed lures (T1566.001, T1566.002, T1598.002, T1598.003).** Use the phishing skill to craft government/military-themed OOXML documents and ZIP archives containing malicious LNK files. Lures should mimic real government circulars, defense procurement notices, or sector-specific documents (maritime port briefings, nuclear regulatory correspondence). Stand up lookalike government portal login pages on domains with sub-domains mimicking target-country ministry websites (e.g., `mofa-gov-[cc].domain[.]net`).
 - **Execution — LNK → HTA → JavaScript → .NET chain (T1204.002, T1059.007, T1218.005, T1203).** Replicate SideWinder's signature multi-stage chain: LNK file triggers `mshta.exe` to execute an HTA containing JavaScript; the JavaScript performs remote template injection to fetch an RTF exploiting CVE-2017-11882 (Equation Editor); the exploit launches additional JavaScript that downloads a .NET loader (ModuleInstaller analog). Use the payload-builder skill for each stage, keeping payloads as close to SideWinder's documented chain as possible.

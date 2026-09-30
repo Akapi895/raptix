@@ -4,7 +4,7 @@ description: Root pointer for the analyst's vulnerability research playbooks. Lo
 metadata:
   subdomain: analyst
   when_to_use: "analyst overview vulnerability research playbook catalog chain building routing iteration start"
-  upstream_ref: "Decepticon analyst lane: vulnerability research playbook catalog"
+  upstream_ref: "Raptix analyst lane: vulnerability research playbook catalog"
 ---
 
 # Analyst Skill Catalog

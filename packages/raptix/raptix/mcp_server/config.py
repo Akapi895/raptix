@@ -2,7 +2,7 @@
 
 The bridge drives a *running* Decepticon LangGraph server. The default URL
 matches ``raptix.cli.scan``'s ``--langgraph-url`` default and the same
-``DECEPTICON_API_URL`` env var, so the MCP server, the headless CLI, and the
+``RAPTIX_API_URL`` env var, so the MCP server, the headless CLI, and the
 web client all agree on where the platform lives.
 """
 
@@ -12,27 +12,27 @@ import os
 from dataclasses import dataclass
 
 #: LangGraph platform URL the bridge connects to.
-ENV_API_URL = "DECEPTICON_API_URL"
+ENV_API_URL = "RAPTIX_API_URL"
 #: Default assistant/graph used when a tool call omits one.
-ENV_ASSISTANT = "DECEPTICON_MCP_SERVER__ASSISTANT"
+ENV_ASSISTANT = "RAPTIX_MCP_SERVER__ASSISTANT"
 #: Per-request timeout (seconds) for LangGraph SDK calls.
-ENV_TIMEOUT = "DECEPTICON_MCP_SERVER__REQUEST_TIMEOUT"
+ENV_TIMEOUT = "RAPTIX_MCP_SERVER__REQUEST_TIMEOUT"
 #: Auth mode override ("none" | "shared-secret" | "jwt"); unset → inferred.
-ENV_AUTH = "DECEPTICON_MCP_SERVER__AUTH"
+ENV_AUTH = "RAPTIX_MCP_SERVER__AUTH"
 #: Shared-secret bearer token (presence infers shared-secret mode).
-ENV_TOKEN = "DECEPTICON_MCP_TOKEN"
+ENV_TOKEN = "RAPTIX_MCP_TOKEN"
 #: JWT issuer (``iss``) the bearer token must carry.
-ENV_ISSUER = "DECEPTICON_MCP_SERVER__ISSUER"
+ENV_ISSUER = "RAPTIX_MCP_SERVER__ISSUER"
 #: JWT audience (``aud``) the bearer token must carry.
-ENV_AUDIENCE = "DECEPTICON_MCP_SERVER__AUDIENCE"
+ENV_AUDIENCE = "RAPTIX_MCP_SERVER__AUDIENCE"
 #: JWKS endpoint used to fetch the JWT signing key.
-ENV_JWKS_URI = "DECEPTICON_MCP_SERVER__JWKS_URI"
+ENV_JWKS_URI = "RAPTIX_MCP_SERVER__JWKS_URI"
 #: Static JWT public key — a filesystem path or inline PEM.
-ENV_PUBLIC_KEY = "DECEPTICON_MCP_SERVER__PUBLIC_KEY"
+ENV_PUBLIC_KEY = "RAPTIX_MCP_SERVER__PUBLIC_KEY"
 #: This server's public URL (OAuth resource identifier); defaults to host:port.
-ENV_RESOURCE_URL = "DECEPTICON_MCP_SERVER__RESOURCE_URL"
+ENV_RESOURCE_URL = "RAPTIX_MCP_SERVER__RESOURCE_URL"
 #: Comma/space-delimited scopes a JWT must carry to be authorized.
-ENV_REQUIRED_SCOPES = "DECEPTICON_MCP_SERVER__REQUIRED_SCOPES"
+ENV_REQUIRED_SCOPES = "RAPTIX_MCP_SERVER__REQUIRED_SCOPES"
 
 _DEFAULT_URL = "http://localhost:2024"
 _DEFAULT_ASSISTANT = "decepticon"
@@ -83,7 +83,7 @@ def _parse_auth_mode(raw: str | None) -> str | None:
 
 
 def load_config() -> ServerConfig:
-    """Build a :class:`ServerConfig` from ``DECEPTICON_*`` environment variables."""
+    """Build a :class:`ServerConfig` from ``RAPTIX_*`` environment variables."""
     return ServerConfig(
         langgraph_url=os.environ.get(ENV_API_URL) or _DEFAULT_URL,
         default_assistant=os.environ.get(ENV_ASSISTANT) or _DEFAULT_ASSISTANT,

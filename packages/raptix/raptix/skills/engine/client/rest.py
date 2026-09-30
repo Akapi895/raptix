@@ -173,12 +173,12 @@ class RestSkillogyClient:
 
 
 def from_env() -> RestSkillogyClient:
-    """Build a client from ``DECEPTICON_SKILLOGY_URL`` + optional bearer.
+    """Build a client from ``RAPTIX_SKILLOGY_URL`` + optional bearer.
 
     Defaults to ``http://skillogy:9100`` (the compose hostname). The
     middleware calls this when no explicit client is injected.
     """
     return RestSkillogyClient(
-        base_url=os.environ.get("DECEPTICON_SKILLOGY_URL", "http://skillogy:9100"),
-        api_key=os.environ.get("DECEPTICON_SKILLOGY_API_KEY") or None,
+        base_url=os.environ.get("RAPTIX_SKILLOGY_URL", "http://skillogy:9100"),
+        api_key=os.environ.get("RAPTIX_SKILLOGY_API_KEY") or None,
     )

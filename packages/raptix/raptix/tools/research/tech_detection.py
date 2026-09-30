@@ -232,12 +232,12 @@ def _json(data: Any) -> str:
 def _load_roe_rules() -> MachineEnforcement:
     """Load the engagement's machine-enforcement RoE block.
 
-    Resolves the workspace from ``DECEPTICON_WORKSPACE_PATH`` (the same env
+    Resolves the workspace from ``RAPTIX_WORKSPACE_PATH`` (the same env
     the middleware factory reads). Absent / unreadable RoE degrades to an
     empty (audit-only) ruleset — matching the middleware's fail-open posture
     so a missing file never silently blocks a legitimate probe.
     """
-    workspace = os.environ.get("DECEPTICON_WORKSPACE_PATH")
+    workspace = os.environ.get("RAPTIX_WORKSPACE_PATH")
     if not workspace:
         return MachineEnforcement()
     roe_path = Path(workspace) / "plan" / "roe.json"

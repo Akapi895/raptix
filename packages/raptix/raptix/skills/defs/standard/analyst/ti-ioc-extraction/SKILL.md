@@ -264,7 +264,7 @@ from stix2 import (Bundle, Indicator, Identity, MarkingDefinition,
 import json, datetime
 
 identity = Identity(
-    name="Decepticon TI Team",
+    name="Raptix TI Team",
     identity_class="organization"
 )
 

@@ -145,11 +145,11 @@ Patchwork (MITRE ATT&CK **G0040**) is a cyber-espionage group believed to operat
 
 > Note: Patchwork's defining characteristic is heavy reuse of publicly available code — exploit code from forums, open-source RATs (QuasarRAT), and public post-exploitation frameworks (PowerSploit, Meterpreter). Custom tools like BADNEWS are themselves built with significant copy-pasted components.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Patchwork's techniques are relatively low-sophistication but high-impact through social engineering — emulate the full kill chain, not just the tooling.
 
-Map Patchwork's signature plays to Decepticon's own capabilities:
+Map Patchwork's signature plays to Raptix's own capabilities:
 
 - **Initial access — weaponized documents (T1566.001, T1566.002, T1203, T1204.002).** Use the payload-builder skill to craft **Office documents with embedded exploits** — prioritize Equation Editor (CVE-2017-11882) and OLE object (CVE-2017-0199) exploit chains, as these are Patchwork's most-used vectors. Build RTF and DOC lures impersonating target-relevant government/military documents (defense policy papers, personnel announcements, conference invitations). Stage tracking pixels (T1598.003) in initial phishing emails to profile which targets open messages before sending armed payloads.
 - **Watering holes (T1189).** With the web-infrastructure skill, stand up a **fake news portal** mirroring Patchwork's Chinastrats-style sites — political news focused on the target's regional interests. Serve malicious PPS/PPSX files with embedded exploits to visitors. Use this as a secondary access vector alongside spearphishing.

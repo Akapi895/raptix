@@ -193,11 +193,11 @@ Mustang Panda (MITRE ATT&CK **G0129**) is a China-based cyber-espionage threat a
 | Wevtutil | S0645 | Windows Event Log utility | Built-in |
 | TeamViewer | — | Remote desktop software | Public (Commercial) |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never deploy USB-propagation worms or kernel-mode drivers outside an explicitly sanctioned, isolated lab.
 
-Map Mustang Panda's signature plays to Decepticon's own capabilities:
+Map Mustang Panda's signature plays to Raptix's own capabilities:
 
 - **Initial access — themed spearphishing (T1566.001, T1566.002, T1204.002).** Use the phishing skill to craft **themed lure documents** matching the target's geopolitical context (ASEAN policy briefs, EU diplomatic memos, military situational reports, religious-affairs documents). Package as RAR/ZIP archives or LNK files with decoy PDFs. Host payloads on Google Drive or Dropbox (T1583.006, T1608.001) to emulate Mustang Panda's cloud-hosted delivery. Add **web bugs** (T1598.003) to profile which recipients open the lure before delivering the payload.
 - **DLL side-loading chain (T1574.001, T1553.002).** This is Mustang Panda's **defining technique**. Use the payload-builder skill to prepare a triad: (1) a legitimately signed executable (Adobe updater, `inkform.exe`, or antivirus agent), (2) a malicious DLL matching the expected side-load name, and (3) an encrypted payload blob (`.dat`). The signed EXE loads the DLL, which decrypts and executes the payload in memory. Vary the signed EXE across engagements to test detection coverage.

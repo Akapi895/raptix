@@ -102,7 +102,7 @@ const (
 )
 
 // methodOrder is the priority order surfaced in the wizard. The
-// resulting DECEPTICON_AUTH_PRIORITY preserves this order, filtered
+// resulting RAPTIX_AUTH_PRIORITY preserves this order, filtered
 // to the methods the user actually selected. OAuth precedes the
 // matching API on purpose: a subscription primary should fall back
 // to the paid API only when the subscription quota is exhausted.
@@ -886,7 +886,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 						"  • the agent's red-team REASONING, with target identifiers MASKED\n"+
 						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
 						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
-						"IP is dropped at the gateway. Change anytime: DECEPTICON_TELEMETRY=off\n"+
+						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
 						"(or basic) in .env, `decepticon-cli telemetry off`, or DO_NOT_TRACK=1.",
 				).
 				Affirmative("Yes, share (recommended)").
@@ -929,15 +929,15 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	}
 
 	values := map[string]string{
-		"DECEPTICON_MODEL_PROFILE":    profile,
-		"DECEPTICON_LANGUAGE":         language,
-		"DECEPTICON_AUTH_PRIORITY":    strings.Join(priority, ","),
-		"DECEPTICON_AUTH_CLAUDE_CODE": boolStr(contains(methods, methodAnthropicOAuth)),
-		"DECEPTICON_AUTH_CHATGPT":     boolStr(contains(methods, methodOpenAIOAuth)),
-		"DECEPTICON_AUTH_GEMINI":      boolStr(contains(methods, methodGoogleOAuth)),
-		"DECEPTICON_AUTH_GROK":        boolStr(contains(methods, methodGrokOAuth)),
-		"DECEPTICON_AUTH_COPILOT":     boolStr(contains(methods, methodCopilotOAuth)),
-		"DECEPTICON_AUTH_PERPLEXITY":  boolStr(contains(methods, methodPerplexityOAuth)),
+		"RAPTIX_MODEL_PROFILE":    profile,
+		"RAPTIX_LANGUAGE":         language,
+		"RAPTIX_AUTH_PRIORITY":    strings.Join(priority, ","),
+		"RAPTIX_AUTH_CLAUDE_CODE": boolStr(contains(methods, methodAnthropicOAuth)),
+		"RAPTIX_AUTH_CHATGPT":     boolStr(contains(methods, methodOpenAIOAuth)),
+		"RAPTIX_AUTH_GEMINI":      boolStr(contains(methods, methodGoogleOAuth)),
+		"RAPTIX_AUTH_GROK":        boolStr(contains(methods, methodGrokOAuth)),
+		"RAPTIX_AUTH_COPILOT":     boolStr(contains(methods, methodCopilotOAuth)),
+		"RAPTIX_AUTH_PERPLEXITY":  boolStr(contains(methods, methodPerplexityOAuth)),
 		"LITELLM_MASTER_KEY":          installationSecrets.LiteLLMMasterKey,
 		"LITELLM_SALT_KEY":            installationSecrets.LiteLLMSaltKey,
 		"POSTGRES_PASSWORD":           installationSecrets.PostgresPassword,
@@ -1068,9 +1068,9 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	}
 
 	// Anonymous usage telemetry consent. Only sends when a gateway endpoint is
-	// configured (DECEPTICON_TELEMETRY_ENDPOINT, shipped in .env.example); an
+	// configured (RAPTIX_TELEMETRY_ENDPOINT, shipped in .env.example); an
 	// unset endpoint keeps it dormant even when the user opted in.
-	values["DECEPTICON_TELEMETRY"] = telemetryChoice
+	values["RAPTIX_TELEMETRY"] = telemetryChoice
 
 	if err := config.WriteEnvFromEmbed(config.EnvPath(), values); err != nil {
 		return fmt.Errorf("write .env: %w", err)
@@ -1117,7 +1117,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 
 	// One-time GitHub star ask — the natural post-onboarding moment.
 	// Suppressed on subsequent runs by the ack file at
-	// $DECEPTICON_HOME/.starred, so a re-run of `decepticon onboard
+	// $RAPTIX_HOME/.starred, so a re-run of `decepticon onboard
 	// --reset` does not re-prompt.
 	starprompt.PromptIfNotStarred()
 

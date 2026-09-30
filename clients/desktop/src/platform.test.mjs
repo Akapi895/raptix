@@ -12,15 +12,15 @@ import {
 import { resolveDesktopConfig, setupGuide } from "./config.mjs";
 
 test("envAssignHint is shell-correct on Windows, macOS, and Linux", () => {
-  const win = envAssignHint("DECEPTICON_DESKTOP_MODE", "local", "win32");
-  assert.match(win, /\$env:DECEPTICON_DESKTOP_MODE="local"/);
-  assert.match(win, /set DECEPTICON_DESKTOP_MODE=local/);
+  const win = envAssignHint("RAPTIX_DESKTOP_MODE", "local", "win32");
+  assert.match(win, /\$env:RAPTIX_DESKTOP_MODE="local"/);
+  assert.match(win, /set RAPTIX_DESKTOP_MODE=local/);
 
-  const unix = envAssignHint("DECEPTICON_DESKTOP_MODE", "local", "linux");
-  assert.equal(unix, "export DECEPTICON_DESKTOP_MODE=local");
+  const unix = envAssignHint("RAPTIX_DESKTOP_MODE", "local", "linux");
+  assert.equal(unix, "export RAPTIX_DESKTOP_MODE=local");
 
-  const mac = envAssignHint("DECEPTICON_DESKTOP_MODE", "cloud", "darwin");
-  assert.equal(mac, "export DECEPTICON_DESKTOP_MODE=cloud");
+  const mac = envAssignHint("RAPTIX_DESKTOP_MODE", "cloud", "darwin");
+  assert.equal(mac, "export RAPTIX_DESKTOP_MODE=cloud");
 });
 
 test("dockerComposeSpawn never enables shell and hides the console on Windows", () => {
@@ -102,7 +102,7 @@ test("resolveDesktopConfig joins cookie and home paths with the host path module
     homedir: () => "/home/alice",
   };
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_DESKTOP_MODE: "cloud" },
+    { RAPTIX_DESKTOP_MODE: "cloud" },
     host,
     () => {
       throw new Error("no env");
@@ -120,7 +120,7 @@ test("resolveDesktopConfig uses path.join so Windows home paths stay native", ()
     ? "C:\\Users\\Alice"
     : "/home/alice";
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: home, DECEPTICON_DESKTOP_MODE: "cloud" },
+    { RAPTIX_HOME: home, RAPTIX_DESKTOP_MODE: "cloud" },
     { homedir: () => home, platform: process.platform },
     () => {
       throw new Error("no env");

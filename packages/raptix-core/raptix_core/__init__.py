@@ -15,7 +15,38 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 
-from raptix_core import (
+
+def _alias_legacy_env() -> None:
+    """Back-compat shim: mirror legacy ``DECEPTICON_*`` env vars onto their
+    ``RAPTIX_*`` equivalents so existing ``.env`` files and deployments keep
+    working after the rename. Runs once at import, before any env is read.
+    A ``RAPTIX_*`` value already set always wins. Legacy names are removed at
+    2.0.0. Uses only stdlib to preserve the core layer's import guarantees.
+    """
+    import os
+    import warnings
+
+    legacy_prefix = "DECEPTICON_"
+    aliased = 0
+    for key in list(os.environ):
+        if not key.startswith(legacy_prefix):
+            continue
+        new_key = "RAPTIX_" + key[len(legacy_prefix) :]
+        if new_key not in os.environ:
+            os.environ[new_key] = os.environ[key]
+            aliased += 1
+    if aliased:
+        warnings.warn(
+            f"{legacy_prefix}* environment variables are deprecated; use RAPTIX_* "
+            f"instead (aliased {aliased} at startup; legacy names removed at 2.0.0).",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+
+_alias_legacy_env()
+
+from raptix_core import (  # noqa: E402  (env shim must run before submodule imports)
     contracts,
     plugin_loader,
     protocols,

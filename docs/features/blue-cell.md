@@ -1,6 +1,6 @@
 # Blue Cell — closing the Offensive Vaccine loop
 
-> Decepticon's defensive sibling. Reads what Red Cell does, evaluates
+> Raptix's defensive sibling. Reads what Red Cell does, evaluates
 > Sigma-style rules in real time, scores MTTD, and writes the result
 > back to the engagement knowledge graph as the **proven** detection
 > coverage report.
@@ -93,7 +93,7 @@ A minimal Sigma-flavored rule matcher:
 ```python
 from decepticon.blue_cell.rule_match import load_rules, RuleMatcher
 
-rules = load_rules("packages/decepticon/decepticon/blue_cell/sample_rules.jsonl")
+rules = load_rules("packages/raptix/raptix/blue_cell/sample_rules.jsonl")
 matcher = RuleMatcher(rules)
 hits = matcher.match(event_dict, now_ts=time.time())
 ```

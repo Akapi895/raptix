@@ -1,8 +1,8 @@
 """Tests for ``raptix.middleware.skillogy`` (Phase 1a, Amendment v0.2.2).
 
 Covers:
-  - Env-flag parsing (legacy ``DECEPTICON_USE_SKILLOGY`` + preferred
-    ``DECEPTICON_SKILL_BACKEND``).
+  - Env-flag parsing (legacy ``RAPTIX_USE_SKILLOGY`` + preferred
+    ``RAPTIX_SKILL_BACKEND``).
   - ``_PHASE_FOR_ROLE`` mapping shape — every OSS specialist resolves
     to a known ``:Phase.name``.
   - The three ``@tool`` wrappers (find_skill, load_skill, traverse)
@@ -43,14 +43,14 @@ from raptix.middleware.skillogy import (
 class TestIsEnabled:
     @pytest.mark.parametrize("val", ["1", "true", "TRUE", "yes", "on", " On "])
     def test_legacy_truthy_values_enable(self, monkeypatch: pytest.MonkeyPatch, val: str) -> None:
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", val)
-        monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", val)
+        monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
         assert _is_enabled() is True
 
     @pytest.mark.parametrize("val", ["0", "false", "no", "off"])
     def test_explicit_falsy_values_disable(self, monkeypatch: pytest.MonkeyPatch, val: str) -> None:
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", val)
-        monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", val)
+        monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
         assert _is_enabled() is False
 
     @pytest.mark.parametrize("val", ["", "maybe"])
@@ -58,32 +58,32 @@ class TestIsEnabled:
         """Anything that isn't an explicit ``0``/``false``/``no``/``off``
         keeps the default-on behaviour — including unrecognised strings.
         """
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", val)
-        monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", val)
+        monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
         assert _is_enabled() is True
 
     def test_preferred_skillogy_brain_enables(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("DECEPTICON_USE_SKILLOGY", raising=False)
-        monkeypatch.setenv("DECEPTICON_SKILL_BACKEND", "skillogy_brain")
+        monkeypatch.delenv("RAPTIX_USE_SKILLOGY", raising=False)
+        monkeypatch.setenv("RAPTIX_SKILL_BACKEND", "skillogy_brain")
         assert _is_enabled() is True
 
     def test_preferred_other_value_does_not_force_enable(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        """Only ``DECEPTICON_SKILL_BACKEND=skillogy_brain`` is the explicit
+        """Only ``RAPTIX_SKILL_BACKEND=skillogy_brain`` is the explicit
         opt-in rail. Any other value is inert; whether Skillogy ends up
-        installed is then up to ``DECEPTICON_USE_SKILLOGY`` (which now
-        defaults to enabled). An explicit ``DECEPTICON_USE_SKILLOGY=0``
-        plus any other ``DECEPTICON_SKILL_BACKEND`` value still disables.
+        installed is then up to ``RAPTIX_USE_SKILLOGY`` (which now
+        defaults to enabled). An explicit ``RAPTIX_USE_SKILLOGY=0``
+        plus any other ``RAPTIX_SKILL_BACKEND`` value still disables.
         """
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "0")
-        monkeypatch.setenv("DECEPTICON_SKILL_BACKEND", "skills")
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "0")
+        monkeypatch.setenv("RAPTIX_SKILL_BACKEND", "skills")
         assert _is_enabled() is False
 
     def test_unset_enables(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Default-on: leaving both env vars unset enables Skillogy."""
-        monkeypatch.delenv("DECEPTICON_USE_SKILLOGY", raising=False)
-        monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+        monkeypatch.delenv("RAPTIX_USE_SKILLOGY", raising=False)
+        monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
         assert _is_enabled() is True
 
 
@@ -496,12 +496,12 @@ class TestMaybeInstallSkillogy:
     ) -> None:
         """With Skillogy default-on, the identity short-circuit only
         triggers when the operator opts out via explicit
-        ``DECEPTICON_USE_SKILLOGY=0`` (or ``false`` / ``no`` / ``off``).
+        ``RAPTIX_USE_SKILLOGY=0`` (or ``false`` / ``no`` / ``off``).
         Default-unset now installs Skillogy, not the file-system
         ``SkillsMiddleware``.
         """
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "0")
-        monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "0")
+        monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
         from raptix.middleware.skills import SkillsMiddleware
 
         fake_skills = MagicMock(spec=SkillsMiddleware)
@@ -511,7 +511,7 @@ class TestMaybeInstallSkillogy:
         assert out is stack  # identity short-circuit
 
     def test_env_enabled_swaps_skills_for_skillogy(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
         stub = _StubBackend(moc_response=[])
         monkeypatch.setattr(sk, "_backend_factory", lambda: stub)
 
@@ -532,7 +532,7 @@ class TestMaybeInstallSkillogy:
     def test_env_enabled_unknown_role_yields_no_phase_block(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
         stub = _StubBackend()
         monkeypatch.setattr(sk, "_backend_factory", lambda: stub)
 
@@ -548,7 +548,7 @@ class TestMaybeInstallSkillogy:
     def test_env_enabled_no_role_argument_still_works(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
         stub = _StubBackend()
         monkeypatch.setattr(sk, "_backend_factory", lambda: stub)
 
@@ -560,7 +560,7 @@ class TestMaybeInstallSkillogy:
         assert installed._phase is None
 
     def test_env_enabled_no_skills_does_not_append(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
         monkeypatch.setattr(sk, "_backend_factory", lambda: _StubBackend())
 
         other = object()

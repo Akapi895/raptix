@@ -32,10 +32,10 @@ The desktop app is an Electron shell for the product UI:
 | Mode | When | Target |
 |---|---|---|
 | `auto` (default) | Local install present → local; otherwise cloud | `http://localhost:${WEB_PORT:-3000}` or `https://app.decepticon.red` |
-| `cloud` | `DECEPTICON_DESKTOP_MODE=cloud` | Hosted app (website login, Google/GitHub OAuth in-window) |
-| `local` | `DECEPTICON_DESKTOP_MODE=local` | Local dashboard; auto-starts the `web` Docker Compose profile from `~/.decepticon` when offline |
+| `cloud` | `RAPTIX_DESKTOP_MODE=cloud` | Hosted app (website login, Google/GitHub OAuth in-window) |
+| `local` | `RAPTIX_DESKTOP_MODE=local` | Local dashboard; auto-starts the `web` Docker Compose profile from `~/.decepticon` when offline |
 
-Sessions use a persistent Electron partition (`persist:decepticon-desktop`). Optional one-shot cookie import: drop a Cookie-Editor JSON or Netscape export at `~/.decepticon/desktop-cookies.txt` (Windows: `%USERPROFILE%\.decepticon\desktop-cookies.txt`) or set `DECEPTICON_DESKTOP_COOKIES`. Prefer interactive sign-in; never commit session tokens.
+Sessions use a persistent Electron partition (`persist:decepticon-desktop`). Optional one-shot cookie import: drop a Cookie-Editor JSON or Netscape export at `~/.decepticon/desktop-cookies.txt` (Windows: `%USERPROFILE%\.decepticon\desktop-cookies.txt`) or set `RAPTIX_DESKTOP_COOKIES`. Prefer interactive sign-in; never commit session tokens.
 
 Cross-platform notes (Linux / macOS / Windows):
 

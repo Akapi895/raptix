@@ -38,7 +38,7 @@ Usage:
         --quarantine corpus.quarantine.jsonl
     python redact_corpus.py --self-test        # offline logic check
 
-Env: DECEPTICON_LLM__PROXY_URL, DECEPTICON_LLM__PROXY_API_KEY, REDACT_MODEL.
+Env: RAPTIX_LLM__PROXY_URL, RAPTIX_LLM__PROXY_API_KEY, REDACT_MODEL.
 """
 
 from __future__ import annotations
@@ -381,15 +381,15 @@ def main(argv: list[str] | None = None) -> int:
         return _self_test()
 
     cfg: dict[str, Any] = {
-        "url": os.environ.get("DECEPTICON_LLM__PROXY_URL", ""),
-        "key": os.environ.get("DECEPTICON_LLM__PROXY_API_KEY", ""),
+        "url": os.environ.get("RAPTIX_LLM__PROXY_URL", ""),
+        "key": os.environ.get("RAPTIX_LLM__PROXY_API_KEY", ""),
         "model": os.environ.get("REDACT_MODEL", "auth/claude-haiku-4-5"),
         "window": args.window,
         "window_workers": args.window_workers,
     }
     if not cfg["url"] or not cfg["key"]:
         print(
-            "error: set DECEPTICON_LLM__PROXY_URL and DECEPTICON_LLM__PROXY_API_KEY.",
+            "error: set RAPTIX_LLM__PROXY_URL and RAPTIX_LLM__PROXY_API_KEY.",
             file=sys.stderr,
         )
         return 2

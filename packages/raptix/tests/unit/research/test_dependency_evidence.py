@@ -17,7 +17,7 @@ def test_dependency_evidence_uses_workspace_relative_manifest_path(
     workspace.mkdir()
     manifest = workspace / "requirements.txt"
     manifest.write_text("flask==2.0.0\n", encoding="utf-8")
-    monkeypatch.setenv("DECEPTICON_WORKSPACE_PATH", str(workspace))
+    monkeypatch.setenv("RAPTIX_WORKSPACE_PATH", str(workspace))
 
     assert _manifest_path(manifest) == "requirements.txt"
     assert _manifest_path(tmp_path / "outside.txt") is None

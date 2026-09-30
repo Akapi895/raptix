@@ -11,7 +11,7 @@ metadata:
 
 # APT28 (Fancy Bear, Forest Blizzard, Sofacy, STRONTIUM) — Adversary Emulation Profile
 
-APT28 (MITRE ATT&CK **G0007**) is a long-running cyber-espionage group attributed to Russia's General Staff Main Intelligence Directorate (GRU) 85th Main Special Service Center (GTsSS), **military unit 26165**, operating since at least 2004. Across two decades it has hit governments, militaries, diplomatic bodies, defense and aerospace, anti-doping and chemical-weapons watchdogs, media, and — since 2022 — Western logistics and IT firms supporting Ukraine. APT28 is best characterized by disciplined credential operations (spearphishing, large-scale password spraying, NTLM-coercion), pragmatic use of N-day exploits (Outlook, Exchange, WinRAR, Windows Print Spooler), a broad cross-platform malware stable (Windows/Linux/macOS/Android, plus the LoJax UEFI rootkit), and a willingness to pivot from pure espionage into influence, hack-and-leak, and occasional destructive/DDoS operations. This profile maps its tradecraft to ATT&CK so Decepticon can emulate it inside an authorized engagement and the blue cell can anticipate detection.
+APT28 (MITRE ATT&CK **G0007**) is a long-running cyber-espionage group attributed to Russia's General Staff Main Intelligence Directorate (GRU) 85th Main Special Service Center (GTsSS), **military unit 26165**, operating since at least 2004. Across two decades it has hit governments, militaries, diplomatic bodies, defense and aerospace, anti-doping and chemical-weapons watchdogs, media, and — since 2022 — Western logistics and IT firms supporting Ukraine. APT28 is best characterized by disciplined credential operations (spearphishing, large-scale password spraying, NTLM-coercion), pragmatic use of N-day exploits (Outlook, Exchange, WinRAR, Windows Print Spooler), a broad cross-platform malware stable (Windows/Linux/macOS/Android, plus the LoJax UEFI rootkit), and a willingness to pivot from pure espionage into influence, hack-and-leak, and occasional destructive/DDoS operations. This profile maps its tradecraft to ATT&CK so Raptix can emulate it inside an authorized engagement and the blue cell can anticipate detection.
 
 ## Attribution & motivation
 
@@ -175,11 +175,11 @@ APT28 (MITRE ATT&CK **G0007**) is a long-running cyber-espionage group attribute
 
 > Note: "GooseEgg" is a Microsoft-attributed custom tool; it is **not** the same as ATT&CK software S1145 (Pikabot), so no false software ID is assigned here.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never run destructive (T1561/T1498) or firmware (LoJax-style) actions outside an explicitly sanctioned, isolated lab.
 
-Map APT28's signature plays to Decepticon's own capabilities:
+Map APT28's signature plays to Raptix's own capabilities:
 
 - **Initial access — credential ops (T1110.003, T1598.003, T1566.001).** Use the phishing/credential-harvest skill to stand up lookalike webmail login pages; drive **slow, low-and-slow password spraying** (~few attempts/account/hour) against in-scope OWA/M365 endpoints, fronted through rotating egress to mimic Tor/VPN spray infra. Stage macro/RAR lures with the payload-builder; if WinRAR is in scope, emulate CVE-2023-38831 archive lures.
 - **NTLM coercion (T1187 / CVE-2023-23397, T1557.001).** With the AD/lateral-movement skill, run **Responder** for LLMNR/NBT-NS poisoning and emulate Outlook-reminder NTLM coercion to capture Net-NTLM hashes, then relay or crack offline. This is APT28's defining 2023-2025 play — prioritize it.

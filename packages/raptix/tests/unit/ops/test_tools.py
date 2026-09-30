@@ -92,7 +92,7 @@ def test_ops_start_pulls_engagement_from_env(monkeypatch, patch_client) -> None:
     # Env is a last-resort fallback for the daemon-less library path
     # and pytest fixtures; production wiring goes through the per-run
     # config.
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "eng-from-env")
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT", "eng-from-env")
     ops_start.invoke({"workload": "ad"})
     assert patch_client.calls[0][1]["engagement_id"] == "eng-from-env"
 
@@ -102,7 +102,7 @@ def test_ops_start_config_wins_over_env(monkeypatch, patch_client) -> None:
     # langgraph process, each thread must see its own
     # config.configurable.engagement_name — the process-wide env
     # cannot be the source of truth.
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "eng-from-env")
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT", "eng-from-env")
     ops_start.invoke(
         {"workload": "ad"},
         config={"configurable": {"engagement_name": "eng-from-config"}},
@@ -173,13 +173,13 @@ def test_ops_cleanup_engagement_returns_envelope(patch_client) -> None:
 
 
 def test_ops_cleanup_engagement_pulls_from_env(monkeypatch, patch_client) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "eng-from-env")
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT", "eng-from-env")
     ops_cleanup_engagement.invoke({})
     assert patch_client.calls[0][1]["engagement_id"] == "eng-from-env"
 
 
 def test_ops_cleanup_engagement_requires_engagement(monkeypatch) -> None:
-    monkeypatch.delenv("DECEPTICON_ENGAGEMENT", raising=False)
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
     out = ops_cleanup_engagement.invoke({})
     data = json.loads(out)
     # No id provided and env unset — the tool must surface a clear

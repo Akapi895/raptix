@@ -1,11 +1,11 @@
 # Agent File & Reporting Conventions
 
-> How Decepticon's agents write to disk, hand work off to each other, and
+> How Raptix's agents write to disk, hand work off to each other, and
 > report back to the orchestrator. This is the authoritative reference for
 > the workspace file contract that the 16 specialist agents, the skill
 > catalogs, and the client UIs all depend on.
 
-Decepticon's multi-agent loop is **file-mediated, not memory-mediated**.
+Raptix's multi-agent loop is **file-mediated, not memory-mediated**.
 Each specialist agent is spawned with a fresh context window (no parent
 transcript), does its work, writes its results to agreed-upon paths in the
 engagement workspace, and returns a short summary. The orchestrator reads

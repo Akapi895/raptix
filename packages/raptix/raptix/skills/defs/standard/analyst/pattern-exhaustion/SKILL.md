@@ -4,7 +4,7 @@ description: Systematic pattern exhaustion methodology. Load after finding any c
 metadata:
   subdomain: analyst
   when_to_use: "pattern exhaustion methodology root cause search same pattern instances codebase variant hunt"
-  upstream_ref: "Decepticon analyst lane: source-root-cause variant investigation"
+  upstream_ref: "Raptix analyst lane: source-root-cause variant investigation"
 ---
 
 # Pattern Exhaustion

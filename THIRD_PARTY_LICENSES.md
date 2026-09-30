@@ -1,6 +1,6 @@
 # Third-Party Licenses
 
-Decepticon vendors external knowledge bases as git submodules under
+Raptix vendors external knowledge bases as git submodules under
 `skills/_corpus/` and references additional resources at runtime. Each
 upstream's license terms are preserved alongside the source in the
 submodule itself; this file is a summary attribution.
@@ -32,7 +32,7 @@ The complete MIT license text ships in `skills/_corpus/payloads/LICENSE`.
 - **Use**: Link index flattened into `skills/_corpus/awesome_index.json`
   (when present) for recon-agent learning-resource lookups.
 
-## Decepticon's own license
+## Raptix's own license
 
 This repository's own license terms are in `LICENSE` at the repo root.
 Vendoring third-party content does not relicense any part of this repo

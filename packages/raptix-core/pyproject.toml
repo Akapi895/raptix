@@ -40,8 +40,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/PurpleAILAB/Decepticon"
-Repository = "https://github.com/PurpleAILAB/Decepticon"
+Homepage = "https://github.com/Akapi895/raptix"
+Repository = "https://github.com/Akapi895/raptix"
 
 [build-system]
 requires = ["hatchling"]

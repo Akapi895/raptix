@@ -6,7 +6,7 @@
 
 ## Problem
 
-Every Decepticon hotfix today requires a **full release cycle** — PyPI publish + 7 GHCR images + GoReleaser binaries + Cosign signing + GitHub release — even when the fix only touches one Python file and a single image's contents. Two costs:
+Every Raptix hotfix today requires a **full release cycle** — PyPI publish + 7 GHCR images + GoReleaser binaries + Cosign signing + GitHub release — even when the fix only touches one Python file and a single image's contents. Two costs:
 
 1. **Maintainer toil.** ~30 minutes of CI per cycle, three pypi-release approvals per run, occasional transient Cosign failures (v1.1.12's c2-sliver merge needed a re-run).
 2. **Release pollution.** Every hotfix creates a new GitHub release entry, a new PyPI version, a new git tag — even when only one image changed.
@@ -17,12 +17,12 @@ The original v1.1.12 plan included **3a: tag-suffix detection** (`vX.Y.Z` = full
 
 `clients/launcher/cmd/start.go:283` sets:
 ```go
-cliEnv["DECEPTICON_VERSION"] = version   // the launcher binary's stamped version
+cliEnv["RAPTIX_VERSION"] = version   // the launcher binary's stamped version
 ```
 
 `docker-compose.yml` interpolates that on every image:
 ```yaml
-image: ghcr.io/purpleailab/decepticon-langgraph:${DECEPTICON_VERSION:-latest}
+image: ghcr.io/purpleailab/decepticon-langgraph:${RAPTIX_VERSION:-latest}
 ```
 
 `clients/launcher/internal/compose/compose.go:264` strips the `v` prefix, so a launcher built at tag `v1.1.12` resolves images at `:1.1.12`.
@@ -38,7 +38,7 @@ Two parallel blockers stack on top:
 
 ### A. Launcher resolves the latest release tag at start
 
-Drop the binding `DECEPTICON_VERSION = version`. The launcher queries `releases/latest` at start (already does for the self-update check), caches the result, and sets `DECEPTICON_VERSION` to **that** tag's stripped form. Image-only patches show up immediately.
+Drop the binding `RAPTIX_VERSION = version`. The launcher queries `releases/latest` at start (already does for the self-update check), caches the result, and sets `RAPTIX_VERSION` to **that** tag's stripped form. Image-only patches show up immediately.
 
 **Pros**
 - Image-only patches reach users on the next `decepticon start` with zero launcher binary rebuild.
@@ -46,12 +46,12 @@ Drop the binding `DECEPTICON_VERSION = version`. The launcher queries `releases/
 
 **Cons**
 - Version skew risk: if the launcher binary expects a flag/env present only in newer images, an older launcher pinned by `--no-update` could pull mismatched images.
-- Offline / air-gapped installs that can't reach GitHub need a graceful fallback (probably: cache last-known-good tag in `$DECEPTICON_HOME/.last-release`).
-- Currently `DECEPTICON_VERSION` is also used in CLI env (start.go:283), web `WEB_PORT` interpolation, etc. — audit downstream consumers.
+- Offline / air-gapped installs that can't reach GitHub need a graceful fallback (probably: cache last-known-good tag in `$RAPTIX_HOME/.last-release`).
+- Currently `RAPTIX_VERSION` is also used in CLI env (start.go:283), web `WEB_PORT` interpolation, etc. — audit downstream consumers.
 
 ### B. Always build the launcher binary on patch tags
 
-Keep `DECEPTICON_VERSION = version`. On a patch tag (`vX.Y.Z.N`), the launcher job runs, just with no Go source diff. The stamped version still bumps, so compose pulls the patched images.
+Keep `RAPTIX_VERSION = version`. On a patch tag (`vX.Y.Z.N`), the launcher job runs, just with no Go source diff. The stamped version still bumps, so compose pulls the patched images.
 
 **Pros**
 - Zero launcher code change. Easiest to ship.
@@ -63,7 +63,7 @@ Keep `DECEPTICON_VERSION = version`. On a patch tag (`vX.Y.Z.N`), the launcher j
 
 ### C. Pin compose to `:latest`
 
-Drop `${DECEPTICON_VERSION:-latest}` interpolation and just always use `:latest`. The :latest tag is promoted by `publish-release` after every successful release, so users always pull whatever is current.
+Drop `${RAPTIX_VERSION:-latest}` interpolation and just always use `:latest`. The :latest tag is promoted by `publish-release` after every successful release, so users always pull whatever is current.
 
 **Pros**
 - Trivially simple — no launcher changes, no compose interpolation, no version skew detection.
@@ -78,10 +78,10 @@ Drop `${DECEPTICON_VERSION:-latest}` interpolation and just always use `:latest`
 **Option A** with a versioned fallback chain:
 
 1. Launcher reads `releases/latest` at start (cache hit → use cached; cache miss → fetch with 5s timeout).
-2. If reachable, set `DECEPTICON_VERSION = stripped(latest_tag)` and persist `$DECEPTICON_HOME/.last-release`.
-3. If unreachable, fall back to `$DECEPTICON_HOME/.last-release` (last known good).
+2. If reachable, set `RAPTIX_VERSION = stripped(latest_tag)` and persist `$RAPTIX_HOME/.last-release`.
+3. If unreachable, fall back to `$RAPTIX_HOME/.last-release` (last known good).
 4. If neither exists, fall back to the launcher binary's stamped `version` (the current behaviour — safe default).
-5. Override hooks for power users: `DECEPTICON_VERSION` set in `.env` always wins; `--pin-version=v1.1.12` CLI flag for one-shot.
+5. Override hooks for power users: `RAPTIX_VERSION` set in `.env` always wins; `--pin-version=v1.1.12` CLI flag for one-shot.
 
 This keeps reproducibility for operators who pin via `.env`, makes image-only patches deliver to default users, and degrades gracefully offline.
 
@@ -97,8 +97,8 @@ Estimated reduction: ~30 min → ~5–8 min per image-only hotfix.
 ## Open questions
 
 - **Cache invalidation.** How often should the launcher re-query `releases/latest` after it's cached? Per-start, or with a TTL? A long TTL means a patch sits unapplied for hours; per-start re-fetches GitHub on every launch.
-- **CI / dev mode.** `version == "dev"` is the existing skip-self-update signal. In dev mode should `DECEPTICON_VERSION` resolve to `:latest`, the binary-stamped `dev`, or something else? Today `make dogfood` stamps `version=dev` and compose interpolates `:dev` which the dev images do tag.
-- **Multi-tenant test stacks.** Some users run multiple stacks via `DECEPTICON_STACK_NAME` — does each stack pick up its own `DECEPTICON_VERSION` resolution, or is it global per-host?
+- **CI / dev mode.** `version == "dev"` is the existing skip-self-update signal. In dev mode should `RAPTIX_VERSION` resolve to `:latest`, the binary-stamped `dev`, or something else? Today `make dogfood` stamps `version=dev` and compose interpolates `:dev` which the dev images do tag.
+- **Multi-tenant test stacks.** Some users run multiple stacks via `RAPTIX_STACK_NAME` — does each stack pick up its own `RAPTIX_VERSION` resolution, or is it global per-host?
 - **`:latest` promotion atomicity across 7 images.** `publish-release` promotes :latest on every image in series; a failure mid-sequence leaves some images at the new tag and others at the old. Not new but more acute under A.
 
 ## Out of scope

@@ -32,7 +32,7 @@ interface AssistantRow {
 }
 
 function apiBase(): string {
-  return process.env.DECEPTICON_API_URL || "http://localhost:2024";
+  return process.env.RAPTIX_API_URL || "http://localhost:2024";
 }
 
 /**

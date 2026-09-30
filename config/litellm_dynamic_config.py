@@ -1,7 +1,7 @@
 """Dynamic LiteLLM config helpers for user-supplied model IDs.
 
 The checked-in ``config/litellm.yaml`` contains the default Decepticon routes.
-Operators can additionally set ``DECEPTICON_MODEL`` / per-role overrides to any
+Operators can additionally set ``RAPTIX_MODEL`` / per-role overrides to any
 LiteLLM model string (for example ``openrouter/anthropic/claude-3.7-sonnet`` or
 ``ollama_chat/qwen3-coder:30b``).  This module appends only those requested routes
 at container startup so the proxy accepts the same model names the agents use.
@@ -76,7 +76,7 @@ PROVIDER_API_KEY_ENV: dict[str, str] = {
     # Xiaomi MiMo Open Platform — OpenAI-compatible (/v1/chat/completions).
     # No native LiteLLM provider yet, so routes are registered under the
     # ``openai/`` provider with an api_base override; this entry lets
-    # operators set ``DECEPTICON_LITELLM_MODELS=xiaomi_mimo/<id>`` and
+    # operators set ``RAPTIX_LITELLM_MODELS=xiaomi_mimo/<id>`` and
     # have validate_model_name() accept it — the actual route is built
     # by build_model_entry() below.
     "xiaomi_mimo": "XIAOMI_MIMO_API_KEY",
@@ -353,11 +353,11 @@ def _clean_model(value: str | None) -> str | None:
 
 
 def _looks_like_model_env_var(name: str) -> bool:
-    if name in {"DECEPTICON_MODEL", "DECEPTICON_MODEL_FALLBACK"}:
+    if name in {"RAPTIX_MODEL", "RAPTIX_MODEL_FALLBACK"}:
         return True
-    if not name.startswith("DECEPTICON_MODEL_"):
+    if not name.startswith("RAPTIX_MODEL_"):
         return False
-    suffix = name.removeprefix("DECEPTICON_MODEL_")
+    suffix = name.removeprefix("RAPTIX_MODEL_")
     return not suffix.endswith(_MODEL_CONTROL_SUFFIXES)
 
 
@@ -410,7 +410,7 @@ def _vllm_model_from_env(source: Mapping[str, str]) -> str | None:
     """Derive ``hosted_vllm/<model>`` from VLLM_API_BASE / VLLM_MODEL.
 
     The ``hosted_vllm`` provider already works through the generic
-    ``DECEPTICON_MODEL_<ROLE>=hosted_vllm/<model>`` path, but that requires
+    ``RAPTIX_MODEL_<ROLE>=hosted_vllm/<model>`` path, but that requires
     knowing the prefix exists. This mirrors the ``OLLAMA_MODEL`` shortcut so
     self-hosting a model is symmetric with running one under Ollama: point at
     the server, name the model, done.
@@ -440,7 +440,7 @@ def _vllm_model_from_env(source: Mapping[str, str]) -> str | None:
 
 
 def collect_requested_models(env: Mapping[str, str] | None = None) -> set[str]:
-    """Collect model IDs requested through DECEPTICON_MODEL* env vars.
+    """Collect model IDs requested through RAPTIX_MODEL* env vars.
 
     Also picks up the OSS-friendly ``OLLAMA_MODEL`` shortcut so a user
     can pull any local model and just point the launcher at it without
@@ -456,7 +456,7 @@ def collect_requested_models(env: Mapping[str, str] | None = None) -> set[str]:
         if model is not None:
             models.add(model)
 
-    models.update(_extra_models_from_env(source.get("DECEPTICON_LITELLM_MODELS")))
+    models.update(_extra_models_from_env(source.get("RAPTIX_LITELLM_MODELS")))
 
     ollama_model = _ollama_model_from_env(source)
     if ollama_model is not None:
@@ -490,14 +490,14 @@ def validate_model_name(model_name: str) -> None:
     Rejects subscription / OAuth provider prefixes (``auth/*``, ``gemini-sub/*``,
     ``copilot/*``, ``grok-sub/*``, ``pplx-sub/*``) for the API-key registration
     path — those routes are added by ``_inject_subscription_routes`` when the
-    matching ``DECEPTICON_AUTH_*`` flag is set, with custom-provider dispatch
+    matching ``RAPTIX_AUTH_*`` flag is set, with custom-provider dispatch
     in ``litellm_startup.py``. Trying to register them as API-key routes here
     would produce a phantom ``<PROVIDER>_API_KEY`` env-var lookup that never
     resolves.
 
     ``merge_dynamic_models`` skips this validation when the model is already
     present in the model_list, so a user setting
-    ``DECEPTICON_MODEL=auth/gpt-5.4-mini`` plus ``DECEPTICON_AUTH_CHATGPT=true``
+    ``RAPTIX_MODEL=auth/gpt-5.4-mini`` plus ``RAPTIX_AUTH_CHATGPT=true``
     is fine — the subscription path injected the route first and the requested
     model is satisfied.
     """
@@ -508,14 +508,14 @@ def validate_model_name(model_name: str) -> None:
         raise ValueError(
             f"{provider}/* routes are not allowed as dynamic API-key model "
             f"routes. Enable the matching subscription via "
-            f"DECEPTICON_AUTH_<provider>=true so the route is registered "
+            f"RAPTIX_AUTH_<provider>=true so the route is registered "
             f"through litellm_startup.py's custom_provider_map instead."
         )
     if provider in _OAUTH_REJECTED_PROVIDERS:
         raise ValueError(
             f"{provider}/* uses interactive OAuth device-flow auth, not an "
             "API-key env var, so it cannot be registered as a dynamic model "
-            "route. It is not supported through DECEPTICON_LITELLM_MODELS."
+            "route. It is not supported through RAPTIX_LITELLM_MODELS."
         )
     if provider == "ollama":
         # Legacy ``ollama/`` (/api/generate) lacks tool calling — fail
@@ -531,7 +531,7 @@ def validate_model_name(model_name: str) -> None:
         raise ValueError(
             f"unsupported model provider {provider!r} for {model_name!r}; "
             f"{len(ALLOWED_DYNAMIC_PROVIDERS)} providers are supported "
-            "(see the DECEPTICON_LITELLM_MODELS docs for the full list). "
+            "(see the RAPTIX_LITELLM_MODELS docs for the full list). "
             "Use custom/<model> with CUSTOM_OPENAI_API_BASE for an "
             "OpenAI-compatible gateway that isn't listed."
         )
@@ -570,7 +570,7 @@ def build_model_entry(model_name: str) -> dict[str, Any]:
 
     if provider == "custom":
         # OpenAI-compatible endpoint with arbitrary model name.  Example:
-        #   DECEPTICON_MODEL=custom/qwen3-coder
+        #   RAPTIX_MODEL=custom/qwen3-coder
         #   CUSTOM_OPENAI_API_BASE=https://gateway.example/v1
         actual_model = model_name.split("/", 1)[1]
         params: dict[str, Any] = {
@@ -741,7 +741,7 @@ def build_model_entry(model_name: str) -> dict[str, Any]:
 # (chatgpt, gemini-sub, copilot, grok-sub, pplx-sub) attempt OAuth
 # handshakes at startup when they see their routes. If the user hasn't
 # enabled the auth method, the handshake blocks → times out → container
-# becomes unhealthy. Gating on DECEPTICON_AUTH_* prevents that.
+# becomes unhealthy. Gating on RAPTIX_AUTH_* prevents that.
 
 # Shadow pricing for subscription OAuth routes (USD per token, as of
 # 2026-05-14). These routes are paid via flat monthly subscriptions
@@ -811,7 +811,7 @@ def _with_shadow_pricing(route: dict[str, Any]) -> dict[str, Any]:
 
 _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
     # env flag → model_list entries
-    "DECEPTICON_AUTH_CHATGPT": [
+    "RAPTIX_AUTH_CHATGPT": [
         # User-facing model_name stays ``auth/gpt-*`` for consistency with
         # ``auth/claude-*``. The internal LiteLLM route uses the dedicated
         # ``codex-oauth`` custom provider plus the ``oauth-gpt-`` slug
@@ -852,7 +852,7 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
         # Code-heavy override (option α). gpt-5.3-codex is OpenAI's
         # agentic-coding specialized model (Codex + GPT-5 training
         # stack); register the route here so per-agent env overrides
-        # like ``DECEPTICON_MODEL_PATCHER=auth/gpt-5.3-codex`` work
+        # like ``RAPTIX_MODEL_PATCHER=auth/gpt-5.3-codex`` work
         # without yaml edits. Slug ``gpt-5.3-codex`` IS in
         # open_ai_chat_completion_models, so the sentinel is required.
         {
@@ -868,7 +868,7 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
             "litellm_params": {"model": "codex-oauth/oauth-gpt-5.3-codex-spark"},
         },
     ],
-    "DECEPTICON_AUTH_GEMINI": [
+    "RAPTIX_AUTH_GEMINI": [
         {
             "model_name": "gemini-sub/gemini-2.5-pro",
             "litellm_params": {"model": "gemini-sub/gemini-2.5-pro"},
@@ -878,7 +878,7 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
             "litellm_params": {"model": "gemini-sub/gemini-2.5-flash"},
         },
     ],
-    "DECEPTICON_AUTH_COPILOT": [
+    "RAPTIX_AUTH_COPILOT": [
         # GitHub Copilot retired gpt-4o / o1 / o3-mini on 2025-10-23.
         # Current Copilot model picker exposes (as of 2026-05-14):
         #   OpenAI:   gpt-5 mini, gpt-5.2, gpt-5.2-Codex, gpt-5.3-Codex,
@@ -909,14 +909,14 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
         # sentinel is required to dodge the main.py:2561 short-circuit.
         # copilot_handler._upstream_model_slug strips ``oauth-`` before
         # posting to api.githubcopilot.com. Pick via
-        # ``DECEPTICON_MODEL_<ROLE>=copilot/gpt-5.3-codex`` for
+        # ``RAPTIX_MODEL_<ROLE>=copilot/gpt-5.3-codex`` for
         # patcher / exploiter / contract_auditor.
         {
             "model_name": "copilot/gpt-5.3-codex",
             "litellm_params": {"model": "copilot/oauth-gpt-5.3-codex"},
         },
     ],
-    "DECEPTICON_AUTH_GROK": [
+    "RAPTIX_AUTH_GROK": [
         # grok-3 / grok-3-mini retired by xAI on 2026-05-15. Replaced
         # with the current production lineup: grok-4.3 (flagship) and
         # grok-4-1-fast-reasoning (cost-efficient MID). Both slugs are
@@ -930,7 +930,7 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
             "litellm_params": {"model": "grok-sub/grok-4-1-fast-reasoning"},
         },
     ],
-    "DECEPTICON_AUTH_PERPLEXITY": [
+    "RAPTIX_AUTH_PERPLEXITY": [
         {"model_name": "pplx-sub/sonar-pro", "litellm_params": {"model": "pplx-sub/sonar-pro"}},
         {"model_name": "pplx-sub/sonar", "litellm_params": {"model": "pplx-sub/sonar"}},
     ],
@@ -938,21 +938,21 @@ _SUBSCRIPTION_ROUTES: dict[str, list[dict[str, Any]]] = {
 
 # Fallback entries for subscription routes — appended to litellm_settings.fallbacks
 _SUBSCRIPTION_FALLBACKS: dict[str, list[dict[str, list[str]]]] = {
-    "DECEPTICON_AUTH_CHATGPT": [
+    "RAPTIX_AUTH_CHATGPT": [
         {"auth/gpt-5.5": ["auth/gpt-5.4"]},
         {"auth/gpt-5.4": ["auth/gpt-5.4-mini"]},
     ],
-    "DECEPTICON_AUTH_GEMINI": [
+    "RAPTIX_AUTH_GEMINI": [
         {"gemini-sub/gemini-2.5-pro": ["gemini-sub/gemini-2.5-flash"]},
     ],
-    "DECEPTICON_AUTH_COPILOT": [
+    "RAPTIX_AUTH_COPILOT": [
         {"copilot/gpt-5.5": ["copilot/claude-sonnet-4-6"]},
         {"copilot/claude-sonnet-4-6": ["copilot/gpt-5.4-mini"]},
     ],
-    "DECEPTICON_AUTH_GROK": [
+    "RAPTIX_AUTH_GROK": [
         {"grok-sub/grok-4.3": ["grok-sub/grok-4-1-fast-reasoning"]},
     ],
-    "DECEPTICON_AUTH_PERPLEXITY": [
+    "RAPTIX_AUTH_PERPLEXITY": [
         {"pplx-sub/sonar-pro": ["pplx-sub/sonar"]},
     ],
 }
@@ -967,7 +967,7 @@ def _inject_subscription_routes(
 ) -> None:
     """Conditionally add subscription OAuth model routes and fallbacks.
 
-    Only registers routes for providers whose ``DECEPTICON_AUTH_*`` flag is
+    Only registers routes for providers whose ``RAPTIX_AUTH_*`` flag is
     truthy.  This prevents LiteLLM's native OAuth providers from attempting
     device-code or session-token handshakes at startup when the user hasn't
     enabled the auth method.
@@ -1004,11 +1004,11 @@ def _inject_subscription_routes(
 
 
 def has_subscription_routes(env: Mapping[str, str] | None = None) -> bool:
-    """Return True if any DECEPTICON_AUTH_* flag enables a subscription route.
+    """Return True if any RAPTIX_AUTH_* flag enables a subscription route.
 
     Used by ``litellm_startup.py`` to decide whether to regenerate the
-    LiteLLM config even when no ``DECEPTICON_MODEL*`` overrides are set —
-    a user who only enables ``DECEPTICON_AUTH_CHATGPT=true`` still needs
+    LiteLLM config even when no ``RAPTIX_MODEL*`` overrides are set —
+    a user who only enables ``RAPTIX_AUTH_CHATGPT=true`` still needs
     the corresponding ``auth/gpt-*`` model_list entries.
     """
     source = env if env is not None else os.environ

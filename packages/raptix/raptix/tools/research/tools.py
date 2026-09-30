@@ -363,7 +363,7 @@ def _dependency_chains(path: Path) -> dict[tuple[str, str, str], list[str]]:
 
 
 def _manifest_path(path: Path) -> str | None:
-    workspace = Path(os.getenv("DECEPTICON_WORKSPACE_PATH", Path.cwd())).resolve()
+    workspace = Path(os.getenv("RAPTIX_WORKSPACE_PATH", Path.cwd())).resolve()
     try:
         return path.resolve().relative_to(workspace).as_posix()
     except ValueError:

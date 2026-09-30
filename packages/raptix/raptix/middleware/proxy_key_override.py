@@ -1,7 +1,7 @@
 """Per-run LiteLLM virtual-key override — multi-tenant cost attribution.
 
 In a SHARED langgraph serving many orgs, the baked-in model authenticates to
-the LiteLLM proxy with the env master key (``DECEPTICON_LLM__PROXY_API_KEY``),
+the LiteLLM proxy with the env master key (``RAPTIX_LLM__PROXY_API_KEY``),
 so ALL spend lands on the master key and can't be split per customer. The SaaS
 launch flow mints a virtual key per engagement (the key's ``team_id`` is the
 org) and threads it in as ``config.configurable.proxy_api_key``. This middleware

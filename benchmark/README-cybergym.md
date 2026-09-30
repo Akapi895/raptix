@@ -1,6 +1,6 @@
 # CyberGym provider
 
-Adapter that runs the Decepticon main agent against
+Adapter that runs the Raptix main agent against
 [CyberGym](https://cybergym.io) — UC Berkeley's large-scale, real-world
 vulnerability-reproduction benchmark (arXiv:2506.02548; ~1,500 tasks over
 ~188 OSS projects). CyberGym is the real-world-CVE benchmark the frontier
@@ -106,7 +106,7 @@ scored as a pass.
 - **No live-verified end-to-end run in this change.** `gen_task` (setup)
   and the ~240GB data path are infra-gated. The parsing + server-scoring
   surface is covered by
-  `packages/decepticon/tests/unit/benchmark/test_cybergym_provider.py`
+  `packages/raptix/tests/unit/benchmark/test_cybergym_provider.py`
   with the HTTP layer faked.
 - **Dynamic-analysis mode not wired.** Upstream can hand the agent the
   vulnerable images (`n132/arvo:<id>-vul`) for running/fuzzing; this

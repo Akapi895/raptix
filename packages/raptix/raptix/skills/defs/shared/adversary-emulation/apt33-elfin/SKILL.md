@@ -1,6 +1,6 @@
 ---
 name: apt33-elfin
-description: "Adversary-emulation profile for APT33 (Elfin, Peach Sandstorm, HOLMIUM), a suspected Iranian state-sponsored espionage group, mapped to MITRE ATT&CK G0064 with Decepticon emulation guidance."
+description: "Adversary-emulation profile for APT33 (Elfin, Peach Sandstorm, HOLMIUM), a suspected Iranian state-sponsored espionage group, mapped to MITRE ATT&CK G0064 with Raptix emulation guidance."
 allowed-tools: Bash Read Write
 metadata:
   subdomain: adversary-emulation
@@ -11,7 +11,7 @@ metadata:
 
 # APT33 (Elfin, Peach Sandstorm, HOLMIUM) — Adversary Emulation Profile
 
-APT33 (MITRE ATT&CK **G0064**; aliases Elfin, Peach Sandstorm, HOLMIUM) is a suspected Iranian state-sponsored threat group that has conducted cyber-espionage operations since at least 2013. The group is best known for spearphishing-driven intrusions against the aviation, energy, and petrochemical sectors in the United States, Saudi Arabia, and South Korea, and for an enduring evolution from `.hta`-based phishing toward large-scale cloud-identity attacks. Its operations blend publicly available offensive tooling with custom backdoors, and the group has been linked — with varying confidence — to destructive wiper malware. This profile maps APT33's documented TTPs to ATT&CK and provides emulation guidance for Decepticon under authorized engagement scope.
+APT33 (MITRE ATT&CK **G0064**; aliases Elfin, Peach Sandstorm, HOLMIUM) is a suspected Iranian state-sponsored threat group that has conducted cyber-espionage operations since at least 2013. The group is best known for spearphishing-driven intrusions against the aviation, energy, and petrochemical sectors in the United States, Saudi Arabia, and South Korea, and for an enduring evolution from `.hta`-based phishing toward large-scale cloud-identity attacks. Its operations blend publicly available offensive tooling with custom backdoors, and the group has been linked — with varying confidence — to destructive wiper malware. This profile maps APT33's documented TTPs to ATT&CK and provides emulation guidance for Raptix under authorized engagement scope.
 
 ## Attribution & motivation
 
@@ -106,19 +106,19 @@ Custom families: **TURNEDUP** (`S0198`/backdoor — RAT, `S0199`), **NanoCore** 
 
 Publicly available / dual-use: **Mimikatz** (`S0002`), **LaZagne** (`S0349`), **PowerSploit** (`S0194`), **Empire** (`S0363`), **Pupy** (`S0192`), **Ruler** (`S0358`, Outlook/O365), **ftp** (`S0095`), **Net** (`S0039`), **ProcDump**, **SniffPass**, **Gpppassword**, **AzureHound**, **Roadtools**, and **AnyDesk** (abused RMM).
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > Authorized-use only: execute these emulations strictly within the engagement's written scope, target list, and rules of engagement. Destructive/wiper TTPs must NEVER be executed against client systems — emulate Impact only via documented, reversible markers or out-of-scope-by-default.
 
-Map APT33's signature chain to Decepticon's own capabilities:
+Map APT33's signature chain to Raptix's own capabilities:
 
-- **Initial access — password spray (`T1110.003`) + cloud valid accounts (`T1078.004`):** This is the modern APT33 signature. Use Decepticon's cloud skills to run a low-and-slow spray against the engagement's M365/Entra ID tenant with a custom user-agent and lockout-aware throttling, mirroring the `go-http-client` low-volume pattern. Pair with the engagement's authorized credential list. Avoid lockouts to stay in scope.
+- **Initial access — password spray (`T1110.003`) + cloud valid accounts (`T1078.004`):** This is the modern APT33 signature. Use Raptix's cloud skills to run a low-and-slow spray against the engagement's M365/Entra ID tenant with a custom user-agent and lockout-aware throttling, mirroring the `go-http-client` low-volume pattern. Pair with the engagement's authorized credential list. Avoid lockouts to stay in scope.
 - **Initial access — spearphishing (`T1566.001/.002`, `T1204`):** If phishing is in scope, emulate `.hta`/archive-attachment lures with recruitment/job themes via the engagement's sanctioned phishing harness; otherwise simulate the post-delivery effect by assuming a foothold.
-- **Execution / staging (`T1059.001`, `T1105`):** Use Decepticon's bash/PowerShell tooling to fetch and run a stager from your redirector, mirroring PowerShell download-and-execute.
+- **Execution / staging (`T1059.001`, `T1105`):** Use Raptix's bash/PowerShell tooling to fetch and run a stager from your redirector, mirroring PowerShell download-and-execute.
 - **C2 — emulate with Sliver:** Stand up a Sliver HTTP listener (matches `T1071.001`), enable symmetric-crypto transport (`T1573.001`), and bind to non-standard ports analogous to 808/880 (`T1571`). For high-fidelity cloud emulation, front C2 through an authorized Azure App Service / `*.azurewebsites.net` redirector to replicate the Tickler infrastructure pattern — only with cloud-team approval.
-- **Cloud/AD discovery (`AzureHound`/`Roadtools`/AD snapshot):** Use Decepticon's cloud and AD skills to enumerate Entra ID via Graph/Azure REST (AzureHound-style) and pull an AD snapshot/BloodHound collection on-prem — the exact recon APT33 runs post-auth.
+- **Cloud/AD discovery (`AzureHound`/`Roadtools`/AD snapshot):** Use Raptix's cloud and AD skills to enumerate Entra ID via Graph/Azure REST (AzureHound-style) and pull an AD snapshot/BloodHound collection on-prem — the exact recon APT33 runs post-auth.
 - **Credential access (`T1003.001/.004/.005`, `T1555`, `T1552.006`):** Via the defense-evasion / credential workflow, emulate LSASS dumping (Mimikatz/ProcDump-style), LaZagne-style store harvesting, and GPP password recovery — log every artifact for the blue cell.
-- **Lateral movement (`T1078`, SMB):** Use Decepticon's lateral-movement skill for SMB-based propagation with recovered valid accounts; optionally emulate AnyDesk RMM deployment if RMM abuse is in scope.
+- **Lateral movement (`T1078`, SMB):** Use Raptix's lateral-movement skill for SMB-based propagation with recovered valid accounts; optionally emulate AnyDesk RMM deployment if RMM abuse is in scope.
 - **Collection & exfil (`T1560.001`, `T1048.003`):** Archive staged data with a WinRAR-equivalent utility, then exfiltrate over a *separate* FTP channel distinct from C2 to reproduce APT33's split-channel pattern.
 - **Defense evasion (`T1132.001`, `T1027.013`, DLL sideloading):** Base64-encode tasking/payloads and emulate DLL sideloading against a benign legitimate binary to test the blue cell's sideload detection.
 - **Persistence (`T1547.001`, `T1546.003`, `T1053.005`):** Plant a Run-key, a WMI event subscription, and a recurring scheduled task (multiple daily triggers) as APT33 does — document each for clean teardown.

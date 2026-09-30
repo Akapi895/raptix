@@ -136,11 +136,11 @@ APT36 (MITRE ATT&CK **G0134**) is a suspected Pakistan-based cyber-espionage gro
 
 > Note: CapraRAT, ElizaRAT, and Limepad are well-documented custom APT36 tools but do not yet have assigned MITRE ATT&CK software IDs. CrimsonRAT (S0115) is the group's signature implant used continuously since at least 2016.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Mobile (CapraRAT-style) emulation requires explicit mobile-device scope authorization.
 
-Map APT36's signature plays to Decepticon's own capabilities:
+Map APT36's signature plays to Raptix's own capabilities:
 
 - **Initial access — spearphishing with weaponized documents (T1566.001, T1566.002, T1204.002).** Use the phishing skill to craft **government/defense-themed lure documents** (defense advisories, HR circulars, Kavach MFA installer downloads, current-event exploitation). Build macro-laden DOCX/XLSX delivering a .NET payload (CrimsonRAT analog) or LNK-in-ZIP with embedded PDF decoy triggering an HTA downloader via `mshta.exe`. Register typo-squatted domains mimicking government file-sharing or education portals; stage payloads on attacker infrastructure with SSL certificates.
 - **Watering hole (T1189, T1608.004).** With the web-attack skill, stand up cloned government/defense/research websites with malicious iframes or injected download links delivering the RAT payload — reproducing APT36's documented watering hole pattern.

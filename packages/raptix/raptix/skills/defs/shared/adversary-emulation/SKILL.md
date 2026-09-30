@@ -41,7 +41,7 @@ documented doing, mapped to [MITRE ATT&CK](https://attack.mitre.org/).
 2. **Load the profile.** `load_skill <slug>` (e.g. `load_skill apt29-cozy-bear`).
    Each profile carries attribution, targeting, dated campaigns, the actor's TTPs
    mapped to ATT&CK technique IDs, signature tooling, **emulation guidance** (how
-   to reproduce each TTP with Decepticon's own tools), and detection notes.
+   to reproduce each TTP with Raptix's own tools), and detection notes.
 3. **Scope to RoE.** Intersect the actor's TTPs with the approved scope. Drop or
    down-scope anything out of bounds (e.g., replace a real wiper with a canary).
    Forbidden-destination / out-of-scope checks still apply at tool-call time.

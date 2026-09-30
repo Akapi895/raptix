@@ -154,11 +154,11 @@ Salt Typhoon (MITRE ATT&CK **G1045**) is a People's Republic of China (PRC) stat
 
 > Note: Trend Micro states they do not have sufficient evidence to attribute DEMODEX and GhostSpider as proprietary to Earth Estries — these tools may be shared across multiple Chinese APT groups or sourced from third-party malware developers.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Salt Typhoon's operations involve network infrastructure (routers, switches, firewalls) — emulation on production network devices requires explicit written authorization and coordination with network operations teams. Never modify production routing tables or SPAN configurations outside an explicitly sanctioned, isolated lab.
 
-Map Salt Typhoon's signature plays to Decepticon's own capabilities:
+Map Salt Typhoon's signature plays to Raptix's own capabilities:
 
 - **Initial access — edge device exploitation (T1190, CVE-2023-20198/20273/2018-0171).** Where Cisco IOS XE devices are in scope, emulate the CVE-2023-20198 web UI auth bypass chain: craft WSMA endpoint requests to `/webui_wsma_Http` with double-encoded paths (`/%2577eb%2575i_%2577sma_Http`) to create unauthorized admin accounts, then chain CVE-2023-20273 for root privilege escalation. For older devices, emulate CVE-2018-0171 Smart Install exploitation using siet.py from within the sandbox. Use the payload-builder to stage Ivanti Connect Secure (CVE-2023-46805 + CVE-2024-21887) and Fortinet (CVE-2023-48788) exploit chains for broader edge device coverage.
 - **Network device persistence & C2 (T1098.004, T1136.001, T1572, T1543.005).** After gaining access to network devices, emulate Salt Typhoon's persistence pattern: create local accounts with `privilege 15`, add SSH authorized_keys for persistent re-entry on non-default high ports (22x22 pattern), and configure GRE/IPsec tunnels for covert C2 channels. If Guest Shell (IOS XE/NX-OS) is available in the lab, enable it (`guestshell enable`) and demonstrate tool staging, Python script execution, and lateral movement from within the container — this is Salt Typhoon's defining evasion technique.

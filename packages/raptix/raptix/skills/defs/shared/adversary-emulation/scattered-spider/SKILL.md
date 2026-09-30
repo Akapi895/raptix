@@ -1,6 +1,6 @@
 ---
 name: scattered-spider
-description: "Adversary-emulation profile for Scattered Spider (UNC3944/Octo Tempest), a financially motivated social-engineering-led intrusion group, mapped to ATT&CK G1015 and Decepticon tooling."
+description: "Adversary-emulation profile for Scattered Spider (UNC3944/Octo Tempest), a financially motivated social-engineering-led intrusion group, mapped to ATT&CK G1015 and Raptix tooling."
 allowed-tools: Bash Read Write
 metadata:
   subdomain: adversary-emulation
@@ -11,7 +11,7 @@ metadata:
 
 # Scattered Spider (UNC3944, Octo Tempest, Muddled Libra, Star Fraud) — Adversary Emulation Profile
 
-Scattered Spider (MITRE ATT&CK **G1015**) is a financially motivated, predominantly native English-speaking cybercriminal collective active since at least 2022 and widely linked to the loosely affiliated "The Com" social network. The group is exceptional not for novel malware but for **aggressive, high-tempo social engineering of human identity processes**: it phones and SMS-phishes help desks and employees, impersonates IT staff, bypasses MFA (push bombing, SIM swapping, attacker-registered tokens), and rapidly pivots into cloud identity (Microsoft Entra ID, Okta, AWS, Azure) and virtualization (VMware ESXi/vCenter) before staging data theft and ransomware. It began with the 2022 "0ktapus" Okta-credential phishing wave, escalated to the high-profile 2023 MGM Resorts and Caesars Entertainment intrusions, and through 2024–2025 operated as an affiliate of multiple ransomware-as-a-service brands (BlackCat/ALPHV, RansomHub, Qilin, DragonForce), hitting retail, insurance, and aviation. This profile teaches Decepticon to emulate G1015's signature identity-centric TTPs inside an authorized engagement and helps the blue cell anticipate detection.
+Scattered Spider (MITRE ATT&CK **G1015**) is a financially motivated, predominantly native English-speaking cybercriminal collective active since at least 2022 and widely linked to the loosely affiliated "The Com" social network. The group is exceptional not for novel malware but for **aggressive, high-tempo social engineering of human identity processes**: it phones and SMS-phishes help desks and employees, impersonates IT staff, bypasses MFA (push bombing, SIM swapping, attacker-registered tokens), and rapidly pivots into cloud identity (Microsoft Entra ID, Okta, AWS, Azure) and virtualization (VMware ESXi/vCenter) before staging data theft and ransomware. It began with the 2022 "0ktapus" Okta-credential phishing wave, escalated to the high-profile 2023 MGM Resorts and Caesars Entertainment intrusions, and through 2024–2025 operated as an affiliate of multiple ransomware-as-a-service brands (BlackCat/ALPHV, RansomHub, Qilin, DragonForce), hitting retail, insurance, and aviation. This profile teaches Raptix to emulate G1015's signature identity-centric TTPs inside an authorized engagement and helps the blue cell anticipate detection.
 
 ## Attribution & motivation
 
@@ -133,7 +133,7 @@ Scattered Spider (MITRE ATT&CK **G1015**) is a financially motivated, predominan
 - **RATs / drivers:** WarzoneRAT (S0670); BYOVD kernel driver (CVE-2015-2291).
 - Hallmark: minimal custom malware — the group weaponizes **legitimate admin/RMM software and identity systems**, making it hard to catch with signature-based detection.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 **Authorized use only:** Execute the below exclusively within the documented rules of engagement and approved scope for this engagement; never SIM-swap real subscribers, social-engineer real third-party carriers/help desks outside scope, or deploy real ransomware against production data.
 

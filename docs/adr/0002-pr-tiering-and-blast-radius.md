@@ -7,7 +7,7 @@
 
 ## Context
 
-Decepticon receives contributions from human maintainers, write-access
+Raptix receives contributions from human maintainers, write-access
 collaborators, external forked-PR contributors, and a growing volume of
 AI-assisted PRs. With one full-time owner today (`@PurpleCHOIms`),
 manually reviewing every PR is not viable, and "every PR self-merges on
@@ -32,7 +32,7 @@ routed to one of three review tiers:
 |---|---|---|---|
 | **Tier-auto** | Tests, internal refactors with no public-API change, docs that are not policy docs, lockfile-only dependency bumps with green security scan | None (CI is the reviewer) | Green required CI + contributor self-review |
 | **Tier-delegate** | Agent prompts, skill bodies, middleware internals, web/CLI features, schema changes that do not break contracts | Maintainer or named delegate | Green CI + 1 review approval |
-| **Tier-owner** | Anything under a `CODEOWNERS`-gated path: `.github/workflows/**`, `pyproject.toml` / lockfiles / package manifests, `packages/decepticon-core/.../contracts/**`, `scripts/install.sh`, `docker-compose.yml`, `containers/*.Dockerfile`, `.semgrep/**`, `SECURITY.md`, `docs/security/**`, `docs/COWORK.md`, `docs/adr/**`, `CONTRIBUTING_AGENT.md`, release tooling | Owner (`@PurpleCHOIms` today) | Green CI + 1 owner approval; release jobs additionally gated by the `pypi-release` GitHub Environment |
+| **Tier-owner** | Anything under a `CODEOWNERS`-gated path: `.github/workflows/**`, `pyproject.toml` / lockfiles / package manifests, `packages/raptix-core/.../contracts/**`, `scripts/install.sh`, `docker-compose.yml`, `containers/*.Dockerfile`, `.semgrep/**`, `SECURITY.md`, `docs/security/**`, `docs/COWORK.md`, `docs/adr/**`, `CONTRIBUTING_AGENT.md`, release tooling | Owner (`@PurpleCHOIms` today) | Green CI + 1 owner approval; release jobs additionally gated by the `pypi-release` GitHub Environment |
 
 A path enters Tier-owner when *both* of these are true:
 

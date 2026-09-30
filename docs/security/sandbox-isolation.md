@@ -38,7 +38,7 @@ sandbox:
   mem_limit: 4g
   pids_limit: 1024
   volumes:
-    - ${DECEPTICON_ENGAGEMENT_WORKSPACE:-${DECEPTICON_HOME:-~/.decepticon}/workspace}:/workspace
+    - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.decepticon}/workspace}:/workspace
 ```
 
 What this gets right:
@@ -68,7 +68,7 @@ What's still wrong:
 ## Target: per-engagement sandbox containers
 
 The launcher already chooses the engagement, sets
-`DECEPTICON_ENGAGEMENT_WORKSPACE`, and runs `docker compose up`. The
+`RAPTIX_ENGAGEMENT_WORKSPACE`, and runs `docker compose up`. The
 minimum-invasive evolution is one extra layer between "engagement
 chosen" and "compose up":
 
@@ -188,7 +188,7 @@ before issuing `docker compose up`, sets `SANDBOX_URL` and
 
 The existing `sandbox` service in `docker-compose.yml` stays as the
 **dev / single-engagement** entry point. The per-engagement spawner is
-opt-in via `DECEPTICON_PER_ENGAGEMENT_SANDBOX=1` so existing dogfood
+opt-in via `RAPTIX_PER_ENGAGEMENT_SANDBOX=1` so existing dogfood
 runs are unchanged.
 
 ## Why not Firecracker / gVisor?
@@ -203,7 +203,7 @@ KVM (no macOS, no Windows desktop). Multi-tenant deployers should run Firecracke
 gVisor is the middle ground: same Docker UX, intercepts every syscall
 through a user-space kernel. ~20-30% perf cost. Available as a Docker
 runtime (`runsc`). Worth offering as an opt-in
-`DECEPTICON_SANDBOX_RUNTIME=runsc` toggle in a follow-up.
+`RAPTIX_SANDBOX_RUNTIME=runsc` toggle in a follow-up.
 
 ## Verifying the hardening
 
@@ -228,7 +228,7 @@ docker inspect decepticon-sandbox --format '{{.HostConfig.PidsLimit}}'
 ## Future hardening
 
 1. **Per-engagement spawn (above).** This is the next major change.
-2. **`DECEPTICON_SANDBOX_RUNTIME=runsc`** opt-in for gVisor.
+2. **`RAPTIX_SANDBOX_RUNTIME=runsc`** opt-in for gVisor.
 3. **Firecracker microVM mode** for the multi-tenant pool plane.
 4. **Per-engagement Sliver C2** so engagement A's beacons don't share a
    team server with engagement B's. The `c2-sliver` service in compose

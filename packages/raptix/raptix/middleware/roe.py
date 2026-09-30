@@ -279,12 +279,12 @@ def _egress_disabled() -> bool:
 
     Default ON: an ``enforce``-mode engagement automatically gets the
     authoritative network boundary compiled + pushed to the sandbox — no
-    extra env needed. ``DECEPTICON_EGRESS_DISABLE=1`` is the escape hatch
+    extra env needed. ``RAPTIX_EGRESS_DISABLE=1`` is the escape hatch
     for an operator whose environment the in-sandbox firewall doesn't fit
     (it falls back to the parser layer alone). audit / warn modes never
     touch the network regardless.
     """
-    return os.environ.get("DECEPTICON_EGRESS_DISABLE", "").strip().lower() in {
+    return os.environ.get("RAPTIX_EGRESS_DISABLE", "").strip().lower() in {
         "1",
         "true",
         "yes",
@@ -471,7 +471,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         """Compile + push the Layer-2 egress guardrail, once per workspace.
 
         Default ON for ``enforce`` mode: skipped only when the operator
-        opts out via ``DECEPTICON_EGRESS_DISABLE``. audit / warn modes
+        opts out via ``RAPTIX_EGRESS_DISABLE``. audit / warn modes
         never reach here (guarded below). Best-effort: any failure is
         logged and never propagates into agent execution.
         """
@@ -624,9 +624,9 @@ def build_default_sink(workspace_path: str | None) -> RoEAuditSink | None:
     Returns ``None`` when no workspace is set yet (during initial
     bootstrapping) so the middleware degrades to "no-sink" cleanly.
     Operators that want a deterministic path can also set
-    ``DECEPTICON_ROE_AUDIT_PATH`` in the env.
+    ``RAPTIX_ROE_AUDIT_PATH`` in the env.
     """
-    env_path = os.environ.get("DECEPTICON_ROE_AUDIT_PATH")
+    env_path = os.environ.get("RAPTIX_ROE_AUDIT_PATH")
     if env_path:
         return RoEAuditSink(path=Path(env_path))
     if not workspace_path:

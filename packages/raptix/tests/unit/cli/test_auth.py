@@ -16,8 +16,8 @@ _PROVIDER_ENV_VARS = (
     *factory._API_METHOD_ENV.values(),
     *factory._OAUTH_METHOD_ENV.values(),
     *factory._LOCAL_METHOD_ENV.values(),
-    "DECEPTICON_AUTH_PRIORITY",
-    "DECEPTICON_HOME",
+    "RAPTIX_AUTH_PRIORITY",
+    "RAPTIX_HOME",
     "OLLAMA_MODEL",
     "OLLAMA_CLOUD_MODEL",
     "LMSTUDIO_MODEL",
@@ -87,11 +87,11 @@ def test_placeholder_key_is_not_configured(clean_env):
 
 def test_subscription_auto_routes_by_default(clean_env, tmp_path):
     # A fully-wired Gemini Advanced subscription is now in the DEFAULT priority
-    # chain, so it is routed without the user authoring DECEPTICON_AUTH_PRIORITY
+    # chain, so it is routed without the user authoring RAPTIX_AUTH_PRIORITY
     # (the footgun the earlier release left for google/copilot/grok/perplexity).
     cred = tmp_path / "gemini.json"
     cred.write_text(json.dumps({"access_token": "x"}))
-    clean_env.setenv("DECEPTICON_AUTH_GEMINI", "true")
+    clean_env.setenv("RAPTIX_AUTH_GEMINI", "true")
     clean_env.setenv("GEMINI_TOKENS_PATH", str(cred))
     inv = factory.auth_inventory()
     gem = next(s for s in inv.statuses if s.method == AuthMethod.GOOGLE_OAUTH)
@@ -108,7 +108,7 @@ def test_configured_but_idle_when_priority_omits(clean_env):
     # explicit priority list — wired but deliberately not routed.
     clean_env.setenv("ANTHROPIC_API_KEY", "sk-ant-api03-" + "x" * 40)
     clean_env.setenv("OPENAI_API_KEY", "sk-" + "y" * 48)
-    clean_env.setenv("DECEPTICON_AUTH_PRIORITY", "openai_api")
+    clean_env.setenv("RAPTIX_AUTH_PRIORITY", "openai_api")
     inv = factory.auth_inventory()
     anthropic = next(s for s in inv.statuses if s.method == AuthMethod.ANTHROPIC_API)
     assert anthropic.configured
@@ -120,9 +120,9 @@ def test_configured_but_idle_when_priority_omits(clean_env):
 def test_explicit_priority_routes_subscription(clean_env, tmp_path):
     cred = tmp_path / "gemini.json"
     cred.write_text(json.dumps({"access_token": "x"}))
-    clean_env.setenv("DECEPTICON_AUTH_GEMINI", "true")
+    clean_env.setenv("RAPTIX_AUTH_GEMINI", "true")
     clean_env.setenv("GEMINI_TOKENS_PATH", str(cred))
-    clean_env.setenv("DECEPTICON_AUTH_PRIORITY", "google_oauth")
+    clean_env.setenv("RAPTIX_AUTH_PRIORITY", "google_oauth")
     inv = factory.auth_inventory()
     gem = next(s for s in inv.statuses if s.method == AuthMethod.GOOGLE_OAUTH)
     assert gem.active

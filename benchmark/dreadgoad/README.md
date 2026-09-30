@@ -10,7 +10,7 @@ The lab is built and torn down by the upstream
 talks to the agent over the LangGraph SDK and to the sandbox container
 over `docker exec` / `docker cp`. There is no downstream-only code path —
 every config + provider + harness file under `benchmark/dreadgoad/`
-runs as-is against an OSS Decepticon stack started with `make dev`.
+runs as-is against an OSS Raptix stack started with `make dev`.
 
 ## Prerequisites
 

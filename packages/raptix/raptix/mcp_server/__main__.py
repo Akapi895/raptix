@@ -47,7 +47,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--langgraph-url",
         default=None,
-        help="Override the Decepticon LangGraph URL (default: $DECEPTICON_API_URL).",
+        help="Override the Decepticon LangGraph URL (default: $RAPTIX_API_URL).",
     )
     parser.add_argument(
         "--auth",
@@ -55,8 +55,8 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Auth mode for the streamable-http transport. Unset → inferred: "
-            "DECEPTICON_MCP_TOKEN ⇒ shared-secret; --issuer + key ⇒ jwt; else none. "
-            "The shared-secret value is read only from DECEPTICON_MCP_TOKEN, never argv."
+            "RAPTIX_MCP_TOKEN ⇒ shared-secret; --issuer + key ⇒ jwt; else none. "
+            "The shared-secret value is read only from RAPTIX_MCP_TOKEN, never argv."
         ),
     )
     parser.add_argument("--issuer", default=None, help="JWT issuer (iss) to require.")

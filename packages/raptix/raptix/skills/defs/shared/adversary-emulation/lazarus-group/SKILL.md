@@ -110,10 +110,10 @@ Lazarus Group (MITRE ATT&CK **G0032**) is a North Korean state-sponsored threat 
 - **Responder (S0174)** — *public*: LLMNR/NBT-NS poisoning & SMB-relay credential capture.
 - **Additional widely reported families (not all in the G0032 software list):** WannaCry ransomware, FASTCash ATM-switch malware (ISO 8583 manipulation), and the 3CX-era VEILEDSIGNAL / Gopuram tooling — *custom*. Validate any of these against current primary reporting before citing in a deliverable.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 > **Authorized use only.** Execute these emulations exclusively inside the signed rules-of-engagement and scope of the current engagement. Never touch out-of-scope assets, never deploy genuinely destructive payloads against production, and use benign, instrumented stand-ins for any wiper/ransomware behavior.
 
-Map Lazarus signature TTPs to Decepticon capabilities to reproduce the actor's behavior chain for the blue cell:
+Map Lazarus signature TTPs to Raptix capabilities to reproduce the actor's behavior chain for the blue cell:
 - **Initial access — fake-job-offer social engineering (T1566.001/.002/.003, T1204):** stage a recruiter-themed lure (LinkedIn/Telegram/email) delivering a benign tracked document or "trial app." Use the **phishing/social-engineering** workflow; deliver a marked payload (beacon-only) rather than live malware. Capture which employees execute (DevOps/admin/dev personas mirror real targeting).
 - **Trojanized app / supply-chain feel (T1189, T1204.002):** with explicit approval, host a signed-looking "installer" on in-scope infrastructure that drops the C2 stager — emulate AppleJeus/3CX delivery without redistributing real malware.
 - **C2 — encrypted multi-stage HTTPS beacon (T1071.001, T1573.001, T1104, T1008, T1090):** deploy **Sliver** (c2/sliver skill) with HTTPS/mTLS profiles, jitter, fallback listeners, and a redirector/proxy to mirror Lazarus's encrypted, multi-stage, proxied C2.

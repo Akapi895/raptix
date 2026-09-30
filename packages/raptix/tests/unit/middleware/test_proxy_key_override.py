@@ -24,10 +24,10 @@ from raptix.middleware.proxy_key_override import (
 @pytest.fixture
 def proxy_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     env = {
-        "DECEPTICON_LLM__PROXY_URL": "http://litellm:4000",
-        "DECEPTICON_LLM__PROXY_API_KEY": "sk-decepticon-master",
-        "DECEPTICON_LLM__TIMEOUT": "120",
-        "DECEPTICON_LLM__MAX_RETRIES": "2",
+        "RAPTIX_LLM__PROXY_URL": "http://litellm:4000",
+        "RAPTIX_LLM__PROXY_API_KEY": "sk-decepticon-master",
+        "RAPTIX_LLM__TIMEOUT": "120",
+        "RAPTIX_LLM__MAX_RETRIES": "2",
     }
     for key, value in env.items():
         monkeypatch.setenv(key, value)
@@ -85,12 +85,12 @@ class TestRekeyModel:
         bound = _rekey_model(_original_chat_model(), "sk-engagement-xyz")
         # The whole point: authenticate with the per-run key, NOT the master.
         assert bound.openai_api_key.get_secret_value() == "sk-engagement-xyz"
-        assert bound.openai_api_key.get_secret_value() != proxy_env["DECEPTICON_LLM__PROXY_API_KEY"]
+        assert bound.openai_api_key.get_secret_value() != proxy_env["RAPTIX_LLM__PROXY_API_KEY"]
 
     def test_preserves_model_id_and_proxy_url(self, proxy_env: dict[str, str]) -> None:
         bound = _rekey_model(_original_chat_model(model="anthropic/claude-sonnet-4-6"), "sk-k")
         assert bound.model_name == "anthropic/claude-sonnet-4-6"
-        assert bound.openai_api_base == proxy_env["DECEPTICON_LLM__PROXY_URL"]
+        assert bound.openai_api_base == proxy_env["RAPTIX_LLM__PROXY_URL"]
 
     def test_drops_temperature_for_opus_4x(self, proxy_env: dict[str, str]) -> None:
         bound = _rekey_model(

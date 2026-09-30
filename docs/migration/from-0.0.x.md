@@ -1,6 +1,6 @@
 # Migration: `decepticon` 0.0.x → core/framework/sdk split
 
-The Decepticon OSS package split into three coordinated wheels in the
+The Raptix OSS package split into three coordinated wheels in the
 post-0.0.x cycle. The redesign is documented in full at
 [`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](../superpowers/specs/2026-05-23-core-framework-sdk-split-design.md);
 this guide is the consumer-facing migration list.
@@ -10,7 +10,7 @@ this guide is the consumer-facing migration list.
 ```text
 decepticon                         (was: monolithic wheel)
     │
-    ├── decepticon-core            NEW — contract layer (pure types,
+    ├── raptix-core            NEW — contract layer (pure types,
     │                                    protocols, registries, plugin
     │                                    contracts). Zero langchain /
     │                                    langgraph / deepagents runtime
@@ -19,9 +19,9 @@ decepticon                         (was: monolithic wheel)
     ├── decepticon                 the opinionated framework (16 agent
     │                              factories, 11 middleware impls,
     │                              tools, LLM router, sandbox client).
-    │                              Depends on decepticon-core.
+    │                              Depends on raptix-core.
     │
-    └── decepticon-sdk             NEW — plugin author entrypoint.
+    └── raptix-sdk             NEW — plugin author entrypoint.
                                    Re-exports the core public API +
                                    pytest fixtures + scaffolding CLI.
 ```
@@ -32,8 +32,8 @@ Pin-and-install advice:
 |----------|---------|-----|
 | End-user running the stack | unchanged — Docker images bundle all three | identical UX |
 | Library consumer (commercial product, downstream framework) | `pip install decepticon` | composes agents, ships custom bundles |
-| Plugin author (community / commercial) | `pip install decepticon-sdk` | protocols + scaffolding + fixtures |
-| Type-check-only context | `pip install decepticon-core` | zero runtime deps; cheapest pin |
+| Plugin author (community / commercial) | `pip install raptix-sdk` | protocols + scaffolding + fixtures |
+| Type-check-only context | `pip install raptix-core` | zero runtime deps; cheapest pin |
 
 ## Import-path mapping
 
@@ -42,7 +42,7 @@ shim layer. `decepticon.compat.register_legacy_imports()` runs at
 import time of `decepticon` and emits a single `DeprecationWarning`
 listing the table below so the migration list shows up in test logs.
 
-Opt out of the warning with `DECEPTICON_NO_COMPAT=1` in the environment.
+Opt out of the warning with `RAPTIX_NO_COMPAT=1` in the environment.
 
 | Legacy path | Canonical path |
 |-------------|----------------|
@@ -183,7 +183,7 @@ SAFETY_FOR_MY_PLUGIN = SafetyDeclaration(
 The SDK ships a scaffolder. From any directory:
 
 ```bash
-decepticon-sdk plugin new \
+raptix-sdk plugin new \
     --kind=middleware \
     --name=my-plugin \
     --path=./my-plugin
@@ -195,7 +195,7 @@ pip install dist/*.whl
 
 Six plugin kinds are supported: `tool`, `middleware`, `agent`,
 `callback`, `skill`, `prompt`. Runnable examples per kind live under
-[`packages/decepticon-sdk/examples/`](../../packages/decepticon-sdk/examples/).
+[`packages/raptix-sdk/examples/`](../../packages/raptix-sdk/examples/).
 
 ## Removal timeline
 

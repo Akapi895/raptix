@@ -160,7 +160,7 @@ async function bootstrapDashboard() {
         `Could not reach ${config.dashboardUrl}.`,
         "Check your network, then retry — or switch to a local dashboard:",
         "",
-        envAssignHint("DECEPTICON_DESKTOP_MODE", "local"),
+        envAssignHint("RAPTIX_DESKTOP_MODE", "local"),
         "npm run desktop",
       ].join("\n"),
     );

@@ -3,8 +3,8 @@
 Use plain text logs for local dev, JSON for production / containers / CI.
 Toggle via env vars (read once at import / first ``configure_logging`` call):
 
-    DECEPTICON_LOG_LEVEL    DEBUG | INFO (default) | WARNING | ERROR
-    DECEPTICON_LOG_FORMAT   text (default) | json
+    RAPTIX_LOG_LEVEL    DEBUG | INFO (default) | WARNING | ERROR
+    RAPTIX_LOG_FORMAT   text (default) | json
 
 JSON output is single-line per record so it can be ingested by Loki, Datadog,
 ELK, etc. without further processing.
@@ -85,8 +85,8 @@ def configure_logging(
     reconfigure freely. Honors env vars when args are omitted.
     """
     global _CONFIGURED
-    level = level or os.getenv("DECEPTICON_LOG_LEVEL", "INFO")
-    fmt = (fmt or os.getenv("DECEPTICON_LOG_FORMAT", "text")).lower()
+    level = level or os.getenv("RAPTIX_LOG_LEVEL", "INFO")
+    fmt = (fmt or os.getenv("RAPTIX_LOG_FORMAT", "text")).lower()
 
     handler = logging.StreamHandler(sys.stderr)
     if fmt == "json":

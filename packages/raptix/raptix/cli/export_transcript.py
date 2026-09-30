@@ -43,7 +43,7 @@ def _build_parser() -> argparse.ArgumentParser:
         type=Path,
         default=None,
         help=(
-            "Engagement workspace root. Defaults to $DECEPTICON_WORKSPACE "
+            "Engagement workspace root. Defaults to $RAPTIX_WORKSPACE "
             "when set, otherwise the current directory."
         ),
     )
@@ -53,7 +53,7 @@ def _build_parser() -> argparse.ArgumentParser:
 def _resolve_workspace(arg_value: Path | None) -> Path:
     if arg_value is not None:
         return arg_value
-    env = os.environ.get("DECEPTICON_WORKSPACE")
+    env = os.environ.get("RAPTIX_WORKSPACE")
     return Path(env) if env else Path(".")
 
 

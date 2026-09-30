@@ -14,7 +14,7 @@ metadata:
 
 # Supply Chain Operator Skill Catalog
 
-Supply-chain attacks have grown 1,300% since 2020 per Decepticon's own
+Supply-chain attacks have grown 1,300% since 2020 per Raptix's own
 [ai-red-teaming.md](../../red-team/tools-techniques.md). This catalog
 gives the agent the playbooks to simulate the most common patterns —
 all in a sandbox-isolated mode that publishes to a local mock registry by

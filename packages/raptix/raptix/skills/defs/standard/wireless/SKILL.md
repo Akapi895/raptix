@@ -1,7 +1,7 @@
 ---
 name: wireless-overview
 description: >
-  Top-level index for the Decepticon 802.11 wireless attack suite. Routes the
+  Top-level index for the Raptix 802.11 wireless attack suite. Routes the
   WirelessOperator to the correct leaf skill based on the target AP's crypto
   column (PSK / SAE / MGT / WPS) and engagement posture. BLE, Zigbee, Z-Wave,
   LoRaWAN, and sub-GHz live under iot/ by design — link provided below to

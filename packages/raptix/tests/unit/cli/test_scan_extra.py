@@ -250,7 +250,7 @@ def test_dispatch_scan_propagates_asyncio_timeout() -> None:
 def test_load_findings_graph_missing_graph_json_returns_none(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     result = _load_findings_graph("my-engagement")
     assert result is None
 
@@ -262,7 +262,7 @@ def test_load_findings_graph_env_var_workspace_used(
     workspace.mkdir()
     graph_path = workspace / "graph.json"
     graph_path.write_text("{}", encoding="utf-8")
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(workspace))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(workspace))
 
     mock_kg = MagicMock()
     mock_kg_class = MagicMock(return_value=mock_kg)
@@ -290,7 +290,7 @@ def test_load_findings_graph_load_exception_returns_none(
     workspace = tmp_path
     graph_path = workspace / "graph.json"
     graph_path.write_text("{}", encoding="utf-8")
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(workspace))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(workspace))
 
     mock_module = MagicMock()
     mock_module.KnowledgeGraph.from_json.side_effect = ValueError("bad json")
@@ -311,7 +311,7 @@ def test_load_findings_graph_load_exception_returns_none(
 def test_load_findings_graph_default_home_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.delenv("DECEPTICON_ENGAGEMENT_WORKSPACE", raising=False)
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT_WORKSPACE", raising=False)
     monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
     result = _load_findings_graph("scan-123")
     assert result is None
@@ -575,7 +575,7 @@ def test_main_diff_scope_passes_diff_files_to_sdk(
 def test_main_langgraph_url_from_env(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_API_URL", "http://custom-host:9999")
+    monkeypatch.setenv("RAPTIX_API_URL", "http://custom-host:9999")
     captured_kwargs: dict[str, Any] = {}
 
     def _fake_dispatch(**kwargs: Any) -> dict[str, Any]:

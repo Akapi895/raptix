@@ -123,7 +123,7 @@ def test_capture_run_provenance_marks_uncommitted_source(tmp_path: Path) -> None
 def test_capture_declared_model_assignments_uses_explicit_priority_and_role_override(
     monkeypatch,
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_AUTH_PRIORITY", "anthropic_api,openai_api")
+    monkeypatch.setenv("RAPTIX_AUTH_PRIORITY", "anthropic_api,openai_api")
     runtime = {
         "auth_priority": "anthropic_api,openai_api",
         "profile": "max",
@@ -136,7 +136,7 @@ def test_capture_declared_model_assignments_uses_explicit_priority_and_role_over
         lambda argv, **_kwargs: subprocess.CompletedProcess(
             argv,
             0,
-            stdout="DECEPTICON_PROVENANCE=" + json.dumps(runtime) + "\n",
+            stdout="RAPTIX_PROVENANCE=" + json.dumps(runtime) + "\n",
             stderr="",
         ),
     )
@@ -150,7 +150,7 @@ def test_capture_declared_model_assignments_uses_explicit_priority_and_role_over
 
 
 def test_capture_declared_models_rejects_container_priority_mismatch(monkeypatch) -> None:
-    monkeypatch.setenv("DECEPTICON_AUTH_PRIORITY", "anthropic_api,openai_api")
+    monkeypatch.setenv("RAPTIX_AUTH_PRIORITY", "anthropic_api,openai_api")
     runtime = {
         "auth_priority": "openai_api",
         "profile": "max",
@@ -161,7 +161,7 @@ def test_capture_declared_models_rejects_container_priority_mismatch(monkeypatch
         lambda argv, **_kwargs: subprocess.CompletedProcess(
             argv,
             0,
-            stdout="DECEPTICON_PROVENANCE=" + json.dumps(runtime),
+            stdout="RAPTIX_PROVENANCE=" + json.dumps(runtime),
             stderr="",
         ),
     )

@@ -9,7 +9,7 @@
 
 ## Context
 
-The gap analysis in #593 found that Decepticon's single largest categorical blind spot is
+The gap analysis in #593 found that Raptix's single largest categorical blind spot is
 AI-attack-surface discovery: the `llm-redteam` plugin can attack exposed Ollama / vLLM / LangChain /
 MLflow / ComfyUI instances, but recon has no way to *recognize* them. Today an open port `11434` is
 ingested as a `Service` with `service=unknown` (`kg_ingest_masscan`), an Ollama banner is copied
@@ -22,9 +22,9 @@ versioned products that CVE cross-referencing assumes as input). Both clusters w
 first-class graph node representing "a named piece of technology running on / behind a service," with a
 category and a detection provenance.
 
-KG node kinds live in `packages/decepticon-core/decepticon_core/types/kg.py` and are part of the
-public type surface (exercised by `packages/decepticon-core/tests/test_public_api_stability.py` and
-`packages/decepticon-core/tests/test_kg_detection_types.py`). Adding one is a deliberate schema
+KG node kinds live in `packages/raptix-core/raptix_core/types/kg.py` and are part of the
+public type surface (exercised by `packages/raptix-core/tests/test_public_api_stability.py` and
+`packages/raptix-core/tests/test_kg_detection_types.py`). Adding one is a deliberate schema
 decision, not an incidental change —
 hence this ADR rather than a drive-by type addition.
 

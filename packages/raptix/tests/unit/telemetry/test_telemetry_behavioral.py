@@ -92,29 +92,28 @@ def test_record_phase_maps_to_opplan_update() -> None:
 
 
 def test_persisted_mode_roundtrip(tmp_path) -> None:
-    env = {"DECEPTICON_HOME": str(tmp_path)}
+    env = {"RAPTIX_HOME": str(tmp_path)}
     assert persisted_mode(env) is None
     set_persisted_mode(TelemetryMode.RESEARCH, env)
     assert persisted_mode(env) is TelemetryMode.RESEARCH
-    cfg = resolve_config({**env, "DECEPTICON_TELEMETRY_ENDPOINT": "https://gw"})
+    cfg = resolve_config({**env, "RAPTIX_TELEMETRY_ENDPOINT": "https://gw"})
     assert cfg.mode is TelemetryMode.RESEARCH and cfg.enabled is True
 
 
 def test_off_overrides_persisted_mode(tmp_path) -> None:
-    env = {"DECEPTICON_HOME": str(tmp_path)}
+    env = {"RAPTIX_HOME": str(tmp_path)}
     set_persisted_mode(TelemetryMode.RESEARCH, env)
     set_persisted_mode(TelemetryMode.OFF, env)
     assert (
-        resolve_config({**env, "DECEPTICON_TELEMETRY_ENDPOINT": "https://gw"}).mode
-        is TelemetryMode.OFF
+        resolve_config({**env, "RAPTIX_TELEMETRY_ENDPOINT": "https://gw"}).mode is TelemetryMode.OFF
     )
 
 
 def test_env_overrides_persisted_mode(tmp_path) -> None:
-    env = {"DECEPTICON_HOME": str(tmp_path), "DECEPTICON_TELEMETRY": "basic"}
+    env = {"RAPTIX_HOME": str(tmp_path), "RAPTIX_TELEMETRY": "basic"}
     set_persisted_mode(TelemetryMode.RESEARCH, env)
     assert (
-        resolve_config({**env, "DECEPTICON_TELEMETRY_ENDPOINT": "https://gw"}).mode
+        resolve_config({**env, "RAPTIX_TELEMETRY_ENDPOINT": "https://gw"}).mode
         is TelemetryMode.BASIC
     )
 
@@ -158,9 +157,9 @@ def test_envelope_omits_arch_and_py_when_unset() -> None:
 def test_resolve_config_populates_arch_and_py(tmp_path) -> None:
     cfg = resolve_config(
         {
-            "DECEPTICON_HOME": str(tmp_path),
-            "DECEPTICON_TELEMETRY": "basic",
-            "DECEPTICON_TELEMETRY_ENDPOINT": "https://gw",
+            "RAPTIX_HOME": str(tmp_path),
+            "RAPTIX_TELEMETRY": "basic",
+            "RAPTIX_TELEMETRY_ENDPOINT": "https://gw",
         }
     )
     # py_version is always the running interpreter's version; arch is the slug or

@@ -2,7 +2,7 @@
 
 Clones (or pulls) any of the catalogued repositories into the per-user
 cache under ``~/.decepticon/references/<slug>/`` (override via
-``DECEPTICON_REFERENCES_ROOT``) so agents can grep through the full
+``RAPTIX_REFERENCES_ROOT``) so agents can grep through the full
 contents offline after the first fetch.
 
 The fetcher uses git via subprocess; tests pass ``run=False`` to avoid
@@ -24,7 +24,7 @@ from raptix.tools.references.catalog import REFERENCES, ReferenceEntry
 
 
 def _default_cache_root() -> Path:
-    override = os.environ.get("DECEPTICON_REFERENCES_ROOT")
+    override = os.environ.get("RAPTIX_REFERENCES_ROOT")
     if override:
         return Path(override)
     return Path.home() / ".decepticon" / "references"

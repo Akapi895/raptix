@@ -1,11 +1,11 @@
 # GitHub Actions Integration
 
-> Run Decepticon security scans on every pull request, upload SARIF to
+> Run Raptix security scans on every pull request, upload SARIF to
 > Code Scanning, gate merges by severity.
 
 ## The composite action
 
-Decepticon ships a composite action at
+Raptix ships a composite action at
 [`.github/actions/decepticon-scan`](../../.github/actions/decepticon-scan)
 that orchestrates: stack boot → scan → SARIF emit → Code Scanning upload
 → stack teardown.
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: { fetch-depth: 0 }
-      - uses: PurpleAILAB/Decepticon/.github/actions/decepticon-scan@main
+      - uses: Akapi895/raptix/.github/actions/decepticon-scan@main
         with:
           fail-on: high
         env:
@@ -68,7 +68,7 @@ supported by `decepticon onboard`):
 - `OPENROUTER_API_KEY`
 - `NVIDIA_API_KEY`
 
-Set `DECEPTICON_AUTH_PRIORITY` (also as an env var) to control fallback ordering.
+Set `RAPTIX_AUTH_PRIORITY` (also as an env var) to control fallback ordering.
 
 ## PR comment integration
 
@@ -82,7 +82,7 @@ this for you) and findings will appear:
 
 ## Diff-scoped scans
 
-When `scope-mode: diff` and `fetch-depth: 0` on checkout, Decepticon
+When `scope-mode: diff` and `fetch-depth: 0` on checkout, Raptix
 runs `git diff --name-only "<diff-base>...HEAD"` and limits the scan to
 those files. This drops PR-time scan times from minutes to tens of seconds
 for typical PRs. Falls back to full scope when the git diff fails (no

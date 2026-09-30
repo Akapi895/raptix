@@ -1,14 +1,14 @@
 # Proposal: resolve the dual `docker-compose.yml` architecture (issue #156)
 
 **Status**: draft, awaiting maintainer direction
-**Issue**: [#156](https://github.com/PurpleAILAB/Decepticon/issues/156)
+**Issue**: [#156](https://github.com/Akapi895/raptix/issues/156)
 **Author**: VoidChecksum
 
 ---
 
 ## Problem recap
 
-Two `docker-compose.yml` files participate in the running Decepticon stack:
+Two `docker-compose.yml` files participate in the running Raptix stack:
 
 | Path | Purpose | Owner |
 |---|---|---|
@@ -25,7 +25,7 @@ The issue catalogues seven concerns. Walking the current `main` (commit at the t
 | 2 | CRITICAL | 7 host port collisions (4000, 5432, 7474, 7687, 2024, 3000, 3003) prevent dual-stack | **Partial.** Of the seven, 5 ports (`LITELLM_PORT`, `POSTGRES_PORT`, `LANGGRAPH_PORT`, `WEB_PORT`, `TERMINAL_PORT`) are now env-overridable with sensible defaults. **Neo4j's `7474` and `7687` are still hardcoded** — fixed in this proposal's companion patch (see "Companion patch" below). |
 | 3 | CRITICAL | All 8 services have hardcoded `container_name`, blocking dual-stack | **Still real.** Every service still pins `container_name: decepticon-<svc>`. Removing those is a behaviour change for downstream tooling that targets containers by exact name (the launcher binary's `decepticon logs`/`stop` use them; user docs and runbooks reference them). Best resolved as part of the architectural decision below, not piecemeal. |
 | 4 | HIGH | Entrypoint divergence — dev override changes entrypoint to `/patched/init.sh langgraph dev …` | **Already addressed.** The current `docker-compose.override.yml` (23 lines) only adds `./skills:/skills:ro` for the sandbox. There is no entrypoint override. |
-| 5 | HIGH | `DECEPTICON_WORKSPACE_PATH=/workspace` set only in dev override; OSS sandbox missing it | **Already addressed.** The base `docker-compose.yml`'s `sandbox` service binds `${DECEPTICON_ENGAGEMENT_WORKSPACE:-${DECEPTICON_HOME:-~/.decepticon}/workspace}` to `/workspace`. The env var is implicit through the bind mount, not a separate declaration. |
+| 5 | HIGH | `RAPTIX_WORKSPACE_PATH=/workspace` set only in dev override; OSS sandbox missing it | **Already addressed.** The base `docker-compose.yml`'s `sandbox` service binds `${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.decepticon}/workspace}` to `/workspace`. The env var is implicit through the bind mount, not a separate declaration. |
 | 6 | MEDIUM | Healthcheck compatibility risk between dev `langgraph dev` and prod `langgraph` server | **Already addressed.** Same reason as #4 — the override no longer changes the entrypoint, so the prod healthcheck (`/ok`) applies in both modes. |
 | 7 | MEDIUM | Override mounts `./skills:/skills:ro` which fails if `./skills/` is missing | **Edge case.** The repo always ships with `skills/`; this only triggers if a contributor deletes it locally. Adding the mount as `:ro` over a missing source is a Docker-level error that surfaces immediately. Documenting this in the override file's preamble is enough. |
 
