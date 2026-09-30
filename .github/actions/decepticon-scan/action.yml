@@ -81,9 +81,9 @@ runs:
       run: |
         set -euo pipefail
         python3 -m pip install --upgrade pip
-        if [ -d packages/decepticon ] && [ -d packages/decepticon-core ]; then
-          python3 -m pip install -e ./packages/decepticon-core
-          python3 -m pip install -e ./packages/decepticon
+        if [ -d packages/raptix ] && [ -d packages/raptix-core ]; then
+          python3 -m pip install -e ./packages/raptix-core
+          python3 -m pip install -e ./packages/raptix
           python3 -m pip install langgraph-sdk
         else
           python3 -m pip install "decepticon" "decepticon-core" "langgraph-sdk"
@@ -132,7 +132,7 @@ runs:
         if [ -n "${DEC_INSTRUCTION_FILE}" ]; then
           EXTRA_ARGS+=(--instruction-file "${DEC_INSTRUCTION_FILE}")
         fi
-        python3 -m decepticon.cli scan \
+        python3 -m raptix.cli scan \
           --target "${DEC_TARGET}" \
           --scan-mode "${DEC_SCAN_MODE}" \
           --scope-mode "${DEC_SCOPE_MODE}" \
