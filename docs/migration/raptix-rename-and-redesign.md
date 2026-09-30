@@ -5,8 +5,10 @@
 > và **có thể kiểm chứng**. Viết đủ chi tiết để một người/agent chưa quen repo vẫn theo được.
 >
 > **Quy tắc vàng:** KHÔNG chạy "find & replace" toàn cục. `decepticon` xuất hiện trong
-> **1039 file / ~7908 dòng** thuộc **6 lớp ngữ cảnh khác nhau**; vài lớp là dữ liệu có state
+> **~1040+ file / ~8000 dòng** thuộc **6 lớp ngữ cảnh khác nhau**; vài lớp là dữ liệu có state
 > hoặc định danh bên ngoài, đổi bừa sẽ mất dữ liệu hoặc hỏng deploy.
+> *(Con số này DỊCH CHUYỂN khi `main` tiến triển — luôn quét lại bằng lệnh ở Phần 8/G0
+> ngay trước khi bắt đầu, đừng tin con số tĩnh.)*
 >
 > **Nếu bạn là agent yếu:** làm đúng thứ tự các Phần 0 → 9. Không nhảy cóc. Mỗi bước có
 > "Kỳ vọng" (expected) và "Nếu hỏng" (on‑fail). Không bao giờ tự ý sửa file trong danh sách
@@ -39,6 +41,24 @@ vi phạm hết các giới hạn này. Vì vậy:
 
 > Ghi câu trả lời D1–D6 vào ADR (PR‑0). Phần còn lại của hướng dẫn giả định:
 > **D1 = có + shim, D2 = giữ key, D3/D4/D5/D6 = chờ chốt.**
+
+### 0.2.1. Ghi chú sau khi merge `main` (cập nhật thực tế)
+
+- **`main` là nhánh SỐNG, đang tiến triển.** Lần merge gần nhất đã thêm cơ chế
+  `agents/standard/_surface_dispatch.py` + `_surface_registry.py` và sửa prompt
+  `agents/prompts/standard/decepticon.md`. Vì vậy: **giữ mỗi PR nhỏ, merge nhanh, và
+  `git merge origin/main` lại trước MỖI PR** để tránh xung đột khổng lồ.
+- **Prompt/agent flagship `decepticon` đang được sửa chủ động** ⇒ quyết định **D3**
+  (đổi tên agent) càng cần chốt sớm; đừng đổi tên agent khi main còn đụng vào nó.
+
+### 0.2.2. Toolchain cho khâu verify (đã kiểm tra trong môi trường này)
+
+| Công cụ | Trạng thái | Ghi chú |
+|---|---|---|
+| `uv`, `node`, `go`, `docker` | Có sẵn | dùng trực tiếp |
+| `semgrep` | **KHÔNG có global** | chạy qua `uv run semgrep` (nằm trong nhóm lint) |
+| `.venv` | **Chưa tạo** | phải `uv sync --dev` trước khi chạy `make ci-*` |
+| Cổng G11 (docker end‑to‑end), G13 (data), G14 (replay) | **Khó verify trong CI/sandbox** | cần môi trường có Docker daemon + volume thật; đánh dấu là "chạy ở môi trường tích hợp" |
 
 ### 0.3. Chuẩn bị môi trường
 
