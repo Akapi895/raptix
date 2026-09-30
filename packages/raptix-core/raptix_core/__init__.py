@@ -1,4 +1,4 @@
-"""decepticon-core — contract layer for the Decepticon agent framework.
+"""raptix-core — contract layer for the Decepticon agent framework.
 
 Pure types, protocols, plugin contracts, and registry primitives. This
 package never imports ``langchain``, ``langgraph``, ``deepagents``,
@@ -15,7 +15,7 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 
-from decepticon_core import (
+from raptix_core import (
     contracts,
     plugin_loader,
     protocols,
@@ -28,7 +28,7 @@ try:
     # pyproject carries a "0.0.0" sentinel; release.yml stamps the real
     # tag into the wheel metadata at build time, and importlib.metadata
     # reads it back here. Local checkouts read 0.0.0.
-    __version__ = _version("decepticon-core")
+    __version__ = _version("raptix-core")
 except PackageNotFoundError:
     __version__ = "0.0.0"
 

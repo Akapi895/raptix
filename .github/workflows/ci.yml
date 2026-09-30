@@ -59,9 +59,9 @@ jobs:
         with:
           filters: |
             python:
-              - 'packages/decepticon/**'
-              - 'packages/decepticon-core/**'
-              - 'packages/decepticon-sdk/**'
+              - 'packages/raptix/**'
+              - 'packages/raptix-core/**'
+              - 'packages/raptix-sdk/**'
               - 'pyproject.toml'
               - 'uv.lock'
               # tests/ and docker-compose.yml were missing here, so a
@@ -102,9 +102,9 @@ jobs:
           filters: |
             langgraph:
               - 'containers/langgraph.Dockerfile'
-              - 'packages/decepticon/**'
-              - 'packages/decepticon-core/**'
-              - 'packages/decepticon-sdk/**'
+              - 'packages/raptix/**'
+              - 'packages/raptix-core/**'
+              - 'packages/raptix-sdk/**'
               - 'pyproject.toml'
               - 'uv.lock'
               - '.github/workflows/ci.yml'
@@ -115,10 +115,10 @@ jobs:
             sandbox:
               - 'containers/sandbox.Dockerfile'
               # Skills no longer ship in the sandbox image — they live under
-              # packages/decepticon/src/decepticon/skills and are read
+              # packages/raptix/src/decepticon/skills and are read
               # in-process by the langgraph service (see
-              # packages/decepticon/src/decepticon/backends/__init__.py).
-              # Skill changes rebuild langgraph (via the packages/decepticon/**
+              # packages/raptix/src/decepticon/backends/__init__.py).
+              # Skill changes rebuild langgraph (via the packages/raptix/**
               # filter above), not the sandbox.
               - '.github/workflows/ci.yml'
             cli:
@@ -222,7 +222,7 @@ jobs:
       - name: Skill corpus audit (strict mode)
         run: make audit-skills-strict
       - name: Capability contracts and held-out scorecards
-        run: uv run pytest -q packages/decepticon/tests/unit/capabilities
+        run: uv run pytest -q packages/raptix/tests/unit/capabilities
       # Phase 1a graph builder — assert the checked-in skills.cypher
       # matches what the builder produces from the current SKILL.md +
       # seed YAML + pinned MITRE STIX bundle. Authors who edit a
@@ -236,8 +236,8 @@ jobs:
           ec=$?
           if [ $ec -ne 0 ]; then
             echo "::group::Diff against checked-in dump"
-            uv run python -m decepticon.skillogy.builder --frozen-built-at --out /tmp/built.cypher
-            diff -u packages/decepticon/decepticon/skills/.graph/skills.cypher /tmp/built.cypher | head -200 || true
+            uv run python -m raptix.skillogy.builder --frozen-built-at --out /tmp/built.cypher
+            diff -u packages/raptix/raptix/skills/.graph/skills.cypher /tmp/built.cypher | head -200 || true
             echo "::endgroup::"
             exit $ec
           fi
