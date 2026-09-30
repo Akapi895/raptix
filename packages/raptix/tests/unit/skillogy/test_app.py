@@ -1,4 +1,4 @@
-"""Tests for the Phase 1a Neo4j-backed REST app (``raptix.skillogy.server.app``).
+"""Tests for the Phase 1a Neo4j-backed REST app (``raptix.skills.engine.server.app``).
 
 Each endpoint is exercised against a fake ``Neo4jBackend`` so the
 FastAPI surface is pinned without needing a live Neo4j during the unit
@@ -14,7 +14,7 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
-from raptix.skillogy.server.app import build_app
+from raptix.skills.engine.server.app import build_app
 
 
 class _FakeBackend:

@@ -32,7 +32,7 @@ def _default_skill_registry() -> tuple[SkillRecord, ...]:
     installs and wheel layouts where package data may not be a plain directory.
     """
     try:
-        root = files("raptix").joinpath("skills")
+        root = files("raptix").joinpath("skills", "defs")
         with as_file(root) as skills_root:
             return tuple(build_registry_from_package(skills_root))
     except (FileNotFoundError, ModuleNotFoundError, OSError):

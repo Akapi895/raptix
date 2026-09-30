@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.skillogy.builder.stix_bootstrap import STIX_SHA256, STIX_URL, ensure_stix_bundle
+from raptix.skills.engine.builder.stix_bootstrap import STIX_SHA256, STIX_URL, ensure_stix_bundle
 
 
 class _Response(BytesIO):
@@ -34,7 +34,7 @@ def test_bootstrap_downloads_verifies_and_reuses_pinned_bundle(tmp_path: Path, m
         assert timeout == 30
         return _Response(payload)
 
-    monkeypatch.setattr("raptix.skillogy.builder.stix_bootstrap.urlopen", opener)
+    monkeypatch.setattr("raptix.skills.engine.builder.stix_bootstrap.urlopen", opener)
     destination = tmp_path / "cache" / "enterprise.json"
 
     assert (
@@ -58,7 +58,7 @@ def test_bootstrap_rejects_corrupt_existing_bundle_without_network(
     def opener(*_args: object, **_kwargs: object) -> _Response:
         raise AssertionError("network must not be used for a corrupt existing cache")
 
-    monkeypatch.setattr("raptix.skillogy.builder.stix_bootstrap.urlopen", opener)
+    monkeypatch.setattr("raptix.skills.engine.builder.stix_bootstrap.urlopen", opener)
 
     with pytest.raises(ValueError, match="SHA-256 mismatch"):
         ensure_stix_bundle(destination, expected_sha256="0" * 64)

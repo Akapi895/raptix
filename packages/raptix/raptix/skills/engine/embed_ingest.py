@@ -15,8 +15,8 @@ from __future__ import annotations
 import hashlib
 import logging
 
-from raptix.skillogy import embeddings
-from raptix.skillogy.server.neo4j_backend import Neo4jBackend
+from raptix.skills.engine import embeddings
+from raptix.skills.engine.server.neo4j_backend import Neo4jBackend
 
 log = logging.getLogger("skillogy")
 

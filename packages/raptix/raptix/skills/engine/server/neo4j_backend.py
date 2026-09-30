@@ -304,7 +304,7 @@ class Neo4jBackend:
         ``description`` and the matched dimensions (``matched_mitre``,
         ``matched_tags``) so the agent can see *why* a skill came back.
         """
-        from raptix.skillogy import embeddings  # noqa: PLC0415
+        from raptix.skills.engine import embeddings  # noqa: PLC0415
 
         limit = int(min(max(limit, 1), 100))
         # Over-fetch from each leg so reciprocal-rank fusion has signal to

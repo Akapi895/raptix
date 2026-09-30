@@ -1,6 +1,6 @@
 """Skillogy REST client (Phase 1a, Amendment v0.2.2)."""
 
-from raptix.skillogy.client.rest import (
+from raptix.skills.engine.client.rest import (
     RestSkillogyClient,
     SkillogyClientError,
     from_env,

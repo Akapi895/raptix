@@ -21,15 +21,15 @@ def test_wheel_bundles_skills_but_excludes_benchmark(tmp_path):
     whl = sorted(glob.glob(str(tmp_path / "*.whl")))[-1]
     names = zipfile.ZipFile(whl).namelist()
 
-    assert any(n.startswith("decepticon/skills/standard/") for n in names), (
+    assert any(n.startswith("raptix/skills/defs/standard/") for n in names), (
         "standard skills missing from wheel"
     )
-    assert any(n.startswith("decepticon/skills/shared/") for n in names), (
+    assert any(n.startswith("raptix/skills/defs/shared/") for n in names), (
         "shared skills missing from wheel"
     )
-    assert any(n.startswith("decepticon/skills/plugins/") for n in names), (
+    assert any(n.startswith("raptix/skills/defs/plugins/") for n in names), (
         "plugins skills missing from wheel"
     )
-    assert not any(n.startswith("decepticon/skills/benchmark/") for n in names), (
+    assert not any(n.startswith("raptix/skills/defs/benchmark/") for n in names), (
         "benchmark skills must be excluded from the wheel"
     )

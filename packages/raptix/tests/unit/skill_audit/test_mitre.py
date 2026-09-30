@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.skill_audit.mitre import (
+from raptix.skills.audit.mitre import (
     MitreMatrix,
     classify_mitre_id,
     coerce_mitre_list,

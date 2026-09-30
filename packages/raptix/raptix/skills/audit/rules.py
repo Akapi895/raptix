@@ -11,14 +11,14 @@ from dataclasses import dataclass
 from typing import Any
 
 from raptix.capabilities.contracts import validate_contract_metadata
-from raptix.skill_audit.aliases import resolve_subdomain
-from raptix.skill_audit.canonical import load_canonical_subdomains
-from raptix.skill_audit.frontmatter import (
+from raptix.skills.audit.aliases import resolve_subdomain
+from raptix.skills.audit.canonical import load_canonical_subdomains
+from raptix.skills.audit.frontmatter import (
     FrontmatterParseError,
     parse_frontmatter,
 )
-from raptix.skill_audit.mitre import classify_mitre_id, coerce_mitre_list
-from raptix.skill_audit.path_kind import is_offensive_path
+from raptix.skills.audit.mitre import classify_mitre_id, coerce_mitre_list
+from raptix.skills.audit.path_kind import is_offensive_path
 
 _REQUIRED_TOP_LEVEL = ("name", "description")
 _REQUIRED_METADATA = ("subdomain", "when_to_use")

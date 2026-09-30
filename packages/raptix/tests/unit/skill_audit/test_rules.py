@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.skill_audit.rules import (
+from raptix.skills.audit.rules import (
     RuleId,
     Violation,
     validate_skill_file,

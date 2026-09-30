@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.skill_audit.cli import (
+from raptix.skills.audit.cli import (
     ExitCode,
     main,
     scan_corpus,

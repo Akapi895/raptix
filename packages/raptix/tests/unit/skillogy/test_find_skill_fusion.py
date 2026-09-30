@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from raptix.skillogy.server.neo4j_backend import Neo4jBackend
+from raptix.skills.engine.server.neo4j_backend import Neo4jBackend
 
 
 def _rec(name: str, path: str, **extra: Any) -> dict[str, Any]:

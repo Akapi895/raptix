@@ -1,4 +1,4 @@
-"""``python -m raptix.skillogy`` — run the Skillogy server.
+"""``python -m raptix.skills.engine`` — run the Skillogy server.
 
 Phase 1a (Amendment v0.2.2) boot sequence:
 
@@ -34,8 +34,8 @@ import threading
 import time
 from pathlib import Path
 
-from raptix.skillogy.server.app import build_app
-from raptix.skillogy.server.neo4j_backend import Neo4jBackend
+from raptix.skills.engine.server.app import build_app
+from raptix.skills.engine.server.neo4j_backend import Neo4jBackend
 
 log = logging.getLogger("skillogy")
 
@@ -97,7 +97,7 @@ def _seed_if_empty(backend: Neo4jBackend) -> None:
     # is deliberately embedding-free, so this is what makes semantic
     # find_skill possible. It degrades to a no-op when the proxy env is
     # absent — the substring path keeps working either way.
-    from raptix.skillogy.embed_ingest import ingest_embeddings  # noqa: PLC0415
+    from raptix.skills.engine.embed_ingest import ingest_embeddings  # noqa: PLC0415
 
     ingest_embeddings(backend)
 

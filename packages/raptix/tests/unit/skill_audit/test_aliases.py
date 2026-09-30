@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.skill_audit.aliases import (
+from raptix.skills.audit.aliases import (
     SUBDOMAIN_ALIASES,
     resolve_subdomain,
 )

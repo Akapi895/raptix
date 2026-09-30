@@ -236,7 +236,7 @@ jobs:
           ec=$?
           if [ $ec -ne 0 ]; then
             echo "::group::Diff against checked-in dump"
-            uv run python -m raptix.skillogy.builder --frozen-built-at --out /tmp/built.cypher
+            uv run python -m raptix.skills.engine.builder --frozen-built-at --out /tmp/built.cypher
             diff -u packages/raptix/raptix/skills/.graph/skills.cypher /tmp/built.cypher | head -200 || true
             echo "::endgroup::"
             exit $ec

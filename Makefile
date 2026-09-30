@@ -246,12 +246,12 @@ ci-test:
 ## SKILL.md schema validator (warn mode — Phase 0). Exit 0 even if violations found.
 .PHONY: audit-skills
 audit-skills:
-	uv run python -m raptix.skill_audit --mode warn
+	uv run python -m raptix.skills.audit --mode warn
 
 ## SKILL.md schema validator (strict mode — post-Phase-0 CI gate). Exit 1 on any violation.
 .PHONY: audit-skills-strict
 audit-skills-strict:
-	uv run python -m raptix.skill_audit --mode strict
+	uv run python -m raptix.skills.audit --mode strict
 
 ## Download and verify the immutable MITRE STIX bundle required by the
 ## Skillogy graph builder. The builder itself remains offline-only.
@@ -263,13 +263,13 @@ bootstrap-skill-graph:
 ## into packages/raptix/raptix/skills/.graph/skills.cypher.
 .PHONY: build-skill-graph
 build-skill-graph: bootstrap-skill-graph
-	uv run python -m raptix.skillogy.builder --frozen-built-at
+	uv run python -m raptix.skills.engine.builder --frozen-built-at
 
 ## CI gate — assert the checked-in skills.cypher matches what the
 ## builder produces from the current SKILL.md + seed YAML + pinned STIX.
 .PHONY: check-skill-graph
 check-skill-graph: bootstrap-skill-graph
-	uv run python -m raptix.skillogy.builder --frozen-built-at --check
+	uv run python -m raptix.skills.engine.builder --frozen-built-at --check
 
 ## main-push lane: slow included, coverage 60% gate (ratcheted from 35% in #380).
 ci-test-coverage:

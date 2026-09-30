@@ -8,8 +8,8 @@ a stale class. See ``docs/design/skillogy-brain-redesign.md`` Amendment
 v0.2.2 for the rationale.
 """
 
-from raptix.skillogy.server.app import build_app
-from raptix.skillogy.server.neo4j_backend import (
+from raptix.skills.engine.server.app import build_app
+from raptix.skills.engine.server.neo4j_backend import (
     CypherWriteRejected,
     Neo4jBackend,
     assert_read_only,

@@ -13,7 +13,7 @@ from .http_sandbox import HTTPSandbox
 # for every install shape — wheel (site-packages), editable (repo checkout),
 # and the langgraph Docker image (``/app/decepticon/skills``) — so no
 # container-specific path is hardcoded.
-SKILLS_LOCAL_PATH = str(importlib.resources.files("raptix") / "skills")
+SKILLS_LOCAL_PATH = str(importlib.resources.files("raptix") / "skills" / "defs")
 
 
 # Caller-supplied ``extra_routes`` keys are rejected if they match any

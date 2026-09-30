@@ -199,4 +199,4 @@ packages = ["raptix"]
 # included by default since they are VCS-tracked. Benchmark skills are
 # XBOW/CTF eval-harness conventions — kept in-repo for `make benchmark` but
 # excluded from the published wheel.
-exclude = ["raptix/skills/benchmark/**"]
+exclude = ["raptix/skills/defs/benchmark/**"]

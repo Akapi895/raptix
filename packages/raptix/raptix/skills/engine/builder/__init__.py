@@ -16,12 +16,12 @@ Layout
 - (forthcoming) ``emit.py`` — deterministic Cypher emitter.
 - (forthcoming) ``validate.py`` — Cypher rules R1–R6 (see spec §5.9).
 - (forthcoming) ``manifest.py`` — manifest.json with build stats + version pins.
-- (forthcoming) ``cli.py`` — ``python -m raptix.skillogy.builder``.
+- (forthcoming) ``cli.py`` — ``python -m raptix.skills.engine.builder``.
 
 See ``docs/design/skillogy-brain-redesign.md`` §5 for the full spec.
 """
 
-from raptix.skillogy.builder.seeds import (
+from raptix.skills.engine.builder.seeds import (
     AssetTypeSeed,
     MocSeed,
     PhaseSeed,

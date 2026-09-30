@@ -7,7 +7,7 @@ one. These two cases are the whole contract.
 
 from __future__ import annotations
 
-from raptix.skillogy import __main__ as skillogy_main
+from raptix.skills.engine import __main__ as skillogy_main
 
 
 class _FakeBackend:
@@ -35,7 +35,7 @@ def test_seed_runs_once_when_graph_empty(monkeypatch, tmp_path) -> None:
     monkeypatch.setenv("SKILLOGY_CYPHER_PATH", str(cypher))
     # Stop before the (network-bound) embedding backfill — the seed itself
     # is what this test covers.
-    import raptix.skillogy.embed_ingest as embed
+    import raptix.skills.engine.embed_ingest as embed
 
     monkeypatch.setattr(embed, "ingest_embeddings", lambda backend: None)
 
