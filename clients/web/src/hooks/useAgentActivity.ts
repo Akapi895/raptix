@@ -3,13 +3,13 @@
 /**
  * useAgentActivity — maps SubagentCustomEvent[] to graph nodes/edges.
  *
- * Uses @decepticon/streaming types directly — no regex parsing.
+ * Uses @raptix/streaming types directly — no regex parsing.
  * Same event types that the CLI processes, rendered as a graph instead of text.
  */
 
 import { useMemo } from "react";
 import type { AgentConfig } from "@/lib/agents";
-import type { SubagentCustomEvent } from "@decepticon/streaming";
+import type { SubagentCustomEvent } from "@raptix/streaming";
 import type { GraphNode, GraphEdge, AgentRuntimeState } from "@/lib/graph/types";
 import { isWaitingState } from "@/lib/graph/types";
 

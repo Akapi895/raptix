@@ -1,5 +1,5 @@
 {
-  "name": "@decepticon/streaming",
+  "name": "@raptix/streaming",
   "version": "0.1.0",
   "description": "Shared LangGraph streaming types, constants, and utilities for Web and CLI",
   "type": "module",

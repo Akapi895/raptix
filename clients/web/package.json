@@ -24,7 +24,7 @@
     "@prisma/adapter-pg": "^7.7.0",
 
     "@base-ui/react": "^1.3.0",
-    "@decepticon/streaming": "*",
+    "@raptix/streaming": "*",
     "@langchain/core": "^1.1.40",
     "@langchain/langgraph-sdk": "^1.8.8",
 

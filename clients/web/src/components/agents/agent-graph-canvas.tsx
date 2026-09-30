@@ -16,7 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { Maximize2 } from "lucide-react";
 import type { AgentConfig } from "@/lib/agents";
-import type { SubagentCustomEvent } from "@decepticon/streaming";
+import type { SubagentCustomEvent } from "@raptix/streaming";
 import type { GraphNode } from "@/lib/graph/types";
 import { isWaitingState } from "@/lib/graph/types";
 import { useForceSimulation } from "@/hooks/useForceSimulation";

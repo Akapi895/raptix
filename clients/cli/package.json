@@ -1,11 +1,11 @@
 {
-  "name": "@decepticon/cli",
+  "name": "@raptix/cli",
   "version": "0.0.0",
   "description": "Decepticon Ink CLI — terminal interface for LangGraph Platform agents",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "decepticon-ink": "dist/index.js"
+    "raptix-ink": "dist/index.js"
   },
   "scripts": {
     "start": "node dist/index.js",
@@ -16,7 +16,7 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@decepticon/streaming": "*",
+    "@raptix/streaming": "*",
     "@inkjs/ui": "^2.0.0",
     "@langchain/langgraph-sdk": "^1.8.8",
     "@types/diff": "^8.0.0",

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useRunObserver — real-time observation of LangGraph runs via @decepticon/streaming.
+ * useRunObserver — real-time observation of LangGraph runs via @raptix/streaming.
  *
  * Uses the shared streaming library (same as CLI) to process LangGraph events.
  * No custom parsing — SubagentCustomEvent is the canonical event type.
@@ -11,14 +11,14 @@
  *                                                                        ↓
  *   CLI ──submit──→ LangGraph Server ←──joinStream──── useRunObserver(threadId)
  *                                                           ↓
- *                                              @decepticon/streaming (shared)
+ *                                              @raptix/streaming (shared)
  *                                                    ↓              ↓
  *                                              CLI (Ink UI)    Web (Canvas Graph)
  */
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Client } from "@langchain/langgraph-sdk";
-import { type SubagentCustomEvent, STREAM_OPTIONS } from "@decepticon/streaming";
+import { type SubagentCustomEvent, STREAM_OPTIONS } from "@raptix/streaming";
 
 const POLL_INTERVAL = 2000;
 

@@ -94,5 +94,5 @@ export interface ActiveQuestion {
   allowOther: boolean;
 }
 
-// SubAgentSession is exported from @decepticon/streaming
-export type { SubAgentSession } from "@decepticon/streaming";
+// SubAgentSession is exported from @raptix/streaming
+export type { SubAgentSession } from "@raptix/streaming";
