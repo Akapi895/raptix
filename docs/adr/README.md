@@ -86,5 +86,6 @@ Use [`template.md`](template.md) as the starting point.
 | [0022](0022-sequential-surface-exploit-dispatch.md) | Dispatch surface-exploit cells sequentially | Proposed |
 | [0023](0023-bounded-iterative-surface-reexpansion.md) | Bound iterative surface-exploit re-expansion | Proposed |
 | [0024](0024-code-owned-surface-reexpansion-bounds.md) | Wire bounded re-expansion into KG surface inventory | Proposed |
+| [0025](0025-surface-exploit-chained-surface-provenance.md) | Record chained surface provenance on confirmation | Proposed |
 
 Keep this index in sync when you land a new ADR.

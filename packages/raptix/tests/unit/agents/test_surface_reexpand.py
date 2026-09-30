@@ -17,6 +17,10 @@ _PROMPT = (
     Path(__file__).resolve().parents[5]
     / "packages/raptix/raptix/agents/prompts/standard/decepticon.md"
 )
+_SURFACE_EXPLOIT_PROMPT = (
+    Path(__file__).resolve().parents[5]
+    / "packages/raptix/raptix/agents/prompts/standard/surface_exploit.md"
+)
 
 
 def _cell(cell_id: str, *, gen: int = 0, priority: int = 1) -> dict[str, Any]:
@@ -141,3 +145,15 @@ def test_prompt_requires_confirmed_only_bounded_reexpansion() -> None:
     assert "code-owned generation stamping" in prompt
     assert 'one task("surface_exploit")' in prompt
     assert "gated on the adr-0021 live runbook" in prompt
+
+
+def test_surface_exploit_prompt_requires_bounded_in_scope_provenance() -> None:
+    prompt = _SURFACE_EXPLOIT_PROMPT.read_text(encoding="utf-8").lower()
+
+    assert "on confirmed" in prompt
+    assert "discovered_by" in prompt
+    assert "via_cell" in prompt
+    assert "do not record `gen`" in prompt
+    assert "within scope" in prompt
+    assert "endpoint::<method>::<url>" in prompt
+    assert "parameter::<endpoint_key>::query::<name>" in prompt
