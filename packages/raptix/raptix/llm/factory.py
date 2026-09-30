@@ -1554,7 +1554,7 @@ class LLMFactory:
 
     When constructed without an explicit mapping, builds one from the
     user's credentials inventory and the model profile from
-    DecepticonConfig (env: ``RAPTIX_MODEL_PROFILE``).
+    RaptixConfig (env: ``RAPTIX_MODEL_PROFILE``).
     """
 
     def __init__(
@@ -1601,7 +1601,7 @@ class LLMFactory:
 
     @staticmethod
     def _resolve_proxy_config() -> ProxyConfig:
-        """Resolve proxy config from DecepticonConfig (env vars)."""
+        """Resolve proxy config from RaptixConfig (env vars)."""
         from raptix_core.utils.config import load_config
 
         config = load_config()
@@ -1614,7 +1614,7 @@ class LLMFactory:
 
     @staticmethod
     def _resolve_profile() -> ModelProfile:
-        """Resolve the model profile from DecepticonConfig (env var)."""
+        """Resolve the model profile from RaptixConfig (env var)."""
         from raptix_core.utils.config import load_config
 
         return load_config().model_profile

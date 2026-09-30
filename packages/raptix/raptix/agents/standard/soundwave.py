@@ -5,7 +5,7 @@ Threat Profile / Contact / Data Handling / Abort / Cleanup) that frame
 the red team engagement. Does NOT generate OPPLAN — the orchestrator
 owns OPPLAN directly via OPPLANMiddleware.
 
-Named after the Decepticon intelligence officer who intercepts, processes,
+Named after the Raptix intelligence officer who intercepts, processes,
 and organizes strategic information for Megatron's operations.
 
 Library API
@@ -29,7 +29,7 @@ cleanly:
      discovers and applies it automatically.
   3. **Full custom** (library composer): import building blocks from
      ``raptix.middleware`` / ``raptix.tools`` and compose with
-     ``langchain.agents.create_agent`` directly. Decepticon's factory
+     ``langchain.agents.create_agent`` directly. Raptix's factory
      is bypassed entirely.
 
 Middleware slots (per ``SLOTS_PER_ROLE["soundwave"]``):

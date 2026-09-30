@@ -1,6 +1,6 @@
 """BudgetEnforcementMiddleware — per-engagement and per-agent USD spend caps.
 
-Decepticon engagements can spin for hours with multiple specialist sub-agents
+Raptix engagements can spin for hours with multiple specialist sub-agents
 running in parallel, each driving an expensive frontier model. The
 LiteLLM-only timeout knob (``RAPTIX_LLM__TIMEOUT``) is necessary but not
 sufficient — a long-running engagement on ``claude-opus-4-8 → fallback →
@@ -308,7 +308,7 @@ def _default_litellm_spend_provider(scope_key: str) -> float:
     tag proxy-side, so the response is one row per tag — bounded by tag
     cardinality, not log volume.
 
-    Proxy URL and key come from the same ``DecepticonConfig`` source the LLM
+    Proxy URL and key come from the same ``RaptixConfig`` source the LLM
     factory uses (``RAPTIX_LLM__PROXY_URL`` / ``__PROXY_API_KEY``), so
     any environment that can run an agent can also enforce its budget.
 

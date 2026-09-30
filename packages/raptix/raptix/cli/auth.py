@@ -105,7 +105,7 @@ def _glyph(configured: bool, active: bool) -> str:
 
 
 def _render_text(inv: AuthInventory) -> str:
-    lines: list[str] = ["Decepticon auth status", "=" * 22, ""]
+    lines: list[str] = ["Raptix auth status", "=" * 22, ""]
     for kind in _KIND_ORDER:
         group = [s for s in inv.statuses if s.kind == kind]
         if not group:

@@ -21,7 +21,7 @@ class ScaffoldTemplate:
     readme_body: str
 
 
-_TOOL_BODY = '''"""Custom tool contributed to Decepticon."""
+_TOOL_BODY = '''"""Custom tool contributed to Raptix."""
 
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def get_tools(role: str | None = None, **_: object) -> list[ToolProtocol]:
 '''
 
 
-_MIDDLEWARE_BODY = '''"""Custom middleware contributed to Decepticon."""
+_MIDDLEWARE_BODY = '''"""Custom middleware contributed to Raptix."""
 
 from __future__ import annotations
 
@@ -71,7 +71,7 @@ def get_middleware(role: str | None = None, **_: object) -> list[MiddlewareProto
 '''
 
 
-_AGENT_BODY = '''"""Custom agent contributed to Decepticon."""
+_AGENT_BODY = '''"""Custom agent contributed to Raptix."""
 
 from __future__ import annotations
 
@@ -93,7 +93,7 @@ graph = None
 '''
 
 
-_CALLBACK_BODY = '''"""Custom callback handler contributed to Decepticon."""
+_CALLBACK_BODY = '''"""Custom callback handler contributed to Raptix."""
 
 from __future__ import annotations
 
@@ -157,7 +157,7 @@ def get_contribution() -> PromptContribution:
 
 _README_TEMPLATE = """# {plugin_name}
 
-A Decepticon plugin ({kind}) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin ({kind}) scaffolded by ``decepticon-sdk plugin new``.
 
 ## Build + install
 
@@ -226,7 +226,7 @@ def pyproject_for(*, plugin_name: str, module_name: str, group: str) -> str:
     return f"""[project]
 name = "{plugin_name}"
 version = "0.0.1"
-description = "Decepticon plugin scaffolded by decepticon-sdk."
+description = "Raptix plugin scaffolded by decepticon-sdk."
 readme = "README.md"
 license = {{ text = "Apache-2.0" }}
 requires-python = ">=3.13"

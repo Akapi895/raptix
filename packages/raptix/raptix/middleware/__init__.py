@@ -1,4 +1,4 @@
-"""Decepticon middleware - custom AgentMiddleware implementations."""
+"""Raptix middleware - custom AgentMiddleware implementations."""
 
 from raptix.middleware.budget import BudgetEnforcementMiddleware
 from raptix.middleware.engagement import EngagementContextMiddleware

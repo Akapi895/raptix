@@ -1,6 +1,6 @@
 """``decepticon-cli scan`` — headless / CI security scan entry.
 
-Modeled after Strix's CLI for surface familiarity, with Decepticon's
+Modeled after Strix's CLI for surface familiarity, with Raptix's
 engagement / OPPLAN / RoE discipline preserved:
 
   decepticon-cli scan --target ./ --scan-mode quick \
@@ -50,7 +50,7 @@ EXIT_INTERNAL = 3
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="decepticon-cli scan",
-        description="Run a Decepticon security scan and emit SARIF for CI.",
+        description="Run a Raptix security scan and emit SARIF for CI.",
     )
     p.add_argument(
         "--target",
@@ -332,7 +332,7 @@ def _write_sarif_and_gate(
                             {
                                 "tool": {
                                     "driver": {
-                                        "name": "Decepticon",
+                                        "name": "Raptix",
                                         "version": "0.0.0",
                                     }
                                 },

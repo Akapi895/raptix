@@ -13,7 +13,7 @@ and no AI co-author trailers. The Incalmo section below applies only to that ini
   tools and runtime; `packages/raptix-sdk` exposes the plugin-author API. Do not
   import upward from core or reach into framework internals from SDK plugins.
 - `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
-  and loads `.env`; in-checkout plugin bundles come from root `[tool.decepticon.plugins]`.
+  and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
 - Node workspaces are rooted in `package.json` (`clients/*`, `clients/shared/*`). Build
   `@raptix/streaming` before CLI typecheck/build or Web build; both consume its `dist/`.
   For Web edits also follow `clients/web/AGENTS.md` (Next's installed docs matter).
@@ -43,7 +43,7 @@ before/after benchmark; do not implement them as part of this initiative.
 
 - Do not touch the exploit-execution path (`tools/bash/*`, sandbox dispatch,
   Sliver/msf/impacket) or weaken `SafeCommand`, RoE, `EngagementContext`, egress, HITL,
-  `.semgrep/decepticon-no-*`, or container hardening.
+  `.semgrep/raptix-no-*`, or container hardening.
 - Post-tool hooks must bound their work, catch failures, and return the original tool
   result unchanged; hook failure must never block or alter tool execution. KG remains
   the canonical state store. L7 records/surfaces only: no retry blocking or pruning.

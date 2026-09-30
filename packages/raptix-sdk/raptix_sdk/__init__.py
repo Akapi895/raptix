@@ -1,6 +1,6 @@
-"""decepticon-sdk — plugin author entrypoint for the Decepticon framework.
+"""decepticon-sdk — plugin author entrypoint for the Raptix framework.
 
-A complete Decepticon plugin can be written importing only from this
+A complete Raptix plugin can be written importing only from this
 package: every protocol, contract, registry, and helper plugin authors
 need is exported here. No underscore-prefixed framework internals are
 required.

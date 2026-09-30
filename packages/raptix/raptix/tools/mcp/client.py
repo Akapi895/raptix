@@ -1,6 +1,6 @@
 """MCP tool-server client — opt-in, lazy, never fatal.
 
-This module is the single bridge between Decepticon and external
+This module is the single bridge between Raptix and external
 Model Context Protocol (MCP) servers (e.g. a Kali MCP daemon,
 HexStrike). It is deliberately additive and self-contained:
 

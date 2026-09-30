@@ -45,7 +45,7 @@ services:
 // downloaded via the release manifest; that made every compose-overlay
 // change a forced point release with sync warnings.
 func writeComposeOverlay() error {
-	target := filepath.Join(config.DecepticonHome(), "docker-compose.opscontrol.yml")
+	target := filepath.Join(config.RaptixHome(), "docker-compose.opscontrol.yml")
 	return os.WriteFile(target, []byte(composeOverlayBody), 0o644)
 }
 

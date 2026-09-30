@@ -167,7 +167,7 @@ def push_analytic_rule(
     body: dict[str, Any] = {
         "kind": "Scheduled",
         "properties": {
-            "displayName": f"[Decepticon] {display_name}",
+            "displayName": f"[Raptix] {display_name}",
             "description": (
                 description
                 + f"\n\nEngagement: {engagement_slug()}"

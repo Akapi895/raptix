@@ -59,7 +59,7 @@ func EnsureInstalled() error {
 	// directory and its run/ subdirectory so the very first start
 	// after install succeeds. (Onboard normally creates these too;
 	// this is the standalone `decepticon opscontrol install` path.)
-	homePath := config.DecepticonHome()
+	homePath := config.RaptixHome()
 	if err := os.MkdirAll(homePath, 0o700); err != nil {
 		return fmt.Errorf("opscontrol: pre-create home: %w", err)
 	}

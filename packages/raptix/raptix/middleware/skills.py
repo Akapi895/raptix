@@ -2,7 +2,7 @@
 
 Subclasses the Deep Agents SkillsMiddleware to provide:
 
-1. **Decepticon-specific system prompt** — Replaces the generic "Skills System"
+1. **Raptix-specific system prompt** — Replaces the generic "Skills System"
    template with red team context, bash access limitation warnings, and
    domain-specific framing.
 
@@ -51,10 +51,10 @@ if TYPE_CHECKING:
     from deepagents.middleware.skills import SkillMetadata
 
 
-# ── Decepticon skill system prompt template ──────────────────────────────────
+# ── Raptix skill system prompt template ──────────────────────────────────
 # Replaces both the old shared skill prompt fragment and the base middleware's
 # generic SKILLS_SYSTEM_PROMPT. Placeholders:
-#   {skills_locations} — `**Decepticon Skills**: /skills/standard/recon/` style headers
+#   {skills_locations} — `**Raptix Skills**: /skills/standard/recon/` style headers
 #   {skills_list}      — catalog of sub-skills grouped by subdomain
 
 RAPTIX_SKILLS_PROMPT = """
@@ -127,7 +127,7 @@ class SkillsMiddleware(BaseSkillsMiddleware):
     """Red-team-aware skill middleware with phase grouping and MITRE ATT&CK tags.
 
     Subclasses the base SkillsMiddleware to provide:
-    - Decepticon-specific system prompt template
+    - Raptix-specific system prompt template
     - Skills grouped by subdomain (kill chain phase)
     - MITRE ATT&CK technique IDs shown inline
     - Compact display format for context efficiency

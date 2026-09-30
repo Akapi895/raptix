@@ -18,7 +18,7 @@
  *     [full EventItem renders — bash output, AI messages, tool results]
  *     ⎿  Done (8 tool uses · 45s)
  *
- * Rationale: Decepticon sub-agents (recon, exploit, postexploit) execute
+ * Rationale: Raptix sub-agents (recon, exploit, postexploit) execute
  * the actual attack — their bash output and AI reasoning are core content,
  * not auxiliary detail. Compact summaries lose critical information.
  */

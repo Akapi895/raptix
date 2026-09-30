@@ -10,7 +10,7 @@ This package provides:
     pipe-pane logs (and, optionally, target-side telemetry via a
     sidecar daemon on each foothold).
   - ``BlueCellAgent`` (in ``agents/standard/blue_cell.py``): a
-    read-only Decepticon agent that subscribes to the tap, evaluates
+    read-only Raptix agent that subscribes to the tap, evaluates
     Sigma rules produced by the Detector agent, computes MTTD, and
     writes ``DetectionFired`` nodes back to the knowledge graph.
   - ``rule_match``: a minimal regex-based rule matcher that consumes

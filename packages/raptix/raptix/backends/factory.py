@@ -3,7 +3,7 @@
 The agent code shouldn't know how the sandbox is deployed; it just asks
 for a sandbox object. ``build_sandbox_backend()`` returns an
 ``HTTPSandbox`` that talks to a sandbox daemon over HTTP, which works in
-every deployment target Decepticon supports today:
+every deployment target Raptix supports today:
 
   - Dev / local-docker: sandbox container exposes the FastAPI daemon
     on ``http://sandbox:9999`` over the shared ``sandbox-net`` network.

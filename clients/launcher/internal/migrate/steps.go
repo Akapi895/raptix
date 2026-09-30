@@ -83,7 +83,7 @@ func applyEnvBackfill(c *Ctx) (string, error) {
 }
 
 const telemetryConsentBlurb = "" +
-	"Decepticon is free and open source. Sharing anonymous usage helps fund\n" +
+	"Raptix is free and open source. Sharing anonymous usage helps fund\n" +
 	"and improve it, and — with your consent — contributes masked red-team\n" +
 	"reasoning to train future open offensive-security agents.\n\n" +
 	"What is shared (research tier):\n" +

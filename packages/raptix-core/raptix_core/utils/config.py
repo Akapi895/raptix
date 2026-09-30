@@ -1,4 +1,4 @@
-"""Decepticon configuration — defaults + environment variable overrides.
+"""Raptix configuration — defaults + environment variable overrides.
 
 LLM model assignments are defined in raptix_core.types.llm (LLMModelMapping).
 This config handles infrastructure settings: proxy connection.
@@ -31,14 +31,14 @@ def _project_root() -> Path:
     return Path.cwd()
 
 
-_LOCAL_PROXY_KEY = "sk-decepticon-master"  # nosemgrep: decepticon-no-hardcoded-default-key
+_LOCAL_PROXY_KEY = "sk-decepticon-master"  # nosemgrep: raptix-no-hardcoded-default-key
 
 
 class LLMConfig(BaseModel):
     """LLM proxy connection configuration.
 
     ``proxy_api_key`` defaults to the local-dev placeholder so the
-    Decepticon Python package can be imported without setting any env
+    Raptix Python package can be imported without setting any env
     var (module-level agent constructors build LLMs at import time).
     Production deployments override via RAPTIX_LLM__PROXY_API_KEY.
     """
@@ -49,7 +49,7 @@ class LLMConfig(BaseModel):
     max_retries: int = 2
 
 
-class DecepticonConfig(BaseSettings):
+class RaptixConfig(BaseSettings):
     """Root configuration.
 
     Set RAPTIX_MODEL_PROFILE to switch tier presets:
@@ -73,6 +73,6 @@ class DecepticonConfig(BaseSettings):
     llm: LLMConfig = Field(default_factory=LLMConfig)
 
 
-def load_config() -> DecepticonConfig:
+def load_config() -> RaptixConfig:
     """Load config from code defaults + environment variable overrides."""
-    return DecepticonConfig()
+    return RaptixConfig()

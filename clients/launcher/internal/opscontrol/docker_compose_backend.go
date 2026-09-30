@@ -37,7 +37,7 @@ type DockerComposeBackend struct {
 // NewDockerComposeBackend constructs a backend with the launcher's
 // standard $RAPTIX_HOME paths.
 func NewDockerComposeBackend() *DockerComposeBackend {
-	home := config.DecepticonHome()
+	home := config.RaptixHome()
 	return &DockerComposeBackend{
 		ComposeFile:        filepath.Join(home, "docker-compose.yml"),
 		EnvFile:            filepath.Join(home, ".env"),

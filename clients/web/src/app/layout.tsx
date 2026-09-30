@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Decepticon — Autonomous Red Team Platform",
+  title: "Raptix — Autonomous Red Team Platform",
   description:
     "AI-powered autonomous red team testing framework with real-time attack monitoring and vulnerability management.",
   icons: {

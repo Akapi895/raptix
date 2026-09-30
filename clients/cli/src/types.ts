@@ -23,7 +23,7 @@ export interface ToolResult {
   content: string;
 }
 
-/** Custom event types emitted by Decepticon agents. */
+/** Custom event types emitted by Raptix agents. */
 export enum EventType {
   SubagentStart = "subagent_start",
   SubagentEnd = "subagent_end",

@@ -15,7 +15,7 @@ Typical upstream layout:
       OAuth Misconfiguration.md
       ...
 
-File basenames are folded into Decepticon vuln_class slugs via a small
+File basenames are folded into Raptix vuln_class slugs via a small
 alias table; unknown filenames get slugified defaults so new chapters
 surface automatically.
 """
@@ -99,7 +99,7 @@ def _slugify(name: str) -> str:
 
 
 def classify_filename(name: str) -> str:
-    """Map a markdown filename to a Decepticon vuln_class slug."""
+    """Map a markdown filename to a Raptix vuln_class slug."""
     key = Path(name).stem.lower().strip()
     if key in _FILE_TO_CLASS:
         return _FILE_TO_CLASS[key]

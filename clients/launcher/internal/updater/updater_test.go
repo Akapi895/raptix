@@ -53,7 +53,7 @@ func TestCompareVersions(t *testing.T) {
 }
 
 func TestResolveChannel(t *testing.T) {
-	// Default + unrecognized → stable (Decepticon's conservative default;
+	// Default + unrecognized → stable (Raptix's conservative default;
 	// soak semantics still match Claude Code, only the default differs).
 	tests := map[string]Channel{
 		"":          ChannelStable, // default

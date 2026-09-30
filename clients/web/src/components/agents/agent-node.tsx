@@ -3,7 +3,7 @@
 /**
  * AgentNode — SVG node for the force-directed graph.
  *
- * - Orchestrator (Decepticon): Custom image
+ * - Orchestrator (Raptix): Custom image
  * - Sub-agents: Initial avatar circle with agent color
  * - Active state: Pulse animation on border
  * - Completed: Checkmark badge

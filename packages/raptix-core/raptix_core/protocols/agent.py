@@ -14,7 +14,7 @@ from typing import Any, Protocol, runtime_checkable
 
 @runtime_checkable
 class AgentProtocol(Protocol):
-    """Contract for a compiled Decepticon agent.
+    """Contract for a compiled Raptix agent.
 
     Mandatory attribute:
         name: agent identifier (matches the role name in

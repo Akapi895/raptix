@@ -42,7 +42,7 @@ cleanly:
      discovers and applies it automatically.
   3. **Full custom** (library composer): import building blocks from
      ``raptix.middleware`` / ``raptix.tools`` and compose with
-     ``langchain.agents.create_agent`` directly. Decepticon's factory
+     ``langchain.agents.create_agent`` directly. Raptix's factory
      is bypassed entirely.
 
 No SandboxNotification (no bash tool). No SubAgent / OPPLAN (specialist).

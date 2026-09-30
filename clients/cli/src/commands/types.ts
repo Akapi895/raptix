@@ -1,5 +1,5 @@
 /**
- * Command type definitions for the Decepticon CLI slash command system.
+ * Command type definitions for the Raptix CLI slash command system.
  *
  * Simplified from Claude Code's three-type system (prompt/local/local-jsx)
  * to a single `Command` interface — all commands execute locally.

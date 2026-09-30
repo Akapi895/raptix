@@ -4,7 +4,7 @@
  * AgentGraphCanvas — force-directed graph visualization of agent execution.
  *
  * Replaces the 3D model panel in the Live page. Shows all agents as nodes
- * in a physics-based layout with the orchestrator (Decepticon) at center.
+ * in a physics-based layout with the orchestrator (Raptix) at center.
  * Active agents glow and edges animate with flowing dots.
  *
  * Includes:

@@ -2,7 +2,7 @@
 
 The bridge can launch authorized engagements, so binding the streamable-http
 transport to a non-loopback interface without auth would let anyone who reaches
-the port drive Decepticon. This builds the MCP SDK's :class:`TokenVerifier` for
+the port drive Raptix. This builds the MCP SDK's :class:`TokenVerifier` for
 two modes, both plugged into ``FastMCP(token_verifier=..., auth=AuthSettings)``
 so the SDK installs its ``BearerAuthBackend`` + ``RequireAuthMiddleware`` (401
 on a missing or invalid ``Authorization: Bearer`` token):
@@ -13,7 +13,7 @@ on a missing or invalid ``Authorization: Bearer`` token):
   static public key, checking ``iss`` and ``aud``. This is the OAuth 2.1
   resource-server posture the MCP June-2025 spec prescribes for remote servers.
 
-Decepticon depends on the official ``mcp`` SDK (``mcp.server.fastmcp``), not the
+Raptix depends on the official ``mcp`` SDK (``mcp.server.fastmcp``), not the
 standalone ``fastmcp`` package, so auth is wired through the SDK's
 ``TokenVerifier`` protocol rather than ``fastmcp``'s ``JWTVerifier``.
 """

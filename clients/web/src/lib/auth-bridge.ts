@@ -1,7 +1,7 @@
 /**
  * Auth bridge — single-user local deploy.
  *
- * Decepticon is self-hosted and single-user. There is no authentication
+ * Raptix is self-hosted and single-user. There is no authentication
  * system; every request resolves to the local user.
  */
 

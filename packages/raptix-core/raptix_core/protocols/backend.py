@@ -1,6 +1,6 @@
 """Filesystem backend protocol — matches the deepagents Backend shape.
 
-The Decepticon framework composes a ``CompositeBackend`` per agent
+The Raptix framework composes a ``CompositeBackend`` per agent
 (``raptix.backends.make_agent_backend``) that routes ``/skills/``
 to in-process file reads and everything else to the sandbox transport.
 Plugin authors implementing custom backends conform to this Protocol.
@@ -17,7 +17,7 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class BackendProtocol(Protocol):
-    """Duck-type contract for a Decepticon filesystem backend.
+    """Duck-type contract for a Raptix filesystem backend.
 
     Implementations mediate read/write/list operations against the
     storage layer of their choice — local filesystem, remote sandbox,

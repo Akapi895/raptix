@@ -88,7 +88,7 @@ class TestPushDefenderXdrDetectionSuccess:
         assert captured["url"] == "https://graph.microsoft.com/beta/security/rules/detectionRules"
         assert captured["headers"]["Authorization"] == "Bearer tok"
         body = json.loads(captured["data"])
-        assert body["displayName"] == "[Decepticon] myrule"
+        assert body["displayName"] == "[Raptix] myrule"
         assert (
             body["queryCondition"]["queryText"] == f'DeviceFileEvents | where SHA256 == "{_SHA256}"'
         )

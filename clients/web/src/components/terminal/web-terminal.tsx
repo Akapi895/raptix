@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * WebTerminal — xterm.js terminal embedding the Decepticon CLI.
+ * WebTerminal — xterm.js terminal embedding the Raptix CLI.
  *
  * Connects to the standalone terminal WebSocket server which spawns
  * the CLI in a PTY. Reports the thread ID back to the parent via callback.

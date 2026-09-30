@@ -1,6 +1,6 @@
 """LangChain ``@tool`` wrappers for the defense exporter bundle.
 
-Each tool follows the Decepticon convention: returns a JSON string so the
+Each tool follows the Raptix convention: returns a JSON string so the
 agent can parse it deterministically. Sigma input is accepted both as a
 parsed dict (recommended — Detector emits dicts) and as a YAML string
 (convenience — operator-supplied rules from disk).

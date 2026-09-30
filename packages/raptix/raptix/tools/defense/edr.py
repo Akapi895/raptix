@@ -69,7 +69,7 @@ def push_defender_xdr_detection(
         return {"error": "YARA rule has no extractable indicator for Defender KQL translation"}
 
     body = {
-        "displayName": f"[Decepticon] {rule_name}",
+        "displayName": f"[Raptix] {rule_name}",
         "description": (
             description
             + f"\n\nEngagement: {engagement_slug()}"

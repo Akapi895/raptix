@@ -165,7 +165,7 @@ def test_merge_dynamic_models_allows_subscription_model_override() -> None:
 
 def test_validate_model_name_rejects_legacy_ollama_with_remediation() -> None:
     """``ollama/`` (legacy /api/generate) does not support tool calling per
-    LiteLLM's own ``supports_function_calling`` assertion. Decepticon agents
+    LiteLLM's own ``supports_function_calling`` assertion. Raptix agents
     always emit tool calls, so accepting it would silently break the first
     request — fail closed at config-merge time and point at ``ollama_chat/``.
     """

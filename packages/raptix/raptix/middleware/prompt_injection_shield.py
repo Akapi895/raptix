@@ -1,6 +1,6 @@
 """PromptInjectionShield — agent self-defense against hostile tool output.
 
-Decepticon agents ingest the output of every tool call back into their own
+Raptix agents ingest the output of every tool call back into their own
 context: HTTP responses from attacker-controlled web servers, file contents
 from compromised hosts, hex dumps of malicious binaries, captured packet
 payloads. **All of that content is untrusted**. A target who knows it's

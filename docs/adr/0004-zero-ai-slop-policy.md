@@ -95,7 +95,7 @@ it is closed for the same reasons.
   Rejected — ADR-0003 is a process document; the bar is a code
   document. Mixing the two dilutes both.
 - **CI-enforce every banned pattern via linters / semgrep rules.**
-  Partial adoption (some patterns *are* in `.semgrep/decepticon-rules.yml`),
+  Partial adoption (some patterns *are* in `.semgrep/raptix-rules.yml`),
   but rejected as a sole strategy: many slop signatures (vague test
   names, premature kwargs, single-use helpers, comments that
   translate the next line) are review-judgment calls. Pretending a

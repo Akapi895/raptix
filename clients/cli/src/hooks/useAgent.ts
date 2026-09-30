@@ -351,7 +351,7 @@ export function useAgent({
             addEvent({
               type: "system",
               content:
-                "Engagement planning complete — Decepticon will pick up your next message.",
+                "Engagement planning complete — Raptix will pick up your next message.",
             });
             break;
           }

@@ -27,7 +27,7 @@ LEADERBOARD = [
     ("XBOW (commercial)", 85.00, "other"),
     ("Cyber-AutoAgent (archived)", 84.62, "other"),
     ("MAPTA", 76.90, "other"),
-    ("Decepticon", 98.08, "us"),
+    ("Raptix", 98.08, "us"),
     ("PentestAgent", 50.00, "other"),
     ("AutoPT", 46.00, "other"),
     ("VulnBot", 6.00, "other"),
@@ -37,11 +37,11 @@ LEADERBOARD = [
 DIFFICULTY = {
     "Strix": [100.0, 96.0, 75.0],
     "PentestGPT": [91.1, 74.5, 62.5],
-    "Decepticon": [100.0, 98.0, 87.5],  # L2 sweep ongoing (1 fail), L3 ongoing (1 fail)
+    "Raptix": [100.0, 98.0, 87.5],  # L2 sweep ongoing (1 fail), L3 ongoing (1 fail)
 }
 LEVELS = ["L1 (Easy)", "L2 (Medium)", "L3 (Hard)"]
 
-# Decepticon — all-level pass/fail (L1+L2+L3 combined view).
+# Raptix — all-level pass/fail (L1+L2+L3 combined view).
 # L2 sweep still has 1 outstanding fail; L3 still has 1 outstanding fail.
 RAPTIX_PIE = [
     ("L1 passed (45 / 45)", 45, "#27ae60"),
@@ -50,7 +50,7 @@ RAPTIX_PIE = [
     ("Not solved (2 / 104)", 2, "#bdc3c7"),
 ]
 
-# Decepticon attack-class coverage — L1 + L2 + L3 totals.
+# Raptix attack-class coverage — L1 + L2 + L3 totals.
 COVERAGE = [
     ("XSS", 14),  # 8 L1 + 3 L2 + 3 L3
     ("Command Injection", 8),  # 6 L1 + 2 L2
@@ -81,7 +81,7 @@ COVERAGE = [
 # Chart helpers.
 # ---------------------------------------------------------------------------
 
-US_COLOR = "#e74c3c"  # Decepticon red
+US_COLOR = "#e74c3c"  # Raptix red
 BAR_COLOR = "#3498db"  # everyone else
 
 plt.rcParams.update(
@@ -125,7 +125,7 @@ def chart_leaderboard() -> Path:
             fontweight="bold" if u else "normal",
             color=US_COLOR if u else "#222",
         )
-    # Bold the Decepticon y-tick label.
+    # Bold the Raptix y-tick label.
     for tick, u in zip(ax.get_yticklabels(), is_us):
         if u:
             tick.set_fontweight("bold")
@@ -137,7 +137,7 @@ def chart_leaderboard() -> Path:
     fig.text(
         0.01,
         0.01,
-        "Shannon: white-box, hint-removed.  Decepticon: black-box, vulnerability tags as hint — 102 / 104.",
+        "Shannon: white-box, hint-removed.  Raptix: black-box, vulnerability tags as hint — 102 / 104.",
         fontsize=8,
         style="italic",
         color="#555",
@@ -157,7 +157,7 @@ def chart_difficulty() -> Path:
     width = 0.25
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    palette = {"Strix": "#3498db", "PentestGPT": "#9b59b6", "Decepticon": US_COLOR}
+    palette = {"Strix": "#3498db", "PentestGPT": "#9b59b6", "Raptix": US_COLOR}
     for i, sys in enumerate(systems):
         offset = (i - 1) * width
         bars = ax.bar(
@@ -171,14 +171,14 @@ def chart_difficulty() -> Path:
     ax.set_xticklabels(LEVELS)
     ax.set_ylim(0, 110)
     ax.set_ylabel("Pass rate (%)")
-    ax.set_title("Pass Rate by Difficulty — Strix · PentestGPT · Decepticon")
+    ax.set_title("Pass Rate by Difficulty — Strix · PentestGPT · Raptix")
     ax.legend(loc="upper right", frameon=False)
     ax.grid(axis="y", linestyle=":", alpha=0.4)
     return save(fig, "difficulty.png")
 
 
 # ---------------------------------------------------------------------------
-# 3) Decepticon donut by difficulty.
+# 3) Raptix donut by difficulty.
 # ---------------------------------------------------------------------------
 
 
@@ -237,7 +237,7 @@ def chart_decepticon_donut() -> Path:
         fontsize=10,
     )
     ax.set_title(
-        "Decepticon — XBOW Validation Benchmark",
+        "Raptix — XBOW Validation Benchmark",
         fontsize=14,
         fontweight="bold",
         pad=18,
@@ -254,7 +254,7 @@ def chart_decepticon_donut() -> Path:
 
 
 # ---------------------------------------------------------------------------
-# 4) Decepticon attack-class coverage.
+# 4) Raptix attack-class coverage.
 # ---------------------------------------------------------------------------
 
 
@@ -269,7 +269,7 @@ def chart_coverage() -> Path:
         ax.text(v + 0.15, bar.get_y() + bar.get_height() / 2, str(v), va="center", fontsize=9)
     ax.set_xlim(0, max(values) + 2)
     ax.set_xlabel("Confirmed end-to-end exploits (L1 + L2 + L3)")
-    ax.set_title("Decepticon — Web Attack Class Coverage on XBOW (L1 + L2 + L3)")
+    ax.set_title("Raptix — Web Attack Class Coverage on XBOW (L1 + L2 + L3)")
     ax.grid(axis="x", linestyle=":", alpha=0.4)
     fig.text(
         0.01,

@@ -5,7 +5,7 @@ rule body to an SPL search using ``sigma-cli``-style logic, then POST it via
 the Saved Searches REST API (``/services/saved/searches``).
 
 If ``pysigma`` is installed we use it. Otherwise we fall back to a tiny
-in-house translator that handles the subset Decepticon's Detector agent
+in-house translator that handles the subset Raptix's Detector agent
 actually emits (selection + condition with ``and``/``or``, optional
 ``modifiers: contains|startswith|endswith``). The fallback is intentionally
 not a full Sigma compiler — anything fancier than the supported subset gets
@@ -158,7 +158,7 @@ def push_savedsearch(
         "search": spl_query,
         "description": (
             f"{description}\n\n"
-            f"Created by Decepticon engagement ``{engagement_slug()}``"
+            f"Created by Raptix engagement ``{engagement_slug()}``"
             + (f"\nMITRE ATT&CK: {technique_id}" if technique_id else "")
         ),
         "is_scheduled": "1",

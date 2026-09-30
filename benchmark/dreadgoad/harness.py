@@ -37,7 +37,7 @@ from benchmark.dreadgoad.schemas import (
 log = logging.getLogger(__name__)
 
 # Sandbox container name — overridable for tests / non-docker setups.
-# Defaults to the OSS Decepticon compose name; override via
+# Defaults to the OSS Raptix compose name; override via
 # ``RAPTIX_SANDBOX_CONTAINER`` when running outside the standard stack.
 _SANDBOX_CONTAINER = os.environ.get("RAPTIX_SANDBOX_CONTAINER", "decepticon-sandbox")
 _SANDBOX_READ_TIMEOUT_S = 10

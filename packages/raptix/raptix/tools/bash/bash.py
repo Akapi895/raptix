@@ -1,4 +1,4 @@
-"""Bash tool for the Decepticon agent.
+"""Bash tool for the Raptix agent.
 
 Thin wrapper around HTTPSandbox.execute_tmux(). All tmux session
 management and PS1 polling logic lives in decepticon/sandbox_kernel/

@@ -2,7 +2,7 @@
  * Canonical Tier-A telemetry contract.
  *
  * This Zod schema is the *runtime* enforcement of the wire format the
- * Decepticon client emits to the gateway. The language-neutral mirror lives in
+ * Raptix client emits to the gateway. The language-neutral mirror lives in
  * `schema.json` (JSON Schema) so the Python client can validate against the
  * same shape — the two MUST stay in sync (see README §Schema).
  *

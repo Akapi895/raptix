@@ -45,7 +45,7 @@ from .waf_detector import _load_profiles, detect, last_load_error, load_profile
 _OK_VALUES = (Verdict.STRONG_OK.value, Verdict.WEAK_OK.value)
 _TERMINAL_NONSUCCESS_VALUES = frozenset(v.value for v in TERMINAL_NONSUCCESS)
 
-# Decepticon adaptation: an optional per-hop RoE scope predicate. Returns True
+# Raptix adaptation: an optional per-hop RoE scope predicate. Returns True
 # if a host/URL is in engagement scope. When supplied (active target work) every
 # transformed/redirected/phase0 host is gated; when None (OSINT web_fetch /
 # web_search) only the SSRF safety layer (safety.classify_url, applied inside
@@ -432,7 +432,7 @@ def _fetch_core(
     enable_playwright: bool = True,
     enable_phase0: bool = True,
     priority: Optional[dict] = None,  # U5: learned route to retry first
-    scope_check: Optional[ScopeCheck] = None,  # Decepticon: per-hop RoE gate
+    scope_check: Optional[ScopeCheck] = None,  # Raptix: per-hop RoE gate
 ) -> FetchResult:
     """Fetch `url` using the generic diversity grid.
 
@@ -473,7 +473,7 @@ def _fetch_core(
             )
         )
 
-    # -------- Decepticon: entry RoE gate ------------------------------------
+    # -------- Raptix: entry RoE gate ------------------------------------
     # Refuse an out-of-scope target host up front (when a scope_check is given).
     # SSRF safety is enforced separately inside transport on every hop.
     if scope_check is not None and not scope_check(url):
@@ -633,7 +633,7 @@ def _fetch_core(
         if max_attempts is not None and curl_attempts >= max_attempts:
             stop_reason = "budget"
             break
-        # Decepticon: a url_transform (m.→ apex, drop-www) can change the host;
+        # Raptix: a url_transform (m.→ apex, drop-www) can change the host;
         # re-gate every transformed candidate against engagement scope.
         if scope_check is not None and not scope_check(cand.url):
             trace.append(_scope_skip(cand.url, cand.transform, "grid"))

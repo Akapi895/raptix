@@ -1,21 +1,21 @@
 """Unit tests for raptix_core.utils.config"""
 
-from raptix_core.utils.config import DecepticonConfig, load_config
+from raptix_core.utils.config import RaptixConfig, load_config
 
 
-class TestDecepticonConfig:
+class TestRaptixConfig:
     def test_default_values(self):
-        config = DecepticonConfig()
+        config = RaptixConfig()
         assert config.debug is False
 
     def test_llm_defaults(self):
-        config = DecepticonConfig()
+        config = RaptixConfig()
         assert config.llm.proxy_url == "http://localhost:4000"
         assert config.llm.proxy_api_key == "sk-decepticon-master"
 
     def test_env_override(self, monkeypatch):
         monkeypatch.setenv("RAPTIX_DEBUG", "true")
-        config = DecepticonConfig()
+        config = RaptixConfig()
         assert config.debug is True
 
 

@@ -5,7 +5,7 @@ name: Security
 # findings all land in the Security tab as SARIF:
 #
 #   * CodeQL            deep SAST (Python + JS/TS), security-and-quality queries
-#   * Semgrep           repo-specific invariants (.semgrep/decepticon-rules.yml),
+#   * Semgrep           repo-specific invariants (.semgrep/raptix-rules.yml),
 #                       hard gate on ERROR-severity findings
 #   * Trivy             dependency CVEs (fs) + IaC/Dockerfile misconfig (config)
 #   * TruffleHog        verified-secret detection across the PR diff
@@ -89,7 +89,7 @@ jobs:
             --metrics=off \
             --severity=ERROR \
             --sarif --sarif-output=semgrep.sarif \
-            --config=.semgrep/decepticon-rules.yml \
+            --config=.semgrep/raptix-rules.yml \
             --exclude=node_modules --exclude=.venv --exclude=dist --exclude=build \
             --exclude=benchmark/xbow-validation-benchmarks \
             --exclude=benchmark/MHBench

@@ -1,7 +1,7 @@
 """CART — Continuous Automated Red Teaming.
 
 CART is the loop that turns a one-shot engagement into infrastructure-as-code:
-the customer's infra changes, Decepticon replays the last successful kill
+the customer's infra changes, Raptix replays the last successful kill
 chain against the new state, and alerts on delta. The competitive moat
 versus Strix, XBOW, and AIxCC entries — all of which do point-in-time scans.
 

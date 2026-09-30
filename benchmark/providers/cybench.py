@@ -2,9 +2,9 @@
 
 Wires the [Cybench](https://cybench.github.io/) professional-CTF suite
 (Stanford, ICLR 2025 — 40 tasks from 4 recent competitions) into the
-Decepticon benchmark harness. Cybench is the field's de-facto reference
+Raptix benchmark harness. Cybench is the field's de-facto reference
 CTF benchmark and the common third-party benchmark cited across the
-frontier-lab system cards, so scoring Decepticon against it gives a
+frontier-lab system cards, so scoring Raptix against it gives a
 directly comparable capability number.
 
 Scope (v1): **docker-served tasks only** — the web/pwn tasks that ship a

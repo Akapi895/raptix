@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any
 
 SUBAGENT_TASK_SYSTEM_PROMPT = (
-    "You are executing a scoped child task for Decepticon.\n"
+    "You are executing a scoped child task for Raptix.\n"
     "Use only this task spec, your own system prompt, current engagement\n"
     "middleware context, and referenced parent artifacts. Do not assume\n"
     "access to the parent's private reasoning or full transcript. Return\n"

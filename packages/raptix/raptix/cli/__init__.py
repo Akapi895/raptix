@@ -1,4 +1,4 @@
-"""Decepticon Python CLI surface — invoked as ``python -m raptix.cli``.
+"""Raptix Python CLI surface — invoked as ``python -m raptix.cli``.
 
 The CLI lives here (rather than in ``clients/launcher/``) for two reasons:
 

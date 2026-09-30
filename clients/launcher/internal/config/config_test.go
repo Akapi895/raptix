@@ -557,18 +557,18 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 	}
 }
 
-func TestDecepticonHome(t *testing.T) {
+func TestRaptixHome(t *testing.T) {
 	// With RAPTIX_HOME set
 	t.Setenv("RAPTIX_HOME", "/custom/path")
-	if got := DecepticonHome(); got != "/custom/path" {
-		t.Errorf("DecepticonHome() = %q, want /custom/path", got)
+	if got := RaptixHome(); got != "/custom/path" {
+		t.Errorf("RaptixHome() = %q, want /custom/path", got)
 	}
 
 	// Without RAPTIX_HOME — falls back to ~/.decepticon
 	t.Setenv("RAPTIX_HOME", "")
-	home := DecepticonHome()
+	home := RaptixHome()
 	if !filepath.IsAbs(home) {
-		t.Errorf("DecepticonHome() = %q, want absolute path", home)
+		t.Errorf("RaptixHome() = %q, want absolute path", home)
 	}
 }
 

@@ -14,7 +14,7 @@ Patterns drawn from:
   * The repo's own offensive skill at
     ``packages/raptix/raptix/skills/standard/analyst/prompt-injection/SKILL.md``
     - same payloads that work *against* third-party LLMs work *against*
-    Decepticon's own agents reading sandboxed output.
+    Raptix's own agents reading sandboxed output.
 
 This is NOT a perfect classifier. It is a defence-in-depth tripwire
 that pairs with the structural quarantine done by

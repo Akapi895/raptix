@@ -1,4 +1,4 @@
-"""Custom middleware contributed to Decepticon."""
+"""Custom middleware contributed to Raptix."""
 
 from __future__ import annotations
 

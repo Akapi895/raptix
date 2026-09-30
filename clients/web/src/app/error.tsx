@@ -10,7 +10,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    console.error("[Decepticon] Unhandled error:", error);
+    console.error("[Raptix] Unhandled error:", error);
   }, [error]);
 
   return (

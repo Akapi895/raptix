@@ -18,7 +18,7 @@ EXIT_CONFIG = 2
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="decepticon-cli audit",
-        description="Verify Decepticon engagement audit ledgers.",
+        description="Verify Raptix engagement audit ledgers.",
     )
     sub = p.add_subparsers(dest="command", required=True)
     verify = sub.add_parser(

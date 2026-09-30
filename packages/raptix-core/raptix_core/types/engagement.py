@@ -573,7 +573,7 @@ class OPPLAN(BaseModel):
 #
 # Distinct from ``CONOPS.threat_actors`` (which stays for backward-compat
 # inside the CONOPS doc): the standalone ``plan/threat-profile.json``
-# carries the MITRE-group-ID-keyed adversary persona that Decepticon's
+# carries the MITRE-group-ID-keyed adversary persona that Raptix's
 # OPPLAN builder consults to pick TTP sequences. CTI delta and per-tier
 # numeric grading live here, not in CONOPS.
 # ─────────────────────────────────────────────────────────────────────
@@ -844,7 +844,7 @@ class AbortPlan(BaseModel):
 # ── Contact Plan ─────────────────────────────────────────────────────
 #
 # Slim version of the traditional white-cell/blue-cell/red-cell matrix.
-# For Decepticon's autonomous flow the agent only needs the operator
+# For Raptix's autonomous flow the agent only needs the operator
 # channel, escalation chain, and abort recipient — full red-team
 # cell-management lives outside the agent. Replaces
 # ``CONOPS.communication_plan`` (deprecated free-form string).
@@ -1009,7 +1009,7 @@ class EngagementBundle(BaseModel):
     ``deconfliction``) plus the five expansion documents introduced for
     the AI-autonomous red-team flow (``threat_profile``, ``cleanup``,
     ``abort``, ``contact``, ``data_handling``). The orchestrator
-    (Decepticon) generates ``opplan`` separately by reading the
+    (Raptix) generates ``opplan`` separately by reading the
     expansion docs — Soundwave does not write opplan.
 
     The ralph loop reads roe + opplan each iteration; the operations

@@ -63,7 +63,7 @@ var (
 // check makes any subsequent call a no-op for users who have already
 // gone through the prompt once.
 func PromptIfNotStarred() {
-	ackPath := filepath.Join(config.DecepticonHome(), AckFileName)
+	ackPath := filepath.Join(config.RaptixHome(), AckFileName)
 
 	// Stage 0 — already acknowledged.
 	if _, err := os.Stat(ackPath); err == nil {
@@ -97,7 +97,7 @@ func PromptIfNotStarred() {
 
 func promptViaGh(ackPath string) {
 	confirmed := confirmFn(
-		"★ Star Decepticon on GitHub?",
+		"★ Star Raptix on GitHub?",
 		"Detected gh CLI — we can star the repo in-place.\n"+RepoURL,
 		"Yes, star now",
 		"Skip",
@@ -122,7 +122,7 @@ func promptViaGh(ackPath string) {
 
 func promptViaBrowser(ackPath string) {
 	confirmed := confirmFn(
-		"★ Star Decepticon on GitHub?",
+		"★ Star Raptix on GitHub?",
 		"Opens "+RepoURL+" in your browser.",
 		"Yes, open",
 		"Skip",

@@ -12,7 +12,7 @@ _GHIDRA_RECON = """# Ghidra headless recon script — dumps symbols, xrefs, stri
 # Usage:
 #   analyzeHeadless /tmp/ghidra_proj proj -import {binary} -postScript {script_name}
 #   (requires Ghidra installed; the wrapper can `apt install ghidra` or download)
-# @category Decepticon
+# @category Raptix
 # @keybinding
 # @menupath
 # @toolbar

@@ -1,6 +1,6 @@
 """Middleware slot enum and per-role applicability mapping.
 
-The Decepticon agent factories assemble their middleware stack by
+The Raptix agent factories assemble their middleware stack by
 walking ``MiddlewareSlot`` in declaration order; each role declares
 which slots apply via ``SLOTS_PER_ROLE``.
 

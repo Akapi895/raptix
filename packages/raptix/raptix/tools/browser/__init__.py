@@ -1,4 +1,4 @@
-"""Persistent Playwright browser sessions for the Decepticon agent.
+"""Persistent Playwright browser sessions for the Raptix agent.
 
 Exposes ``browser_action(action, **kwargs)`` — a single multiplex
 LangChain tool covering the operations a specialist needs to drive a

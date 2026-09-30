@@ -63,7 +63,7 @@ type ServiceManager interface {
 // InstallSpec carries every value the manager needs to template the
 // unit file. Built once by `decepticon opscontrol install` from the
 // launcher's resolved config (binary path via os.Executable(), home
-// path via config.DecepticonHome()).
+// path via config.RaptixHome()).
 type InstallSpec struct {
 	// BinaryPath is the absolute path of the `decepticon` binary the
 	// service will exec. Resolved via os.Executable() so the service

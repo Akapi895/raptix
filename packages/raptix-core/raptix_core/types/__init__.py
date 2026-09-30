@@ -1,4 +1,4 @@
-"""Pure-pydantic types for the Decepticon contract layer.
+"""Pure-pydantic types for the Raptix contract layer.
 
 Four submodules:
 

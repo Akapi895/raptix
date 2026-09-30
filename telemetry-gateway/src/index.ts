@@ -1,5 +1,5 @@
 /**
- * Decepticon telemetry gateway — Cloudflare Worker.
+ * Raptix telemetry gateway — Cloudflare Worker.
  *
  * The single public, unauthenticated ingest endpoint for OSS maintainer
  * collection (design doc §4, Layer 1). It holds the PostHog secret so the OSS

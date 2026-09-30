@@ -1,6 +1,6 @@
-"""Skillogy - skill-as-a-service for Decepticon.
+"""Skillogy - skill-as-a-service for Raptix.
 
-Skillogy externalizes Decepticon's skill catalog out of the agent process
+Skillogy externalizes Raptix's skill catalog out of the agent process
 and into a dedicated service that speaks both gRPC and REST. The current
 file-system-backed ``SkillsMiddleware`` reads SKILL.md files at agent boot
 and again at each ``load_skill()`` invocation; Skillogy replaces that with

@@ -23,7 +23,7 @@ Directory layout (upstream):
         Intruder/*.txt
       ...
 
-The folder name is normalised into the Decepticon ``vuln_class`` slug
+The folder name is normalised into the Raptix ``vuln_class`` slug
 via ``_DIR_TO_CLASS``. Unknown folders are mapped to a lowercase-hyphen
 slug so new classes surface automatically with a stable label.
 """
@@ -38,7 +38,7 @@ from raptix.tools.references.payloads import BUNDLED_PAYLOADS, PayloadBundle
 
 REPO_SLUG = "payloads-all-the-things"
 
-# Canonical Decepticon vuln_class labels used by the rest of the
+# Canonical Raptix vuln_class labels used by the rest of the
 # codebase (research/cve.py, skills/analyst/*, etc.). Keep this map in
 # sync with those labels.
 _DIR_TO_CLASS: dict[str, str] = {
@@ -117,7 +117,7 @@ def _slugify(name: str) -> str:
 
 
 def classify_dir(dir_name: str) -> str | None:
-    """Map an upstream folder name to a Decepticon vuln_class slug.
+    """Map an upstream folder name to a Raptix vuln_class slug.
 
     Returns ``None`` when the folder is explicitly skipped.
     """

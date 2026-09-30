@@ -1,6 +1,6 @@
 """Engagement evidence tools — capture, bundle, and export operational artifacts.
 
-The Decepticon sandbox already captures every tmux session's full stream
+The Raptix sandbox already captures every tmux session's full stream
 via ``pipe-pane`` (see raptix.middleware.notifications). These tools
 turn that captured stream into deliverable artifacts the operator can hand
 to the client at out-brief: asciicast v2 recordings for browser playback,

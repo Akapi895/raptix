@@ -197,7 +197,7 @@ The bar is on the *evidence*, not the *claim*.
 ## Banned patterns — PR closed on sight
 
 Each pattern is closed without further review when found. Several are
-already enforced by `.semgrep/decepticon-rules.yml`; the rest are
+already enforced by `.semgrep/raptix-rules.yml`; the rest are
 enforced by the maintainer reviewing the diff. There is no "I didn't
 know" exception once this document exists.
 
@@ -236,7 +236,7 @@ preserved.
 ### Type-safety escape hatches
 
 ```python
-# BANNED (also semgrep: decepticon-no-blanket-type-ignore)
+# BANNED (also semgrep: raptix-no-blanket-type-ignore)
 x = call()  # type: ignore
 y = other()  # pyright: ignore
 

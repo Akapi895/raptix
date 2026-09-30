@@ -49,7 +49,7 @@ export function dockerInspectSpawn(webContainer, { platform = process.platform, 
  * macOS needs Edit roles or Cmd+C/V fail inside login forms.
  * Windows/Linux get the same Edit menu so Ctrl+C/V work consistently.
  */
-export function applicationMenuTemplate(platform = process.platform, appName = "Decepticon") {
+export function applicationMenuTemplate(platform = process.platform, appName = "Raptix") {
   /** @type {Array<Record<string, unknown>>} */
   const template = [];
 
@@ -120,7 +120,7 @@ export function applicationMenuTemplate(platform = process.platform, appName = "
       label: "Help",
       submenu: [
         {
-          label: "Decepticon Docs",
+          label: "Raptix Docs",
           // main process wires click → shell.openExternal; role-less label only.
         },
       ],
@@ -138,7 +138,7 @@ export function browserWindowChrome(platform = process.platform) {
     minWidth: 1000,
     minHeight: 700,
     show: false,
-    title: "Decepticon",
+    title: "Raptix",
     backgroundColor: "#050609",
     autoHideMenuBar: platform !== "darwin",
   };

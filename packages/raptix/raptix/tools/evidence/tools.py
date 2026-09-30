@@ -89,7 +89,7 @@ def export_session_asciicast(
         pipe_pane_log_path: explicit path to the pipe-pane log. When empty,
             falls back to ``<workspace>/.tmux-logs/<session_name>.log`` (the
             default location used by the sandbox FastAPI daemon).
-        title: optional asciicast title; defaults to ``"Decepticon session <name>"``.
+        title: optional asciicast title; defaults to ``"Raptix session <name>"``.
     """
     log_path = (
         Path(pipe_pane_log_path)

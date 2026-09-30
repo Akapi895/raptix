@@ -88,7 +88,7 @@ func (si SystemInfo) OSLabel() string {
 	}
 }
 
-// Ready reports whether the host can run the Decepticon stack right now
+// Ready reports whether the host can run the Raptix stack right now
 // (Docker installed, daemon up, Compose v2 present).
 func (si SystemInfo) Ready() bool {
 	return si.DockerInstalled && si.DockerRunning && si.ComposeAvailable

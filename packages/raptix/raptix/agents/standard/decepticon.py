@@ -1,4 +1,4 @@
-"""Decepticon — autonomous red team coordinator agent.
+"""Raptix — autonomous red team coordinator agent.
 
 Engagement-ready agent that builds the OPPLAN from existing RoE/CONOPS
 documents and executes the kill chain by delegating to specialist sub-agents.
@@ -43,7 +43,7 @@ cleanly:
      discovers and applies it automatically.
   3. **Full custom** (library composer): import building blocks from
      ``raptix.middleware`` / ``raptix.tools`` and compose with
-     ``langchain.agents.create_agent`` directly. Decepticon's factory
+     ``langchain.agents.create_agent`` directly. Raptix's factory
      is bypassed entirely.
 
 SubAgent / OPPLAN (orchestrator — delegates all work via task()).
@@ -88,7 +88,7 @@ def create_decepticon_agent(
     # ── Tuning ───────────────────────────────────────────────────────
     recursion_limit: int | None = None,
 ):
-    """Build the Decepticon orchestrator.
+    """Build the Raptix orchestrator.
 
     Args:
         backend: deepagents-style filesystem backend. Defaults to

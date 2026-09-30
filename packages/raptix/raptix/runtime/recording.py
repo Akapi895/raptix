@@ -2,7 +2,7 @@
 
 Why this exists
 ---------------
-Decepticon's benchmark numbers (XBOW 98.08%) are not currently reproducible
+Raptix's benchmark numbers (XBOW 98.08%) are not currently reproducible
 on demand. A run that hit 102/104 today may hit 99/104 tomorrow because the
 underlying LLM is non-deterministic and tool outputs against live targets
 drift. Without a record/replay layer you cannot:

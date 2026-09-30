@@ -1,4 +1,4 @@
-"""Runtime infrastructure for the Decepticon orchestrator process.
+"""Runtime infrastructure for the Raptix orchestrator process.
 
 Each runtime module (event log, graceful shutdown, recording, CART, ...)
 ships in its own PR. This package init imports every known module

@@ -51,7 +51,7 @@ test("dockerInspectSpawn uses the Go template format string on every OS", () => 
 
 test("applicationMenuTemplate includes Edit roles required for login forms", () => {
   for (const platform of ["win32", "darwin", "linux"]) {
-    const template = applicationMenuTemplate(platform, "Decepticon");
+    const template = applicationMenuTemplate(platform, "Raptix");
     const labels = template.map((item) => item.label);
     assert.ok(labels.includes("Edit"), `Edit menu missing on ${platform}`);
     assert.ok(labels.includes("View"), `View menu missing on ${platform}`);
@@ -64,11 +64,11 @@ test("applicationMenuTemplate includes Edit roles required for login forms", () 
     assert.ok(roles.includes("selectAll"), `selectAll role missing on ${platform}`);
   }
 
-  const mac = applicationMenuTemplate("darwin", "Decepticon");
-  assert.equal(mac[0].label, "Decepticon");
+  const mac = applicationMenuTemplate("darwin", "Raptix");
+  assert.equal(mac[0].label, "Raptix");
   assert.ok(mac[0].submenu.some((item) => item.role === "quit"));
 
-  const win = applicationMenuTemplate("win32", "Decepticon");
+  const win = applicationMenuTemplate("win32", "Raptix");
   assert.ok(win.some((item) => item.label === "Help"));
   assert.equal(win[0].label, "Edit");
 });

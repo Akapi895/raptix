@@ -1,7 +1,7 @@
-"""Drive Decepticon engagements through the LangGraph SDK.
+"""Drive Raptix engagements through the LangGraph SDK.
 
 A thin async bridge: MCP tool calls are translated into LangGraph runs
-against a running Decepticon server, reusing the same scope/state payload
+against a running Raptix server, reusing the same scope/state payload
 shape as ``raptix.cli.scan`` so the orchestrator (and its RoE
 enforcement middleware) sees an identical engagement contract whether the
 trigger is the CLI or an external agent.
@@ -54,7 +54,7 @@ def _split_model_command(message: str) -> tuple[str | None, str]:
 
 
 class EngagementClient:
-    """Async bridge from MCP tool calls to a running Decepticon LangGraph server.
+    """Async bridge from MCP tool calls to a running Raptix LangGraph server.
 
     ``client`` is the ``langgraph_sdk`` async client. It is injectable so unit
     tests can pass a fake; in production it is created lazily from the

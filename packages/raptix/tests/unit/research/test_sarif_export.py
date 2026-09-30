@@ -35,7 +35,7 @@ def test_export_emits_v2_1_0_envelope():
     doc = export_findings_to_sarif(graph)
     assert doc["version"] == "2.1.0"
     assert len(doc["runs"]) == 1
-    assert doc["runs"][0]["tool"]["driver"]["name"] == "Decepticon"
+    assert doc["runs"][0]["tool"]["driver"]["name"] == "Raptix"
 
 
 def test_export_empty_graph_yields_zero_results():

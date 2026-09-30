@@ -212,9 +212,9 @@ class ExploitBenchEnv(BaseModel):
 class ExploitBenchSpec(BaseModel):
     """Parsed ExploitBench-style YAML config.
 
-    Only the subset of fields the Decepticon harness actually consumes
+    Only the subset of fields the Raptix harness actually consumes
     is modeled — model dispatch and per-provider budget knobs stay
-    inside Decepticon's own config (``BenchmarkConfig`` /
+    inside Raptix's own config (``BenchmarkConfig`` /
     ``EngagementContextMiddleware``) so the upstream config can be
     copy-pasted without diff churn.
     """
@@ -235,7 +235,7 @@ class CyberGymSpec(BaseModel):
     the target and records whether the PoC crashes the vulnerable build
     (``vul_exit_code``) and survives the patched build (``fix_exit_code``).
 
-    Only the fields the Decepticon harness consumes are modeled. ``server``
+    Only the fields the Raptix harness consumes are modeled. ``server``
     is the running ``cybergym.server`` base URL the generated ``submit.sh``
     posts to and that ``evaluate`` queries; ``data_dir`` is the local
     ``cybergym_data/data`` tree feeding ``gen_task``; ``api_key`` matches

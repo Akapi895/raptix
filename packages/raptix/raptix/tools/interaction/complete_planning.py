@@ -94,7 +94,7 @@ def _safe_writer():
 def complete_engagement_planning(
     tool_call_id: Annotated[str, InjectedToolCallId] = "",
 ) -> Any:
-    """Validate the full planner bundle and hand the engagement to Decepticon.
+    """Validate the full planner bundle and hand the engagement to Raptix.
 
     The event is emitted only after every Soundwave-owned document validates,
     the bundle shares an engagement name, the RoE records authorization, and
@@ -119,5 +119,5 @@ def complete_engagement_planning(
         )
     return (
         "Planning complete. The operator's next message will be routed to the "
-        "Decepticon operations agent."
+        "Raptix operations agent."
     )

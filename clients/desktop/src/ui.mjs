@@ -14,7 +14,7 @@ export function statusHtml(config, message = "checking dashboard…", detail = "
     || (config.decepticonHome ? `${config.decepticonHome}/desktop-cookies.txt` : "~/.decepticon/desktop-cookies.txt"),
   );
   const icon = config.iconDataUrl
-    ? `<img class="mark" src="${escapeHtml(config.iconDataUrl)}" alt="Decepticon chameleon" />`
+    ? `<img class="mark" src="${escapeHtml(config.iconDataUrl)}" alt="Raptix chameleon" />`
     : `<div class="mark mark-fallback" aria-hidden="true">D</div>`;
 
   return `<!doctype html>
@@ -23,7 +23,7 @@ export function statusHtml(config, message = "checking dashboard…", detail = "
   <meta charset="utf-8" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:;" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Decepticon</title>
+  <title>Raptix</title>
   <style>
     :root {
       color-scheme: dark;
@@ -256,7 +256,7 @@ export function statusHtml(config, message = "checking dashboard…", detail = "
 </head>
 <body>
   <main class="screen">
-    <section class="card" aria-label="Decepticon desktop">
+    <section class="card" aria-label="Raptix desktop">
       <header class="card-head">
         <div class="brand">
           ${icon}

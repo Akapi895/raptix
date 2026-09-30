@@ -8,7 +8,7 @@ startup.
 
 Bundle model
 ------------
-Decepticon's graph manifest is split into two bundles by
+Raptix's graph manifest is split into two bundles by
 ``raptix.graph_registry``:
 
   - ``standard``: official OSS agents (decepticon + 9 specialists).
@@ -132,7 +132,7 @@ def _registered_graph_ids() -> set[str]:
 
 
 app = FastAPI(
-    title="Decepticon plugin bundle API",
+    title="Raptix plugin bundle API",
     summary="Runtime activation/deactivation of agent bundles on the LangGraph platform.",
 )
 

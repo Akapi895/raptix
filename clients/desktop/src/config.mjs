@@ -52,7 +52,7 @@ export function isLocalDashboardUrl(url) {
   }
 }
 
-export function isDecepticonHost(hostname) {
+export function isRaptixHost(hostname) {
   const host = String(hostname || "").toLowerCase();
   return host === "decepticon.red" || host.endsWith(".decepticon.red");
 }
@@ -204,7 +204,7 @@ export function canNavigateInShell(targetUrl, dashboardUrl, { cloud = false } = 
   try {
     const { protocol, hostname } = new URL(targetUrl);
     if (protocol !== "http:" && protocol !== "https:") return false;
-    return isDecepticonHost(hostname) || isAuthHost(hostname);
+    return isRaptixHost(hostname) || isAuthHost(hostname);
   } catch {
     return false;
   }

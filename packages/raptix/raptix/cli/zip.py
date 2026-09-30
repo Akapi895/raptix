@@ -38,7 +38,7 @@ def _default_workspace() -> Path | None:
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="decepticon-cli zip",
-        description="Package and restore Decepticon engagement workspaces.",
+        description="Package and restore Raptix engagement workspaces.",
     )
     sub = p.add_subparsers(dest="command", required=True)
 

@@ -34,11 +34,11 @@ def register_lifecycle_tools(
 
     @mcp.tool()
     async def decepticon_list_graphs() -> list[GraphInfo]:
-        """List the engagement graphs the connected Decepticon server exposes.
+        """List the engagement graphs the connected Raptix server exposes.
 
         Pick a graph: ``decepticon`` (full kill-chain engagement), ``recon``
         (reconnaissance only), ``soundwave`` (planning), etc. Requires a running
-        Decepticon LangGraph server.
+        Raptix LangGraph server.
         """
         return await engagements.list_graphs()
 
@@ -50,7 +50,7 @@ def register_lifecycle_tools(
         engagement_name: str | None = None,
         assistant: str | None = None,
     ) -> StartResult:
-        """Start an AUTHORIZED Decepticon engagement against one or more targets.
+        """Start an AUTHORIZED Raptix engagement against one or more targets.
 
         ``targets`` are URLs, hostnames/CIDRs, repo URLs, or filesystem paths.
         Put scope and rules of engagement in ``instruction`` (what is in and out

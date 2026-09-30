@@ -56,7 +56,7 @@ without review, regardless of how green CI is.
    Specifically:
    - You did not remove or soften wording in `packages/raptix/raptix/skills/shared/opsec/**`,
      RoE enforcement, `SafeCommand`, `EngagementContext`, or any
-     `decepticon-no-*` Semgrep rule under `.semgrep/` without an
+     `raptix-no-*` Semgrep rule under `.semgrep/` without an
      accompanying ADR and an explicit threat-model paragraph in the
      PR body.
    - You did not add a tool to a skill's `allowed-tools:` frontmatter
@@ -226,7 +226,7 @@ catching them yourself first.
 | Adding a `try/except Exception: pass` to "make a test pass" | Hides real failures in sandbox / network / LLM call paths where flakes are signal. |
 | Inserting `if not …: return None` defaults instead of raising | RoE / OPPLAN code that silently returns `None` produces ghost objectives downstream. Fail loud. |
 | "Helpfully" widening a function's signature with a new optional kwarg | Public-API surface change on the plugin contracts downstream authors build against. Justify it or drop it. |
-| Replacing `assert` with `if ... raise ...` *everywhere* | Already covered by `decepticon-no-assert-in-prod` for the right paths. Do not bulk-rewrite. |
+| Replacing `assert` with `if ... raise ...` *everywhere* | Already covered by `raptix-no-assert-in-prod` for the right paths. Do not bulk-rewrite. |
 | Adding a new dependency to fix a small thing | Supply-chain change. Justify in the PR body or remove the dep and inline the small thing. |
 | Generating a long Mermaid diagram or architecture doc as part of a code PR | Land docs separately. Mixed PRs make review pathological. |
 | Reformatting unrelated files because the formatter "thought they were dirty" | Revert. Match existing formatting; do not normalize the tree. |

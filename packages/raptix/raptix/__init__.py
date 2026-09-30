@@ -1,4 +1,4 @@
-"""Decepticon — AI-powered autonomous red team testing framework."""
+"""Raptix — AI-powered autonomous red team testing framework."""
 
 import os as _os
 from importlib.metadata import PackageNotFoundError

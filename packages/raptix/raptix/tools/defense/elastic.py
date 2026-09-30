@@ -122,7 +122,7 @@ def push_detection_rule(
     tagged_id = f"decepticon-eng-{engagement_slug()}-{rule_id}"
     body = {
         "rule_id": tagged_id,
-        "name": f"[Decepticon] {name}",
+        "name": f"[Raptix] {name}",
         "description": (
             description
             + f"\n\nEngagement: {engagement_slug()}"

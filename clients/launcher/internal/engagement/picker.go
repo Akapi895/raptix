@@ -28,8 +28,8 @@ import (
 // AssistantSoundwave drives the document-writing interview for a fresh engagement.
 const AssistantSoundwave = "soundwave"
 
-// AssistantDecepticon drives kill-chain execution against an existing engagement.
-const AssistantDecepticon = "decepticon"
+// AssistantRaptix drives kill-chain execution against an existing engagement.
+const AssistantRaptix = "decepticon"
 
 // Slug regex: lowercase alphanumeric with internal hyphens, 3-64 chars.
 var slugRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$`)
@@ -170,7 +170,7 @@ func (i pickerItem) Description() string {
 	if i.inProgress {
 		return "Planning incomplete — resume with Soundwave"
 	}
-	return "Resume with Decepticon"
+	return "Resume with Raptix"
 }
 
 type pickerKeyMap struct {
@@ -254,7 +254,7 @@ func newPickerModel(home string, entries []engagementEntry) pickerModel {
 	items := buildItems(entries)
 	delegate := list.NewDefaultDelegate()
 	l := list.New(items, delegate, 0, 0)
-	l.Title = "Decepticon — pick an engagement"
+	l.Title = "Raptix — pick an engagement"
 	l.SetShowHelp(true)
 	l.SetShowStatusBar(false)
 	l.SetFilteringEnabled(false)
@@ -407,7 +407,7 @@ func Select(home string) (Choice, error) {
 	slug := final.chosen.slug
 	assistant := AssistantSoundwave
 	if isReady(home, slug) {
-		assistant = AssistantDecepticon
+		assistant = AssistantRaptix
 	}
 	return Choice{
 		AssistantID:   assistant,
@@ -428,7 +428,7 @@ func promptNewSlug(home string) (string, error) {
 				Value(&slug).
 				Validate(func(s string) error { return validateSlug(home, s) }),
 		).Title("New engagement").Description("Create the engagement workspace"),
-	).WithTheme(huh.ThemeFunc(ui.DecepticonTheme))
+	).WithTheme(huh.ThemeFunc(ui.RaptixTheme))
 	if err := form.Run(); err != nil {
 		return "", fmt.Errorf("slug input cancelled: %w", err)
 	}
