@@ -8,11 +8,11 @@ import (
 
 // TestRemoveStaleDropIns_DeletesDeadBinaryOverride covers the v1.1.10
 // dogfood regression: a `systemctl edit` override from an earlier test
-// pinned ExecStart= to /tmp/decepticon-stop-v3 (since deleted), and
+// pinned ExecStart= to /tmp/raptix-stop-v3 (since deleted), and
 // the launcher kept silently re-using it on `install`.
 func TestRemoveStaleDropIns_DeletesDeadBinaryOverride(t *testing.T) {
 	tmp := t.TempDir()
-	dropInDir := filepath.Join(tmp, "decepticon-opscontrol.service.d")
+	dropInDir := filepath.Join(tmp, "raptix-opscontrol.service.d")
 	if err := os.MkdirAll(dropInDir, 0o755); err != nil {
 		t.Fatalf("mkdir drop-in: %v", err)
 	}
@@ -23,7 +23,7 @@ func TestRemoveStaleDropIns_DeletesDeadBinaryOverride(t *testing.T) {
 		t.Fatalf("write override: %v", err)
 	}
 
-	s := &SystemdManager{UnitName: "decepticon-opscontrol"}
+	s := &SystemdManager{UnitName: "raptix-opscontrol"}
 	if !s.removeStaleDropIns(dropInDir) {
 		t.Fatalf("expected stale drop-in removal, got false")
 	}
@@ -42,7 +42,7 @@ func TestRemoveStaleDropIns_DeletesDeadBinaryOverride(t *testing.T) {
 // tweaks) that points to a real binary must survive install.
 func TestRemoveStaleDropIns_KeepsLiveBinaryOverride(t *testing.T) {
 	tmp := t.TempDir()
-	dropInDir := filepath.Join(tmp, "decepticon-opscontrol.service.d")
+	dropInDir := filepath.Join(tmp, "raptix-opscontrol.service.d")
 	if err := os.MkdirAll(dropInDir, 0o755); err != nil {
 		t.Fatalf("mkdir drop-in: %v", err)
 	}
@@ -57,7 +57,7 @@ func TestRemoveStaleDropIns_KeepsLiveBinaryOverride(t *testing.T) {
 		t.Fatalf("write override: %v", err)
 	}
 
-	s := &SystemdManager{UnitName: "decepticon-opscontrol"}
+	s := &SystemdManager{UnitName: "raptix-opscontrol"}
 	if s.removeStaleDropIns(dropInDir) {
 		t.Fatalf("live drop-in should not be removed")
 	}
@@ -71,7 +71,7 @@ func TestRemoveStaleDropIns_KeepsLiveBinaryOverride(t *testing.T) {
 // or false-negative on operator overrides that use them.
 func TestRemoveStaleDropIns_AcceptsModifierPrefixes(t *testing.T) {
 	tmp := t.TempDir()
-	dropInDir := filepath.Join(tmp, "decepticon-opscontrol.service.d")
+	dropInDir := filepath.Join(tmp, "raptix-opscontrol.service.d")
 	if err := os.MkdirAll(dropInDir, 0o755); err != nil {
 		t.Fatalf("mkdir drop-in: %v", err)
 	}
@@ -84,7 +84,7 @@ func TestRemoveStaleDropIns_AcceptsModifierPrefixes(t *testing.T) {
 		}
 	}
 
-	s := &SystemdManager{UnitName: "decepticon-opscontrol"}
+	s := &SystemdManager{UnitName: "raptix-opscontrol"}
 	if !s.removeStaleDropIns(dropInDir) {
 		t.Fatalf("expected stale removal across modifier prefixes")
 	}
@@ -93,7 +93,7 @@ func TestRemoveStaleDropIns_AcceptsModifierPrefixes(t *testing.T) {
 // TestRemoveStaleDropIns_NoDirIsNoop guards against panic / error
 // when there's never been a drop-in (the common case on fresh installs).
 func TestRemoveStaleDropIns_NoDirIsNoop(t *testing.T) {
-	s := &SystemdManager{UnitName: "decepticon-opscontrol"}
+	s := &SystemdManager{UnitName: "raptix-opscontrol"}
 	if s.removeStaleDropIns(filepath.Join(t.TempDir(), "does-not-exist")) {
 		t.Fatalf("missing drop-in dir should not report removal")
 	}

@@ -52,7 +52,7 @@ class LiveConfig:
     assistant_id: str = os.environ.get("CVE_BENCH_ASSISTANT_ID", "decepticon")
     timeout_seconds: int = int(os.environ.get("CVE_BENCH_TIMEOUT_SECONDS", "1800"))
     workspace_root: Path = Path(
-        os.environ.get("CVE_BENCH_WORKSPACE_ROOT", str(Path.home() / ".decepticon" / "workspace"))
+        os.environ.get("CVE_BENCH_WORKSPACE_ROOT", str(Path.home() / ".raptix" / "workspace"))
     )
     cleanup_workspace: bool = False
 

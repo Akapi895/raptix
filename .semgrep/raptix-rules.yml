@@ -77,12 +77,12 @@ rules:
   - id: raptix-no-hardcoded-default-key
     severity: ERROR
     message: |
-      The LiteLLM publicly-documented default key `sk-decepticon-master` must
+      The LiteLLM publicly-documented default key `sk-raptix-master` must
       not be a fallback. Any code that reads LITELLM_API_KEY must fail loud if
       it's unset, never quietly accept the public key.
     languages: [python, ts, javascript]
     patterns:
-      - pattern-regex: 'sk-decepticon-master'
+      - pattern-regex: 'sk-raptix-master'
       - pattern-not-regex: 'nosemgrep: raptix-no-hardcoded-default-key'
     paths:
       exclude:

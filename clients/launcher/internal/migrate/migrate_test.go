@@ -161,7 +161,7 @@ func TestEnvBackfillStepReflectsIntoEnv(t *testing.T) {
 }
 
 // TestRunAll_ExistingUserUpgrade exercises the fully wired path an existing
-// (pre-endpoint) user hits at `decepticon start`: env-backfill adds the
+// (pre-endpoint) user hits at `raptix start`: env-backfill adds the
 // telemetry endpoint their .env never had, and the one-time re-consent
 // prompt flips them to research — then never fires again.
 func TestRunAll_ExistingUserUpgrade(t *testing.T) {

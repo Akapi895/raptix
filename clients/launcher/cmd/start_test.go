@@ -171,7 +171,7 @@ func TestApplyAutoUpdate_RoutingMatrix(t *testing.T) {
 // --no-update is a one-shot override that must beat the persistent
 // .env setting in every direction — including the default-on path and
 // the explicit AUTO_UPDATE=true path. Without this short-circuit a CI
-// runner that pinned `decepticon --no-update` would still re-exec into
+// runner that pinned `raptix --no-update` would still re-exec into
 // a newer binary, defeating the pin.
 func TestApplyAutoUpdate_NoUpdateFlagAlwaysWins(t *testing.T) {
 	envValues := []string{"", "true", "1", "yes", "on", "prompt", "ask", "interactive"}
@@ -189,10 +189,10 @@ func TestApplyAutoUpdate_NoUpdateFlagAlwaysWins(t *testing.T) {
 
 func TestCheckDefaultCredentials_RefusesDefaults(t *testing.T) {
 	defaults := map[string][]string{
-		"LITELLM_MASTER_KEY": {"sk-decepticon-master"},
-		"LITELLM_SALT_KEY":   {"sk-decepticon-salt-change-me", "sk-decepticon-salt"},
-		"POSTGRES_PASSWORD":  {"decepticon"},
-		"NEO4J_PASSWORD":     {"decepticon-graph"},
+		"LITELLM_MASTER_KEY": {"sk-raptix-master"},
+		"LITELLM_SALT_KEY":   {"sk-raptix-salt-change-me", "sk-raptix-salt"},
+		"POSTGRES_PASSWORD":  {"raptix"},
+		"NEO4J_PASSWORD":     {"raptix-graph"},
 	}
 	custom := map[string]string{
 		"LITELLM_MASTER_KEY": "sk-9f2c1a7b3d5e",

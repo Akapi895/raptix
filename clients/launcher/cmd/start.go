@@ -97,8 +97,8 @@ func init() {
 	rootCmd.AddCommand(startCmd)
 
 	// PersistentFlag on root → inherited by `start`, so both
-	// `decepticon --no-update` (no subcommand → runStart) and
-	// `decepticon start --no-update` accept the flag.
+	// `raptix --no-update` (no subcommand → runStart) and
+	// `raptix start --no-update` accept the flag.
 	rootCmd.PersistentFlags().BoolVar(&skipUpdate, "no-update", false,
 		"Skip the self-update check for this launch (does not change AUTO_UPDATE in .env)")
 
@@ -176,7 +176,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 		}
 		ui.Info("Downloading configuration files...")
 		// release == nil here: this branch only triggers when compose
-		// files are missing on launch (e.g. user wiped ~/.decepticon), so
+		// files are missing on launch (e.g. user wiped ~/.raptix), so
 		// we lack the prefetched Release object that ApplyUpdate carries.
 		// SyncConfigFiles falls back to unverified download with a
 		// warning — the install.sh path is the verified-by-default entry.
@@ -242,7 +242,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	// otherwise") meant a bug-fix release sat on the user's machine,
 	// un-applied, until they noticed the notice and re-ran. Silent self-
 	// update collapses the "fix shipped" → "fix running on user host" gap
-	// from days/weeks to the next `decepticon start`, which is the same
+	// from days/weeks to the next `raptix start`, which is the same
 	// behaviour Discord/Slack/electron-updater apps already use.
 	//
 	// Synchronous on purpose: the prompt + unattended paths apply and re-exec
@@ -287,7 +287,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	}
 
 	// 4.5. Refuse to start with default credentials. The compose file
-	// ships sk-decepticon-master / decepticon as fallbacks so a bare
+	// ships sk-raptix-master / raptix as fallbacks so a bare
 	// `docker compose up` still works for dev, but the launcher is the
 	// supported path — a default-keyed LiteLLM proxy on a reachable host
 	// is a free LLM proxy for anyone who finds it. Fail loud with the fix.
@@ -322,7 +322,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	}
 
 	// Pass through terminal. Services are intentionally left running on CLI exit
-	// so re-entry is fast (cold start is ~75s); use 'decepticon stop' to shut
+	// so re-entry is fast (cold start is ~75s); use 'raptix stop' to shut
 	// the stack down.
 	if err := c.RunInteractive(
 		[]string{compose.Profiles.CLI},
@@ -333,7 +333,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cli: %w", err)
 	}
 
-	ui.DimText("CLI exited. Services kept running — run 'decepticon stop' to shut down.")
+	ui.DimText("CLI exited. Services kept running — run 'raptix stop' to shut down.")
 	return nil
 }
 
@@ -354,10 +354,10 @@ func runStart(cmd *cobra.Command, args []string) error {
 // while the supported launcher path cannot expose a default-keyed service.
 func checkDefaultCredentials(env map[string]string) error {
 	defaults := map[string][]string{
-		"LITELLM_MASTER_KEY": {"sk-decepticon-master"},
-		"LITELLM_SALT_KEY":   {"sk-decepticon-salt-change-me", "sk-decepticon-salt"},
-		"POSTGRES_PASSWORD":  {"decepticon"},
-		"NEO4J_PASSWORD":     {"decepticon-graph"},
+		"LITELLM_MASTER_KEY": {"sk-raptix-master"},
+		"LITELLM_SALT_KEY":   {"sk-raptix-salt-change-me", "sk-raptix-salt"},
+		"POSTGRES_PASSWORD":  {"raptix"},
+		"NEO4J_PASSWORD":     {"raptix-graph"},
 	}
 	insecure := make([]string, 0, len(defaults))
 	for name, fallbacks := range defaults {
@@ -372,9 +372,9 @@ func checkDefaultCredentials(env map[string]string) error {
 	slices.Sort(insecure)
 	return fmt.Errorf(
 		"refusing to start with missing or default credentials in %s: %s.\n"+
-			"For a new install, delete %s and run `decepticon onboard`.\n"+
+			"For a new install, delete %s and run `raptix onboard`.\n"+
 			"For an initialized install, do not change database passwords in .env alone; "+
-			"back up the engagement, run `decepticon remove`, then onboard again so credentials and volumes are recreated together.",
+			"back up the engagement, run `raptix remove`, then onboard again so credentials and volumes are recreated together.",
 		config.EnvPath(), strings.Join(insecure, ", "), config.EnvPath())
 }
 

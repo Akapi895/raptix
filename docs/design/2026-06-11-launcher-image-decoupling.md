@@ -22,7 +22,7 @@ cliEnv["RAPTIX_VERSION"] = version   // the launcher binary's stamped version
 
 `docker-compose.yml` interpolates that on every image:
 ```yaml
-image: ghcr.io/purpleailab/decepticon-langgraph:${RAPTIX_VERSION:-latest}
+image: ghcr.io/akapi895/raptix-langgraph:${RAPTIX_VERSION:-latest}
 ```
 
 `clients/launcher/internal/compose/compose.go:264` strips the `v` prefix, so a launcher built at tag `v1.1.12` resolves images at `:1.1.12`.
@@ -41,7 +41,7 @@ Two parallel blockers stack on top:
 Drop the binding `RAPTIX_VERSION = version`. The launcher queries `releases/latest` at start (already does for the self-update check), caches the result, and sets `RAPTIX_VERSION` to **that** tag's stripped form. Image-only patches show up immediately.
 
 **Pros**
-- Image-only patches reach users on the next `decepticon start` with zero launcher binary rebuild.
+- Image-only patches reach users on the next `raptix start` with zero launcher binary rebuild.
 - Combines naturally with silent auto-update — the launcher already polls `releases/latest`.
 
 **Cons**
@@ -71,7 +71,7 @@ Drop `${RAPTIX_VERSION:-latest}` interpolation and just always use `:latest`. Th
 **Cons**
 - **Loses reproducibility.** Users on different days are running different image versions despite seemingly identical launchers. Bug reports become unreproducible.
 - An accidentally-promoted `:latest` (e.g. a partial release that survived `publish-release`'s verify gate) silently lands on every user.
-- Conflicts with the `decepticon` operator who wants to pin a specific version for a multi-day engagement.
+- Conflicts with the `raptix` operator who wants to pin a specific version for a multi-day engagement.
 
 ## Recommendation
 
@@ -113,4 +113,4 @@ Before any code change:
 
 1. Confirm **A** is the direction (vs B's simpler-but-defeats-the-point, or C's lose-reproducibility).
 2. Pick the cache invalidation policy for the latest-release lookup.
-3. Decide whether `--pin-version` lives on `decepticon start` (per-launch) or in `.env` (per-install).
+3. Decide whether `--pin-version` lives on `raptix start` (per-launch) or in `.env` (per-install).

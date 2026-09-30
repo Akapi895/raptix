@@ -40,7 +40,7 @@ The recommendation is **NOT** to pick option A (spec-as-written) blindly. The th
 These are the spec items that survive the research check:
 
 - **Class shape**: `class KGMiddleware(AgentMiddleware)` with `state_schema = KGState`. Mirrors OPPLAN.
-- **Tool factory**: `self.tools = build_kg_tools(self._store, enabled)`. The `self.tools` attribute is the standard LangChain middleware mechanism for contributing tools to the agent's tool list (confirmed by 8+ usages in `decepticon/tools/opplan.py`).
+- **Tool factory**: `self.tools = build_kg_tools(self._store, enabled)`. The `self.tools` attribute is the standard LangChain middleware mechanism for contributing tools to the agent's tool list (confirmed by 8+ usages in `raptix/tools/opplan.py`).
 - **Per-op `execute_write` / `execute_read`** replacing `graph_transaction()`. Removes the global `threading.Lock`. (Research notes §1–§2.)
 - **`InjectedState` pattern** for engagement scoping at the tool layer — the model never sees an `engagement` parameter. Used 8+ times in `tools/opplan.py` already.
 - **Engagement-scoped composite range indexes** (`(engagement, severity)` etc.) ship as a V002 migration. (Research notes §3, §7.)
@@ -249,7 +249,7 @@ def kg_ingest(scanner_kind: str, path: str) -> str:
     """Ingest a scanner output file into the engagement graph.
 
     SUPPORTED scanner_kinds (registry-backed; plugins can add more
-    via the decepticon.kg.ingesters entry-point group):
+    via the raptix.kg.ingesters entry-point group):
       nmap_xml, nuclei_jsonl, subfinder, httpx_jsonl, dnsx, katana,
       masscan, ffuf, testssl, crackmapexec, asrep_hashes, sarif.
 
@@ -356,13 +356,13 @@ Estimated dynamic block: **15-25 lines of markdown**. Compares to the broken bac
 **PR-B — Middleware + 2 tools (~700 LOC)**
 
 5. `feat(kg): KGState schema + summary block builder` — `kg_internal/summary.py`. Returns a static block + dynamic block (the 5-section table from §9.5).
-6. `feat(kg): scanner adapter registry + 12 built-in adapters` — `kg_internal/ingest.py`. Plugin authors register via `decepticon.kg.ingesters` entry-point.
+6. `feat(kg): scanner adapter registry + 12 built-in adapters` — `kg_internal/ingest.py`. Plugin authors register via `raptix.kg.ingesters` entry-point.
 7. `feat(kg): kg_record + kg_ingest tools` — `kg_internal/tools.py`. `build_kg_tools(store)` factory.
 8. `feat(kg): KGMiddleware wires state + tools + 4 lifecycle hooks` — `middleware/kg.py`. Mirrors `OPPLANMiddleware` shape.
 
 **PR-C — Agent cutover + prompt rewrite (~400 LOC)**
 
-9. `feat(kg): MiddlewareSlot.KG + SLOTS_PER_ROLE adoption` — `decepticon_core.contracts.slots`. Analyst gets the slot.
+9. `feat(kg): MiddlewareSlot.KG + SLOTS_PER_ROLE adoption` — `raptix_core.contracts.slots`. Analyst gets the slot.
 10. `refactor(kg): analyst.py drops direct RESEARCH_TOOLS imports` — middleware provides them.
 11. `docs(prompts): analyst.md rewrites the KG_DISCIPLINE block` — drops `kg_query`/`kg_neighbors` references. Replaces with "the chain candidates above are computed each turn; call `kg_record` to observe; use `grep findings/` to recall older details; use `bash('cypher-shell ...')` for advanced graph queries."
 12. `test(integration): analyst e2e against compose Neo4j` — full workflow: observe host → record → check summary block updates → record chain → verify web-dashboard read works.

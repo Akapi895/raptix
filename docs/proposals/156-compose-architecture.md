@@ -12,7 +12,7 @@ Two `docker-compose.yml` files participate in the running Raptix stack:
 
 | Path | Purpose | Owner |
 |---|---|---|
-| `~/.decepticon/docker-compose.yml` | OSS install (downloaded by `scripts/install.sh` from the release tag) | end user |
+| `~/.raptix/docker-compose.yml` | OSS install (downloaded by `scripts/install.sh` from the release tag) | end user |
 | `<repo>/docker-compose.yml` + `<repo>/docker-compose.override.yml` | Dev clone (`make dev`, `make cli-dev`, benchmark harness) | contributor |
 
 Compose merges files by directory, so `docker compose ls` reports the active project as the union of whichever files are in `cwd` (and an `override.yml` if present). The two installs produce *different* stacks — the dev override hot-bind-mounts `./skills/` into the sandbox; the OSS install does not (skills are baked into the image).
@@ -21,11 +21,11 @@ The issue catalogues seven concerns. Walking the current `main` (commit at the t
 
 | # | Severity | Issue claim | Current state |
 |---|----------|------------|---------------|
-| 1 | CRITICAL | Override placement ambiguity — overrides in `~/.decepticon/` are silently ignored when running from the repo dir | **Still real.** The override file at the repo root is auto-merged by Compose any time `docker compose up` is run from the repo. A user who follows OSS docs and edits `~/.decepticon/docker-compose.override.yml` (a path that doesn't exist in the install) will see no effect; a contributor who edits the repo `docker-compose.override.yml` will affect dev runs but not OSS-style runs. The semantics depend on `cwd`, which is implicit and surprising. |
+| 1 | CRITICAL | Override placement ambiguity — overrides in `~/.raptix/` are silently ignored when running from the repo dir | **Still real.** The override file at the repo root is auto-merged by Compose any time `docker compose up` is run from the repo. A user who follows OSS docs and edits `~/.raptix/docker-compose.override.yml` (a path that doesn't exist in the install) will see no effect; a contributor who edits the repo `docker-compose.override.yml` will affect dev runs but not OSS-style runs. The semantics depend on `cwd`, which is implicit and surprising. |
 | 2 | CRITICAL | 7 host port collisions (4000, 5432, 7474, 7687, 2024, 3000, 3003) prevent dual-stack | **Partial.** Of the seven, 5 ports (`LITELLM_PORT`, `POSTGRES_PORT`, `LANGGRAPH_PORT`, `WEB_PORT`, `TERMINAL_PORT`) are now env-overridable with sensible defaults. **Neo4j's `7474` and `7687` are still hardcoded** — fixed in this proposal's companion patch (see "Companion patch" below). |
-| 3 | CRITICAL | All 8 services have hardcoded `container_name`, blocking dual-stack | **Still real.** Every service still pins `container_name: decepticon-<svc>`. Removing those is a behaviour change for downstream tooling that targets containers by exact name (the launcher binary's `decepticon logs`/`stop` use them; user docs and runbooks reference them). Best resolved as part of the architectural decision below, not piecemeal. |
+| 3 | CRITICAL | All 8 services have hardcoded `container_name`, blocking dual-stack | **Still real.** Every service still pins `container_name: raptix-<svc>`. Removing those is a behaviour change for downstream tooling that targets containers by exact name (the launcher binary's `raptix logs`/`stop` use them; user docs and runbooks reference them). Best resolved as part of the architectural decision below, not piecemeal. |
 | 4 | HIGH | Entrypoint divergence — dev override changes entrypoint to `/patched/init.sh langgraph dev …` | **Already addressed.** The current `docker-compose.override.yml` (23 lines) only adds `./skills:/skills:ro` for the sandbox. There is no entrypoint override. |
-| 5 | HIGH | `RAPTIX_WORKSPACE_PATH=/workspace` set only in dev override; OSS sandbox missing it | **Already addressed.** The base `docker-compose.yml`'s `sandbox` service binds `${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.decepticon}/workspace}` to `/workspace`. The env var is implicit through the bind mount, not a separate declaration. |
+| 5 | HIGH | `RAPTIX_WORKSPACE_PATH=/workspace` set only in dev override; OSS sandbox missing it | **Already addressed.** The base `docker-compose.yml`'s `sandbox` service binds `${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.raptix}/workspace}` to `/workspace`. The env var is implicit through the bind mount, not a separate declaration. |
 | 6 | MEDIUM | Healthcheck compatibility risk between dev `langgraph dev` and prod `langgraph` server | **Already addressed.** Same reason as #4 — the override no longer changes the entrypoint, so the prod healthcheck (`/ok`) applies in both modes. |
 | 7 | MEDIUM | Override mounts `./skills:/skills:ro` which fails if `./skills/` is missing | **Edge case.** The repo always ships with `skills/`; this only triggers if a contributor deletes it locally. Adding the mount as `:ro` over a missing source is a Docker-level error that surfaces immediately. Documenting this in the override file's preamble is enough. |
 
@@ -55,13 +55,13 @@ This proposal recommends **Direction 1** for the reasons in the next section, th
 
 - Rename `docker-compose.override.yml` → `docker-compose.dev.yml`. The new name **does not** auto-merge.
 - Update `Makefile`'s `dev`, `cli-dev`, `web-dev`, `infra` targets to pass `-f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.watch.yml` explicitly (some already pass `docker-compose.watch.yml`).
-- Document in the new file's preamble that running raw `docker compose up` from the repo will produce the OSS image behaviour, matching `~/.decepticon/`.
+- Document in the new file's preamble that running raw `docker compose up` from the repo will produce the OSS image behaviour, matching `~/.raptix/`.
 
-After this change, `docker compose ls` from the repo (without `make`) reports the same merged config as `docker compose ls` from `~/.decepticon/` — the surprise is gone.
+After this change, `docker compose ls` from the repo (without `make`) reports the same merged config as `docker compose ls` from `~/.raptix/` — the surprise is gone.
 
 #### B. Document the OSS-install path as the user-facing override surface
 
-- Add a section to [`docs/setup-guide.md`](../setup-guide.md) titled "Customizing the install": tell users they can drop a `docker-compose.override.yml` into `~/.decepticon/` and Compose will merge it (since the launcher runs Compose from that directory).
+- Add a section to [`docs/setup-guide.md`](../setup-guide.md) titled "Customizing the install": tell users they can drop a `docker-compose.override.yml` into `~/.raptix/` and Compose will merge it (since the launcher runs Compose from that directory).
 - Note explicitly that **edits to `<repo>/docker-compose.override.yml` will not affect the launcher-driven OSS stack** — a one-liner that closes the trap the issue identified.
 
 #### C. Address the remaining hardcoded port (CRITICAL #2 partial)
@@ -79,9 +79,9 @@ Plus the matching `.env.example` entries with the same defaults. Existing instal
 
 #### D. Address the container_name collision (CRITICAL #3) — phased
 
-The launcher binary references containers by exact name (`decepticon logs <svc>`, `decepticon stop`, `decepticon status`). Dropping `container_name` would break those. Two options:
+The launcher binary references containers by exact name (`raptix logs <svc>`, `raptix stop`, `raptix status`). Dropping `container_name` would break those. Two options:
 
-- **D1** (recommended): keep `container_name` for the OSS install, but parameterize via Compose project name. `decepticon-${COMPOSE_PROJECT_NAME:-default}-postgres` etc. Default `COMPOSE_PROJECT_NAME=default` reproduces today's names.
+- **D1** (recommended): keep `container_name` for the OSS install, but parameterize via Compose project name. `raptix-${COMPOSE_PROJECT_NAME:-default}-postgres` etc. Default `COMPOSE_PROJECT_NAME=default` reproduces today's names.
 - **D2**: drop `container_name` entirely, teach the launcher to resolve services by Compose label (`com.docker.compose.service=postgres`). This is a larger launcher change.
 
 D1 is the right tradeoff for an incremental fix. The launcher-side change to read `${COMPOSE_PROJECT_NAME}` is small and backwards-compatible.

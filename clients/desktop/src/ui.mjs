@@ -4,14 +4,14 @@ export function statusHtml(config, message = "checking dashboard…", detail = "
   const escapedVersion = escapeHtml(config.installedVersion ? `v${config.installedVersion}` : "cloud");
   const setup = config.setup || {};
   const installCommand = escapeHtml(setup.installCommand || "curl -fsSL https://decepticon.red/install.sh | bash");
-  const onboardCommand = escapeHtml(setup.onboardCommand || "decepticon onboard");
-  const apiKeyCommand = escapeHtml(setup.apiKeyCommand || "decepticon onboard --reset");
+  const onboardCommand = escapeHtml(setup.onboardCommand || "raptix onboard");
+  const apiKeyCommand = escapeHtml(setup.apiKeyCommand || "raptix onboard --reset");
   const cloudUrl = escapeHtml(config.cloudAppUrl || setup.cloudAppUrl || "https://app.decepticon.red");
   const dashboardUrl = escapeHtml(config.dashboardUrl || cloudUrl);
   const modeLabel = config.isCloud ? "cloud" : "local";
   const cookiesPathHint = escapeHtml(
     config.cookiesPath
-    || (config.decepticonHome ? `${config.decepticonHome}/desktop-cookies.txt` : "~/.decepticon/desktop-cookies.txt"),
+    || (config.raptixHome ? `${config.raptixHome}/desktop-cookies.txt` : "~/.raptix/desktop-cookies.txt"),
   );
   const icon = config.iconDataUrl
     ? `<img class="mark" src="${escapeHtml(config.iconDataUrl)}" alt="Raptix chameleon" />`

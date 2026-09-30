@@ -42,7 +42,7 @@ def capture_declared_model_assignments() -> tuple[str, dict[str, list[str]]]:
     if len(set(methods)) != len(methods):
         raise ProvenanceCaptureError("RAPTIX_AUTH_PRIORITY contains duplicates")
     stack_name = os.environ.get("RAPTIX_STACK_NAME", "").strip()
-    container = f"decepticon-{stack_name}-langgraph" if stack_name else "decepticon-langgraph"
+    container = f"raptix-{stack_name}-langgraph" if stack_name else "raptix-langgraph"
     script = """import json, os
 from raptix.llm.factory import LLMFactory
 factory = LLMFactory()
@@ -91,7 +91,7 @@ def capture_container_images(explicit_refs: list[str]) -> dict[str, str]:
     stack_name = os.environ.get("RAPTIX_STACK_NAME", "").strip()
     project = os.environ.get("RAPTIX_COMPOSE_PROJECT", "").strip()
     if not project:
-        project = f"decepticon-{stack_name}" if stack_name else "decepticon"
+        project = f"raptix-{stack_name}" if stack_name else "decepticon"
     try:
         running = subprocess.run(
             [

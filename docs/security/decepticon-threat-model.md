@@ -12,7 +12,7 @@ Three trust planes:
 1. **Operator plane.** The human running Raptix, their workstation,
    their Claude/OpenAI/Codex OAuth tokens, the `.env` file with API
    keys.
-2. **Management plane.** Everything on `decepticon-net`: LangGraph,
+2. **Management plane.** Everything on `raptix-net`: LangGraph,
    LiteLLM, PostgreSQL, Neo4j, the Next.js web dashboard.
 3. **Operational plane.** Everything on `sandbox-net`: the Kali
    sandbox, Sliver C2 server (when active), target infrastructure.
@@ -27,7 +27,7 @@ Bridges between planes are the highest-impact compromise paths.
                           │ keys, OAuth, RoE authoring
                           ▼
             ┌────────────────────────────┐
-            │   decepticon-net (mgmt)    │
+            │   raptix-net (mgmt)    │
             │                            │
             │  langgraph ──► litellm ──► [Anthropic/OpenAI/...]
             │      │           ▲
@@ -58,7 +58,7 @@ The four bridges, in decreasing blast radius:
 |--------|---------|----------------|
 | **Neo4j dual-homing** | Cypher / APOC procedures | sandbox → mgmt plane RCE if APOC procedures are unrestricted |
 | **LiteLLM** | OAuth files + provider API keys | full LLM-provider compromise; engagement spend; cross-customer cred theft |
-| **Plugin entry-points** | Arbitrary Python on `import decepticon` | `pip install` of one malicious bundle → agent-startup RCE |
+| **Plugin entry-points** | Arbitrary Python on `import raptix` | `pip install` of one malicious bundle → agent-startup RCE |
 | **Web dashboard** | OPPLAN edits, operator overrides, engagement state | full agent control if web is exposed without auth (PR #338) |
 
 ## STRIDE walk
@@ -81,9 +81,9 @@ Per-asset analysis.
 
 | Threat | Vector | Mitigation | Status |
 |--------|--------|-----------|--------|
-| **Spoofing** | Default master key `sk-decepticon-master` documented | `.env.example` warns; web health route refuses to fall back | Partial — operator must rotate |
+| **Spoofing** | Default master key `sk-raptix-master` documented | `.env.example` warns; web health route refuses to fall back | Partial — operator must rotate |
 | **Tampering** | LiteLLM admin UI mutates routing | Master key never exposed to sandbox network | Done |
-| **Information disclosure** | OAuth credential files bind-mounted (Claude/Codex) | Bind RO; LiteLLM container itself is on `decepticon-net` only | Done |
+| **Information disclosure** | OAuth credential files bind-mounted (Claude/Codex) | Bind RO; LiteLLM container itself is on `raptix-net` only | Done |
 | **Information disclosure** | Health endpoint hardcoded master key as fallback | Removed; health refuses without explicit `LITELLM_API_KEY` | Done |
 | **Denial of service** | Per-engagement model-tier spend not capped | `BudgetEnforcementMiddleware` (in `_BASE_SLOTS`) hard-pauses at the per-engagement / per-agent USD cap | Done — opt-in via `RAPTIX_BUDGET__*` ([security-controls](./security-controls.md)) |
 | **Elevation of privilege** | Compromised LiteLLM → upstream provider impersonation | Provider keys held server-side; client can't extract | Done (LiteLLM design) |
@@ -109,7 +109,7 @@ Per-asset analysis.
 | **Repudiation** | OPPLAN object reordered post-hoc | OPPLAN edits via tool calls land in the RoE audit ledger as decision records | Done |
 | **Information disclosure** | OPPLAN dumped to a tool that reads `/workspace` content | EngagementFilesystemBackend scopes paths to engagement workspace | Done |
 | **Denial of service** | Infinite recursion via `task()` -> orchestrator -> `task()` | Per-agent `recursion_limit` defaults (200-1000 depending on role) | Done |
-| **Elevation of privilege** | Compromised orchestrator dispatches arbitrary subagents | SubAgent allowlist via `decepticon.subagents` entry-point group | Partial — relies on operator trust of installed plugins |
+| **Elevation of privilege** | Compromised orchestrator dispatches arbitrary subagents | SubAgent allowlist via `raptix.subagents` entry-point group | Partial — relies on operator trust of installed plugins |
 
 ### Asset: Web dashboard (Next.js)
 
@@ -118,8 +118,8 @@ Per-asset analysis.
 | **Spoofing** | No auth on non-localhost deploys | PR #338 (open) adds password / bind-restriction | Open |
 | **Tampering** | OPPLAN edits via API | API requires `requireAuth()` (currently no-op in OSS) | Partial |
 | **Information disclosure** | `engagements/[id]/graph` route ignored `[id]`, returned full graph | Prisma ownership + per-engagement scoped Cypher | Done |
-| **Information disclosure** | `engagements/[id]/graph` fell back to public Neo4j password | Refuses to query with `decepticon-graph` | Done |
-| **Information disclosure** | Health route hardcoded `LITELLM_API_KEY = "sk-decepticon-master"` | Removed; refuses without explicit env | Done |
+| **Information disclosure** | `engagements/[id]/graph` fell back to public Neo4j password | Refuses to query with `raptix-graph` | Done |
+| **Information disclosure** | Health route hardcoded `LITELLM_API_KEY = "sk-raptix-master"` | Removed; refuses without explicit env | Done |
 | **Denial of service** | `MATCH (n)` cypher dump on every dashboard render | Per-engagement filtering bounds the query | Done |
 | **Elevation of privilege** | Operator override without audit | Audit trail logs OPERATOR_OVERRIDE event class | Partial |
 
@@ -127,10 +127,10 @@ Per-asset analysis.
 
 | Threat | Vector | Mitigation | Status |
 |--------|--------|-----------|--------|
-| **Spoofing** | `pip install decepticon-plugin-evil` typosquat | Operator-explicit `RAPTIX_PLUGINS` allowlist; no auto-enable | Done |
+| **Spoofing** | `pip install raptix-plugin-evil` typosquat | Operator-explicit `RAPTIX_PLUGINS` allowlist; no auto-enable | Done |
 | **Tampering** | PluginBundle replaces ENGAGEMENT_CONTEXT or RoE middleware | `SAFETY_CRITICAL_SLOTS` gate requires `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` | Done |
 | **Repudiation** | Plugin issues tool calls without audit | All tool calls flow through middleware stack; ledger captures them | Done |
-| **Information disclosure** | Plugin reads `~/.config/decepticon/` | Plugin code runs in agent process; no FS sandboxing | Open |
+| **Information disclosure** | Plugin reads `~/.config/raptix/` | Plugin code runs in agent process; no FS sandboxing | Open |
 | **Denial of service** | Plugin import hangs | Entry-point loading timeout (planned) | Open |
 | **Elevation of privilege** | Plugin escalates to bypass middleware | SAFETY_CRITICAL gate; threat-model doc this file documents | Partial |
 
@@ -144,7 +144,7 @@ The chains that matter, ranked by realistic damage:
 
 3. **Operator workstation → LiteLLM OAuth file read.** Operator's `~/.claude/.credentials.json` is bind-mounted RO into LiteLLM. Compromised host with read on that file gets the OAuth token. **Mitigation**: the file is RO mounted only into LiteLLM, not into sandbox; standard OS file perms (600) apply to operator host. **Status**: partial — relies on operator host hygiene.
 
-4. **Plugin entry-point poisoning.** Operator runs `pip install decepticon-plugin-foo` from a typosquat. Bundle's `__init__.py` exfiltrates `.env` at agent startup. **Closed** by `RAPTIX_PLUGINS` allowlist; **Open** signed-bundle verification.
+4. **Plugin entry-point poisoning.** Operator runs `pip install raptix-plugin-foo` from a typosquat. Bundle's `__init__.py` exfiltrates `.env` at agent startup. **Closed** by `RAPTIX_PLUGINS` allowlist; **Open** signed-bundle verification.
 
 5. **Prompt-injection-driven RCE via docker socket.** The old `DockerSandbox` transport mounted `/var/run/docker.sock` into the LangGraph container; any agent-controlled command could escape to the host. **Closed** by the HTTP-only sandbox transport rewrite (predates this PR; see [`backends/factory.py`](../../packages/raptix/raptix/backends/factory.py)).
 
@@ -152,7 +152,7 @@ The chains that matter, ranked by realistic damage:
 
 Tracked in this PR's roadmap, in order of priority:
 
-1. **Per-engagement Cypher user** (`decepticon-sandbox-<engagement>`, rotating Bolt token). Caps the impact of a single sandbox compromise to that engagement's portion of the graph.
+1. **Per-engagement Cypher user** (`raptix-sandbox-<engagement>`, rotating Bolt token). Caps the impact of a single sandbox compromise to that engagement's portion of the graph.
 2. **Per-engagement sandbox container** (Docker SDK based lifecycle, one container per engagement open). Eliminates the "Engagement A's `.scratch/` is visible to Engagement B" leak. Tier 3 of this PR ships the design + compose hardening; full lifecycle ships in a follow-up.
 3. ~~**Per-engagement budget cap**~~ — **shipped.** `BudgetEnforcementMiddleware` (in `_BASE_SLOTS`) soft-warns at a configurable fraction of the cap and hard-pauses the run at 100%, scoped per-engagement and per-agent. Enable via `RAPTIX_BUDGET__ENGAGEMENT_USD` / `RAPTIX_BUDGET__PER_AGENT_USD`; see [security-controls](./security-controls.md). Automatic model-tier downgrade at threshold is not implemented.
 4. **Plugin bundle signature** (PluginBundle ships an Ed25519 signature; operator pins trust set; `pip install` of an unpinned bundle is rejected at boot).

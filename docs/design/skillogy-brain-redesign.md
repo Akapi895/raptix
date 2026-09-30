@@ -3,8 +3,8 @@
 **Status**: design spec, awaiting implementation
 **Date**: 2026-06-03
 **Supersedes (in spirit)**: [docs/design/skillogy.md](../../design/skillogy.md) (2026-05-28 v0.1 draft)
-**Replaces (at runtime)**: `decepticon.middleware.skills.SkillsMiddleware` (text-matching catalog)
-**Rebuilds (in package)**: `decepticon.skillogy.*` REST + gRPC service — backend switched from in-memory dict to Neo4j; wire protocol preserved.
+**Replaces (at runtime)**: `raptix.middleware.skills.SkillsMiddleware` (text-matching catalog)
+**Rebuilds (in package)**: `raptix.skillogy.*` REST + gRPC service — backend switched from in-memory dict to Neo4j; wire protocol preserved.
 **Target version**: Skillogy v0.2 — "Brain"
 
 ---
@@ -50,7 +50,7 @@ Net effect on the runtime: agent boot prompt = (PromptBuilder static prefix, inc
 
 ### 1.1 Where we are today
 
-The current production path is `decepticon.middleware.skills.SkillsMiddleware`, a subclass of `deepagents.middleware.skills.SkillsMiddleware`. At each agent boot, it:
+The current production path is `raptix.middleware.skills.SkillsMiddleware`, a subclass of `deepagents.middleware.skills.SkillsMiddleware`. At each agent boot, it:
 
 1. Reads every `SKILL.md` under the agent's configured `sources` list.
 2. Injects a 2–4 KB system-prompt block listing every skill's `name`, `description`, `mitre_attack` tags, and `when_to_use` triggers grouped by `subdomain`.
@@ -58,7 +58,7 @@ The current production path is `decepticon.middleware.skills.SkillsMiddleware`, 
 
 The catalog is **flat text**; the agent picks a skill by reading the catalog and matching keywords. Per-agent slicing (different specialists get different `sources`) cuts the catalog to ~20–40 skills per agent, but the routing decision remains opaque LLM keyword matching.
 
-A parallel `decepticon.skillogy.*` package (added 2026-05-28 in `20d57603`) externalizes the catalog as a REST service backed by an in-memory dict. It is feature-flagged behind `RAPTIX_USE_SKILLOGY=1` and currently sees no production traffic. The original gRPC half is unwired (`build_grpc_server` raises `RuntimeError`).
+A parallel `raptix.skillogy.*` package (added 2026-05-28 in `20d57603`) externalizes the catalog as a REST service backed by an in-memory dict. It is feature-flagged behind `RAPTIX_USE_SKILLOGY=1` and currently sees no production traffic. The original gRPC half is unwired (`build_grpc_server` raises `RuntimeError`).
 
 ### 1.2 What hurts (user-confirmed, in priority order)
 
@@ -102,7 +102,7 @@ This corpus is the input to the graph. Phase 0 cleans it.
 
 ### 1.4 Audit of which frontmatter fields are actually used
 
-A code audit of `deepagents.middleware.skills.SkillsMiddleware` (base) + `decepticon.middleware.skills.SkillsMiddleware` (override) + `decepticon.tools.skills.build_load_skill_tool` was performed against the same 251-file corpus. Findings drive the slim `:Skill` schema in §5.2:
+A code audit of `deepagents.middleware.skills.SkillsMiddleware` (base) + `raptix.middleware.skills.SkillsMiddleware` (override) + `raptix.tools.skills.build_load_skill_tool` was performed against the same 251-file corpus. Findings drive the slim `:Skill` schema in §5.2:
 
 | Frontmatter field | Files | deepagents parses? | Raptix middleware reads? | Reaches system prompt? | Verdict |
 |---|---|---|---|---|---|
@@ -222,7 +222,7 @@ canonical seeds ──┤   (Python)             (checked into repo)       │
                                                          └──────────────────────────────┘
 ```
 
-Key shift vs. the original v0.2 diagram: **Neo4j is owned by the skillogy service, not by `SkillogyMiddleware`**. The agent process never opens a Bolt connection. This preserves the original `decepticon.skillogy.*` package's intent (skill-as-a-service over a wire protocol) and makes the langgraph image catalog-free at the end of Phase 1a.
+Key shift vs. the original v0.2 diagram: **Neo4j is owned by the skillogy service, not by `SkillogyMiddleware`**. The agent process never opens a Bolt connection. This preserves the original `raptix.skillogy.*` package's intent (skill-as-a-service over a wire protocol) and makes the langgraph image catalog-free at the end of Phase 1a.
 
 ### 3.2 Component decomposition
 
@@ -237,7 +237,7 @@ Key shift vs. the original v0.2 diagram: **Neo4j is owned by the skillogy servic
 | `skillogy.validation` | `packages/raptix/raptix/skillogy/validation.py` (NEW) | Cypher-rule validator run by CI (build-time, not runtime). |
 | `skills.cypher` | `packages/raptix/raptix/skills/.graph/skills.cypher` (NEW, checked in) | Deterministic Cypher dump produced by `skillogy.builder`. **Baked into the skillogy container image at build time**; the langgraph image does not need it. |
 | `containers/skillogy.Dockerfile` | (REWRITTEN) | Now builds an image that contains `skills.cypher` + the server, exposing REST (default 9100) and gRPC (default 50051). |
-| `docker-compose.yml` skillogy service | (REWRITTEN) | Same compose entry, new image. Talks to Neo4j on the existing `decepticon-net`. |
+| `docker-compose.yml` skillogy service | (REWRITTEN) | Same compose entry, new image. Talks to Neo4j on the existing `raptix-net`. |
 | `langgraph` image | (TRIMMED at Phase 1a final cutover) | Drops `COPY packages/raptix/raptix/skills` once `SkillogyMiddleware` is the only path. See §5.11. |
 
 ### 3.3 Phase split
@@ -460,7 +460,7 @@ Version pinning is explicit. Bumping a matrix version is a manual PR (no silent 
 ```
 packages/raptix/raptix/skillogy/builder/
 ├── __init__.py
-├── __main__.py                   # `python -m decepticon.skillogy.builder`
+├── __main__.py                   # `python -m raptix.skillogy.builder`
 ├── frontmatter.py                # SKILL.md → :Skill + IN_PHASE/IMPLEMENTS/TAGGED/RELATED_TO
 ├── mitre.py                      # 4-matrix STIX importer
 ├── seeds/
@@ -476,9 +476,9 @@ packages/raptix/raptix/skillogy/builder/
 CLI:
 
 ```bash
-python -m decepticon.skillogy.builder            # full build
-python -m decepticon.skillogy.builder --validate # rules only, no write
-python -m decepticon.skillogy.builder --diff     # show diff vs checked-in dump
+python -m raptix.skillogy.builder            # full build
+python -m raptix.skillogy.builder --validate # rules only, no write
+python -m raptix.skillogy.builder --diff     # show diff vs checked-in dump
 ```
 
 **Stages** (in order):
@@ -630,7 +630,7 @@ Two responsibilities orthogonal to the graph are preserved from the current Rapt
 
 ```python
 class SkillogyMiddleware(AgentMiddleware):
-    """Replaces both decepticon.middleware.skills.SkillsMiddleware and
+    """Replaces both raptix.middleware.skills.SkillsMiddleware and
     its deepagents base. Thin client of the skillogy service container;
     holds no Neo4j connection of its own."""
 
@@ -677,7 +677,7 @@ Notes:
 
 - The middleware imports nothing from `neo4j`. The `langgraph` container does not need the Neo4j driver to be installed.
 - `build_skillogy_client` returns either a REST or gRPC implementation behind a shared `SkillogyClient` Protocol. Default REST keeps OSS deployments simple; gRPC is opt-in for performance-sensitive operators.
-- The `decepticon-skillogy-skillogy` compose service is the authoritative owner of the schema cheat-sheet — the middleware fetches it from `/v1/skills:schema` on first use and caches it per-process. This way schema drift cannot desync the agent prompt from the live graph.
+- The `raptix-skillogy-skillogy` compose service is the authoritative owner of the schema cheat-sheet — the middleware fetches it from `/v1/skills:schema` on first use and caches it per-process. This way schema drift cannot desync the agent prompt from the live graph.
 
 The injected system prompt (~300 tokens) carries:
 - The always-loaded workflow (`workflow.md` body — unchanged behavior, still in-process).
@@ -690,7 +690,7 @@ The injected system prompt (~300 tokens) carries:
 - New env flag: `RAPTIX_SKILL_BACKEND ∈ {skills, skillogy_brain}` (default `skills`).
 - New env vars for the client side: `RAPTIX_SKILLOGY_URL` (default `http://skillogy:9100`), `RAPTIX_SKILLOGY_API_KEY` (optional). These are read by `SkillogyMiddleware.from_env()`.
 - Existing `SkillsMiddleware` is kept and continues to read SKILL.md files. After Phase 0 cleanup, both backends operate on the same canonical corpus.
-- The current `decepticon.skillogy.*` REST/proto/client package is **rewritten in place**, not deleted. The wire surface (4 RPC methods + Bearer-token auth) is preserved; the storage backend swaps from in-memory dict to Neo4j; new RPCs (`Traverse`, `CypherRead`, `MocSummary`, `Schema`) are added. The `RAPTIX_USE_SKILLOGY` flag is renamed `RAPTIX_SKILL_BACKEND` for clarity but the legacy name accepts a compat shim for one minor cycle.
+- The current `raptix.skillogy.*` REST/proto/client package is **rewritten in place**, not deleted. The wire surface (4 RPC methods + Bearer-token auth) is preserved; the storage backend swaps from in-memory dict to Neo4j; new RPCs (`Traverse`, `CypherRead`, `MocSummary`, `Schema`) are added. The `RAPTIX_USE_SKILLOGY` flag is renamed `RAPTIX_SKILL_BACKEND` for clarity but the legacy name accepts a compat shim for one minor cycle.
 - Agent-by-agent rollout: specialists opt in to `skillogy_brain` one at a time. Benchmark per agent before moving the next.
 - A 50-case routing benchmark + token-cost comparison gates the global default flip.
 - After one release cycle on the new backend as default:
@@ -805,7 +805,7 @@ Out of scope for this design doc; tracked here only to confirm that the Phase 1a
 
 1. Phase 0 lands cleaned-up corpus + validator + canonical schema. **(DONE — PR #519 merged 2026-06-03.)**
 2. PR introduces `skillogy.builder` package, `skills/.graph/skills.cypher` artifact, CI build step that asserts the dump matches what's checked in.
-3. PR rewrites `decepticon.skillogy.{proto,server,client}/` in place: storage swaps from in-memory dict to Neo4j; wire surface gains `Traverse` / `CypherRead` / `MocSummary` / `Schema` RPCs; Bearer-token auth preserved; container image now bakes the `skills.cypher` dump and connects to Neo4j on `decepticon-net`. The `RAPTIX_USE_SKILLOGY` env var is renamed `RAPTIX_SKILL_BACKEND` with a one-cycle compat shim.
+3. PR rewrites `raptix.skillogy.{proto,server,client}/` in place: storage swaps from in-memory dict to Neo4j; wire surface gains `Traverse` / `CypherRead` / `MocSummary` / `Schema` RPCs; Bearer-token auth preserved; container image now bakes the `skills.cypher` dump and connects to Neo4j on `raptix-net`. The `RAPTIX_USE_SKILLOGY` env var is renamed `RAPTIX_SKILL_BACKEND` with a one-cycle compat shim.
 4. PR introduces the new `SkillogyMiddleware` as a thin REST/gRPC client of the rewritten skillogy service. Old `SkillsMiddleware` untouched in this step.
 5. Per-agent opt-in via `RAPTIX_SKILL_BACKEND=skillogy_brain` (per-factory override). Raptix orchestrator stays on `skills` until specialists are validated one by one.
 6. 50-case routing benchmark + token-cost report on each opt-in.
@@ -829,10 +829,10 @@ Schema-additive. CI build produces embeddings; runtime middleware registers `rec
 | `packages/raptix/raptix/middleware/skills.py` | Kept through migration; deleted after one release cycle on `skillogy_brain` as default. **Note**: this class subclasses `deepagents.middleware.skills.SkillsMiddleware` and overrides ~all of its prompt-building methods. Removing it also removes Raptix's runtime dependency on the deepagents skill machinery (the deepagents library itself remains for its non-skill middleware). |
 | `packages/raptix/raptix/middleware/skillogy.py` | **Rewritten** — thin REST/gRPC client of the skillogy service. 3 tools (Phase 1a), 4 tools (Phase 1b). Imports nothing from `neo4j`; the langgraph image no longer needs the Neo4j driver. Does NOT subclass `deepagents.middleware.skills.SkillsMiddleware` — directly extends `langchain.agents.middleware.AgentMiddleware`. |
 | `packages/raptix/raptix/skillogy/proto/` | **Rewritten in place** — adds `Traverse`, `CypherRead`, `MocSummary`, `Schema` RPCs to the existing surface; preserves the `Skillogy.proto` service identity for backward-compat. protoc codegen wired into the build this time. |
-| `packages/raptix/raptix/skillogy/server/` | **Rewritten in place** — FastAPI + grpcio app. Now owns the Neo4j driver (Bolt connection on `decepticon-net`), loads `skills.cypher` at boot, serves read-only Cypher with parameterisation + AST safety, supports Bearer-token auth (preserved from PR `23918e9`). |
+| `packages/raptix/raptix/skillogy/server/` | **Rewritten in place** — FastAPI + grpcio app. Now owns the Neo4j driver (Bolt connection on `raptix-net`), loads `skills.cypher` at boot, serves read-only Cypher with parameterisation + AST safety, supports Bearer-token auth (preserved from PR `23918e9`). |
 | `packages/raptix/raptix/skillogy/client/` | **Rewritten in place** — REST + gRPC client behind a shared `SkillogyClient` Protocol. No Neo4j dependency. Used by the middleware and by future non-Python agent runtimes. |
 | `containers/skillogy.Dockerfile` | **Rewritten** — bakes `skills.cypher` into the image, runs the new server, exposes `${SKILLOGY_REST_PORT:-9100}` (REST) and `${SKILLOGY_GRPC_PORT:-50051}` (gRPC). |
-| `docker-compose.yml` skillogy service | **Kept and updated** — same service name (`decepticon-skillogy-skillogy`), new image tag, depends_on Neo4j now. |
+| `docker-compose.yml` skillogy service | **Kept and updated** — same service name (`raptix-skillogy-skillogy`), new image tag, depends_on Neo4j now. |
 | `containers/langgraph.Dockerfile` | **Trimmed at Phase 1a final cutover**: the `COPY packages/raptix/raptix/skills` line is removed once `SkillsMiddleware` is deleted. |
 | `packages/raptix/raptix/skills/**/SKILL.md` | Normalized through Phase 0 (frontmatter, MITRE) — **DONE (PR #519)**. |
 | `packages/raptix/raptix/skills/.graph/skills.cypher` | **New**, checked-in build artifact. Reviewable diff per PR. |
@@ -861,7 +861,7 @@ Total Phase 0 + 1a + 1b: **~14–17 weeks** to land the full "brain v1." Compare
 
 ## 13. Changelog
 
-- **2026-06-03 (v0.2.1, amendment)** — Service-architecture pivot. The original v0.2 plan retired the existing `decepticon.skillogy.*` REST/proto package and had `SkillogyMiddleware` open a Bolt connection directly to Neo4j from the langgraph process. After implementing Phase 0, the user reframed the intent: **skillogy should remain a standalone communication service**, not a library-style middleware. The amendment:
+- **2026-06-03 (v0.2.1, amendment)** — Service-architecture pivot. The original v0.2 plan retired the existing `raptix.skillogy.*` REST/proto package and had `SkillogyMiddleware` open a Bolt connection directly to Neo4j from the langgraph process. After implementing Phase 0, the user reframed the intent: **skillogy should remain a standalone communication service**, not a library-style middleware. The amendment:
   1. **Rebuilds the existing REST/proto/client package on a Neo4j backend** instead of deleting it. Wire surface preserved; storage swapped; `Traverse`, `CypherRead`, `MocSummary`, `Schema` RPCs added.
   2. **Reframes `SkillogyMiddleware` as a thin REST/gRPC client** of the service. The middleware imports nothing from `neo4j`. Multi-tenant operation, hot-swap, and non-Python agent runtimes (Go, Rust, TypeScript) are now first-class concerns of the service container.
   3. **Trims `containers/langgraph.Dockerfile` at the final Phase 1a cutover** — drops the `COPY packages/raptix/raptix/skills` line. The skillogy container becomes the sole owner of the catalog at runtime; the agent image becomes catalog-free, removing a stale-catalog footgun and shrinking the image.

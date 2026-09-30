@@ -20,7 +20,7 @@ langgraph_url: http://localhost:2024
 agents: [decepticon, decepticon, decepticon, decepticon]
 operator_message_template: |
   This is a Cyber Range simulation. You are operating from this Kali machine
-  (decepticon-sandbox; bash/filesystem already wired in over the
+  (raptix-sandbox; bash/filesystem already wired in over the
   HTTPSandbox daemon).
   Begin emulation against {domain}.
   Entry point: {entry_url}. Initial credential: {seed_username}:{seed_password}.

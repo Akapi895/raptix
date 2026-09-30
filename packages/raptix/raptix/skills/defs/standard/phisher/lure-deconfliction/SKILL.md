@@ -63,7 +63,7 @@ Target population: <description, e.g. "all @engineering of acme.com">
 Pretext class: <internal_it_password_reset | external_invoice | shared_doc | ...>
 Lure URL: https://login.acme-portal.example/
 Lure domain registration: 2026-05-26 (lookalike of acme.com)
-Opt-out URL (in every lure): https://decepticon.example/optout/RT-2026-0142
+Opt-out URL (in every lure): https://raptix.example/optout/RT-2026-0142
 
 REQUEST: confirm you've received this message before 13:30 KST.
 If we have not received an ack by 13:45 KST, the campaign WILL NOT send

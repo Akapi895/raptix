@@ -35,7 +35,7 @@ runs as-is against an OSS Raptix stack started with `make dev`.
 
 3. **A reachable LangGraph server** with the agent you want to drive
    already registered. The default config points at the OSS main
-   agent (`decepticon`) on `http://localhost:2024` — start it with
+   agent (`raptix`) on `http://localhost:2024` — start it with
    `make dev` from the repository root. Override via the `langgraph_url`
    field in the config YAML.
 
@@ -81,7 +81,7 @@ Exit codes:
 | `apt-grid-15runs.yaml` | 5 × 3 = 15 | isolated | $50–100 |
 | `apt-shared-lab-grid.yaml` | 4 × 3 = 12 | shared | $5–10 |
 
-Every shipped config defaults its `agents:` list to `decepticon` —
+Every shipped config defaults its `agents:` list to `raptix` —
 edit the YAML (or override on the CLI with `--agents <id1> <id2> …`)
 to point at the LangGraph `assistant_id` of whatever agent you want
 to drive against the lab.

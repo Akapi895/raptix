@@ -139,7 +139,7 @@ class CyberGymProvider(BaseBenchmarkProvider):
 
         # The harness creates this workspace before calling setup and
         # bind-mounts it into the sandbox as /workspace/benchmark-<id>.
-        workspace = (Path.home() / f".decepticon/workspace/benchmark-{challenge.id}").resolve()
+        workspace = (Path.home() / f".raptix/workspace/benchmark-{challenge.id}").resolve()
         workspace.mkdir(parents=True, exist_ok=True)
 
         agent_id = uuid.uuid4().hex

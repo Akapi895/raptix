@@ -11,14 +11,14 @@ credentials, and tool output are never transmitted.**
 
 - **Off by default (opt-in).** The onboard wizard asks during setup (default
   no), writing `RAPTIX_TELEMETRY=off` unless you choose to share. Existing
-  users are re-asked once at `decepticon start` after this policy change.
+  users are re-asked once at `raptix start` after this policy change.
 - **Turn it on anytime:** set `RAPTIX_TELEMETRY=research` (or `basic`) in
-  `~/.decepticon/.env`, or run `decepticon-cli telemetry on`.
+  `~/.raptix/.env`, or run `raptix-cli telemetry on`.
 - **Turn it off anytime:** set `RAPTIX_TELEMETRY=off` (or `basic`) in
-  `~/.decepticon/.env`, run `decepticon-cli telemetry off`, or `DO_NOT_TRACK=1`.
+  `~/.raptix/.env`, run `raptix-cli telemetry off`, or `DO_NOT_TRACK=1`.
 - **Nothing is sent** without a `RAPTIX_TELEMETRY_ENDPOINT` (shipped in the
   `.env` template; backfilled into existing installs on update).
-- **See exactly what would be sent:** `decepticon-cli telemetry preview`.
+- **See exactly what would be sent:** `raptix-cli telemetry preview`.
 
 ## Controls
 
@@ -28,9 +28,9 @@ credentials, and tool output are never transmitted.**
 | `DO_NOT_TRACK=1` | standard kill switch — forces `off` |
 | `BENCHMARK_MODE=1` | forces `off` — benchmark prompts are harness-generated, not user activity |
 | `RAPTIX_TELEMETRY_ENDPOINT=<url>` | gateway URL; unset ⇒ nothing is sent |
-| `decepticon-cli telemetry status` | show resolved mode / endpoint / anonymous id |
-| `decepticon-cli telemetry preview` | print the exact payload for a sample run |
-| `decepticon-cli telemetry off` / `on` | persistent opt-out marker (overrides env) |
+| `raptix-cli telemetry status` | show resolved mode / endpoint / anonymous id |
+| `raptix-cli telemetry preview` | print the exact payload for a sample run |
+| `raptix-cli telemetry off` / `on` | persistent opt-out marker (overrides env) |
 
 ## What is collected
 
@@ -61,7 +61,7 @@ Two consent tiers map to the data tiers in the design doc:
   what is recorded as human input is what you wrote. **Target identifiers
   are MASKED** (`10.0.0.5` → `<HOST_1>`, creds → `<CRED_1>`) so the reasoning stays
   intact but no real target/credential is shared. Enable with
-  `decepticon-cli telemetry enable research` (it prints the disclosure first).
+  `raptix-cli telemetry enable research` (it prints the disclosure first).
 
   **Consent boundary:** the agent's reasoning is yours to share. The *target's*
   data is not yours to consent away, so it is masked even here.
@@ -98,7 +98,7 @@ the OS family (`linux`/`darwin`/`windows`).
   "schema_version": "1.0",
   "tier": "A",
   "install_id": "1e9a73a6-c8bd-4e1e-be02-78f4b11de4e1",
-  "client": { "decepticon_version": "1.1.13", "os": "linux" },
+  "client": { "raptix_version": "1.1.13", "os": "linux" },
   "events": [
     { "type": "tool.call",   "ts": 2.0, "agent": "recon", "tool": "bash" },
     { "type": "tool.result", "ts": 3.0, "agent": "recon", "tool": "bash",
@@ -121,7 +121,7 @@ turn sequence a training pipeline needs. Identifiers are masked throughout:
   "schema_version": "1.0",
   "tier": "R",
   "install_id": "1e9a73a6-…",
-  "client": { "decepticon_version": "1.1.13", "os": "linux" },
+  "client": { "raptix_version": "1.1.13", "os": "linux" },
   "events": [
     { "type": "trajectory.step", "session_id": "a1b2c3d4e5f60718", "step": 0,
       "role": "human", "agent": "decepticon", "text": "Objective: own the host at <HOST_1>" },
@@ -171,9 +171,9 @@ anonymization.
   retention. A specific published retention window and a self-serve deletion
   path are **not yet in place** — until they are, the reliable control is
   turning telemetry off (`RAPTIX_TELEMETRY=off`, `DO_NOT_TRACK=1`, or
-  `decepticon-cli telemetry off`), which takes effect immediately. If you need
+  `raptix-cli telemetry off`), which takes effect immediately. If you need
   data already sent to be removed, open an issue with your `install_id`
-  (`decepticon-cli telemetry status` prints it).
+  (`raptix-cli telemetry status` prints it).
 
 ## How it is sent
 

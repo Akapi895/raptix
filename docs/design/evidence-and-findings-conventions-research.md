@@ -257,7 +257,7 @@ scanning, DefectDojo import, etc.). Raptix's analyst *ingests* SARIF via
 `kg_ingest("sarif", ...)` **and already emits** it: `tools/reporting/sarif.py`
 `render_sarif()` serializes the engagement KG (Vulnerability/Finding nodes
 populated from `findings/FIND-NNN.md`) to SARIF v2.1.0, and the
-`decepticon scan --sarif-output` CLI path exposes it. So this is **already
+`raptix scan --sarif-output` CLI path exposes it. So this is **already
 aligned**, not a gap.
 
 ### 5.2 MITRE ATT&CK Navigator layers — coverage / attack-path

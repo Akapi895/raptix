@@ -63,7 +63,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 
 	// Phase 2: Remove Docker images
 	ui.Info("Removing Docker images...")
-	out, err := exec.Command("docker", "images", "--format", "{{.Repository}}:{{.Tag}}", "--filter", "reference=*decepticon*").Output()
+	out, err := exec.Command("docker", "images", "--format", "{{.Repository}}:{{.Tag}}", "--filter", "reference=*raptix*").Output()
 	if err == nil {
 		for _, img := range strings.Fields(strings.TrimSpace(string(out))) {
 			_ = exec.Command("docker", "rmi", "-f", img).Run()
@@ -87,7 +87,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 	}
 
 	userHome, _ := os.UserHomeDir()
-	backupDir := filepath.Join(userHome, "decepticon-workspace-backup")
+	backupDir := filepath.Join(userHome, "raptix-workspace-backup")
 
 	skipHomeRemoval := false
 	if preserveWorkspace {
@@ -96,7 +96,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		if err := backupWorkspace(wsDir, backupDir); err != nil {
 			ui.Warning("Backup failed: " + err.Error())
 			ui.Warning("Workspace data left in place at " + wsDir)
-			ui.DimText("Re-run 'decepticon remove' or move the workspace manually before deleting " + home)
+			ui.DimText("Re-run 'raptix remove' or move the workspace manually before deleting " + home)
 			skipHomeRemoval = true
 		}
 	}
@@ -145,13 +145,13 @@ func cleanShellRC() {
 
 // cleanPathFromFile removes the exact two-line block install.sh appends:
 //
-//	# decepticon
+//	# raptix
 //	export PATH="$HOME/.local/bin:$PATH"      # bash/zsh
 //	fish_add_path $HOME/.local/bin            # fish
 //
 // Matching only this marker block avoids touching unrelated PATH lines
 // the user may have written themselves. The previous heuristic looked for
-// `decepticon` AND `.local/bin` on the same line, which never matched
+// `raptix` AND `.local/bin` on the same line, which never matched
 // install.sh's actual output and left the export line behind on every
 // uninstall.
 func cleanPathFromFile(path string) {
@@ -171,7 +171,7 @@ func cleanPathFromFile(path string) {
 	i := 0
 	for i < len(lines) {
 		line := lines[i]
-		if strings.TrimSpace(line) == "# decepticon" && i+1 < len(lines) && isInstallPathLine(lines[i+1]) {
+		if strings.TrimSpace(line) == "# raptix" && i+1 < len(lines) && isInstallPathLine(lines[i+1]) {
 			// Also drop a single preceding blank line install.sh inserts.
 			if n := len(out); n > 0 && strings.TrimSpace(out[n-1]) == "" {
 				out = out[:n-1]

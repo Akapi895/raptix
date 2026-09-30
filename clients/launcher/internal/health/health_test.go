@@ -11,7 +11,7 @@ func TestCheckLangGraph_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" && r.URL.Path == "/assistants/search" {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte(`[{"assistant_id": "abc", "graph_id": "decepticon"}]`))
+			w.Write([]byte(`[{"assistant_id": "abc", "graph_id": "raptix"}]`))
 			return
 		}
 		w.WriteHeader(http.StatusNotFound)
@@ -44,7 +44,7 @@ func TestCheckLangGraph_RejectsEmptyBody(t *testing.T) {
 	env := map[string]string{"LANGGRAPH_PORT": port[len("127.0.0.1:"):]}
 
 	if err := CheckLangGraph(env); err == nil {
-		t.Error("CheckLangGraph() should fail when body lacks decepticon assistant")
+		t.Error("CheckLangGraph() should fail when body lacks raptix assistant")
 	}
 }
 

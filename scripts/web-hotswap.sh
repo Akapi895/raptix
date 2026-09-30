@@ -2,7 +2,7 @@
 # web-hotswap.sh — Hot-swap web dashboard into running container
 #
 # Builds Next.js on the host, injects the output directly into the
-# running decepticon-web container, then signals PID 1 (the entrypoint
+# running raptix-web container, then signals PID 1 (the entrypoint
 # supervisor) to restart only the Next.js process. The terminal server
 # stays alive — zero WebSocket disconnections for the operator.
 #
@@ -18,7 +18,7 @@ set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 WEB_DIR="$REPO_ROOT/clients/web"
-CONTAINER="decepticon-web"
+CONTAINER="raptix-web"
 STANDALONE="$WEB_DIR/.next/standalone/clients/web"
 
 RED='\033[0;31m'
@@ -55,7 +55,7 @@ if [[ "$SKIP_BUILD" == false ]]; then
     info "Building Next.js on host..."
     cd "$WEB_DIR"
 
-    DATABASE_URL="${DATABASE_URL:-postgresql://decepticon:decepticon@localhost:5432/decepticon_web}" \
+    DATABASE_URL="${DATABASE_URL:-postgresql://raptix:raptix@localhost:5432/raptix_web}" \
         npx prisma generate --no-hints 2>&1 | tail -1
 
     npm run build 2>&1 | tail -3

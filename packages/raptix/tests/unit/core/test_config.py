@@ -11,7 +11,7 @@ class TestRaptixConfig:
     def test_llm_defaults(self):
         config = RaptixConfig()
         assert config.llm.proxy_url == "http://localhost:4000"
-        assert config.llm.proxy_api_key == "sk-decepticon-master"
+        assert config.llm.proxy_api_key == "sk-raptix-master"
 
     def test_env_override(self, monkeypatch):
         monkeypatch.setenv("RAPTIX_DEBUG", "true")

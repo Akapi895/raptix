@@ -25,11 +25,11 @@ release, use the separate `RAPTIX_BRANCH` override.)
 
 ## Selecting a channel
 
-The channel lives in `RAPTIX_CHANNEL` in `~/.decepticon/.env` (default
+The channel lives in `RAPTIX_CHANNEL` in `~/.raptix/.env` (default
 `stable`; unrecognized values resolve to `stable`):
 
 ```bash
-# ~/.decepticon/.env
+# ~/.raptix/.env
 RAPTIX_CHANNEL=latest
 # optional — override the stable soak window (days):
 RAPTIX_STABLE_SOAK_DAYS=7
@@ -39,15 +39,15 @@ Three ways to set it:
 
 - **At install** — `CHANNEL=latest curl -fsSL https://decepticon.red/install | bash`.
 - **In `.env`** — `RAPTIX_CHANNEL=stable|latest`. The launch-time
-  self-update and `decepticon update` both honor it.
-- **Per command** — `decepticon update --channel latest` (one run only).
+  self-update and `raptix update` both honor it.
+- **Per command** — `raptix update --channel latest` (one run only).
 
 Pinning an exact version still wins over the channel: `VERSION=1.2.0
 curl … | bash` (install) or `RAPTIX_VERSION=1.2.0` (compose).
 
 ## How it works
 
-- **Launcher self-update / `decepticon update`** (`internal/updater`):
+- **Launcher self-update / `raptix update`** (`internal/updater`):
   - `latest` → GitHub `…/releases/latest` (newest final; the endpoint
     already excludes pre-releases and drafts).
   - `stable` → lists `…/releases` and picks the newest **final** whose

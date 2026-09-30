@@ -182,7 +182,7 @@ def chart_difficulty() -> Path:
 # ---------------------------------------------------------------------------
 
 
-def chart_decepticon_donut() -> Path:
+def chart_raptix_donut() -> Path:
     labels = [r[0] for r in RAPTIX_PIE]
     sizes = [r[1] for r in RAPTIX_PIE]
     colors = [r[2] for r in RAPTIX_PIE]
@@ -250,7 +250,7 @@ def chart_decepticon_donut() -> Path:
         fontsize=9,
         color="#6c757d",
     )
-    return save(fig, "decepticon_donut.png")
+    return save(fig, "raptix_donut.png")
 
 
 # ---------------------------------------------------------------------------
@@ -283,7 +283,7 @@ def chart_coverage() -> Path:
 
 
 def main() -> None:
-    for fn in (chart_leaderboard, chart_difficulty, chart_decepticon_donut, chart_coverage):
+    for fn in (chart_leaderboard, chart_difficulty, chart_raptix_donut, chart_coverage):
         path = fn()
         print(f"wrote {path.relative_to(OUT_DIR.parents[1])}")
 

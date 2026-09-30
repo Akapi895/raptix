@@ -18,9 +18,9 @@ tiny or challenge body is treated as suspect, not success.
 
 ## How it works
 
-The engine (`decepticon/sandbox_web/`) runs **inside the sandbox**; the tools
+The engine (`raptix/sandbox_web/`) runs **inside the sandbox**; the tools
 dispatch it over the existing bash execution surface
-(`python3 -m decepticon.sandbox_web …`). Every byte of egress therefore happens
+(`python3 -m raptix.sandbox_web …`). Every byte of egress therefore happens
 in `sandbox-net`, behind the nftables/DNS allowlist compiled from the
 engagement's `roe.json` — there is no management-side egress and no new
 transport.
@@ -58,7 +58,7 @@ browser tier are conservative by default.
 
 The engine never hardcodes a target site (host/selector/referer) — that
 knowledge enters only at call time via `selector` / `user_hint`. A CI gate
-(`python -m decepticon.sandbox_web.bias_check`) enforces it. The one exception
+(`python -m raptix.sandbox_web.bias_check`) enforces it. The one exception
 is the `web_search` provider allowlist (the agreed OSINT entry points).
 
 ## Provenance

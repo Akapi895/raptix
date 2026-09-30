@@ -122,5 +122,5 @@ The middleware does not hardcode any event-log format; it talks to an
   below HITL; operator approval cannot override an RoE refusal.
 - [Audit Ledger](./audit-ledger.md) — the append-only record of RoE
   decisions.
-- [Threat Model](./decepticon-threat-model.md) — HITL as the
+- [Threat Model](./raptix-threat-model.md) — HITL as the
   operator-approval control.

@@ -14,7 +14,7 @@
 # user can remain narrowly scoped.
 #
 # Postgres auto-runs files in /docker-entrypoint-initdb.d/ on first boot
-# only, but Decepticon v1.1.7 also ships to users with an existing
+# only, but Raptix v1.1.7 also ships to users with an existing
 # postgres_data volume.  Keep this script idempotent and run it both from
 # initdb and from the compose `bhce-postgres-init` sidecar so upgrades gain
 # the BloodHound role/database without deleting user data.
@@ -24,7 +24,7 @@ set -euo pipefail
 
 BHCE_DB_NAME="${BHCE_POSTGRES_DB:-bloodhound}"
 BHCE_DB_USER="${BHCE_POSTGRES_USER:-bloodhound}"
-BHCE_DB_PASSWORD="${BHCE_POSTGRES_PASSWORD:-bhce-decepticon-local}"
+BHCE_DB_PASSWORD="${BHCE_POSTGRES_PASSWORD:-bhce-raptix-local}"
 
 psql -v ON_ERROR_STOP=1 \
     --username "${POSTGRES_USER}" \

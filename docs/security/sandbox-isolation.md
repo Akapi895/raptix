@@ -38,7 +38,7 @@ sandbox:
   mem_limit: 4g
   pids_limit: 1024
   volumes:
-    - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.decepticon}/workspace}:/workspace
+    - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
 ```
 
 What this gets right:
@@ -83,7 +83,7 @@ launcher.sandbox_lifecycle.Acquire(engagement_slug)
     │  - if no:  docker run, return SandboxHandle(url, token)
     │
     ▼
-SANDBOX_URL=http://decepticon-sandbox-<slug>:9999
+SANDBOX_URL=http://raptix-sandbox-<slug>:9999
 SANDBOX_TOKEN=<rotated per acquire>
     │
     ▼
@@ -95,7 +95,7 @@ agent reaches its own sandbox via the URL+token
 
 Per-engagement container properties:
 
-- Container name: `decepticon-sandbox-<engagement-slug>`.
+- Container name: `raptix-sandbox-<engagement-slug>`.
 - Per-engagement Docker network: `sandbox-net-<engagement-slug>` so
   engagement A's container cannot reach engagement B's container even
   on the same host.
@@ -129,7 +129,7 @@ type Lifecycle struct {
 }
 
 func (l *Lifecycle) Acquire(slug string) (*Handle, error) {
-    name := "decepticon-sandbox-" + slug
+    name := "raptix-sandbox-" + slug
     netName := "sandbox-net-" + slug
 
     // 1. Ensure per-engagement network exists.
@@ -169,7 +169,7 @@ func (l *Lifecycle) Acquire(slug string) (*Handle, error) {
 }
 
 func (l *Lifecycle) Release(slug string, archive bool) error {
-    name := "decepticon-sandbox-" + slug
+    name := "raptix-sandbox-" + slug
     if archive {
         // tar /workspace/.sessions and .scratch to .archive/<ts>.tar.zst
         l.archive(slug)
@@ -209,19 +209,19 @@ runtime (`runsc`). Worth offering as an opt-in
 
 ```bash
 # Verify cap_drop is in effect
-docker exec decepticon-sandbox cat /proc/1/status | grep CapEff
+docker exec raptix-sandbox cat /proc/1/status | grep CapEff
 # Expect a tiny capability set, not 0x000001ffffffffff (= all caps)
 
 # Verify no-new-privileges
-docker exec decepticon-sandbox cat /proc/1/status | grep NoNewPrivs
+docker exec raptix-sandbox cat /proc/1/status | grep NoNewPrivs
 # Expect: NoNewPrivs:	1
 
 # Verify mem_limit
-docker inspect decepticon-sandbox --format '{{.HostConfig.Memory}}'
+docker inspect raptix-sandbox --format '{{.HostConfig.Memory}}'
 # Expect: 4294967296 (4 GiB)
 
 # Verify pids_limit
-docker inspect decepticon-sandbox --format '{{.HostConfig.PidsLimit}}'
+docker inspect raptix-sandbox --format '{{.HostConfig.PidsLimit}}'
 # Expect: 1024
 ```
 
@@ -242,5 +242,5 @@ docker inspect decepticon-sandbox --format '{{.HostConfig.PidsLimit}}'
 - [gVisor](https://gvisor.dev/)
 - [`docs/security/neo4j-hardening.md`](./neo4j-hardening.md) - the
   paired control for the management-plane bridge.
-- [`docs/security/decepticon-threat-model.md`](./decepticon-threat-model.md) -
+- [`docs/security/raptix-threat-model.md`](./raptix-threat-model.md) -
   STRIDE walk that ranks per-engagement isolation as the #2 follow-up.

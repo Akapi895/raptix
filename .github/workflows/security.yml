@@ -82,7 +82,7 @@ jobs:
       # Blocks the run on ERROR-severity findings from the repo's own rules
       # (e.g. no hardcoded default LiteLLM key). Public rule packs are covered
       # by CodeQL's security-and-quality suite and are not re-run here.
-      - name: Custom Decepticon rules (blocking on ERROR)
+      - name: Custom Raptix rules (blocking on ERROR)
         run: |
           semgrep scan \
             --error \

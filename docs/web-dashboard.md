@@ -10,10 +10,10 @@ The web dashboard is an open-source (Apache 2.0) browser-based control plane for
 
 **End users:**
 ```bash
-decepticon                    # starts the core stack + drops into the terminal CLI
+raptix                    # starts the core stack + drops into the terminal CLI
 ```
 
-The dashboard is **dynamic-spawn** (v1.1.8+): it does NOT come up on `decepticon start`. Bring it up from inside the CLI with the `/web` slash command, then open <http://localhost:3000>:
+The dashboard is **dynamic-spawn** (v1.1.8+): it does NOT come up on `raptix start`. Bring it up from inside the CLI with the `/web` slash command, then open <http://localhost:3000>:
 
 | CLI command | Effect |
 |---|---|
@@ -33,9 +33,9 @@ The desktop app is an Electron shell for the product UI:
 |---|---|---|
 | `auto` (default) | Local install present → local; otherwise cloud | `http://localhost:${WEB_PORT:-3000}` or `https://app.decepticon.red` |
 | `cloud` | `RAPTIX_DESKTOP_MODE=cloud` | Hosted app (website login, Google/GitHub OAuth in-window) |
-| `local` | `RAPTIX_DESKTOP_MODE=local` | Local dashboard; auto-starts the `web` Docker Compose profile from `~/.decepticon` when offline |
+| `local` | `RAPTIX_DESKTOP_MODE=local` | Local dashboard; auto-starts the `web` Docker Compose profile from `~/.raptix` when offline |
 
-Sessions use a persistent Electron partition (`persist:decepticon-desktop`). Optional one-shot cookie import: drop a Cookie-Editor JSON or Netscape export at `~/.decepticon/desktop-cookies.txt` (Windows: `%USERPROFILE%\.decepticon\desktop-cookies.txt`) or set `RAPTIX_DESKTOP_COOKIES`. Prefer interactive sign-in; never commit session tokens.
+Sessions use a persistent Electron partition (`persist:raptix-desktop`). Optional one-shot cookie import: drop a Cookie-Editor JSON or Netscape export at `~/.raptix/desktop-cookies.txt` (Windows: `%USERPROFILE%\.raptix\desktop-cookies.txt`) or set `RAPTIX_DESKTOP_COOKIES`. Prefer interactive sign-in; never commit session tokens.
 
 Cross-platform notes (Linux / macOS / Windows):
 
@@ -51,7 +51,7 @@ External links stay in the system browser; status UI matches the product brandin
 
 Headless operators (no CLI, e.g. CI) can drive the same lifecycle from the host shell:
 ```bash
-docker compose -p decepticon --profile web up -d --no-build web
+docker compose -p raptix --profile web up -d --no-build web
 ```
 
 **Contributors (full stack with hot-reload):**

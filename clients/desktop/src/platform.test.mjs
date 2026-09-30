@@ -41,9 +41,9 @@ test("dockerComposeSpawn never enables shell and hides the console on Windows", 
 
 test("dockerInspectSpawn uses the Go template format string on every OS", () => {
   for (const platform of ["win32", "darwin", "linux"]) {
-    const spawn = dockerInspectSpawn("decepticon-web", { platform, env: {} });
+    const spawn = dockerInspectSpawn("raptix-web", { platform, env: {} });
     assert.equal(spawn.command, "docker");
-    assert.deepEqual(spawn.args, ["inspect", "--format", "{{.Config.Image}}", "decepticon-web"]);
+    assert.deepEqual(spawn.args, ["inspect", "--format", "{{.Config.Image}}", "raptix-web"]);
     assert.equal(spawn.options.shell, false);
     assert.equal(spawn.options.windowsHide, platform === "win32");
   }
@@ -110,8 +110,8 @@ test("resolveDesktopConfig joins cookie and home paths with the host path module
     () => false,
   );
   // path.join is the Node path for the runner OS (correct for desktop runtime).
-  assert.equal(cfg.decepticonHome, path.join("/home/alice", ".decepticon"));
-  assert.equal(cfg.cookiesPath, path.join("/home/alice", ".decepticon", "desktop-cookies.txt"));
+  assert.equal(cfg.raptixHome, path.join("/home/alice", ".raptix"));
+  assert.equal(cfg.cookiesPath, path.join("/home/alice", ".raptix", "desktop-cookies.txt"));
   assert.equal(cfg.dashboardUrl, "https://app.decepticon.red");
 });
 
@@ -127,7 +127,7 @@ test("resolveDesktopConfig uses path.join so Windows home paths stay native", ()
     },
     () => false,
   );
-  assert.equal(cfg.decepticonHome, home);
+  assert.equal(cfg.raptixHome, home);
   assert.equal(cfg.cookiesPath, path.join(home, "desktop-cookies.txt"));
   // Path separators must match the host OS.
   if (process.platform === "win32") {

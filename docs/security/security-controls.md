@@ -85,5 +85,5 @@ See [hitl-approval](./hitl-approval.md) for the policy and approval flow.
 - [RoE Machine Enforcement](./roe-machine-enforcement.md)
 - [Audit Ledger](./audit-ledger.md)
 - [HITL Approval](./hitl-approval.md)
-- [Threat Model](./decepticon-threat-model.md)
+- [Threat Model](./raptix-threat-model.md)
 - [Prompt-Injection Defense](./prompt-injection-defense.md)

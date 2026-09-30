@@ -1,6 +1,6 @@
 # Telemetry & Usage Data Collection — Design
 
-> Branch: `claude/decepticon-telemetry-research-5comvf` (2026-06-20).
+> Branch: `claude/raptix-telemetry-research-5comvf` (2026-06-20).
 > Goal: give maintainers visibility into **what users ask the agents to do and
 > what the agents actually do**, without ever exfiltrating engagement-sensitive
 > content (targets, credentials, client data). Raptix is a red-team test
@@ -33,7 +33,7 @@ deliberately content-free:
 | Layer | Location | Behavior |
 |---|---|---|
 | Event log (JSONL) | `runtime/event_log.py`, `middleware/event_logging.py` → `engagements/<id>/events.jsonl` | `LLM_CALL / TOOL_CALL / TOOL_RESULT / FINDING_CREATED`, **local only** |
-| OpenTelemetry (opt-in) | `telemetry/otel.py` (263 lines) | spans `decepticon.engagement / agent_run / tool_call / llm_call`; OTLP exporter; no-op unless `OTEL_ENABLED` |
+| OpenTelemetry (opt-in) | `telemetry/otel.py` (263 lines) | spans `raptix.engagement / agent_run / tool_call / llm_call`; OTLP exporter; no-op unless `OTEL_ENABLED` |
 | Full recording | `runtime/recording.py` | full prompt/output capture, **local only** |
 | Knowledge graph | Neo4j | findings / attack chains |
 
@@ -178,7 +178,7 @@ RAPTIX_TELEMETRY_ENDPOINT=...         # users may self-route
 ```
 
 - Tiered consent (Tier A only / through B / later ③).
-- `decepticon telemetry status|off|preview` — **`preview` prints the exact
+- `raptix telemetry status|off|preview` — **`preview` prints the exact
   payload that would be sent** (transparency; cf. Go's transparent telemetry).
 - `TELEMETRY.md` documents every collected field, the redaction rules, and the
   endpoint.

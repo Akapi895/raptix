@@ -1,17 +1,17 @@
 # OSS PyPI Distribution — Strategic Value to Downstream Products
 
-> Analysis of what publishing the OSS `decepticon` core to PyPI buys a
+> Analysis of what publishing the OSS `raptix` core to PyPI buys a
 > downstream commercial product built on the SDK. Grounded in the current
 > packaging and plugin architecture, with risks and execution prerequisites.
 
 ## TL;DR
 
 A downstream product is **not a fork** of Raptix — it is a
-downstream Python package that depends on the OSS `decepticon` core and
-extends it through entry-point plugin groups (`decepticon.bundles`,
-`decepticon.subagents`, `decepticon.skills`, …). Today that downstream
+downstream Python package that depends on the OSS `raptix` core and
+extends it through entry-point plugin groups (`raptix.bundles`,
+`raptix.subagents`, `raptix.skills`, …). Today that downstream
 package can only pull the core as a **git dependency**
-(`decepticon @ git+https://…@v1.x.y`). Publishing the core to PyPI turns
+(`raptix @ git+https://…@v1.x.y`). Publishing the core to PyPI turns
 the core into a normal, versioned upstream dependency. That single change
 upgrades dependency hygiene, release decoupling, API-contract stability,
 the adoption funnel, and the enterprise trust story — all of which accrue
@@ -21,7 +21,7 @@ a real version-stamping flow, and supply-chain hardening.
 ## 1. Current state
 
 - **OSS core is already a pip-installable package.** `pyproject.toml`
-  builds a `decepticon` wheel via hatchling (`pyproject.toml:149-154`),
+  builds a `raptix` wheel via hatchling (`pyproject.toml:149-154`),
   Apache-2.0 licensed (`pyproject.toml:10`). The package is import-ready
   as a library — `docs/library-usage.md` documents three integration
   paths plus the declarative `PluginBundle` override surface.
@@ -31,15 +31,15 @@ a real version-stamping flow, and supply-chain hardening.
   build time (`pyproject.toml:1-7`) — there is no published-version flow.
 - **A downstream product layers on via entry-points.** The vendor bundle
   (`bundle="vendor"`) is activated with `RAPTIX_PLUGINS=standard,vendor`
-  (`pyproject.toml:111-123`, `decepticon/plugin_loader.py:527-529`). The
+  (`pyproject.toml:111-123`, `raptix/plugin_loader.py:527-529`). The
   OSS default stays lean (`["standard"]`); downstream images opt their bundle in.
 - **The only documented way for a downstream product to consume the core is a git pin.**
   `docs/library-usage.md:383-393` recommends
-  `decepticon @ git+https://github.com/Akapi895/raptix.git@v1.x.y`
+  `raptix @ git+https://github.com/Akapi895/raptix.git@v1.x.y`
   and states: *"PyPI publication is on the roadmap once the public API
   surface is stable enough to commit to."*
 - `docs/contributing.md:114` already assumes the end state:
-  *"End-user installs that just `pip install decepticon` get the lean
+  *"End-user installs that just `pip install raptix` get the lean
   standard-only default."*
 
 **Why this matters:** because a downstream product is a *dependent
@@ -54,11 +54,11 @@ A git dependency is the weakest link in a Python dependency graph:
 
 | Concern | git dependency (today) | PyPI dependency |
 |---------|------------------------|-----------------|
-| Resolver | uv/pip/poetry cannot range-resolve a git ref | `decepticon>=1.4,<2` resolves normally |
+| Resolver | uv/pip/poetry cannot range-resolve a git ref | `raptix>=1.4,<2` resolves normally |
 | Auth | needs git access in every build context | anonymous index fetch |
 | Reproducibility | ref can move; needs commit-pin discipline | immutable versioned wheels + hashes |
 | CI speed | full clone (incl. history) per build | cached wheel download |
-| Docker layers | clone + build-from-source in image | `pip install decepticon==X` like any dep |
+| Docker layers | clone + build-from-source in image | `pip install raptix==X` like any dep |
 
 For the downstream image and CI, this is the most concrete, immediate win.
 
@@ -83,7 +83,7 @@ fewer surprise breakages and a clear upgrade signal (major bump = review).
 
 ### 2.4 Larger adoption funnel → conversion
 
-`pip install decepticon` is dramatically lower friction than
+`pip install raptix` is dramatically lower friction than
 `curl | bash` + Docker for the Python/security-research audience. A bigger
 OSS top-of-funnel feeds the upsell: downstream users adopt the **same core they
 already run**, then activate the `vendor` bundle. PyPI also adds
@@ -129,7 +129,7 @@ guarantee rather than asking customers to trust a black box.
 5. **Dependency weight.** The core's install set
    (`pyproject.toml:35-67`) pulls langchain/langgraph/neo4j/fastapi/etc.
    For pure-library consumers, consider optional-dependency extras so
-   `pip install decepticon` stays reasonable.
+   `pip install raptix` stays reasonable.
 
 ## 4. Prerequisites & execution steps
 
@@ -141,12 +141,12 @@ guarantee rather than asking customers to trust a black box.
 3. **Wire PyPI Trusted Publishing** (OIDC) into the release workflow; add
    artifact attestation/signing.
 4. **Decide the core install footprint** — keep the heavy agent deps as
-   the default, or split optional extras (`decepticon[agents]`,
-   `decepticon[neo4j]`) so library/plugin consumers can stay lean.
+   the default, or split optional extras (`raptix[agents]`,
+   `raptix[neo4j]`) so library/plugin consumers can stay lean.
 5. **Switch the downstream build to a versioned dependency** — replace the git pin with
-   `decepticon>=X,<Y` once the first version is published.
+   `raptix>=X,<Y` once the first version is published.
 6. **Update docs** — `docs/library-usage.md:383-393` git-pin guidance and
-   `docs/contributing.md:114` already assume `pip install decepticon`;
+   `docs/contributing.md:114` already assume `pip install raptix`;
    align them with the published flow.
 
 ## 5. Recommendation

@@ -2,7 +2,7 @@
 
 This is the authoring contract for every `SKILL.md` file in
 `packages/raptix/raptix/skills/**`. CI runs
-`python -m decepticon.skill_audit` against the tree; any violation listed
+`python -m raptix.skill_audit` against the tree; any violation listed
 below either fails the build (after Phase 0 completes) or surfaces as a
 warning (during Phase 0 cleanup).
 

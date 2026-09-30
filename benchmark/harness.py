@@ -168,7 +168,7 @@ class Harness:
         Single attempt (no retry loop) so a slow proxy doesn't double
         the harness's per-challenge teardown latency.
         """
-        master_key = os.getenv("LITELLM_MASTER_KEY", "sk-decepticon-master")
+        master_key = os.getenv("LITELLM_MASTER_KEY", "sk-raptix-master")
         try:
             async with httpx.AsyncClient(timeout=15) as client:
                 r = await client.get(
@@ -344,8 +344,8 @@ class Harness:
         _run_docker(["docker", "compose", "restart", "langgraph"], timeout=60)
         # Reconnect networks (compose restart usually preserves them but be
         # defensive — same pattern as _ensure_services_healthy).
-        for net in ("benchmark_decepticon-net", "benchmark_sandbox-net"):
-            _run_docker(["docker", "network", "connect", net, "decepticon-langgraph"])
+        for net in ("benchmark_raptix-net", "benchmark_sandbox-net"):
+            _run_docker(["docker", "network", "connect", net, "raptix-langgraph"])
         # Wait up to 60s for /ok
         for _ in range(30):
             time.sleep(2)
@@ -367,7 +367,7 @@ class Harness:
             [
                 "docker",
                 "exec",
-                "decepticon-sandbox",
+                "raptix-sandbox",
                 "bash",
                 "-c",
                 "pkill -9 -f python3 2>/dev/null || true; "
@@ -443,7 +443,7 @@ class Harness:
             try:
                 r = httpx.get(
                     f"{litellm_url}/v1/models",
-                    headers={"Authorization": "Bearer sk-decepticon-master"},
+                    headers={"Authorization": "Bearer sk-raptix-master"},
                     timeout=5,
                 )
                 if r.status_code == 200:
@@ -471,8 +471,8 @@ class Harness:
         log.warning("LangGraph unreachable — restarting container")
         _run_docker(["docker", "compose", "up", "-d", "--no-deps", "langgraph"])
         # Reconnect networks (lost after container recreation)
-        for net in ("benchmark_decepticon-net", "benchmark_sandbox-net"):
-            _run_docker(["docker", "network", "connect", net, "decepticon-langgraph"])
+        for net in ("benchmark_raptix-net", "benchmark_sandbox-net"):
+            _run_docker(["docker", "network", "connect", net, "raptix-langgraph"])
         # Wait for LangGraph to become healthy
         for _ in range(30):
             time.sleep(2)
@@ -500,11 +500,11 @@ class Harness:
         _run_docker(["docker", "compose", "restart", "sandbox"], timeout=60)
         # Reconnect to required networks (compose restart usually preserves them
         # but be defensive for benchmark / make dev variants)
-        for net in ("benchmark_decepticon-net", "benchmark_sandbox-net"):
-            _run_docker(["docker", "network", "connect", net, "decepticon-sandbox"])
+        for net in ("benchmark_raptix-net", "benchmark_sandbox-net"):
+            _run_docker(["docker", "network", "connect", net, "raptix-sandbox"])
         # Wait for `docker exec true` to succeed before returning
         for attempt in range(40):
-            r = _run_docker(["docker", "exec", "decepticon-sandbox", "true"])
+            r = _run_docker(["docker", "exec", "raptix-sandbox", "true"])
             if r.returncode == 0:
                 log.info("harness.sandbox: ready after %.1fs", attempt * 0.5)
                 return
@@ -512,8 +512,8 @@ class Harness:
         log.warning("harness.sandbox: not responsive after 20s — proceeding anyway")
 
     async def run_challenge(self, challenge: Challenge) -> ChallengeResult:
-        # Use ~/.decepticon/workspace/ which is bind-mounted as /workspace/ in the sandbox
-        workspace = (Path.home() / f".decepticon/workspace/benchmark-{challenge.id}").resolve()
+        # Use ~/.raptix/workspace/ which is bind-mounted as /workspace/ in the sandbox
+        workspace = (Path.home() / f".raptix/workspace/benchmark-{challenge.id}").resolve()
 
         # Each challenge starts on a clean sandbox: no stale tmux sessions,
         # no leftover python processes, no /tmp clutter from prior cycle.
@@ -524,11 +524,11 @@ class Harness:
 
         # Clean residual sandbox workspace from previous runs (sandbox is persistent)
         sandbox_ws = f"/workspace/benchmark-{challenge.id}"
-        _run_docker(["docker", "exec", "decepticon-sandbox", "rm", "-rf", sandbox_ws])
+        _run_docker(["docker", "exec", "raptix-sandbox", "rm", "-rf", sandbox_ws])
         # Clean orphan files at workspace root (top-level, not in a benchmark-* subdir).
         # Sandbox mounts the entire workspace root as /workspace/ — orphan flag.txt files
         # at the root contaminate ALL challenge runs by being readable via cat /workspace/flag.txt.
-        ws_root = workspace.parent  # ~/.decepticon/workspace
+        ws_root = workspace.parent  # ~/.raptix/workspace
         if ws_root.exists():
             for p in ws_root.iterdir():
                 if p.is_file() and not p.name.startswith("benchmark-"):
@@ -744,7 +744,7 @@ class Harness:
         provider's workflow: flag challenges load the benchmark skill;
         PoC challenges get direct source-analysis and submission guidance.
         """
-        # The sandbox maps ~/.decepticon/workspace/ → /workspace/
+        # The sandbox maps ~/.raptix/workspace/ → /workspace/
         sandbox_workspace = f"/workspace/benchmark-{challenge.id}"
 
         # Per-challenge facts are injected into the system message every model

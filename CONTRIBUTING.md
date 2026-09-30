@@ -67,16 +67,16 @@ Use the [Feature Request](https://github.com/Akapi895/raptix/issues/new?template
 - **Python**: Pydantic v2, Ruff for formatting/linting, basedpyright for type checking
 - **Line length**: 100 characters
 - **Imports**: Absolute imports, public API re-exported through `__init__.py`
-- **Logging**: `from decepticon.core.logging import get_logger; log = get_logger("module.sub")`
-- **Skills**: Markdown files in `decepticon/skills/` with YAML frontmatter
+- **Logging**: `from raptix.core.logging import get_logger; log = get_logger("module.sub")`
+- **Skills**: Markdown files in `raptix/skills/` with YAML frontmatter
 - **CLI (TypeScript)**: Ink.js components in `clients/cli/src/`
 
 ## Project Structure
 
 ```
-decepticon/          Python agents, core logic, backends
+raptix/          Python agents, core logic, backends
 clients/cli/         Ink.js terminal UI (TypeScript)
-decepticon/skills/   Markdown knowledge base for agents
+raptix/skills/   Markdown knowledge base for agents
 containers/          Dockerfiles
 config/              Runtime configuration
 scripts/             Installer and utilities

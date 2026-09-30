@@ -50,7 +50,7 @@ and hand back to the orchestrator.
 
 `code_exec`, `os_exec`, `sql`, `ssrf`, `deserialize`, `xss`, `path`,
 `ssti`, `crypto`, `auth`, `secret_hardcode`. See
-`decepticon/research/scanner_tools.py` for the exact regex table.
+`raptix/research/scanner_tools.py` for the exact regex table.
 
 ## What NOT to do
 

@@ -115,9 +115,9 @@ jobs:
             sandbox:
               - 'containers/sandbox.Dockerfile'
               # Skills no longer ship in the sandbox image — they live under
-              # packages/raptix/src/decepticon/skills and are read
+              # packages/raptix/src/raptix/skills and are read
               # in-process by the langgraph service (see
-              # packages/raptix/src/decepticon/backends/__init__.py).
+              # packages/raptix/src/raptix/backends/__init__.py).
               # Skill changes rebuild langgraph (via the packages/raptix/**
               # filter above), not the sandbox.
               - '.github/workflows/ci.yml'
@@ -170,7 +170,7 @@ jobs:
   python:
     # ubuntu-only by design: the Python backend ships and runs inside the
     # langgraph Docker image (python:3.13-slim — Linux), never natively on
-    # a developer's macOS/Windows host. The pip-installable `decepticon`
+    # a developer's macOS/Windows host. The pip-installable `raptix`
     # SDK is a thin client that routes execution to those Linux services
     # over HTTP, so there is no macOS/Windows Python runtime to validate.
     # Testing Python on macOS only bought 10x CI minutes, flakiness, and a
@@ -563,7 +563,7 @@ jobs:
           file: containers/${{ matrix.image }}.Dockerfile
           push: false
           load: true
-          tags: decepticon-${{ matrix.image }}:ci
+          tags: raptix-${{ matrix.image }}:ci
           cache-from: type=gha
           cache-to: type=gha,mode=${{ github.event_name == 'push' && 'max' || 'min' }}
       # Informational scan. The hotfix scope (1.0.27) keeps this as a
@@ -576,7 +576,7 @@ jobs:
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
-          image-ref: decepticon-${{ matrix.image }}:ci
+          image-ref: raptix-${{ matrix.image }}:ci
           format: sarif
           output: trivy-${{ matrix.image }}.sarif
           severity: CRITICAL,HIGH
@@ -629,7 +629,7 @@ jobs:
           # Dockerfile path on the target arch.
           load: false
           platforms: linux/arm64
-          tags: decepticon-${{ matrix.image }}:ci-arm64
+          tags: raptix-${{ matrix.image }}:ci-arm64
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=${{ github.event_name == 'push' && 'max' || 'min' }},scope=arm64
 

@@ -1,4 +1,4 @@
-# decepticon
+# raptix
 
 Opinionated agent framework that builds on top of `raptix-core`. Carries
 the 16 agent factories, 11 middleware implementations, tools, LLM router,
@@ -13,7 +13,7 @@ for the rationale behind the core/framework/sdk split.
 ## Install
 
 ```bash
-pip install decepticon
+pip install raptix
 ```
 
 Plugin authors should depend on `raptix-sdk` instead.

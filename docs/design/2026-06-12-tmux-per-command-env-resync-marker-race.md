@@ -1,7 +1,7 @@
 # tmux bash tool: per-command env re-sync races the PS1 completion marker
 
 **Date:** 2026-06-12
-**Component:** `decepticon/sandbox_kernel/tmux.py` (`TmuxSessionManager`)
+**Component:** `raptix/sandbox_kernel/tmux.py` (`TmuxSessionManager`)
 **Severity:** high — silently drops command output (data loss, not just a hang)
 
 ## Symptom
@@ -53,7 +53,7 @@ Fast commands happen to win the race (their marker lands within the same poll
 tick); slower/network commands lose it deterministically.
 
 `RAPTIX_SKIP_BOOT` itself is benign — it is the intentional session-init env
-(set so `python3` subprocesses skip `decepticon/__init__.py`'s boot). It only
+(set so `python3` subprocesses skip `raptix/__init__.py`'s boot). It only
 *leaked into output* because the per-command export polluted the pane and the
 race surfaced its echo.
 

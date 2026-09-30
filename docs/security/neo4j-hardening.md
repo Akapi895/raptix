@@ -6,7 +6,7 @@
 ## TL;DR
 
 The Raptix `neo4j` container hosts the engagement knowledge graph
-and is **dual-homed across `sandbox-net` and `decepticon-net`** so the
+and is **dual-homed across `sandbox-net` and `raptix-net`** so the
 orchestrator on the management plane can read findings written by
 agents from inside the sandbox. That bridge is by design - but it also
 means Neo4j is the **shortest path** from a compromised sandbox into
@@ -133,7 +133,7 @@ useful message) instead of silent (driver error deep inside Neo4j).
 Two functions:
 
 ```python
-from decepticon.tools.research._apoc_safety import (
+from raptix.tools.research._apoc_safety import (
     find_violations,
     ensure_safe,
     CypherSafetyError,
@@ -159,13 +159,13 @@ have a target:
 ### Per-engagement Cypher user (next)
 
 Today, every agent uses the single `neo4j` user with `${NEO4J_PASSWORD}`
-on both `decepticon-net` and `sandbox-net`. A sandbox compromise
+on both `raptix-net` and `sandbox-net`. A sandbox compromise
 extracts the same credentials the orchestrator uses.
 
 Plan:
-- Create a `decepticon-mgmt` user with full read/write access for the
+- Create a `raptix-mgmt` user with full read/write access for the
   orchestrator.
-- Create a `decepticon-sandbox-<engagement>` user on engagement open
+- Create a `raptix-sandbox-<engagement>` user on engagement open
   with write access to only that engagement's nodes (via label predicate
   or - on Enterprise - a dedicated database).
 - The `Neo4jConfig.from_env()` factory at
@@ -194,7 +194,7 @@ sandbox lifecycle (`docs/security/sandbox-isolation.md`).
 
 ## Verifying the hardening
 
-Run inside the running stack (`make dev` or `decepticon`):
+Run inside the running stack (`make dev` or `raptix`):
 
 ```bash
 # Should succeed - allowlisted procedure

@@ -8,7 +8,7 @@ ship custom plugins layered on top of the OSS stack.
 ## 1. Install
 
 ```bash
-pip install decepticon
+pip install raptix
 ```
 
 For the full Docker stack (with sandbox container + LiteLLM proxy +
@@ -21,20 +21,20 @@ library consumers can rely on from v1.1.2 onward (the current
 release series — see CHANGELOG):
 
 ```python
-from decepticon.agents import (
-    create_decepticon_agent,
+from raptix.agents import (
+    create_raptix_agent,
     create_soundwave_agent,
     create_recon_agent,
     # ... 16 factories total
     build_middleware,
     build_tools,
 )
-from decepticon.backends import (
+from raptix.backends import (
     HTTPSandbox,
     build_sandbox_backend,
     make_agent_backend,
 )
-from decepticon.middleware import (
+from raptix.middleware import (
     EngagementContextMiddleware,
     FilesystemMiddleware,
     OPPLANMiddleware,
@@ -42,14 +42,14 @@ from decepticon.middleware import (
     SkillsMiddleware,
     ModelOverrideMiddleware,
 )
-from decepticon.llm import LLMFactory, create_llm
+from raptix.llm import LLMFactory, create_llm
 ```
 
 Plugin contracts come from `raptix-core` (or via the
 `raptix-sdk` re-export):
 
 ```python
-from decepticon_sdk import (
+from raptix_sdk import (
     BackendProtocol, MiddlewareProtocol, ToolProtocol,
     PluginBundle, SubAgentSpec,
     RoleRegistry, PluginRegistry,
@@ -62,8 +62,8 @@ from decepticon_sdk import (
 The simplest path — use an OSS factory and pass it your own sandbox:
 
 ```python
-from decepticon.backends import build_sandbox_backend, make_agent_backend
-from decepticon.agents import create_recon_agent
+from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.agents import create_recon_agent
 
 sandbox = build_sandbox_backend()
 backend = make_agent_backend(sandbox)
@@ -89,7 +89,7 @@ For fine-grained slot replacement (without rewriting the full
 stack), use a `PluginBundle`:
 
 ```python
-from decepticon_sdk import PluginBundle
+from raptix_sdk import PluginBundle
 
 
 VENDOR_OVERLAY = PluginBundle(
@@ -100,7 +100,7 @@ VENDOR_OVERLAY = PluginBundle(
 )
 ```
 
-Ship the bundle via the `decepticon.bundles` entry-point group; the
+Ship the bundle via the `raptix.bundles` entry-point group; the
 framework's `build_middleware` picks it up.
 
 ## 5. Mount per-tenant assets — `make_agent_backend(extra_routes=)`
@@ -109,7 +109,7 @@ For multi-tenant or B2B Enterprise deployments, mount your own
 asset trees onto the agent's filesystem:
 
 ```python
-from decepticon.backends import make_agent_backend
+from raptix.backends import make_agent_backend
 from deepagents.backends import FilesystemBackend
 
 
@@ -136,7 +136,7 @@ Add a new agent role to the framework's catalog. The LLM factory
 and middleware assembler will see it as first-class:
 
 ```python
-from decepticon_sdk import RoleRegistry, MiddlewareSlot
+from raptix_sdk import RoleRegistry, MiddlewareSlot
 
 RoleRegistry.register(
     "apt",
@@ -162,13 +162,13 @@ snapshot — hashable, cacheable, suitable as an audit record key per
 run ID:
 
 ```python
-from decepticon_sdk import PluginRegistry
+from raptix_sdk import PluginRegistry
 
 reg = PluginRegistry.load()
 
 # Collision detection — surface plugin conflicts at boot
 for collision in reg.detect_collisions():
-    metrics.incr("decepticon.plugin.collision", tags=[
+    metrics.incr("raptix.plugin.collision", tags=[
         f"kind:{collision.kind}",
         f"key:{collision.key}",
         f"loser:{collision.previous_owner}",

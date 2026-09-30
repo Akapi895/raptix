@@ -564,7 +564,7 @@ func TestRaptixHome(t *testing.T) {
 		t.Errorf("RaptixHome() = %q, want /custom/path", got)
 	}
 
-	// Without RAPTIX_HOME — falls back to ~/.decepticon
+	// Without RAPTIX_HOME — falls back to ~/.raptix
 	t.Setenv("RAPTIX_HOME", "")
 	home := RaptixHome()
 	if !filepath.IsAbs(home) {

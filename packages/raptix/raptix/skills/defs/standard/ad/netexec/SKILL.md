@@ -126,8 +126,8 @@ should be `nxc smb` cred-sweep across the subnet**. It surfaces:
 
 Wrap as Raptix tool:
 ```python
-# decepticon/tools/ad/netexec.py — skeleton
-from decepticon.tools.bash import bash_tool
+# raptix/tools/ad/netexec.py — skeleton
+from raptix.tools.bash import bash_tool
 
 def nxc_sweep(protocol: str, targets: str, user: str, pw_or_hash: str, modules: list[str] = None) -> dict:
     """Run nxc across targets; parse JSON output; promote findings to KG."""

@@ -62,7 +62,7 @@ The agent's system prompt no longer carries a 4 KB catalog. It sees a tiny navig
 | `:Tool` | External tool | `nmap`, `sqlmap`, `bloodhound` |
 | `:Phase` | Kill-chain phase | `reconnaissance`, `initial-access`, `lateral-movement` |
 | `:MoC` | Map-of-Concepts navigation category | `web-exploitation`, `ad-attacks`, `cloud-pivot` |
-| `:Agent` | Raptix specialist agent | `soundwave`, `recon`, `exploit`, `decepticon` |
+| `:Agent` | Raptix specialist agent | `soundwave`, `recon`, `exploit`, `raptix` |
 | `:RoEConstraint` | Explicit Rules-of-Engagement constraint | `no-data-exfil`, `scope-internal-only` |
 
 ---

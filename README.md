@@ -71,8 +71,8 @@ Supported on macOS (Apple Silicon + Intel), Linux (amd64 + arm64), and Windows (
 **macOS / Linux / WSL2**
 ```bash
 curl -fsSL https://decepticon.red/install | bash
-decepticon onboard   # Interactive setup wizard (provider, API key, model profile)
-decepticon           # Start the core stack and drop into the terminal CLI
+raptix onboard   # Interactive setup wizard (provider, API key, model profile)
+raptix           # Start the core stack and drop into the terminal CLI
 ```
 
 The default start brings up the core management plane (LiteLLM, PostgreSQL, Neo4j, Skillogy, LangGraph, sandbox) and launches the terminal CLI. Specialist workloads (BloodHound CE, Sliver C2, Ghidra MCP, …) and the web dashboard come up on demand — the orchestrator spawns specialists via `ops_start("ad")` etc., and you bring up the dashboard from inside the CLI with `/web` (see [Web Dashboard](docs/web-dashboard.md)).
@@ -80,8 +80,8 @@ The default start brings up the core management plane (LiteLLM, PostgreSQL, Neo4
 **Windows (PowerShell, native)**
 ```powershell
 irm https://decepticon.red/install.ps1 | iex
-decepticon onboard
-decepticon
+raptix onboard
+raptix
 ```
 
 → **[Quick start](docs/getting-started.md)** · **[Full setup walkthrough](docs/setup-guide.md)**
@@ -91,11 +91,11 @@ decepticon
 Building on top of the agents — a product, a research integration, or a custom orchestrator? Install the SDK from PyPI:
 
 ```bash
-pip install decepticon              # core SDK
-pip install "decepticon[neo4j]"     # + the knowledge-graph attack-chain tools
+pip install raptix              # core SDK
+pip install "raptix[neo4j]"     # + the knowledge-graph attack-chain tools
 ```
 
-`decepticon` is a **client SDK**: it ships the agent factories, middleware, tools, and skills, and routes LLM calls and sandbox execution to runtime services over HTTP (`RAPTIX_LLM__PROXY_URL`, `SANDBOX_URL`). Running agents still needs those services — use the Docker stack above, or point the URLs at your own equivalents. See **[Raptix as a library](docs/library-usage.md)** for the factory override surface, declarative `PluginBundle` plugins, and the safety gate.
+`raptix` is a **client SDK**: it ships the agent factories, middleware, tools, and skills, and routes LLM calls and sandbox execution to runtime services over HTTP (`RAPTIX_LLM__PROXY_URL`, `SANDBOX_URL`). Running agents still needs those services — use the Docker stack above, or point the URLs at your own equivalents. See **[Raptix as a library](docs/library-usage.md)** for the factory override surface, declarative `PluginBundle` plugins, and the safety gate.
 
 ---
 
@@ -110,7 +110,7 @@ We're building Raptix toward an **Offensive Vaccine** for the AI-driven threat l
 ## Benchmark
 
 <div align="center">
-  <img src="assets/benchmark/decepticon_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
+  <img src="assets/benchmark/raptix_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
 </div>
 
 | Benchmark | Difficulty | Pass Rate |
@@ -143,7 +143,7 @@ But more importantly: it operates under the discipline that separates red teamer
 
 **Interactive shells, actually.** Real offensive tools are interactive (`msfconsole`, `sliver-client`, `evil-winrm`). Raptix runs every command inside persistent tmux sessions with automatic prompt detection — so when a tool drops into an interactive prompt, the agent sends follow-up commands without workarounds.
 
-**Hardened sandbox isolation.** All commands run inside a Kali Linux sandbox on a dedicated operational network (`sandbox-net`), separate from the management plane (`decepticon-net`). LangGraph drives the sandbox via the Docker socket. → **[Architecture](docs/architecture.md)**
+**Hardened sandbox isolation.** All commands run inside a Kali Linux sandbox on a dedicated operational network (`sandbox-net`), separate from the management plane (`raptix-net`). LangGraph drives the sandbox via the Docker socket. → **[Architecture](docs/architecture.md)**
 
 **Offense serves defense.** The planned [Offensive Vaccine](docs/offensive-vaccine.md) loop will turn findings into defense improvements through an attack → defend → verify cycle.
 
@@ -152,10 +152,10 @@ But more importantly: it operates under the discipline that separates red teamer
 ## Architecture
 
 <div align="center">
-  <img src="assets/decepticon_infra.svg" alt="Raptix Infrastructure" width="680">
+  <img src="assets/raptix_infra.svg" alt="Raptix Infrastructure" width="680">
 </div>
 
-Two-network design. The **always-on** management plane (LiteLLM, PostgreSQL, Skillogy, LangGraph) and the always-on sandbox plane stay up across the whole engagement; everything else is **dynamic-spawn** — the Web dashboard comes up on `/web` from the CLI, and specialist workloads (BloodHound CE, Sliver C2, Ghidra MCP, …) come up only when the orchestrator calls `ops_start(...)` (see [ADR-0006](docs/adr/0006-agent-driven-container-lifecycle.md)). Networks: management on `decepticon-net`; sandbox + C2 server + targets on `sandbox-net`. Neo4j is dual-homed so the agent (on management) can persist findings written from inside the sandbox.
+Two-network design. The **always-on** management plane (LiteLLM, PostgreSQL, Skillogy, LangGraph) and the always-on sandbox plane stay up across the whole engagement; everything else is **dynamic-spawn** — the Web dashboard comes up on `/web` from the CLI, and specialist workloads (BloodHound CE, Sliver C2, Ghidra MCP, …) come up only when the orchestrator calls `ops_start(...)` (see [ADR-0006](docs/adr/0006-agent-driven-container-lifecycle.md)). Networks: management on `raptix-net`; sandbox + C2 server + targets on `sandbox-net`. Neo4j is dual-homed so the agent (on management) can persist findings written from inside the sandbox.
 
 → **[Architecture deep dive](docs/architecture.md)** · **[Knowledge graph](docs/knowledge-graph.md)**
 
@@ -184,7 +184,7 @@ Tier-based, credentials-aware fallback chain. You declare which credentials you 
 **Tier-mapped providers**: Anthropic, OpenAI, Google Gemini, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM, Ollama (local).
 **Subscription OAuth**: Claude Max/Pro/Team, ChatGPT Pro/Plus/Team, Gemini Advanced, Copilot Pro, SuperGrok, Perplexity Pro.
 
-Configure via `decepticon onboard`. → **[Full model reference & fallback examples](docs/models.md)**
+Configure via `raptix onboard`. → **[Full model reference & fallback examples](docs/models.md)**
 
 ---
 

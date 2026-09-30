@@ -12,7 +12,7 @@ keep updates short.
 scope: the billing host `pay.example.com`. Use Raptix."
 
 ```
-decepticon_start_engagement(
+raptix_start_engagement(
   targets=["https://app.example.com", "*.example.com"],
   instruction="In scope: app.example.com and all *.example.com subdomains. "
               "Out of scope: pay.example.com (production billing). Bug-bounty "
@@ -27,7 +27,7 @@ subdomains), billing host excluded. I'll watch and report progress."*
 Then poll (every ~20s), advancing the cursor:
 
 ```
-decepticon_transcript(thread_id="th_1", after_index=0) -> { next_index: 6, run_status: "running",
+raptix_transcript(thread_id="th_1", after_index=0) -> { next_index: 6, run_status: "running",
   messages: [ ... assistant: "Building OPPLAN…", tool_calls: ["task(recon)"], tool(name=task): "Found 4 subdomains, 3 web apps…" ] }
 ```
 
@@ -35,9 +35,9 @@ Reply: *"Recon done — 4 subdomains, 3 web apps. Now enumerating endpoints."*
 Next poll uses `after_index=6`, and so on. When:
 
 ```
-decepticon_engagement_status(thread_id="th_1", engagement_name="mcp-20260603-2140")
+raptix_engagement_status(thread_id="th_1", engagement_name="mcp-20260603-2140")
   -> { status: "running", findings_available: true }
-decepticon_engagement_findings(engagement_name="mcp-20260603-2140", include_sarif=true)
+raptix_engagement_findings(engagement_name="mcp-20260603-2140", include_sarif=true)
   -> { available: true, result_count: 3, level_counts: {error: 1, warning: 2}, sarif: {...} }
 ```
 
@@ -49,21 +49,21 @@ Reply with the findings: 1 high + 2 medium, each with affected URL + repro from
 **User:** "Just do recon on `10.10.0.0/24`, don't exploit anything."
 
 ```
-decepticon_start_engagement(targets=["10.10.0.0/24"],
+raptix_start_engagement(targets=["10.10.0.0/24"],
   instruction="Recon and enumeration ONLY. In scope: 10.10.0.0/24. Do not exploit.",
   assistant="recon", scan_mode="quick")
 ```
 
 Use the `recon` graph + an explicit no-exploit instruction. Watch via
 `transcript`; report hosts/services/attack surface from
-`decepticon_engagement_state(thread_id)` (`values` holds the recon map).
+`raptix_engagement_state(thread_id)` (`values` holds the recon map).
 
 ## 3. Steering a live engagement
 
 **User (mid-run):** "Ignore the marketing site, focus on the API at `/api/v2`."
 
 ```
-decepticon_send_message(thread_id="th_1",
+raptix_send_message(thread_id="th_1",
   message="Deprioritize the marketing site. Focus on the REST API under /api/v2 — "
           "test authz/IDOR and injection there.") -> { run_id: "rn_9", status: "pending" }
 ```
@@ -74,7 +74,7 @@ polling the transcript to confirm the orchestrator picked it up.
 **Switch models mid-run** (e.g. for a hard target):
 
 ```
-decepticon_send_message(thread_id="th_1", message="/model anthropic/claude-opus-4-8")
+raptix_send_message(thread_id="th_1", message="/model anthropic/claude-opus-4-8")
 ```
 
 ## 4. Check status / resume later
@@ -82,18 +82,18 @@ decepticon_send_message(thread_id="th_1", message="/model anthropic/claude-opus-
 **User (next day):** "What's happening with the example.com engagement?"
 
 ```
-decepticon_list_engagements(limit=20) -> [{ thread_id: "th_1", engagement_name: "mcp-20260603-2140", status: "idle" }, …]
-decepticon_transcript(thread_id="th_1", after_index=0, limit=10)   # recent narrative
-decepticon_engagement_findings(engagement_name="mcp-20260603-2140")  # what was found
+raptix_list_engagements(limit=20) -> [{ thread_id: "th_1", engagement_name: "mcp-20260603-2140", status: "idle" }, …]
+raptix_transcript(thread_id="th_1", after_index=0, limit=10)   # recent narrative
+raptix_engagement_findings(engagement_name="mcp-20260603-2140")  # what was found
 ```
 
-Summarise where it stands + findings. To continue, `decepticon_send_message` or
-`decepticon_start_engagement` a fresh pass.
+Summarise where it stands + findings. To continue, `raptix_send_message` or
+`raptix_start_engagement` a fresh pass.
 
 ## 5. A live burst (when the user wants detail "right now")
 
 ```
-decepticon_watch(thread_id="th_1", max_seconds=15, max_events=30)
+raptix_watch(thread_id="th_1", max_seconds=15, max_events=30)
   -> { run_status: "running", events: [{event:"custom", data:"{\"type\":\"recon_step\",…}"}, …], truncated: true }
 ```
 
@@ -103,12 +103,12 @@ directories, exploit agent queued"). Then return to the normal transcript loop.
 ## 6. Handling failure
 
 ```
-decepticon_engagement_status(thread_id="th_1", engagement_name="…") -> { status: "error" }
-decepticon_transcript(thread_id="th_1", after_index=<n>, limit=10)  # read the cause
+raptix_engagement_status(thread_id="th_1", engagement_name="…") -> { status: "error" }
+raptix_transcript(thread_id="th_1", after_index=<n>, limit=10)  # read the cause
 ```
 
 Tell the user what failed (from the last messages) and offer to
-`decepticon_send_message` a correction or start a fresh engagement. If a tool
+`raptix_send_message` a correction or start a fresh engagement. If a tool
 errors with a connection problem, the Raptix server is down — ask the user
 to start it rather than retrying.
 

@@ -42,13 +42,13 @@ jobs:
         run: |
           set -euo pipefail
           images=(
-            decepticon-litellm
-            decepticon-langgraph
-            decepticon-sandbox
-            decepticon-cli
-            decepticon-skillogy
-            decepticon-c2-sliver
-            decepticon-web
+            raptix-litellm
+            raptix-langgraph
+            raptix-sandbox
+            raptix-cli
+            raptix-skillogy
+            raptix-c2-sliver
+            raptix-web
           )
           for img in "${images[@]}"; do
             ref="ghcr.io/bittersecurity/${img}:${VERSION}"
@@ -63,13 +63,13 @@ jobs:
         run: |
           set -euo pipefail
           images=(
-            decepticon-litellm
-            decepticon-langgraph
-            decepticon-sandbox
-            decepticon-cli
-            decepticon-skillogy
-            decepticon-c2-sliver
-            decepticon-web
+            raptix-litellm
+            raptix-langgraph
+            raptix-sandbox
+            raptix-cli
+            raptix-skillogy
+            raptix-c2-sliver
+            raptix-web
           )
           for img in "${images[@]}"; do
             src="ghcr.io/bittersecurity/${img}:${VERSION}"

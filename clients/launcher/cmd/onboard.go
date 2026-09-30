@@ -39,7 +39,7 @@ func init() {
 // `claude setup-token` (mint a long-lived 1-year OAuth token for headless use).
 const claudeSetupTokenDocsURL = "https://code.claude.com/docs/en/authentication"
 
-// AuthMethod identifiers — must match decepticon/llm/models.py::AuthMethod.
+// AuthMethod identifiers — must match raptix/llm/models.py::AuthMethod.
 const (
 	methodAnthropicOAuth  = "anthropic_oauth"
 	methodAnthropicAPI    = "anthropic_api"
@@ -193,7 +193,7 @@ func systemCheckGroup(sys platform.SystemInfo) *huh.Group {
 func runOnboard(cmd *cobra.Command, args []string) error {
 	if config.EnvExists() && !resetFlag {
 		ui.Info(".env already configured at " + config.EnvPath())
-		ui.DimText("Run 'decepticon onboard --reset' to reconfigure")
+		ui.DimText("Run 'raptix onboard --reset' to reconfigure")
 		return nil
 	}
 	existingEnv := map[string]string{}
@@ -544,7 +544,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 		huh.NewGroup(
 			huh.NewNote().
 				Title("Local Ollama").
-				Description("Ollama must already be running on your host with\nat least one tool-capable model pulled. Launch it\nbound to all interfaces so the Raptix container\ncan reach it:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n\nThe default 127.0.0.1 binding only accepts host-side\nconnections — containers won't see it.\n\nThe default URL `host.docker.internal:11434` works\non macOS, Linux, and WSL2 (with or without Docker\nDesktop). Only change it for remote / custom setups.\nNote: the model list is probed against the default URL\nat wizard start; if you customize OLLAMA_API_BASE,\nfinish the wizard then re-run 'decepticon onboard\n--reset' so the probe targets the new endpoint."),
+				Description("Ollama must already be running on your host with\nat least one tool-capable model pulled. Launch it\nbound to all interfaces so the Raptix container\ncan reach it:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n\nThe default 127.0.0.1 binding only accepts host-side\nconnections — containers won't see it.\n\nThe default URL `host.docker.internal:11434` works\non macOS, Linux, and WSL2 (with or without Docker\nDesktop). Only change it for remote / custom setups.\nNote: the model list is probed against the default URL\nat wizard start; if you customize OLLAMA_API_BASE,\nfinish the wizard then re-run 'raptix onboard\n--reset' so the probe targets the new endpoint."),
 			huh.NewInput().
 				Title("OLLAMA_API_BASE").
 				Placeholder(defaultOllamaAPIBase).
@@ -887,7 +887,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 						"    (10.0.0.5 -> <HOST_1>, acme.com -> <DOMAIN_1>)\n\n"+
 						"Never sent: raw prompts, real target IPs/hosts, credentials. Your\n"+
 						"IP is dropped at the gateway. Change anytime: RAPTIX_TELEMETRY=off\n"+
-						"(or basic) in .env, `decepticon-cli telemetry off`, or DO_NOT_TRACK=1.",
+						"(or basic) in .env, `raptix-cli telemetry off`, or DO_NOT_TRACK=1.",
 				).
 				Affirmative("Yes, share (recommended)").
 				Negative("No, keep it off").
@@ -1064,7 +1064,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	if useLangSmith && langSmithKey != "" {
 		values["LANGSMITH_TRACING"] = "true"
 		values["LANGSMITH_API_KEY"] = langSmithKey
-		values["LANGSMITH_PROJECT"] = "decepticon"
+		values["LANGSMITH_PROJECT"] = "raptix"
 	}
 
 	// Anonymous usage telemetry consent. Only sends when a gateway endpoint is
@@ -1106,7 +1106,7 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 	// — re-running onboard re-templates the unit so a launcher
 	// upgrade picks up the new ExecStart path. On hosts without
 	// systemd-user / launchd this is a no-op announcement, and the
-	// launcher's spawn fallback takes over at `decepticon start`.
+	// launcher's spawn fallback takes over at `raptix start`.
 	fmt.Println()
 	if err := opscontrol.EnsureInstalled(); err != nil {
 		// Non-fatal: onboarding can complete without managed-service
@@ -1117,11 +1117,11 @@ func runOnboard(cmd *cobra.Command, args []string) error {
 
 	// One-time GitHub star ask — the natural post-onboarding moment.
 	// Suppressed on subsequent runs by the ack file at
-	// $RAPTIX_HOME/.starred, so a re-run of `decepticon onboard
+	// $RAPTIX_HOME/.starred, so a re-run of `raptix onboard
 	// --reset` does not re-prompt.
 	starprompt.PromptIfNotStarred()
 
-	ui.DimText("  Run 'decepticon' to start the platform")
+	ui.DimText("  Run 'raptix' to start the platform")
 	return nil
 }
 
@@ -1201,12 +1201,12 @@ func buildOllamaModelField(probe ollamaProbeResult, selected *string) huh.Field 
 	if probe.Reachable {
 		return huh.NewNote().
 			Title("OLLAMA_MODEL — no tool-capable models found").
-			Description("Ollama is reachable but none of your pulled models\nadvertise the 'tools' capability. Raptix agents\nalways emit tool calls, so a model without tool\nsupport cannot power them.\n\n  ollama pull qwen3-coder:30b\n  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n\nThen press Esc and re-run 'decepticon onboard'.")
+			Description("Ollama is reachable but none of your pulled models\nadvertise the 'tools' capability. Raptix agents\nalways emit tool calls, so a model without tool\nsupport cannot power them.\n\n  ollama pull qwen3-coder:30b\n  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n\nThen press Esc and re-run 'raptix onboard'.")
 	}
 
 	return huh.NewNote().
 		Title("OLLAMA_MODEL — Ollama not reachable").
-		Description("Could not reach Ollama at " + defaultOllamaAPIBase + ".\n\nMost likely Ollama isn't running or is bound to\n127.0.0.1 only (which the Raptix container can't\nsee). Launch it on all interfaces, pull a tool-capable\nmodel, then re-run the wizard:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n  ollama pull qwen3-coder:30b\n  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n\nThen press Esc and re-run 'decepticon onboard'.")
+		Description("Could not reach Ollama at " + defaultOllamaAPIBase + ".\n\nMost likely Ollama isn't running or is bound to\n127.0.0.1 only (which the Raptix container can't\nsee). Launch it on all interfaces, pull a tool-capable\nmodel, then re-run the wizard:\n\n  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n  ollama pull qwen3-coder:30b\n  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n\nThen press Esc and re-run 'raptix onboard'.")
 }
 
 // ollamaUnusableError surfaces the post-form remediation when the user
@@ -1220,7 +1220,7 @@ func ollamaUnusableError(probe ollamaProbeResult, baseURL string) error {
 				"model and verify it advertises tools, then re-run:\n\n" +
 				"  ollama pull qwen3-coder:30b\n" +
 				"  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n" +
-				"  decepticon onboard --reset")
+				"  raptix onboard --reset")
 	}
 	return fmt.Errorf(
 		"Ollama selected but the host probe could not reach %s.\n"+
@@ -1230,6 +1230,6 @@ func ollamaUnusableError(probe ollamaProbeResult, baseURL string) error {
 			"  OLLAMA_HOST=0.0.0.0:11434 ollama serve\n"+
 			"  ollama pull qwen3-coder:30b\n"+
 			"  ollama show qwen3-coder:30b   # capabilities should list 'tools'\n"+
-			"  decepticon onboard --reset",
+			"  raptix onboard --reset",
 		baseURL)
 }

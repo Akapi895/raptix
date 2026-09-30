@@ -4,7 +4,7 @@ Two checks: ``GET /api/tags`` for reachability (with diagnostics for
 the localhost trap and the 127.0.0.1-binding case), and
 ``POST /api/show`` to require the model's ``capabilities`` includes
 ``tools`` — Raptix agents always emit tool calls. Best-effort:
-never blocks proxy boot, just logs ``[decepticon ollama]`` lines.
+never blocks proxy boot, just logs ``[raptix ollama]`` lines.
 
 Lives next to ``litellm_startup.py`` rather than inside it so the
 unit tests can load it via ``importlib`` without dragging in the
@@ -412,7 +412,7 @@ def probe_cloud(
 
     if not api_key.strip():
         lines.append(
-            "Ollama Cloud is selected but no API key is set. `decepticon "
+            "Ollama Cloud is selected but no API key is set. `raptix "
             "onboard` writes OLLAMA_CLOUD_API_KEY — set it (or "
             "OLLAMA_API_KEY) to a key from "
             "https://ollama.com/settings/keys, otherwise every request "

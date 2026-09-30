@@ -26,7 +26,7 @@ the same kill chain we ran" deliverable.
 ## Architecture
 
 ```
-                       decepticon-net (mgmt)
+                       raptix-net (mgmt)
         ┌───────────────────────────────────────────────────┐
         │                                                   │
         │   orchestrator ◄────────────────────────────┐     │
@@ -48,18 +48,18 @@ the same kill chain we ran" deliverable.
         │                                  │       │
         │  foothold/target host(s)         │       │
         │     │                            │       │
-        │     │ decepticon-telemetry-collector (sidecar daemon, optional)
+        │     │ raptix-telemetry-collector (sidecar daemon, optional)
         │     ▼                            │       │
         │  /workspace/.sessions/_target/<host>.log
         │                                  │       │
         └──────────────────────────────────┴───────┘
                                             │
                                             ▼
-                  decepticon.blue_cell.BlueCellTap
+                  raptix.blue_cell.BlueCellTap
                                             │
                                             │ TapEvent stream
                                             ▼
-                  decepticon.blue_cell.RuleMatcher  ◄── rules/sigma-*.jsonl
+                  raptix.blue_cell.RuleMatcher  ◄── rules/sigma-*.jsonl
                                             │           (Detector output)
                                             │ DetectionEvent stream
                                             ▼
@@ -76,7 +76,7 @@ the same kill chain we ran" deliverable.
 
 ## Components
 
-### `decepticon.blue_cell.tap.BlueCellTap`
+### `raptix.blue_cell.tap.BlueCellTap`
 
 Tails sandbox + target log files; yields `TapEvent` objects with
 normalized fields: ``ts``, ``source``, ``actor.process``,
@@ -86,12 +86,12 @@ The tap is intentionally simple — a feeder, not a parser. SIEM-grade
 enrichment (Sysmon parsing, Windows-event normalization) belongs in a
 follow-up that swaps in a sidecar telemetry collector per foothold.
 
-### `decepticon.blue_cell.rule_match`
+### `raptix.blue_cell.rule_match`
 
 A minimal Sigma-flavored rule matcher:
 
 ```python
-from decepticon.blue_cell.rule_match import load_rules, RuleMatcher
+from raptix.blue_cell.rule_match import load_rules, RuleMatcher
 
 rules = load_rules("packages/raptix/raptix/blue_cell/sample_rules.jsonl")
 matcher = RuleMatcher(rules)
@@ -136,7 +136,7 @@ Full pysigma compatibility is a follow-up. The bootstrap matcher
 covers ~80% of real-world Sigma rules without the pysigma footprint
 (deployers can install pysigma and convert their rules through it).
 
-### `decepticon.blue_cell.sample_rules.jsonl`
+### `raptix.blue_cell.sample_rules.jsonl`
 
 Ten baseline detection rules covering common offensive techniques:
 Kerberoast, AS-REP roast, DCSync, Pass-the-Hash, web-shell drop,
@@ -223,22 +223,22 @@ Proposed rule improvements:
 
 **In this commit (Tier 6 scaffolding):**
 
-- `decepticon.blue_cell.tap.BlueCellTap` — sandbox log tail + normalize.
-- `decepticon.blue_cell.rule_match.RuleMatcher` — Sigma-flavored
+- `raptix.blue_cell.tap.BlueCellTap` — sandbox log tail + normalize.
+- `raptix.blue_cell.rule_match.RuleMatcher` — Sigma-flavored
   regex matcher with `and`/`or`/`not` condition support.
-- `decepticon.blue_cell.sample_rules.jsonl` — 10 baseline rules.
+- `raptix.blue_cell.sample_rules.jsonl` — 10 baseline rules.
 - 12 unit tests covering rule loading, substring/regex match, boolean
   conditions, MTTD scoring, end-to-end kerberoast detection.
 - This design doc.
 
 **Follow-up (tracked):**
 
-- `decepticon.agents.standard.blue_cell.create_blue_cell_agent` —
+- `raptix.agents.standard.blue_cell.create_blue_cell_agent` —
   read-only agent factory consuming the tap + matcher.
 - Orchestrator pre-iteration hook reading `DetectionFired` events
   for adaptive OPSEC.
 - pysigma-based rule loader for full Sigma compatibility.
-- `decepticon-telemetry-collector` sidecar for target-side telemetry.
+- `raptix-telemetry-collector` sidecar for target-side telemetry.
 - ATT&CK Navigator JSON export.
 - Customer-deliverable Defense Brief generator.
 
@@ -250,6 +250,6 @@ Proposed rule improvements:
   datasets useful as Blue Cell regression-test corpora.
 - [`docs/offensive-vaccine.md`](../offensive-vaccine.md)
   — the broader pipeline this closes.
-- [`docs/security/decepticon-threat-model.md`](../security/decepticon-threat-model.md)
+- [`docs/security/raptix-threat-model.md`](../security/raptix-threat-model.md)
   — the threat model Blue Cell helps validate (Red Cell on the front
   side, Blue Cell on the back).

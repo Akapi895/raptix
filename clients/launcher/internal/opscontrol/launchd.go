@@ -11,17 +11,17 @@ import (
 )
 
 // LaunchdManager owns a per-user LaunchAgent at
-// ~/Library/LaunchAgents/red.decepticon.opscontrol[.${STACK}].plist.
+// ~/Library/LaunchAgents/red.raptix.opscontrol[.${STACK}].plist.
 //
 // LaunchAgents (not LaunchDaemons) is intentional — same UID story
 // as the systemd user-unit choice in systemd.go.
 type LaunchdManager struct {
-	Label string // e.g. "red.decepticon.opscontrol" or
-	//               "red.decepticon.opscontrol.stack2"
+	Label string // e.g. "red.raptix.opscontrol" or
+	//               "red.raptix.opscontrol.stack2"
 }
 
 func newLaunchdManager() *LaunchdManager {
-	label := "red.decepticon.opscontrol"
+	label := "red.raptix.opscontrol"
 	if stack := StackName(); stack != "" {
 		label = label + "." + stack
 	}

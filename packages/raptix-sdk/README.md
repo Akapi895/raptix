@@ -4,7 +4,7 @@ The Raptix plugin author entrypoint. Re-exports the `raptix-core`
 contracts, ships pytest fixtures, and provides a scaffolding CLI for
 creating new plugin packages.
 
-A complete plugin can be written importing only from `decepticon_sdk`:
+A complete plugin can be written importing only from `raptix_sdk`:
 no underscore-prefixed framework internals required.
 
 See the umbrella [`README.md`](../../README.md) and the design spec at

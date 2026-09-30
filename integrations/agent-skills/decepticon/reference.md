@@ -1,6 +1,6 @@
 # Raptix MCP — tool reference
 
-Exact parameters, defaults, clamps, and return schemas for every `decepticon_*`
+Exact parameters, defaults, clamps, and return schemas for every `raptix_*`
 tool. Read this when you need precise field names or edge-case behaviour. All
 tools are async and target a running Raptix LangGraph server.
 
@@ -10,28 +10,28 @@ tools are async and target a running Raptix LangGraph server.
   `list_engagements`). The active run for a thread is resolved automatically —
   you never pass a `run_id`.
 - **`engagement_name`** is the human slug used for the workspace + findings
-  (`~/.decepticon/workspace/<engagement_name>/`). `start_engagement` returns it.
+  (`~/.raptix/workspace/<engagement_name>/`). `start_engagement` returns it.
 - Tools return structured objects (shown below). Counts/cursors are integers.
 
 ---
 
-## decepticon_list_graphs()
+## raptix_list_graphs()
 
 List the engagement graphs (assistants) the connected server exposes.
 
 - **Args:** none.
 - **Returns:** `[{ assistant_id, graph_id, name }]`.
-- Common `graph_id`s: `decepticon` (full kill-chain orchestrator), `recon`
+- Common `graph_id`s: `raptix` (full kill-chain orchestrator), `recon`
   (recon only), `soundwave` (engagement planning). Others may exist per install.
 
-## decepticon_list_engagements(limit=20)
+## raptix_list_engagements(limit=20)
 
 Recent engagements, most-recently-updated first — for browse / resume.
 
 - **Args:** `limit` (int, clamped 1–100).
 - **Returns:** `[{ thread_id, engagement_name, status, created_at, updated_at }]`.
 
-## decepticon_start_engagement(targets, instruction="", scan_mode="standard", engagement_name=None, assistant=None)
+## raptix_start_engagement(targets, instruction="", scan_mode="standard", engagement_name=None, assistant=None)
 
 Launch a **background** engagement. Returns immediately.
 
@@ -42,10 +42,10 @@ Launch a **background** engagement. Returns immediately.
   - `scan_mode` (`"quick"` | `"standard"` | `"deep"`) — depth/timeout profile.
   - `engagement_name` (str, optional) — defaults to `mcp-<UTC timestamp>`.
   - `assistant` (str, optional) — graph id; defaults to the server's default
-    (`decepticon`).
+    (`raptix`).
 - **Returns:** `{ engagement_name, thread_id, run_id, assistant, status, langgraph_url }`.
 
-## decepticon_transcript(thread_id, after_index=0, limit=40)
+## raptix_transcript(thread_id, after_index=0, limit=40)
 
 The orchestrator narrative — poll this to watch progress.
 
@@ -61,7 +61,7 @@ The orchestrator narrative — poll this to watch progress.
   - `text` is truncated per message (long results are clipped with a `+N chars`
     marker).
 
-## decepticon_watch(thread_id, max_seconds=20, max_events=40)
+## raptix_watch(thread_id, max_seconds=20, max_events=40)
 
 Bounded live tail of the run's stream (sub-agent activity), then returns.
 
@@ -73,7 +73,7 @@ Bounded live tail of the run's stream (sub-agent activity), then returns.
   - `truncated`: true if `max_events` was hit before the window/closed run.
   - Returns `events: []` when no run is active (idle/finished) — use `transcript`.
 
-## decepticon_send_message(thread_id, message, assistant=None)
+## raptix_send_message(thread_id, message, assistant=None)
 
 Send an operator message onto the engagement thread — steer, answer, or switch.
 
@@ -85,7 +85,7 @@ Send an operator message onto the engagement thread — steer, answer, or switch
   orchestrator's model mid-engagement (e.g. `/model anthropic/claude-opus-4-8`).
 - **Returns:** `{ thread_id, run_id, assistant, status }`.
 
-## decepticon_engagement_state(thread_id)
+## raptix_engagement_state(thread_id)
 
 Engagement context minus the message log.
 
@@ -95,7 +95,7 @@ Engagement context minus the message log.
     phase, working files. Large values are replaced with an `<N chars omitted>`
     placeholder to keep the payload small.
 
-## decepticon_engagement_status(thread_id, engagement_name="")
+## raptix_engagement_status(thread_id, engagement_name="")
 
 Latest run status + whether findings have been persisted.
 
@@ -104,7 +104,7 @@ Latest run status + whether findings have been persisted.
   - `status`: `pending`/`running`/`success`/`error`/`timeout`/`interrupted`/`none`.
   - `findings_available`: true once `graph.json` exists for the engagement.
 
-## decepticon_engagement_findings(engagement_name, include_sarif=False)
+## raptix_engagement_findings(engagement_name, include_sarif=False)
 
 Findings summary, optionally with the full SARIF v2.1.0 document.
 
@@ -116,7 +116,7 @@ Findings summary, optionally with the full SARIF v2.1.0 document.
   - `sarif`: full SARIF doc when `include_sarif=true`, else null. Mine
     `runs[0].results[]` for `ruleId`, `message`, and `locations` (reproduction).
 
-## decepticon_cancel_engagement(thread_id)
+## raptix_cancel_engagement(thread_id)
 
 Cancel the active run on a thread.
 

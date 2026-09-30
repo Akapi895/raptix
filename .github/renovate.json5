@@ -1,5 +1,5 @@
 {
-  // Renovate config for the Decepticon monorepo.
+  // Renovate config for the Raptix monorepo.
   //
   // Goals:
   //   * Batch low-risk updates (minor / patch) so dependency PRs stay

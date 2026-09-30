@@ -11,7 +11,7 @@ auto-refreshes expired tokens, and spoofs Claude Code request headers
 so requests are indistinguishable from the native CLI.
 
 This file is mounted into the LiteLLM container alongside litellm.yaml.
-No dependency on the ``decepticon`` package — it depends only on the
+No dependency on the ``raptix`` package — it depends only on the
 shared ``oauth_token_store`` helper module mounted alongside it.
 
 Registration in litellm.yaml:
@@ -204,7 +204,7 @@ def get_access_token(force_refresh: bool = False) -> str:
     tokens = _load_tokens()
     if tokens is None:
         raise litellm.AuthenticationError(
-            message="No Claude Code OAuth tokens found. Run 'decepticon onboard' to authenticate.",
+            message="No Claude Code OAuth tokens found. Run 'raptix onboard' to authenticate.",
             model="auth",
             llm_provider="auth",
         )

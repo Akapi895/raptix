@@ -354,7 +354,7 @@ func SyncConfigFiles(branch string, release *Release) error {
 	files := map[string]string{
 		// docker-compose.opscontrol.yml is intentionally absent: it is
 		// LAUNCHER-MANAGED (cmd/opscontrol/supervisor.go embeds the
-		// body and writes it at every `decepticon start`), so the file
+		// body and writes it at every `raptix start`), so the file
 		// is never downloaded, never manifest-verified, and never
 		// release-tied. Previously every overlay change forced a point
 		// release with a "no checksum entry" sync warning.
@@ -557,7 +557,7 @@ func replaceExecutable(tmpPath, execPath string) error {
 // verification (no “checksums.txt“ asset) emit a warning and fall
 // back to the legacy unverified replace.
 func SelfUpdate(release *Release) error {
-	assetName := fmt.Sprintf("decepticon-%s-%s", runtime.GOOS, runtime.GOARCH)
+	assetName := fmt.Sprintf("raptix-%s-%s", runtime.GOOS, runtime.GOARCH)
 
 	downloadURL := assetURL(release, assetName)
 	if downloadURL == "" {
@@ -639,7 +639,7 @@ func WriteVersion(version string) error {
 
 // NotifyIfUpdateAvailable checks GitHub releases and prints a non-blocking
 // update notice. It never mutates the binary, config files, or Docker images;
-// users apply updates explicitly with `decepticon update`.
+// users apply updates explicitly with `raptix update`.
 //
 // Used as the fallback path when “PromptIfUpdateAvailable“ cannot present
 // an interactive prompt (e.g. stdin is not a TTY in CI / piped invocation).
@@ -654,13 +654,13 @@ func NotifyIfUpdateAvailable(currentVersion string, ch Channel) bool {
 	}
 
 	ui.Info(fmt.Sprintf("Update available: %s -> %s", displayVersion(currentVersion), release.TagName))
-	ui.DimText("Run `decepticon update` to upgrade.")
+	ui.DimText("Run `raptix update` to upgrade.")
 	return true
 }
 
 // ApplyUpdate runs the full upgrade flow: SyncConfigFiles, Docker image
 // pull, SelfUpdate (binary), WriteVersion. Shared between the
-// “decepticon update“ command and the interactive launch-time prompt.
+// “raptix update“ command and the interactive launch-time prompt.
 //
 // “ref“ is the git ref used for “SyncConfigFiles“ — “release.TagName“
 // for tagged releases, or a branch name for development tracking.
@@ -764,7 +764,7 @@ func PromptIfUpdateAvailable(currentVersion string, ch Channel) (bool, error) {
 	if !confirmed {
 		ui.DimText(
 			"Continuing with " + displayVersion(currentVersion) +
-				". Run `decepticon update` later to upgrade.",
+				". Run `raptix update` later to upgrade.",
 		)
 		return false, nil
 	}
@@ -818,7 +818,7 @@ func applyAndReexec(release *Release, currentVersion string) (bool, error) {
 		// Re-exec failed: tell the user to restart manually rather than
 		// silently keep running the old in-memory image.
 		ui.Warning("Re-exec failed: " + err.Error())
-		ui.DimText("Run `decepticon` again to use the new version.")
+		ui.DimText("Run `raptix` again to use the new version.")
 		os.Exit(0)
 	}
 	// POSIX exec replaces the process — control never reaches here. The

@@ -425,9 +425,9 @@ packages/raptix/raptix/graph_builder/
 CLI:
 
 ```bash
-decepticon graph-build              # full build
-decepticon graph-build --validate   # validate without writing
-decepticon graph-build --diff       # show diff vs checked-in dump
+raptix graph-build              # full build
+raptix graph-build --validate   # validate without writing
+raptix graph-build --diff       # show diff vs checked-in dump
 ```
 
 ### 7.2 The 12 stages

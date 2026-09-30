@@ -18,7 +18,7 @@ report quality.
 
 ### 1. Is the asset in scope?
 
-Check the engagement's `scope.md` (recon/decepticon's RoE doc):
+Check the engagement's `scope.md` (recon/raptix's RoE doc):
 - In-scope domain list
 - In-scope IP/CIDR list
 - Out-of-scope explicit exclusions (test envs, staging, third-party
@@ -171,7 +171,7 @@ which question pass/failed before it reaches the report stage.
 | Apply this only to High/Critical | All findings benefit; Low findings w/ bad titles also damage validity |
 
 ## Cross-references
-- Verifier agent prompt: `decepticon/agents/prompts/verifier.md`
+- Verifier agent prompt: `raptix/agents/prompts/verifier.md`
 - Verifier router: `skills/verifier/SKILL.md`
 - Bounty report skill: `skills/verifier/bounty-report/SKILL.md`
 - Operator's external `triage-validation` skill (Raptix-external) for the broader gate methodology

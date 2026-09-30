@@ -48,13 +48,13 @@ Inside the sandbox container, the daemon (`sandbox_server/app.py` wrapping
 `/workspace` is **bind-mounted** from the host:
 
 ```
-~/.decepticon/workspace/<engagement-slug>/   (host)
+~/.raptix/workspace/<engagement-slug>/   (host)
         ⇅  docker volume bind
 /workspace/                                   (container, what the agent sees)
 ```
 
 So a write to `/workspace/findings/FIND-001.md` lands at
-`~/.decepticon/workspace/<slug>/findings/FIND-001.md` on the host and is
+`~/.raptix/workspace/<slug>/findings/FIND-001.md` on the host and is
 visible to the web dashboard (which mounts the same tree read-only).
 
 **Engagement isolation is physical, not state-level.** Each engagement is
@@ -167,7 +167,7 @@ drift when sub-shells, background jobs, or tool wrappers change the working
 directory mid-task. Agents must not assume `pwd` equals the engagement root
 after any `cd`.
 
-**The orchestrator (decepticon) has no bash tool at all.** It only has
+**The orchestrator (raptix) has no bash tool at all.** It only has
 OPPLAN CRUD tools (`add_objective`, `update_objective`, `get_objective`,
 `list_objectives`) plus the workspace file tools (`read_file`, `write_file`,
 `ls`) for reading sub-agent artifacts. All offensive work is delegated via
@@ -268,7 +268,7 @@ undocumented success attempt.
 
 ## 6. The orchestrator read protocol
 
-After **every** recon `task()` returns, the orchestrator (decepticon)
+After **every** recon `task()` returns, the orchestrator (raptix)
 executes a fixed decision tree (in `decepticon.md`):
 
 1. `read_file("recon/SUMMARY.md")`. If missing/empty → treat as crash.
@@ -360,7 +360,7 @@ identical text, enabling prompt caching for the child run.
 Before any offensive dispatch, the **Soundwave** planning agent (and its
 `/skills/standard/soundwave/*` templates) author the JSON planning bundle in
 `plan/`. Each validates against a Pydantic v2 schema in
-`decepticon_core.types`:
+`raptix_core.types`:
 
 | File | Skill | Schema |
 |------|-------|--------|
@@ -382,9 +382,9 @@ contract the orchestrator re-reads before **every** `task()` dispatch.
 ## 9. Final report generation
 
 At engagement close, the orchestrator runs the final-report sequence
-(`decepticon.md` → `/skills/standard/decepticon/final-report/SKILL.md`):
+(`decepticon.md` → `/skills/standard/raptix/final-report/SKILL.md`):
 
-1. `load_skill("/skills/standard/decepticon/final-report/SKILL.md")`.
+1. `load_skill("/skills/standard/raptix/final-report/SKILL.md")`.
 2. Generate `report/executive-summary.md` (C-level, no tool names/jargon).
 3. Generate `report/technical-report.md` (findings detail, attack-path
    narratives, detection-gap analysis, activity timeline, remediation
@@ -467,14 +467,14 @@ The host-mounted workspace tree is what the clients render.
   in-flight `findings/FIND-*.md`, the `plan/opplan.json` checkpoint, a
   partial `report/report_partial_executive.md`, and `events.jsonl`, so a
   killed engagement still leaves a coherent workspace.
-- **Orphan reaping** — on daemon startup, decepticon-named tmux sockets from
+- **Orphan reaping** — on daemon startup, raptix-named tmux sockets from
   a crashed prior run are reaped before new sessions start.
 
 ---
 
 ## 14. Writing a plugin agent that fits the contract
 
-A community/downstream plugin agent (registered under the `decepticon.subagents`
+A community/downstream plugin agent (registered under the `raptix.subagents`
 entry-point group, declaring `parent_agents=("decepticon",)`) inherits the
 file contract for free if it:
 

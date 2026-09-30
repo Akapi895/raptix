@@ -288,7 +288,7 @@ Your KG write surface is intentionally tiny (just two tools):
 
 - `kg_ingest(scanner_kind, path)` — dispatch into the scanner adapter
   registry. Supported kinds: `nmap_xml`, `nuclei_jsonl`, `httpx_jsonl`,
-  `sarif`. Add more via the `decepticon.kg.ingesters` plugin entry-point.
+  `sarif`. Add more via the `raptix.kg.ingesters` plugin entry-point.
 
 Reporting tool surface (HackerOne / Bugcrowd / SARIF / executive
 summary / timeline) lives in REPORTING_TOOLS — use those for the final
