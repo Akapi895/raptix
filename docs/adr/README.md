@@ -85,5 +85,6 @@ Use [`template.md`](template.md) as the starting point.
 | [0021](0021-b0-session-isolation-gate.md) | Gate surface-exploit fan-out on session isolation | Proposed |
 | [0022](0022-sequential-surface-exploit-dispatch.md) | Dispatch surface-exploit cells sequentially | Proposed |
 | [0023](0023-bounded-iterative-surface-reexpansion.md) | Bound iterative surface-exploit re-expansion | Proposed |
+| [0024](0024-code-owned-surface-reexpansion-bounds.md) | Wire bounded re-expansion into KG surface inventory | Proposed |
 
 Keep this index in sync when you land a new ADR.

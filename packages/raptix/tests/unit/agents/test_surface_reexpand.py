@@ -52,6 +52,24 @@ def test_plan_reexpansion_drops_generation_over_bound() -> None:
     assert [cell["cell_id"] for cell in result] == ["gen-1"]
 
 
+def test_plan_reexpansion_stamps_and_caps_code_owned_generations() -> None:
+    first = plan_reexpansion([], [_cell("gen-1", gen=99)], base_generation=0)
+    second = plan_reexpansion(first, [_cell("gen-2", gen=99)], base_generation=first[0]["gen"])
+    third = plan_reexpansion(
+        [*first, *second],
+        [_cell("gen-3", gen=99)],
+        base_generation=second[0]["gen"],
+    )
+    capped = plan_reexpansion(
+        [*first, *second, *third],
+        [_cell("gen-4", gen=0)],
+        base_generation=third[0]["gen"],
+    )
+
+    assert [cell["gen"] for cell in [*first, *second, *third]] == [1, 2, 3]
+    assert capped == []
+
+
 def test_plan_reexpansion_hard_caps_total_cells_with_priority_then_generation() -> None:
     result = plan_reexpansion(
         [{"id": "OBJ-001", "notes": "cell_id=existing"}],
@@ -119,5 +137,7 @@ def test_prompt_requires_confirmed_only_bounded_reexpansion() -> None:
     prompt = _PROMPT.read_text(encoding="utf-8").lower()
 
     assert "only after confirmed" in prompt
+    assert "kg_surface_inventory(base_generation=n)" in prompt
+    assert "code-owned generation stamping" in prompt
     assert 'one task("surface_exploit")' in prompt
     assert "gated on the adr-0021 live runbook" in prompt

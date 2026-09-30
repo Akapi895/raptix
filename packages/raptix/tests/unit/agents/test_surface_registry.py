@@ -102,3 +102,4 @@ def test_kg_inventory_and_objective_payload_are_deterministic() -> None:
     assert all(child["owner"] == "surface_exploit" for child in payload["children"])
     assert all(child["mitre"] == ["T1190"] for child in payload["children"])
     assert all("session_name=" in child["notes"] for child in payload["children"])
+    assert all("gen=0" in child["notes"] for child in payload["children"])

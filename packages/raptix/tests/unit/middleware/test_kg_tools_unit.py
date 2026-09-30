@@ -15,6 +15,7 @@ import pytest
 
 from raptix.middleware.kg_internal.tools import (
     DEFAULT_KG_TOOLS,
+    SURFACE_INVENTORY_TOOL,
     build_kg_tools,
 )
 
@@ -49,6 +50,27 @@ def _fake_store(record_result: dict[str, Any] | None = None) -> MagicMock:
     return store
 
 
+_SURFACE_ROWS = [
+    {
+        "key": "endpoint::GET::https://app.test/search",
+        "props": {"url": "https://app.test/search", "path": "/search"},
+        "children": [
+            {
+                "kind": "Parameter",
+                "key": "parameter::q",
+                "label": "q",
+                "props": {"name": "q"},
+            }
+        ],
+    }
+]
+
+
+def _surface_inventory(store: MagicMock) -> Any:
+    [inventory] = build_kg_tools(store, enabled={SURFACE_INVENTORY_TOOL})
+    return inventory
+
+
 # ── Factory shape ───────────────────────────────────────────────────────
 
 
@@ -72,6 +94,59 @@ def test_factory_with_empty_enabled_returns_no_tools() -> None:
 
 def test_default_kg_tools_constant_lists_both() -> None:
     assert DEFAULT_KG_TOOLS == frozenset({"kg_record", "kg_ingest"})
+
+
+def test_surface_inventory_preserves_b5_initial_matrix() -> None:
+    store = _fake_store()
+    store.execute_read.return_value = _SURFACE_ROWS
+
+    out_msg = _call(_surface_inventory(store), {}, state={"kg_engagement": "acme"})
+    payload = json.loads(out_msg.content)
+
+    assert [cell["cell_id"] for cell in payload["cells"]] == [
+        "sqli::endpoint::GET::https://app.test/search",
+        "xss::endpoint::GET::https://app.test/search",
+    ]
+    assert {cell["gen"] for cell in payload["cells"]} == {0}
+    assert all("gen=0" in child["notes"] for child in payload["objective_children"])
+
+
+def test_surface_inventory_reexpansion_deduplicates_and_enforces_generation_bound() -> None:
+    store = _fake_store()
+    store.execute_read.return_value = _SURFACE_ROWS
+    inventory = _surface_inventory(store)
+    state = {
+        "kg_engagement": "acme",
+        "objectives": [
+            {
+                "id": "OBJ-002",
+                "status": "completed",
+                "notes": "cell_id=sqli::endpoint::GET::https://app.test/search; gen=0",
+            }
+        ],
+    }
+
+    out_msg = _call(inventory, {"base_generation": 0}, state=state)
+    payload = json.loads(out_msg.content)
+
+    assert [cell["cell_id"] for cell in payload["cells"]] == [
+        "xss::endpoint::GET::https://app.test/search"
+    ]
+    assert payload["cells"][0]["gen"] == 1
+    assert "gen=1" in payload["objective_children"][0]["notes"]
+
+    capped = _call(inventory, {"base_generation": 3}, state=state)
+    assert json.loads(capped.content)["cells"] == []
+
+    at_total_cap = {
+        "kg_engagement": "acme",
+        "objectives": [
+            *state["objectives"],
+            *[{"notes": f"cell_id=existing-{index}"} for index in range(49)],
+        ],
+    }
+    capped_total = _call(inventory, {"base_generation": 0}, state=at_total_cap)
+    assert json.loads(capped_total.content)["cells"] == []
 
 
 # ── kg_record engagement scope ──────────────────────────────────────────

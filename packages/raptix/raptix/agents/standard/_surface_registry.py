@@ -275,7 +275,11 @@ def build_objective_expand_payload(
         session_name = str(cell.get("session_name") or cell.get("session") or "")
         mitre = cell.get("mitre", [])
         mitre_list = [item.strip() for item in str(mitre).split(",") if item.strip()]
-        notes = [f"cell_id={cell_id}", f"session_name={session_name}"]
+        try:
+            generation = max(0, int(cell.get("gen", 0)))
+        except (TypeError, ValueError):
+            generation = 0
+        notes = [f"cell_id={cell_id}", f"session_name={session_name}", f"gen={generation}"]
         via_cell = cell.get("via_cell")
         if via_cell:
             notes.append(f"via_cell={via_cell}")
