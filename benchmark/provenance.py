@@ -15,7 +15,7 @@ from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from benchmark.schemas import RunProvenance
-from decepticon_core.types.llm import AuthMethod
+from raptix_core.types.llm import AuthMethod
 
 _SENSITIVE_KEY = re.compile(
     r"(?:api[_-]?key|authorization|cookie|credential|password|secret|session|token)",
@@ -44,7 +44,7 @@ def capture_declared_model_assignments() -> tuple[str, dict[str, list[str]]]:
     stack_name = os.environ.get("DECEPTICON_STACK_NAME", "").strip()
     container = f"decepticon-{stack_name}-langgraph" if stack_name else "decepticon-langgraph"
     script = """import json, os
-from decepticon.llm.factory import LLMFactory
+from raptix.llm.factory import LLMFactory
 factory = LLMFactory()
 chains = {}
 for role, assignment in factory._mapping.assignments.items():
