@@ -23,7 +23,7 @@ import {
   STREAM_OPTIONS,
   extractText,
   stripResultTags,
-} from "@decepticon/streaming";
+} from "@raptix/streaming";
 import { getModelOverride } from "../commands/modelOverride.js";
 import { getAssistantOverride } from "../commands/assistantOverride.js";
 

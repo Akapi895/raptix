@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveSubAgentSessions, type StreamEvent } from "@decepticon/streaming";
+import { deriveSubAgentSessions, type StreamEvent } from "@raptix/streaming";
 
 let seq = 0;
 /** Build a minimal StreamEvent with sensible id/timestamp defaults. */

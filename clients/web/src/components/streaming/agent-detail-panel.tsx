@@ -8,7 +8,7 @@
  */
 
 import { useEffect, useMemo } from "react";
-import type { SubagentCustomEvent } from "@decepticon/streaming";
+import type { SubagentCustomEvent } from "@raptix/streaming";
 import type { AgentConfig } from "@/lib/agents";
 import { AGENT_DISPLAY_CONFIG } from "@/lib/agents";
 import { cn } from "@/lib/utils";

@@ -1,5 +1,5 @@
 {
-  "name": "@decepticon/desktop",
+  "name": "@raptix/desktop",
   "version": "0.0.0",
   "private": true,
   "description": "Decepticon desktop shell for the cloud app and local web dashboard",
