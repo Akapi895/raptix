@@ -235,7 +235,7 @@ def test_only_allowlisted_services_mount_docker_socket():
         msgs.append(
             f"services mounting docker.sock without an allowlist entry: {sorted(unexpected)}\n"
             "Fix: use the sandbox HTTP daemon (port 9999) instead of docker exec "
-            "(see packages/decepticon/decepticon/backends/), or — if the service runs "
+            "(see packages/raptix/raptix/backends/), or — if the service runs "
             "no agent code — add it to DOCKER_SOCKET_SERVICES with the reason."
         )
     if stale:

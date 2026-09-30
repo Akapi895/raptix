@@ -47,8 +47,8 @@ def _build_run_provenance(
     config_snapshot["filters"] = filters.model_dump(mode="json")
     config_snapshot["parallel"] = parallel
     artifact_paths = {
-        "agent-prompts": repo_root / "packages/decepticon/decepticon/agents/prompts",
-        "skill-corpus": repo_root / "packages/decepticon/decepticon/skills",
+        "agent-prompts": repo_root / "packages/raptix/raptix/agents/prompts",
+        "skill-corpus": repo_root / "packages/raptix/raptix/skills",
         "litellm-config": repo_root / "config/litellm.yaml",
         "compose-config": repo_root / "docker-compose.yml",
     }
