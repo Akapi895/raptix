@@ -249,7 +249,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     # process. A SIGKILL leaves them orphaned (their tmux servers
     # survive but no live manager tracks them); without this reap they
     # accumulate forever and can collide with new session names on the
-    # next engagement attempt. Scoped to decepticon-named sockets
+    # next engagement attempt. Scoped to raptix-named sockets
     # only — see SandboxBase.reap_orphaned_tmux_sessions docstring.
     try:
         reaped = backend.reap_orphaned_tmux_sessions()

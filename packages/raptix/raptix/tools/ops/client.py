@@ -1,7 +1,7 @@
 """HTTP-over-Unix-socket client for the opscontrol daemon.
 
 ADR-0006 §1' / §6: the daemon listens on a Unix domain socket bind-
-mounted into the langgraph container at ``/var/run/decepticon-ops.sock``.
+mounted into the langgraph container at ``/var/run/raptix-ops.sock``.
 The socket file is the capability grant — no TCP, no network member-
 ship, no service discovery.
 
@@ -18,7 +18,7 @@ from typing import Any
 
 import httpx
 
-DEFAULT_SOCKET_PATH = "/var/run/decepticon-ops.sock"
+DEFAULT_SOCKET_PATH = "/var/run/raptix-ops.sock"
 SOCKET_PATH_ENV = "RAPTIX_OPSCONTROL_SOCK"
 
 

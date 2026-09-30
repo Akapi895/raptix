@@ -192,8 +192,8 @@ def export_findings_to_sarif(
             "message": {"text": str(message_text)},
             "properties": {
                 "security-severity": f"{security_severity:.1f}",
-                "decepticon-finding-id": getattr(node, "id", None),
-                "decepticon-engagement": engagement_name,
+                "raptix-finding-id": getattr(node, "id", None),
+                "raptix-engagement": engagement_name,
             },
         }
         locations = _result_locations(props)
@@ -216,8 +216,8 @@ def export_findings_to_sarif(
                 },
                 "results": results,
                 "properties": {
-                    "decepticon-engagement": engagement_name,
-                    "decepticon-finding-count": len(results),
+                    "raptix-engagement": engagement_name,
+                    "raptix-finding-count": len(results),
                 },
             }
         ],

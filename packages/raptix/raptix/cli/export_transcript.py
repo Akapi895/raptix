@@ -1,4 +1,4 @@
-"""``decepticon-cli export-transcript`` - render an engagement's event log.
+"""``raptix-cli export-transcript`` - render an engagement's event log.
 
 Reads the append-only ``events.jsonl`` for one engagement and renders it as a
 human-readable Markdown transcript. The log lives at
@@ -25,7 +25,7 @@ EXIT_NOT_FOUND = 1
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="decepticon-cli export-transcript",
+        prog="raptix-cli export-transcript",
         description="Render an engagement's event log as a Markdown transcript.",
     )
     p.add_argument(

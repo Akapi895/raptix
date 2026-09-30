@@ -1,4 +1,4 @@
-"""Plugin scaffolding CLI — ``decepticon-sdk plugin new --kind=...``.
+"""Plugin scaffolding CLI — ``raptix-sdk plugin new --kind=...``.
 
 Phase 3 of the core/framework/sdk split (per
 ``docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md``)
@@ -11,7 +11,7 @@ Six plugin kinds covered: ``tool``, ``middleware``, ``agent``,
 
 Usage:
 
-    decepticon-sdk plugin new --kind=middleware --name=my-plugin --path=./my-plugin
+    raptix-sdk plugin new --kind=middleware --name=my-plugin --path=./my-plugin
 """
 
 from __future__ import annotations

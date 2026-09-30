@@ -1,4 +1,4 @@
-"""``decepticon-cli auth`` — headless provider/auth introspection.
+"""``raptix-cli auth`` — headless provider/auth introspection.
 
 The interactive ``decepticon onboard`` wizard (Go launcher) is the place to
 *configure* credentials. This command is the headless complement: it reports
@@ -37,7 +37,7 @@ _KIND_HEADING = {
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="decepticon-cli auth",
+        prog="raptix-cli auth",
         description="Report provider/auth configuration (API keys + subscriptions + local).",
     )
     p.add_argument(

@@ -53,7 +53,7 @@ export default function SettingsPage() {
     { name: "LiteLLM Proxy", status: "loading", detail: "Checking...", icon: Server },
     { name: "Neo4j", status: "loading", detail: "Checking...", icon: Network },
     { name: "PostgreSQL", status: "ok", detail: "Connected", icon: Database },
-    { name: "Sandbox", status: "ok", detail: "decepticon-sandbox", icon: Box },
+    { name: "Sandbox", status: "ok", detail: "raptix-sandbox", icon: Box },
   ]);
   const [agents, setAgents] = useState<AgentConfig[]>([]);
   const [engagements, setEngagements] = useState<Engagement[]>([]);

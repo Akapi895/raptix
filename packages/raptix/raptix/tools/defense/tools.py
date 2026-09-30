@@ -59,7 +59,7 @@ def sigma_to_splunk_savedsearch(
     """Convert a Sigma rule to SPL and push it to Splunk as a saved search.
 
     Requires ConOps.blue_team.splunk with ``url`` + ``auth`` (HEC token via env).
-    The rule name will be prefixed with ``decepticon-eng-<slug>::`` so the
+    The rule name will be prefixed with ``raptix-eng-<slug>::`` so the
     blue team can identify and revoke after engagement end.
     """
     try:
@@ -93,7 +93,7 @@ def sigma_to_sentinel_analyticrule(
 
     Requires ConOps.blue_team.sentinel with subscription_id, resource_group,
     workspace_name, and auth (bearer token via env). The rule_id is suffixed
-    onto a ``decepticon-eng-<slug>`` prefix for blue-team auditability.
+    onto a ``raptix-eng-<slug>`` prefix for blue-team auditability.
     """
     try:
         rule_dict = _coerce_sigma(sigma_rule)

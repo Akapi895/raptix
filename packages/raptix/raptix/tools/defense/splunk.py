@@ -124,7 +124,7 @@ def push_savedsearch(
     """POST the saved-search to Splunk via REST.
 
     Reads the Splunk endpoint + HEC token from ConOps (``blue_team.splunk``).
-    Tags the saved search ``decepticon-eng-<slug>`` so blue-team can audit
+    Tags the saved search ``raptix-eng-<slug>`` so blue-team can audit
     and disable rules after the engagement ends.
 
     Returns the parsed Splunk response on success or a ``{"error": ...}``
@@ -144,7 +144,7 @@ def push_savedsearch(
     except ConOpsLookupError as exc:
         return {"error": str(exc)}
 
-    tag = f"decepticon-eng-{engagement_slug()}"
+    tag = f"raptix-eng-{engagement_slug()}"
     safe_title = f"{tag}::{title}"
 
     try:

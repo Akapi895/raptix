@@ -119,7 +119,7 @@ def push_detection_rule(
     except ConOpsLookupError as exc:
         return {"error": str(exc)}
 
-    tagged_id = f"decepticon-eng-{engagement_slug()}-{rule_id}"
+    tagged_id = f"raptix-eng-{engagement_slug()}-{rule_id}"
     body = {
         "rule_id": tagged_id,
         "name": f"[Raptix] {name}",

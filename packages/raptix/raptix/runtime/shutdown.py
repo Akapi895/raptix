@@ -174,7 +174,7 @@ def _on_signal(signum: int | None, frame: Any) -> None:
         except Exception as exc:  # noqa: BLE001 - last line of defense
             result_holder["r"] = _FlushResult(errors=[f"flush crashed: {exc!r}"])
 
-    worker = threading.Thread(target=_worker, name="decepticon-shutdown-flush", daemon=True)
+    worker = threading.Thread(target=_worker, name="raptix-shutdown-flush", daemon=True)
     worker.start()
     worker.join(timeout=MAX_FLUSH_SECONDS)
 
@@ -290,7 +290,7 @@ def _run_step(
         except Exception as exc:  # noqa: BLE001 - reported via result.errors
             box["e"] = exc
 
-    t = threading.Thread(target=_runner, name=f"decepticon-shutdown-{label}", daemon=True)
+    t = threading.Thread(target=_runner, name=f"raptix-shutdown-{label}", daemon=True)
     t.start()
     t.join(timeout=cap)
     if t.is_alive():

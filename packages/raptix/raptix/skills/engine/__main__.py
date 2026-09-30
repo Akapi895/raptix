@@ -17,7 +17,7 @@ Environment variables:
   SKILLOGY_REST_PORT          (default 9100)
   SKILLOGY_NEO4J_URI          (default ``bolt://neo4j:7687``)
   SKILLOGY_NEO4J_USER         (default ``neo4j``)
-  SKILLOGY_NEO4J_PASSWORD     (default ``decepticon-graph``)
+  SKILLOGY_NEO4J_PASSWORD     (default ``raptix-graph``)
   SKILLOGY_NEO4J_DATABASE     (default ``neo4j``; managed backends e.g. Aura
                               name the database after the instance id)
   SKILLOGY_CYPHER_PATH        (default ``/app/skills.cypher`` — baked into the image)
@@ -57,7 +57,7 @@ def _build_backend() -> Neo4jBackend:
     return Neo4jBackend(
         uri=os.environ.get("SKILLOGY_NEO4J_URI", "bolt://neo4j:7687"),
         user=os.environ.get("SKILLOGY_NEO4J_USER", "neo4j"),
-        password=os.environ.get("SKILLOGY_NEO4J_PASSWORD", "decepticon-graph"),
+        password=os.environ.get("SKILLOGY_NEO4J_PASSWORD", "raptix-graph"),
         database=os.environ.get("SKILLOGY_NEO4J_DATABASE", "neo4j"),
     )
 
@@ -111,7 +111,7 @@ def _start_rest(backend: Neo4jBackend, port: int, started_at: float) -> None:
         ) from exc
     app = build_app(backend, started_at=started_at)
     # 0.0.0.0 is intentional: the Skillogy container is only exposed on
-    # decepticon-net; docker-compose pins the host port to 127.0.0.1.
+    # raptix-net; docker-compose pins the host port to 127.0.0.1.
     config = uvicorn.Config(  # nosec B104
         app=app, host="0.0.0.0", port=port, log_level="info"
     )

@@ -131,7 +131,7 @@ class SafetyDeclaration:
     declare *their own* tool / middleware names safety-critical, but
     cannot remove safety on OSS-declared names. The framework merges
     plugin SafetyDeclarations with ``SAFETY_CRITICAL_TOOLS`` /
-    ``SAFETY_CRITICAL_SLOTS`` from ``decepticon-core``.
+    ``SAFETY_CRITICAL_SLOTS`` from ``raptix-core``.
 
     Fields:
         tools: tool names the plugin marks safety-critical.

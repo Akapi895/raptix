@@ -13,7 +13,7 @@ from raptix.sandbox_kernel.daemon import DaemonSandbox
 
 
 def test_initialize_does_not_create_root_workspace_sessions_log():
-    mgr = TmuxSessionManager("scan-1", "decepticon-sandbox")
+    mgr = TmuxSessionManager("scan-1", "raptix-sandbox")
     TmuxSessionManager._initialized.discard("scan-1")
 
     with (
@@ -42,7 +42,7 @@ def test_initialize_does_not_create_root_workspace_sessions_log():
 def test_initialize_pipes_pane_to_engagement_scoped_sessions_log():
     mgr = TmuxSessionManager(
         "dcptn_test-main",
-        "decepticon-sandbox",
+        "raptix-sandbox",
         workspace_path="/workspace/test",
         log_name="main",
     )
@@ -80,7 +80,7 @@ def test_initialize_pipes_pane_to_engagement_scoped_sessions_log():
 def test_initialize_creates_sessions_directory_inside_engagement_workspace():
     mgr = TmuxSessionManager(
         "dcptn_test-scan-2",
-        "decepticon-sandbox",
+        "raptix-sandbox",
         workspace_path="/workspace/test",
         log_name="scan-2",
     )
@@ -119,7 +119,7 @@ def test_initialize_creates_sessions_directory_inside_engagement_workspace():
 def test_initialize_warns_when_mkdir_fails(caplog):
     mgr = TmuxSessionManager(
         "dcptn_test-scan-3",
-        "decepticon-sandbox",
+        "raptix-sandbox",
         workspace_path="/workspace/test",
         log_name="scan-3",
     )
@@ -415,7 +415,7 @@ def test_kill_all_sessions_is_noop_when_no_managers():
 
 def test_read_screen_handles_capture_timeout_gracefully():
     """read_screen() must NOT crash on subprocess.TimeoutExpired from capture-pane."""
-    mgr = TmuxSessionManager("hung", "decepticon-sandbox")
+    mgr = TmuxSessionManager("hung", "raptix-sandbox")
     TmuxSessionManager._initialized.add("hung")  # skip initialize path
 
     with patch.object(
@@ -432,7 +432,7 @@ def test_execute_async_baseline_capture_timeout_does_not_escape():
     """execute_async() initial baseline _capture timing out must not raise."""
     import asyncio
 
-    mgr = TmuxSessionManager("hung", "decepticon-sandbox")
+    mgr = TmuxSessionManager("hung", "raptix-sandbox")
     TmuxSessionManager._initialized.add("hung")
 
     with patch.object(
@@ -451,7 +451,7 @@ def test_execute_async_poll_loop_capture_timeout_continues():
     escape; loop should continue (and eventually time out cleanly)."""
     import asyncio
 
-    mgr = TmuxSessionManager("flaky", "decepticon-sandbox")
+    mgr = TmuxSessionManager("flaky", "raptix-sandbox")
     TmuxSessionManager._initialized.add("flaky")
 
     # Baseline succeeds; subsequent polls raise TimeoutExpired forever.
@@ -482,7 +482,7 @@ def test_poll_loop_capture_errors_dont_falsely_trigger_stall_detection():
     a non-baseline screen (e.g. command produced output earlier)."""
     import asyncio
 
-    mgr = TmuxSessionManager("loaded", "decepticon-sandbox")
+    mgr = TmuxSessionManager("loaded", "raptix-sandbox")
     TmuxSessionManager._initialized.add("loaded")
 
     # Sequence: baseline → 3 transient timeouts → success with new marker (DONE)
@@ -518,7 +518,7 @@ def test_poll_loop_capture_errors_dont_falsely_trigger_stall_detection():
 
 
 def test_initialize_recreates_stale_cached_pane_without_error_string_matching():
-    mgr = TmuxSessionManager("stale", "decepticon-sandbox")
+    mgr = TmuxSessionManager("stale", "raptix-sandbox")
     mgr._pane_id = "%old"
     TmuxSessionManager._initialized.add("stale")
 
@@ -552,7 +552,7 @@ def test_initialize_recreates_stale_cached_pane_without_error_string_matching():
 
 
 def test_execute_recovers_initial_capture_failure_without_error_string_matching():
-    mgr = TmuxSessionManager("recover", "decepticon-sandbox")
+    mgr = TmuxSessionManager("recover", "raptix-sandbox")
     mgr._pane_id = "%bad"
     TmuxSessionManager._initialized.add("recover")
 

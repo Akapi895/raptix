@@ -2,7 +2,7 @@
 
 If the daemon is SIGKILLed, its tmux sessions/sockets survive but the new
 process starts with an empty manager map — they would leak forever. The
-reap path discovers pre-existing decepticon-named sockets on the host and
+reap path discovers pre-existing raptix-named sockets on the host and
 kills the ones not tracked by the live manager.
 
 These tests cover the pure decision function (no I/O) and the reap method
@@ -38,7 +38,7 @@ def test_compute_orphans_spares_every_tracked_session() -> None:
 
 
 def test_compute_orphans_ignores_non_decepticon_sockets() -> None:
-    # The reap path must scope to decepticon-named sockets only — never
+    # The reap path must scope to raptix-named sockets only — never
     # touch a session that some other process (e.g. an operator's shell)
     # might own on a shared host.
     discovered = {"dcptn_eng-abc_main", "user-tmux", "main", "agent-session-1"}

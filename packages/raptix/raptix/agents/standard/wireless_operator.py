@@ -15,7 +15,7 @@ modes documented in agents/prompts/workflows/wireless_operator.md:
      the toolset. Matches real-world Red Team workflow. Operator
      pre-configures dropbox credentials in plan/roe.json under
      ``machine_enforcement.dropbox`` (block defined in
-     decepticon-core.types.roe).
+     raptix-core.types.roe).
 
 Tool surface (all via bash; no Python SDKs except where critical):
 

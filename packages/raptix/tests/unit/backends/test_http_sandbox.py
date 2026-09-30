@@ -41,7 +41,7 @@ def test_http_lazy_client_created_once_and_cached() -> None:
     c2 = sb._http()
     assert c1 is c2
     assert sb._client is not None
-    assert "decepticon-http-sandbox/1" in c1.headers["user-agent"]
+    assert "raptix-http-sandbox/1" in c1.headers["user-agent"]
     assert "authorization" not in c1.headers
 
 

@@ -34,7 +34,7 @@ def proxy_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     """Set the proxy env vars the agent runs under in the langgraph container.
 
     The container's hostname for the LiteLLM proxy is ``litellm`` on the
-    decepticon-net Docker network; the bare ``ProxyConfig()`` default of
+    raptix-net Docker network; the bare ``ProxyConfig()`` default of
     ``localhost:4000`` does not work inside a container — issue #186.
     """
     env = {

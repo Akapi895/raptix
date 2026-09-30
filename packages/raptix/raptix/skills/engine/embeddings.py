@@ -105,7 +105,7 @@ def available() -> bool:
 
 def _cache_dir() -> Path:
     raw = os.environ.get("RAPTIX_SKILLOGY_EMBED_CACHE", "").strip()
-    path = Path(raw) if raw else Path(tempfile.gettempdir()) / "decepticon-skillogy-embed"
+    path = Path(raw) if raw else Path(tempfile.gettempdir()) / "raptix-skillogy-embed"
     return path
 
 

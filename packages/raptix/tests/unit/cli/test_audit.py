@@ -1,4 +1,4 @@
-"""Tests for ``decepticon-cli audit``."""
+"""Tests for ``raptix-cli audit``."""
 
 from __future__ import annotations
 

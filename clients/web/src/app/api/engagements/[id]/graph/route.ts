@@ -33,7 +33,7 @@ export async function GET(
   const neo4jUri = process.env.NEO4J_URI ?? "bolt://neo4j:7687";
   const neo4jUser = process.env.NEO4J_USER ?? "neo4j";
   const neo4jPassword = process.env.NEO4J_PASSWORD;
-  if (!neo4jPassword || neo4jPassword === "decepticon-graph") {
+  if (!neo4jPassword || neo4jPassword === "raptix-graph") {
     return NextResponse.json(
       {
         error:

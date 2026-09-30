@@ -1,4 +1,4 @@
-"""``decepticon-cli audit`` - engagement audit ledger utilities."""
+"""``raptix-cli audit`` - engagement audit ledger utilities."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ EXIT_CONFIG = 2
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="decepticon-cli audit",
+        prog="raptix-cli audit",
         description="Verify Raptix engagement audit ledgers.",
     )
     sub = p.add_subparsers(dest="command", required=True)

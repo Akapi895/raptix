@@ -70,9 +70,9 @@ def _compute_orphan_tmux_sessions(
 ) -> set[str]:
     """Pure decision function for the startup reap.
 
-    Returns the subset of ``discovered`` that are decepticon-owned
+    Returns the subset of ``discovered`` that are raptix-owned
     (``dcptn_`` prefix) AND not present in ``tracked``. Tracked sessions
-    are spared; non-decepticon-prefixed names are spared regardless.
+    are spared; non-raptix-prefixed names are spared regardless.
     """
     return {
         name
@@ -82,7 +82,7 @@ def _compute_orphan_tmux_sessions(
 
 
 def _list_decepticon_tmux_sockets() -> list[str]:
-    """List decepticon-owned tmux socket names on the host.
+    """List raptix-owned tmux socket names on the host.
 
     Each ``tmux -L <name>`` creates a socket at ``/tmp/tmux-<uid>/<name>``
     (see ``man tmux``). We scan that directory and keep only the names
@@ -142,7 +142,7 @@ class SandboxBase(BaseSandbox):
 
     def __init__(
         self,
-        container_name: str = "decepticon-sandbox",
+        container_name: str = "raptix-sandbox",
         default_timeout: int = 120,
         workspace_path: str = "/workspace",
         exec_prefix: list[str] | None = None,
@@ -451,7 +451,7 @@ class SandboxBase(BaseSandbox):
             self._jobs.remove(session, key=manager_key)
 
     def reap_orphaned_tmux_sessions(self) -> int:
-        """Kill decepticon-named tmux sockets this process does NOT own.
+        """Kill raptix-named tmux sockets this process does NOT own.
 
         Wired into the daemon's startup lifespan: if the previous daemon
         was SIGKILLed, its tmux sockets/sessions survive but no live

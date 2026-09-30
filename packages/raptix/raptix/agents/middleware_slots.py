@@ -30,7 +30,7 @@ from typing import Any
 # Middleware classes & factory helpers — imported at module level so
 # slot factories don't pay per-call import cost. langchain + langgraph
 # packages are listed as runtime deps; only ``benchmark_skill_sources``
-# is decepticon-internal.
+# is raptix-internal.
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
 from deepagents.middleware.subagents import SubAgentMiddleware
 from deepagents.middleware.summarization import create_summarization_middleware

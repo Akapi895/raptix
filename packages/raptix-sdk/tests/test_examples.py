@@ -49,7 +49,7 @@ def test_example_declares_correct_entry_point_group(kind: str) -> None:
     assert expected_group in entry_points, (
         f"example {kind!r} missing entry-points.{expected_group}; got {sorted(entry_points)}"
     )
-    # Module name matches kind: decepticon-example-tool -> raptix_example_tool
+    # Module name matches kind: raptix-example-tool -> raptix_example_tool
     expected_module = f"raptix_example_{kind}"
     group_entries = entry_points[expected_group]
     assert expected_module in group_entries, (

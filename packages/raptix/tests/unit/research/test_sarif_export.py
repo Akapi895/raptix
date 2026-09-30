@@ -41,7 +41,7 @@ def test_export_emits_v2_1_0_envelope():
 def test_export_empty_graph_yields_zero_results():
     doc = export_findings_to_sarif(_FakeGraph([]))
     assert doc["runs"][0]["results"] == []
-    assert doc["runs"][0]["properties"]["decepticon-finding-count"] == 0
+    assert doc["runs"][0]["properties"]["raptix-finding-count"] == 0
 
 
 def test_export_groups_results_by_rule_id():
@@ -137,7 +137,7 @@ def test_write_sarif_round_trip(tmp_path: Path):
     written = write_sarif(graph, out_path, engagement_name="testing")
     assert written.exists()
     doc = json.loads(written.read_text(encoding="utf-8"))
-    assert doc["runs"][0]["properties"]["decepticon-engagement"] == "testing"
+    assert doc["runs"][0]["properties"]["raptix-engagement"] == "testing"
     assert len(doc["runs"][0]["results"]) == 1
 
 

@@ -875,7 +875,7 @@ class LLMModelMapping(BaseModel):
     def get_assignment(self, role: str, *, default_role: str | None = None) -> ModelAssignment:
         """Get model assignment for a role.
 
-        Plugin orchestrators with a custom role (e.g. ``"decepticon-pro"``)
+        Plugin orchestrators with a custom role (e.g. ``"raptix-pro"``)
         that aren't part of the OSS ``AGENT_TIERS`` registry can pass
         ``default_role="decepticon"`` (or any OSS role) to inherit that
         role's assignment as fallback. The plugin can later register its

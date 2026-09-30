@@ -80,7 +80,7 @@ class TestPushDefenderXdrDetectionSuccess:
         )
         assert result == {
             "status": "pushed",
-            "rule_id": "decepticon-eng-eng1-myrule",
+            "rule_id": "raptix-eng-eng1-myrule",
             "engagement_slug": "eng1",
             "technique_id": "T1059",
             "severity": "high",
@@ -111,7 +111,7 @@ class TestPushDefenderXdrDetectionSuccess:
         monkeypatch.setattr("requests.post", fake_post)
         push_defender_xdr_detection("myrule", _YARA_RULE_WITH_META, technique_id="T1")
         body = json.loads(captured["data"])
-        assert body["tags"] == ["decepticon-eng-eng1", "a", "b", "T1"]
+        assert body["tags"] == ["raptix-eng-eng1", "a", "b", "T1"]
 
     def test_tags_with_no_meta_tags_and_no_technique_id(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
@@ -131,7 +131,7 @@ class TestPushDefenderXdrDetectionSuccess:
         monkeypatch.setattr("requests.post", fake_post)
         push_defender_xdr_detection("myrule", _YARA_RULE_INDICATOR_NO_TAGS)
         body = json.loads(captured["data"])
-        assert body["tags"] == ["decepticon-eng-eng1"]
+        assert body["tags"] == ["raptix-eng-eng1"]
         assert "MITRE" not in body["description"]
 
 

@@ -1,4 +1,4 @@
-"""decepticon-sdk — plugin author entrypoint for the Raptix framework.
+"""raptix-sdk — plugin author entrypoint for the Raptix framework.
 
 A complete Raptix plugin can be written importing only from this
 package: every protocol, contract, registry, and helper plugin authors
@@ -8,7 +8,7 @@ required.
 Phase 3 surface:
 
   * ``raptix_sdk`` (this module) — re-exports the public
-    ``decepticon-core`` API (types, protocols, contracts, registries,
+    ``raptix-core`` API (types, protocols, contracts, registries,
     plugin loader). Tracks the framework's release version (current
     series: 1.1.x → 1.1.2 with this redesign; shim removal at 2.0.0).
     Public names listed in ``__all__`` are SemVer-stable.
@@ -18,7 +18,7 @@ Phase 3 surface:
 
 Deferred from Phase 3 (follow-up commits):
 
-  * ``decepticon-sdk plugin new --kind=...`` scaffolding CLI
+  * ``raptix-sdk plugin new --kind=...`` scaffolding CLI
   * Runnable example plugin per ``kind`` under ``examples/``
 """
 
@@ -27,7 +27,7 @@ from __future__ import annotations
 from importlib.metadata import PackageNotFoundError
 from importlib.metadata import version as _version
 
-# Re-export the decepticon-core contracts so plugin authors only need
+# Re-export the raptix-core contracts so plugin authors only need
 # a single import line:
 #
 #     from raptix_sdk import (
@@ -73,9 +73,9 @@ from raptix_core.registry import (
 
 # Read the installed distribution version — release.yml stamps the git
 # tag into wheel metadata at build time; local checkouts read 0.0.0.
-# Mirrors decepticon-core / decepticon so all three report consistently.
+# Mirrors raptix-core / decepticon so all three report consistently.
 try:
-    __version__ = _version("decepticon-sdk")
+    __version__ = _version("raptix-sdk")
 except PackageNotFoundError:
     __version__ = "0.0.0"
 
