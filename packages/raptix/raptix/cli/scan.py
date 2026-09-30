@@ -108,8 +108,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--langgraph-url",
-        default=os.environ.get("DECEPTICON_API_URL", "http://localhost:2024"),
-        help="LangGraph platform API URL (default: $DECEPTICON_API_URL).",
+        default=os.environ.get("RAPTIX_API_URL", "http://localhost:2024"),
+        help="LangGraph platform API URL (default: $RAPTIX_API_URL).",
     )
     p.add_argument(
         "--assistant",
@@ -297,7 +297,7 @@ def _load_findings_graph(engagement_name: str) -> Any | None:
     persisted findings). Caller treats absent graph as "zero findings".
     """
     workspace = Path(
-        os.environ.get("DECEPTICON_ENGAGEMENT_WORKSPACE")
+        os.environ.get("RAPTIX_ENGAGEMENT_WORKSPACE")
         or (Path.home() / ".decepticon" / "workspace" / engagement_name)
     )
     graph_path = workspace / "graph.json"

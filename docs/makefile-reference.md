@@ -12,7 +12,7 @@ The primary purpose of this Makefile. Run these before tagging a release.
 
 | Target | Description |
 |--------|-------------|
-| `make dogfood` | Full OSS UX on local code: builds the Go launcher + every service image (`:dev` tag), wires up an isolated `$DECEPTICON_HOME` under `.dogfood/`, then runs the launcher. The onboard wizard, engagement picker, `compose up`, health checks, and CLI all execute exactly as a `curl \| bash` install. |
+| `make dogfood` | Full OSS UX on local code: builds the Go launcher + every service image (`:dev` tag), wires up an isolated `$RAPTIX_HOME` under `.dogfood/`, then runs the launcher. The onboard wizard, engagement picker, `compose up`, health checks, and CLI all execute exactly as a `curl \| bash` install. |
 | `make smoke` | Compose-only smoke (no launcher, no onboard wizard) — fastest possible release-shape check. Replicates only the launcher's `compose up` step: clean → build images locally → `up -d --no-build --wait` → health checks. Use when you only changed the compose stack. |
 | `make launcher` | Build the Go launcher binary at `clients/launcher/bin/decepticon`. Embedded version is `dev`, which skips release update notices and versioned config sync inside the launcher. Invoked automatically by `make dogfood`. |
 
@@ -64,7 +64,7 @@ The Web dashboard is optional. Start it from the CLI with `/web`; it is then rea
 | `make test [ARGS=...]` | Run Python tests (`pytest`) inside the Docker container |
 | `make test-local [ARGS=...]` | Run Python tests locally (requires `uv sync --dev`) |
 
-CLI tests are part of `make quality-cli`. To run them in isolation: `npm run test --workspace=@decepticon/cli`.
+CLI tests are part of `make quality-cli`. To run them in isolation: `npm run test --workspace=@raptix/cli`.
 
 ---
 
@@ -110,7 +110,7 @@ Release channel policy (see [update-channels.md](./update-channels.md) for the u
 - GHCR version tags (`X.Y.Z`) are immutable release artifacts and should be used by installed deployments.
 - Two moving channel tags (Claude-Code-style soak model — both **final-only**):
   - GHCR `latest` → moved to the newest **final** release **immediately**, by the `publish-release` job (after all version-tagged images exist and the GitHub release is undrafted).
-  - GHCR `stable` → moved to the newest final release **baked ≥ the soak window** (default 7 days), by the **scheduled** `promote-stable.yml` workflow — *not* on release. The conservative default; the `${DECEPTICON_VERSION:-stable}` compose fallback resolves here.
+  - GHCR `stable` → moved to the newest final release **baked ≥ the soak window** (default 7 days), by the **scheduled** `promote-stable.yml` workflow — *not* on release. The conservative default; the `${RAPTIX_VERSION:-stable}` compose fallback resolves here.
 - Pre-releases use SemVer suffixes such as `v1.1.0-rc.1`, stay marked as GitHub pre-releases, and move **neither** channel tag (the channels never auto-select them).
 - Bug fixes ship as new patch releases. Do not rebuild or rewrite an existing version tag.
 

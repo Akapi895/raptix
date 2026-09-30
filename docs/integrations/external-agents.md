@@ -1,22 +1,22 @@
 # External agents — OpenClaw & Hermes
 
-Decepticon ships an **engagement MCP server** so external agent runtimes can
+Raptix ships an **engagement MCP server** so external agent runtimes can
 drive it like its CLI — from a phone, via those agents' chat channels. It
 exposes the full interactive loop over the Model Context Protocol: discover and
 resume engagements, launch one, **steer it by chatting**, **watch progress**,
 inspect the OPPLAN, and pull findings.
 
-This makes Decepticon usable from
+This makes Raptix usable from
 [OpenClaw](https://github.com/openclaw/openclaw) and
 [Hermes](https://github.com/NousResearch/hermes-agent).
 
 ```
-OpenClaw / Hermes  ──MCP──▶  decepticon-mcp  ──LangGraph SDK──▶  Decepticon server
+OpenClaw / Hermes  ──MCP──▶  decepticon-mcp  ──LangGraph SDK──▶  Raptix server
    (chat / phone)              (bridge)         (HTTP :2024)        (16 agents, RoE, KG)
 ```
 
 The bridge is a thin control plane. The red-team work runs inside the
-Decepticon LangGraph server (full RoE enforcement, sandbox, knowledge-graph
+Raptix LangGraph server (full RoE enforcement, sandbox, knowledge-graph
 persistence); the MCP layer translates tool calls into LangGraph runs
 (`decepticon.mcp_server`) and reads persisted transcript/state/findings back.
 
@@ -41,18 +41,18 @@ Every tool is keyed by the `thread_id` returned from `decepticon_start_engagemen
 ## 1. Install + run
 
 ```bash
-# Install Decepticon with the MCP server extra
+# Install Raptix with the MCP server extra
 pip install 'decepticon[mcp]'        # or: uv sync --extra mcp
 
-# Start the Decepticon LangGraph server (one of):
+# Start the Raptix LangGraph server (one of):
 langgraph dev                        # dev server on http://localhost:2024
 # or the Docker stack — see docs/deployment
 
 # Smoke-test the bridge over stdio (Ctrl-C to exit):
-DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport stdio
+RAPTIX_SKIP_BOOT=1 decepticon-mcp --transport stdio
 ```
 
-> **`DECEPTICON_SKIP_BOOT=1`** — always set this for the bridge. It drives a
+> **`RAPTIX_SKIP_BOOT=1`** — always set this for the bridge. It drives a
 > *separate* LangGraph server and never builds agents in-process, so the eager
 > framework boot is pure cold-start overhead. With it, the server starts in a
 > few seconds instead of ~30s; the wiring below sets it for you. It does **not**
@@ -60,7 +60,7 @@ DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport stdio
 > bridge talks to, not in this process, so skipping the in-process boot leaves
 > scope enforcement untouched.
 
-The bridge connects to `DECEPTICON_API_URL` (default `http://localhost:2024`).
+The bridge connects to `RAPTIX_API_URL` (default `http://localhost:2024`).
 Override with `--langgraph-url` or the env var.
 
 ## 2. OpenClaw
@@ -70,16 +70,16 @@ Override with `--langgraph-url` or the env var.
 openclaw mcp set decepticon '{
   "command": "decepticon-mcp",
   "args": ["--transport", "stdio"],
-  "env": { "DECEPTICON_API_URL": "http://localhost:2024", "DECEPTICON_SKIP_BOOT": "1" }
+  "env": { "RAPTIX_API_URL": "http://localhost:2024", "RAPTIX_SKIP_BOOT": "1" }
 }'
 
 # Install the agent skill (clone the repo first, then point at the skill dir)
-openclaw skills install ./Decepticon/integrations/agent-skills/decepticon --as decepticon --global
+openclaw skills install ./Raptix/integrations/agent-skills/decepticon --as decepticon --global
 openclaw gateway restart
 ```
 
 Now message your OpenClaw agent (dashboard or any connected channel, e.g.
-Telegram for phone): *"Start a Decepticon recon engagement against
+Telegram for phone): *"Start a Raptix recon engagement against
 `https://test.example.com` — scope only that host — then watch it and summarise
 findings."* The agent calls `decepticon_start_engagement`, polls
 `decepticon_transcript`, and reports findings.
@@ -93,13 +93,13 @@ mcp_servers:
     command: decepticon-mcp
     args: ["--transport", "stdio"]
     env:
-      DECEPTICON_API_URL: "http://localhost:2024"
-      DECEPTICON_SKIP_BOOT: "1"
+      RAPTIX_API_URL: "http://localhost:2024"
+      RAPTIX_SKIP_BOOT: "1"
 ```
 
 ```bash
 # Install the skill for Hermes (copy the skill folder into Hermes' skills dir)
-cp -r ./Decepticon/integrations/agent-skills/decepticon ~/.hermes/skills/red-teaming/decepticon
+cp -r ./Raptix/integrations/agent-skills/decepticon ~/.hermes/skills/red-teaming/decepticon
 ```
 
 Restart Hermes; the `decepticon` skill and `decepticon_*` tools become available.
@@ -145,8 +145,8 @@ invalid `Authorization: Bearer` token gets a 401 before any tool runs).
 environment, never from argv:
 
 ```bash
-DECEPTICON_MCP_TOKEN=$(openssl rand -hex 32) \
-DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport streamable-http \
+RAPTIX_MCP_TOKEN=$(openssl rand -hex 32) \
+RAPTIX_SKIP_BOOT=1 decepticon-mcp --transport streamable-http \
   --host 0.0.0.0 --port 8765 --langgraph-url http://decepticon-host:2024
 ```
 
@@ -158,7 +158,7 @@ bearer JWT's signature, `iss`, and `aud` against your identity provider's JWKS
 June-2025 spec prescribes for remote servers:
 
 ```bash
-DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport streamable-http \
+RAPTIX_SKIP_BOOT=1 decepticon-mcp --transport streamable-http \
   --host 0.0.0.0 --port 8765 --langgraph-url http://decepticon-host:2024 \
   --issuer https://issuer.example.com --audience decepticon-mcp \
   --jwks-uri https://issuer.example.com/.well-known/jwks.json \
@@ -170,7 +170,7 @@ Point the agent's MCP client at `http://<bridge-host>:8765/mcp`. Loopback
 
 ## Authorization
 
-Engagements run under Decepticon's Rules-of-Engagement enforcement. The calling
+Engagements run under Raptix's Rules-of-Engagement enforcement. The calling
 agent **must** pass scope (in / out of scope) in the `instruction` argument and
 only target assets the operator is authorized to test. See the bundled
 `integrations/agent-skills/decepticon/SKILL.md` for the agent-facing contract.

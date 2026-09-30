@@ -142,7 +142,7 @@ class TestFallbackExecution:
         msg = str(excinfo.value)
         assert fallbacks[-1].model_name in msg
         assert "rate limit" in msg.lower()
-        assert "DECEPTICON_AUTH_PRIORITY" in msg
+        assert "RAPTIX_AUTH_PRIORITY" in msg
         # And the original transport-shaped error is preserved as the cause
         # — otherwise we'd be papering over the real failure.
         assert isinstance(excinfo.value.__cause__, RateLimitError)

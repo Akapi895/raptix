@@ -9,9 +9,9 @@
 #   CHANNEL              — Update channel (default: stable):
 #                            stable — newest final release baked >= SOAK days
 #                            latest — newest final release, immediately
-#   DECEPTICON_STABLE_SOAK_DAYS — stable soak window (default: 7)
+#   RAPTIX_STABLE_SOAK_DAYS — stable soak window (default: 7)
 #   VERSION              — Install a specific version (overrides CHANNEL)
-#   DECEPTICON_HOME      — Install directory (default: ~/.decepticon)
+#   RAPTIX_HOME      — Install directory (default: ~/.decepticon)
 #   SKIP_PULL            — Skip Docker image pull (default: false)
 # ─────────────────────────────────────────────────────────────────────
 
@@ -33,7 +33,7 @@ case "$CHANNEL" in
     *) CHANNEL="stable" ;;
 esac
 # Days the stable channel waits before adopting a final release.
-STABLE_SOAK_DAYS="${DECEPTICON_STABLE_SOAK_DAYS:-7}"
+STABLE_SOAK_DAYS="${RAPTIX_STABLE_SOAK_DAYS:-7}"
 RAW_BASE="https://raw.githubusercontent.com/$REPO/$BRANCH"
 # release asset base — same host every install, used for binary +
 # checksum manifests. raw.githubusercontent.com hosts the source-tree
@@ -64,9 +64,9 @@ preflight() {
     fi
 
     # Container runtime — Docker (preferred) OR Podman 4.4+ (compose v2
-    # compatible). Honor explicit DECEPTICON_CONTAINER_RUNTIME override
+    # compatible). Honor explicit RAPTIX_CONTAINER_RUNTIME override
     # if the user is on a non-default setup (e.g. nerdctl, Rancher Desktop).
-    local rt="${DECEPTICON_CONTAINER_RUNTIME:-}"
+    local rt="${RAPTIX_CONTAINER_RUNTIME:-}"
     if [[ -z "$rt" ]]; then
         if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             rt="docker"
@@ -77,11 +77,11 @@ preflight() {
             echo -e "${DIM}Install one of:${NC}"
             echo -e "${DIM}  Docker:  ${NC}https://docs.docker.com/get-docker/"
             echo -e "${DIM}  Podman:  ${NC}https://podman.io/docs/installation"
-            echo -e "${DIM}  …or set DECEPTICON_CONTAINER_RUNTIME=nerdctl${NC}"
+            echo -e "${DIM}  …or set RAPTIX_CONTAINER_RUNTIME=nerdctl${NC}"
             exit 1
         fi
     elif ! command -v "$rt" >/dev/null 2>&1 || ! "$rt" info >/dev/null 2>&1; then
-        error "Error: DECEPTICON_CONTAINER_RUNTIME=$rt requested but unusable."
+        error "Error: RAPTIX_CONTAINER_RUNTIME=$rt requested but unusable."
         exit 1
     fi
     info "Container runtime: $rt"
@@ -130,11 +130,11 @@ assert_sha256() {
     local file="$1" expected="$2" label="$3"
     if [[ -z "$expected" ]]; then
         error "Integrity check failed: no checksum recorded for $label."
-        error "The release at v${DECEPTICON_VERSION} predates checksum verification."
+        error "The release at v${RAPTIX_VERSION} predates checksum verification."
         error "Either install a newer release (>=1.0.27) or set"
-        error "  DECEPTICON_SKIP_VERIFY=1   to explicitly opt out (NOT recommended)."
-        [[ "${DECEPTICON_SKIP_VERIFY:-}" == "1" ]] || exit 1
-        warn "  → skipping verification because DECEPTICON_SKIP_VERIFY=1."
+        error "  RAPTIX_SKIP_VERIFY=1   to explicitly opt out (NOT recommended)."
+        [[ "${RAPTIX_SKIP_VERIFY:-}" == "1" ]] || exit 1
+        warn "  → skipping verification because RAPTIX_SKIP_VERIFY=1."
         return
     fi
     local actual
@@ -192,7 +192,7 @@ print(best or "")
 
 resolve_version() {
     if [[ -n "${VERSION:-}" ]]; then
-        DECEPTICON_VERSION="$VERSION"
+        RAPTIX_VERSION="$VERSION"
         return
     fi
 
@@ -212,12 +212,12 @@ resolve_version() {
 
     if [[ -z "$resolved" ]]; then
         # No releases at all — fall back to the moving channel image tag.
-        DECEPTICON_VERSION="$CHANNEL"
+        RAPTIX_VERSION="$CHANNEL"
         info "No releases found, using the :$CHANNEL image tag."
     else
-        DECEPTICON_VERSION="$resolved"
+        RAPTIX_VERSION="$resolved"
         # Pin config downloads to the release tag (not the moving main branch)
-        RAW_BASE="https://raw.githubusercontent.com/$REPO/v$DECEPTICON_VERSION"
+        RAW_BASE="https://raw.githubusercontent.com/$REPO/v$RAPTIX_VERSION"
     fi
 }
 
@@ -236,22 +236,22 @@ download_files() {
     curl -fsSL "$RAW_BASE/.env.example" -o "$install_dir/.env.example"
 
     # Existing .env (upgrade path) — preserve user's keys, just ensure
-    # DECEPTICON_HOME points at the current install dir.
+    # RAPTIX_HOME points at the current install dir.
     if [[ -f "$install_dir/.env" ]]; then
-        if ! grep -q "^DECEPTICON_HOME=" "$install_dir/.env" 2>/dev/null; then
-            echo "DECEPTICON_HOME=$install_dir" >> "$install_dir/.env"
+        if ! grep -q "^RAPTIX_HOME=" "$install_dir/.env" 2>/dev/null; then
+            echo "RAPTIX_HOME=$install_dir" >> "$install_dir/.env"
         fi
         # Record the update channel so future `decepticon update` runs and
         # the launch-time self-update track the same stream. An existing
         # value is preserved (the user's prior choice wins).
-        if ! grep -q "^DECEPTICON_CHANNEL=" "$install_dir/.env" 2>/dev/null; then
-            echo "DECEPTICON_CHANNEL=$CHANNEL" >> "$install_dir/.env"
+        if ! grep -q "^RAPTIX_CHANNEL=" "$install_dir/.env" 2>/dev/null; then
+            echo "RAPTIX_CHANNEL=$CHANNEL" >> "$install_dir/.env"
         fi
         info ".env already exists, preserving your configuration."
     else
         info "No .env yet — run 'decepticon onboard' to create one."
         if [[ "$CHANNEL" == "latest" ]]; then
-            info "After onboarding, set DECEPTICON_CHANNEL=latest in .env to keep tracking the latest channel."
+            info "After onboarding, set RAPTIX_CHANNEL=latest in .env to keep tracking the latest channel."
         fi
     fi
 
@@ -270,7 +270,7 @@ download_files() {
     verify_config_manifest "$install_dir"
 
     # Version marker
-    echo "$DECEPTICON_VERSION" > "$install_dir/.version"
+    echo "$RAPTIX_VERSION" > "$install_dir/.version"
 }
 
 # Download config-checksums.txt for the resolved release tag, then verify
@@ -279,7 +279,7 @@ download_files() {
 # release job (.github/workflows/release.yml).
 verify_config_manifest() {
     local install_dir="$1"
-    if [[ "$DECEPTICON_VERSION" == "latest" || "$DECEPTICON_VERSION" == "stable" ]]; then
+    if [[ "$RAPTIX_VERSION" == "latest" || "$RAPTIX_VERSION" == "stable" ]]; then
         # resolve_version's fallback path. No release tag → no manifest.
         # We already abort the launcher download in that branch, so this
         # path is only hit when someone runs the installer with branch-
@@ -287,15 +287,15 @@ verify_config_manifest() {
         warn "No release tag resolved — skipping config manifest verification."
         return
     fi
-    local manifest_url="$RELEASE_BASE/v${DECEPTICON_VERSION}/config-checksums.txt"
+    local manifest_url="$RELEASE_BASE/v${RAPTIX_VERSION}/config-checksums.txt"
     local manifest="$install_dir/.config-checksums.txt"
     if ! curl -fsSL "$manifest_url" -o "$manifest" 2>/dev/null; then
-        error "Failed to download config-checksums.txt from release v${DECEPTICON_VERSION}."
+        error "Failed to download config-checksums.txt from release v${RAPTIX_VERSION}."
         error "  url: $manifest_url"
         error "Release predates checksum verification (<1.0.27) — refusing to install."
-        error "Either install a newer release, or opt out with DECEPTICON_SKIP_VERIFY=1."
-        [[ "${DECEPTICON_SKIP_VERIFY:-}" == "1" ]] || exit 1
-        warn "Skipping config manifest verification (DECEPTICON_SKIP_VERIFY=1)."
+        error "Either install a newer release, or opt out with RAPTIX_SKIP_VERIFY=1."
+        [[ "${RAPTIX_SKIP_VERIFY:-}" == "1" ]] || exit 1
+        warn "Skipping config manifest verification (RAPTIX_SKIP_VERIFY=1)."
         return
     fi
     info "Verifying configuration files against release manifest..."
@@ -338,7 +338,7 @@ create_launcher() {
 
     local binary_name="decepticon-${os}-${arch}"
 
-    if [[ "$DECEPTICON_VERSION" == "latest" || "$DECEPTICON_VERSION" == "stable" ]]; then
+    if [[ "$RAPTIX_VERSION" == "latest" || "$RAPTIX_VERSION" == "stable" ]]; then
         error "Could not resolve a release version automatically."
         error "Set VERSION explicitly with a tag from:"
         error "  https://github.com/$REPO/releases"
@@ -346,10 +346,10 @@ create_launcher() {
         exit 1
     fi
 
-    local download_url="$RELEASE_BASE/v${DECEPTICON_VERSION}/${binary_name}"
+    local download_url="$RELEASE_BASE/v${RAPTIX_VERSION}/${binary_name}"
     info "Downloading launcher binary ($binary_name)..."
     if ! curl -fsSL "$download_url" -o "$bin_dir/decepticon" 2>/dev/null; then
-        error "No launcher binary for ${os}/${arch} in v${DECEPTICON_VERSION}."
+        error "No launcher binary for ${os}/${arch} in v${RAPTIX_VERSION}."
         error "Supported targets: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64."
         error "If you need another target, please open an issue."
         exit 1
@@ -368,16 +368,16 @@ create_launcher() {
 # our binary, and compare. Aborts on mismatch.
 verify_launcher_binary() {
     local binary_path="$1" binary_name="$2"
-    local checksums_url="$RELEASE_BASE/v${DECEPTICON_VERSION}/checksums.txt"
+    local checksums_url="$RELEASE_BASE/v${RAPTIX_VERSION}/checksums.txt"
     local tmp
     tmp=$(mktemp)
     if ! curl -fsSL "$checksums_url" -o "$tmp" 2>/dev/null; then
         rm -f "$tmp"
-        error "Failed to download checksums.txt from release v${DECEPTICON_VERSION}."
+        error "Failed to download checksums.txt from release v${RAPTIX_VERSION}."
         error "Release predates checksum verification (<1.0.27) — refusing to install."
-        error "Either install a newer release, or opt out with DECEPTICON_SKIP_VERIFY=1."
-        [[ "${DECEPTICON_SKIP_VERIFY:-}" == "1" ]] || exit 1
-        warn "Skipping launcher binary verification (DECEPTICON_SKIP_VERIFY=1)."
+        error "Either install a newer release, or opt out with RAPTIX_SKIP_VERIFY=1."
+        [[ "${RAPTIX_SKIP_VERIFY:-}" == "1" ]] || exit 1
+        warn "Skipping launcher binary verification (RAPTIX_SKIP_VERIFY=1)."
         return
     fi
     local expected
@@ -490,10 +490,10 @@ pull_images() {
     info "Pulling Docker images (this may take a few minutes)..."
     # No --env-file: .env doesn't exist yet (onboard hasn't run). All
     # ${VAR} interpolations in docker-compose.yml have :-defaults, and we
-    # inject DECEPTICON_VERSION/HOME explicitly so the image tags resolve.
+    # inject RAPTIX_VERSION/HOME explicitly so the image tags resolve.
     (cd "$install_dir" && \
-        DECEPTICON_VERSION="$DECEPTICON_VERSION" \
-        DECEPTICON_HOME="$install_dir" \
+        RAPTIX_VERSION="$RAPTIX_VERSION" \
+        RAPTIX_HOME="$install_dir" \
         docker compose --profile cli pull) || {
         warn "Warning: Failed to pull some images."
         info "You can pull them manually later: decepticon update"
@@ -502,7 +502,7 @@ pull_images() {
 
 # ── Main ──────────────────────────────────────────────────────────
 main() {
-    local install_dir="${DECEPTICON_HOME:-$HOME/.decepticon}"
+    local install_dir="${RAPTIX_HOME:-$HOME/.decepticon}"
     local bin_dir="$HOME/.local/bin"
 
 
@@ -518,7 +518,7 @@ main() {
 
     mkdir -p "$install_dir"
 
-    info "Installing Decepticon $DECEPTICON_VERSION"
+    info "Installing Decepticon $RAPTIX_VERSION"
     info "Directory: $install_dir"
     echo ""
 

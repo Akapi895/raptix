@@ -41,7 +41,7 @@ var (
 // graph compilation can still be in progress, so this functional probe is the
 // only signal that the agent is actually callable.
 //
-// DECEPTICON_STARTUP_TIMEOUT_SECONDS overrides LangGraphTimeout for slow
+// RAPTIX_STARTUP_TIMEOUT_SECONDS overrides LangGraphTimeout for slow
 // environments where graph compile is the long pole.
 func CheckLangGraph(env map[string]string) error {
 	port := config.Get(env, "LANGGRAPH_PORT", DefaultLangGraphPort)
@@ -53,7 +53,7 @@ func CheckLangGraph(env map[string]string) error {
 	})
 
 	timeout := LangGraphTimeout
-	if v := os.Getenv("DECEPTICON_STARTUP_TIMEOUT_SECONDS"); v != "" {
+	if v := os.Getenv("RAPTIX_STARTUP_TIMEOUT_SECONDS"); v != "" {
 		if n, err := strconv.Atoi(v); err == nil && n > 0 {
 			timeout = time.Duration(n) * time.Second
 		}

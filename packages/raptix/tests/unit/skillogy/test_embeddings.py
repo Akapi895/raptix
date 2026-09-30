@@ -19,16 +19,16 @@ from raptix.skills.engine import embeddings
 @pytest.fixture(autouse=True)
 def _isolated_env(tmp_path: Any, monkeypatch: pytest.MonkeyPatch) -> None:
     """Each test starts with no proxy and a private, empty disk cache."""
-    monkeypatch.delenv("DECEPTICON_LLM__PROXY_URL", raising=False)
-    monkeypatch.delenv("DECEPTICON_LLM__PROXY_API_KEY", raising=False)
-    monkeypatch.delenv("DECEPTICON_SKILLOGY_EMBED_MODEL", raising=False)
-    monkeypatch.delenv("DECEPTICON_SKILLOGY_EMBED_DIM", raising=False)
-    monkeypatch.setenv("DECEPTICON_SKILLOGY_EMBED_CACHE", str(tmp_path / "embed-cache"))
+    monkeypatch.delenv("RAPTIX_LLM__PROXY_URL", raising=False)
+    monkeypatch.delenv("RAPTIX_LLM__PROXY_API_KEY", raising=False)
+    monkeypatch.delenv("RAPTIX_SKILLOGY_EMBED_MODEL", raising=False)
+    monkeypatch.delenv("RAPTIX_SKILLOGY_EMBED_DIM", raising=False)
+    monkeypatch.setenv("RAPTIX_SKILLOGY_EMBED_CACHE", str(tmp_path / "embed-cache"))
 
 
 def _set_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("DECEPTICON_LLM__PROXY_URL", "http://litellm:4000/")
-    monkeypatch.setenv("DECEPTICON_LLM__PROXY_API_KEY", "sk-test")
+    monkeypatch.setenv("RAPTIX_LLM__PROXY_URL", "http://litellm:4000/")
+    monkeypatch.setenv("RAPTIX_LLM__PROXY_API_KEY", "sk-test")
 
 
 # --- availability / config -------------------------------------------------
@@ -47,14 +47,14 @@ def test_available_with_proxy(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_embed_dim_defaults_and_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
     assert embeddings.embed_model() == "openai/text-embedding-3-small"
     assert embeddings.embed_dim() == 1536
-    monkeypatch.setenv("DECEPTICON_SKILLOGY_EMBED_MODEL", "text-embedding-3-large")
+    monkeypatch.setenv("RAPTIX_SKILLOGY_EMBED_MODEL", "text-embedding-3-large")
     assert embeddings.embed_dim() == 3072
     # explicit dim wins for an unknown model
-    monkeypatch.setenv("DECEPTICON_SKILLOGY_EMBED_MODEL", "some-private-model")
-    monkeypatch.setenv("DECEPTICON_SKILLOGY_EMBED_DIM", "256")
+    monkeypatch.setenv("RAPTIX_SKILLOGY_EMBED_MODEL", "some-private-model")
+    monkeypatch.setenv("RAPTIX_SKILLOGY_EMBED_DIM", "256")
     assert embeddings.embed_dim() == 256
     # unknown model, no explicit dim → fallback
-    monkeypatch.delenv("DECEPTICON_SKILLOGY_EMBED_DIM")
+    monkeypatch.delenv("RAPTIX_SKILLOGY_EMBED_DIM")
     assert embeddings.embed_dim() == 1536
 
 

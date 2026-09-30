@@ -2,7 +2,7 @@
 
 PR 1 of the MHBench integration: wires the upstream
 [MHBench](https://github.com/PurpleAILAB/MHBench) topology orchestrator into
-Decepticon's benchmark harness so Decepticon agents can be scored against
+Raptix's benchmark harness so Raptix agents can be scored against
 multi-host network attack scenarios.
 
 This guide is intended for operators with an OpenStack tenant. MHBench is
@@ -14,7 +14,7 @@ The work splits cleanly into two categories:
 - **Category 1 — environment setup.** Operator side. Stand up the OpenStack
   tenant, run MHBench's own bootstrap scripts, compile the topology once.
   Use the upstream recommended path verbatim.
-- **Category 2 — Decepticon side.** Provider-side automation. The provider
+- **Category 2 — Raptix side.** Provider-side automation. The provider
   drives ``main.py setup`` / ``teardown`` per challenge, discovers the
   attacker floating IP via the OpenStack API, plants a deterministic flag
   using upstream's ``addFlag.yml`` playbook, stages the SSH key into the
@@ -31,7 +31,7 @@ hand-tuned spec environments and 30 generated topologies.
 Follow the path the MHBench authors recommend. The repo ships
 `openstack_setup/setup_kolla.sh` and a `local.conf` for DevStack, so we use
 those directly. **All commands in this section run on the operator's
-machine, not inside the Decepticon container stack.**
+machine, not inside the Raptix container stack.**
 
 ### 1.1 OpenStack tenant
 
@@ -57,7 +57,7 @@ openstack keypair create --public-key ~/perry_key.pub perry_key
 
 ### 1.2 Initialize the submodule + install MHBench deps
 
-From the Decepticon repo root:
+From the Raptix repo root:
 
 ```bash
 git submodule update --init --recursive benchmark/MHBench
@@ -68,7 +68,7 @@ uv sync
 The submodule is pinned to the `decepticon` branch of
 `PurpleAILAB/MHBench`. As of PR 1 the branch has zero patches on top of
 upstream `bsinger98/MHBench@main` — it exists as a stable place to land
-Decepticon-side adjustments later.
+Raptix-side adjustments later.
 
 ### 1.3 Prepare Glance images and quotas
 
@@ -104,7 +104,7 @@ cp benchmark/MHBench/config/config_example.json \
 $EDITOR benchmark/MHBench/config/config.json
 ```
 
-What must be filled for Decepticon's PR 1 scoring path:
+What must be filled for Raptix's PR 1 scoring path:
 
 - **`openstack_config`** — all six fields. Match what you set in 1.1.
   `ssh_key_path` must point at the private key on the operator's host
@@ -114,7 +114,7 @@ What must be filled for Decepticon's PR 1 scoring path:
   Caldera callbacks. Use the OpenStack floating-IP gateway or the
   Caldera host's public IP. If you skip Caldera (see below), any
   syntactically valid IP is fine.
-- **`elastic_config` / `c2_config`** — placeholders are OK. Decepticon
+- **`elastic_config` / `c2_config`** — placeholders are OK. Raptix
   attacks via SSH directly from the Kali jump host, so the Caldera C2
   callback the topology installs is never actually exercised. See
   ["Caldera is optional"](#caldera-is-optional) below for why.
@@ -148,14 +148,14 @@ MHBench's `compile` and `setup` run
 The `&`+`disown` makes the call fire-and-forget — if no Caldera server is
 listening at `$caldera_ip:8888`, `curl` returns an empty body, the
 backgrounded `splunkd` invocation silently fails, and the Ansible step
-still returns 0. Decepticon does not use the Caldera C2 channel, so
+still returns 0. Raptix does not use the Caldera C2 channel, so
 "unreachable Caldera" is the steady-state operating mode for this
 integration. If you do want parity with the Incalmo paper baselines,
 stand up Caldera on `external_ip:8888` independently.
 
 ---
 
-## Category 2 — Decepticon side (what the provider does automatically)
+## Category 2 — Raptix side (what the provider does automatically)
 
 Once Category 1 is complete and you have a `benchmark/MHBench/config/config.json`
 with valid OpenStack creds and a compiled topology, running a benchmark is
@@ -196,7 +196,7 @@ Per-challenge, the provider does the following — no operator intervention:
 6. **`SetupResult.target_url` = bare attacker floating IP** (no
    `ssh://` scheme) so the agent's existing tooling reasons about it
    like any other target. The SSH contract lives in `MHBENCH_CONNECT.md`.
-7. **Decepticon agent runs the engagement.** Same harness path as
+7. **Raptix agent runs the engagement.** Same harness path as
    XBOW — agent reads the engagement context, opens a session, recons
    the network, pivots, and ideally captures the planted flag.
 8. **`provider.evaluate`** — requires a **literal** match against the
@@ -229,7 +229,7 @@ Per-challenge, the provider does the following — no operator intervention:
   every PR. The provider's pure / file-IO surface (topology registry,
   config parsing, flag-target selection, external-mode artefact
   staging, evaluator) **is** covered by unit tests in
-  `packages/decepticon/tests/unit/benchmark/test_mhbench_provider.py`
+  `packages/raptix/tests/unit/benchmark/test_mhbench_provider.py`
   and runs inside `make test-local` and `make quality`. The subprocess
   layers (OpenStack discovery, `ansible-playbook addFlag.yml`,
   `main.py setup`/`teardown`) still require an operator with a live

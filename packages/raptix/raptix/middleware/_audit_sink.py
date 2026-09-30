@@ -11,7 +11,7 @@ appended as JSON Lines. Each record carries:
     fields PLUS ``prev_hash``. Chaining means tampering with record N
     invalidates every record after N.
   * ``hmac`` - HMAC-SHA-256 of ``hash`` using a key from
-    ``DECEPTICON_AUDIT_HMAC_KEY``. When set, the HMAC binds the chain
+    ``RAPTIX_AUDIT_HMAC_KEY``. When set, the HMAC binds the chain
     to an operator-held secret; without the secret a tamperer can
     recompute the chain but cannot forge a valid hmac. When unset,
     the field is ``""`` and integrity rests only on the chain.
@@ -82,7 +82,7 @@ class RoEAuditSink:
     Construction kwargs:
         path: filesystem path. Parent directory is created on demand.
         hmac_key: optional bytes for the HMAC binder. When ``None``,
-            falls back to ``os.environ['DECEPTICON_AUDIT_HMAC_KEY']``
+            falls back to ``os.environ['RAPTIX_AUDIT_HMAC_KEY']``
             (utf-8 encoded). When that's also unset, ``hmac`` field
             stays empty in every record.
     """
@@ -97,7 +97,7 @@ class RoEAuditSink:
         if isinstance(self.path, str):
             self.path = Path(self.path)
         if self.hmac_key is None:
-            env_key = os.environ.get("DECEPTICON_AUDIT_HMAC_KEY")
+            env_key = os.environ.get("RAPTIX_AUDIT_HMAC_KEY")
             if env_key:
                 self.hmac_key = env_key.encode("utf-8")
 

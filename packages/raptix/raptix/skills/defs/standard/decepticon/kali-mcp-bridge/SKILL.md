@@ -21,7 +21,7 @@ Drive Kali Linux tools (nmap, gobuster, sqlmap, metasploit, hydra, john, nikto, 
 
 ```
 ┌──────────────┐    MCP stdio    ┌─────────────────┐    HTTP/REST    ┌──────────────────┐
-│ Decepticon   │ ◄────────────► │ client.py (MCP) │ ◄────────────► │ server.py (Kali) │
+│ Raptix   │ ◄────────────► │ client.py (MCP) │ ◄────────────► │ server.py (Kali) │
 │ (AI agent)   │                 │ on attacker host│                 │ Flask API :5000  │
 └──────────────┘                 └─────────────────┘                 └──────────────────┘
 ```
@@ -68,7 +68,7 @@ ssh -N -o ServerAliveInterval=60 -o ServerAliveCountMax=3 \
     -L 5000:localhost:5000 <user>@<KALI_IP>
 ```
 
-### 2c. MCP client registration (Claude Desktop / Decepticon)
+### 2c. MCP client registration (Claude Desktop / Raptix)
 
 `claude_desktop_config.json` or equivalent:
 ```json

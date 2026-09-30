@@ -88,12 +88,12 @@ def _norm(addrs: Iterable[str]) -> tuple[str, ...]:
 # web_search would silently fail. Mirrors the provider allowlist in
 # raptix.sandbox_web.providers (kept as a small literal here to avoid the
 # middleware importing the in-sandbox engine). Extend/replace via
-# DECEPTICON_OSINT_EGRESS_HOSTS (comma-separated); set it empty to disable.
+# RAPTIX_OSINT_EGRESS_HOSTS (comma-separated); set it empty to disable.
 _DEFAULT_OSINT_EGRESS_HOSTS = ("duckduckgo.com", "html.duckduckgo.com")
 
 
 def osint_egress_hosts() -> tuple[str, ...]:
-    raw = os.environ.get("DECEPTICON_OSINT_EGRESS_HOSTS")
+    raw = os.environ.get("RAPTIX_OSINT_EGRESS_HOSTS")
     if raw is None:
         return _DEFAULT_OSINT_EGRESS_HOSTS
     return tuple(h.strip() for h in raw.split(",") if h.strip())

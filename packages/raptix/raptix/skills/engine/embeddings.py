@@ -3,7 +3,7 @@
 Used by BOTH boot-ingest (embed each ``:Skill`` once into Neo4j) and query-time
 ``find_skill`` (embed the query for the vector search). Embeddings go through
 the **litellm proxy** the agents already use — the skillogy container must be
-given ``DECEPTICON_LLM__PROXY_URL`` + ``DECEPTICON_LLM__PROXY_API_KEY`` (see
+given ``RAPTIX_LLM__PROXY_URL`` + ``RAPTIX_LLM__PROXY_API_KEY`` (see
 ADR-0011 §"Skillogy↔litellm coupling").
 
 Degradation contract: this module **never raises** to its callers. When the
@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 
 # OSS default mirrors the KG layer's default (see kg_internal migration V002:
 # "OpenAI text-embedding-3-small (1536) as the OSS default"). Override with
-# DECEPTICON_SKILLOGY_EMBED_MODEL; set the matching dim if the model differs.
+# RAPTIX_SKILLOGY_EMBED_MODEL; set the matching dim if the model differs.
 DEFAULT_EMBED_MODEL = "openai/text-embedding-3-small"
 _KNOWN_DIMS: dict[str, int] = {
     "openai/text-embedding-3-small": 1536,
@@ -69,16 +69,16 @@ _QUERY_REQUEST_TIMEOUT = 5.0
 
 
 def embed_model() -> str:
-    return os.environ.get("DECEPTICON_SKILLOGY_EMBED_MODEL", DEFAULT_EMBED_MODEL).strip()
+    return os.environ.get("RAPTIX_SKILLOGY_EMBED_MODEL", DEFAULT_EMBED_MODEL).strip()
 
 
 def embed_dim() -> int:
     """Embedding dimension for the configured model (drives the vector index DDL).
 
-    An explicit ``DECEPTICON_SKILLOGY_EMBED_DIM`` wins (for models not in the
+    An explicit ``RAPTIX_SKILLOGY_EMBED_DIM`` wins (for models not in the
     table); otherwise look the model up, else fall back to 1536.
     """
-    raw = os.environ.get("DECEPTICON_SKILLOGY_EMBED_DIM", "").strip()
+    raw = os.environ.get("RAPTIX_SKILLOGY_EMBED_DIM", "").strip()
     if raw:
         try:
             value = int(raw)
@@ -91,8 +91,8 @@ def embed_dim() -> int:
 
 def _proxy() -> tuple[str, str] | None:
     """``(base_url, api_key)`` for the litellm proxy, or ``None`` if unconfigured."""
-    base = os.environ.get("DECEPTICON_LLM__PROXY_URL", "").strip()
-    key = os.environ.get("DECEPTICON_LLM__PROXY_API_KEY", "").strip()
+    base = os.environ.get("RAPTIX_LLM__PROXY_URL", "").strip()
+    key = os.environ.get("RAPTIX_LLM__PROXY_API_KEY", "").strip()
     if not base or not key:
         return None
     return base.rstrip("/"), key
@@ -104,7 +104,7 @@ def available() -> bool:
 
 
 def _cache_dir() -> Path:
-    raw = os.environ.get("DECEPTICON_SKILLOGY_EMBED_CACHE", "").strip()
+    raw = os.environ.get("RAPTIX_SKILLOGY_EMBED_CACHE", "").strip()
     path = Path(raw) if raw else Path(tempfile.gettempdir()) / "decepticon-skillogy-embed"
     return path
 

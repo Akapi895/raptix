@@ -10,7 +10,7 @@ this module ships the one-release migration shim:
     ``raptix.core.logging``) keep working via the per-file
     re-export modules in Phase 1.
   * ``register_legacy_imports()`` (default-on, opt-out via
-    ``DECEPTICON_NO_COMPAT=1``) raises ``DeprecationWarning`` once on
+    ``RAPTIX_NO_COMPAT=1``) raises ``DeprecationWarning`` once on
     first call to surface the migration list in test logs.
 
 The shim is REMOVED at ``2.0.0``. Phase 2 of the redesign rewrites
@@ -44,7 +44,7 @@ def register_legacy_imports() -> None:
     """Enable the Phase 1 compat shim layer.
 
     Default-on via ``raptix.__init__`` (Phase 2 wires this);
-    opt-out via ``DECEPTICON_NO_COMPAT=1`` in the environment. Idempotent —
+    opt-out via ``RAPTIX_NO_COMPAT=1`` in the environment. Idempotent —
     repeated calls are no-ops.
 
     Emits a single ``DeprecationWarning`` per process listing the
@@ -55,7 +55,7 @@ def register_legacy_imports() -> None:
     global _REGISTERED
     if _REGISTERED:
         return
-    if os.environ.get("DECEPTICON_NO_COMPAT", "").strip().lower() in {"1", "true", "yes"}:
+    if os.environ.get("RAPTIX_NO_COMPAT", "").strip().lower() in {"1", "true", "yes"}:
         _REGISTERED = True
         return
 

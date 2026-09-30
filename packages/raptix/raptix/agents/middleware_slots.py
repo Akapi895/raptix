@@ -128,7 +128,7 @@ def _make_engagement_context(**_: Any):
 def _make_tried_edges(*, role: str, **_: Any):
     import os
 
-    if os.environ.get("DECEPTICON_KG_TRIED_EDGES", "0").strip().lower() not in {
+    if os.environ.get("RAPTIX_KG_TRIED_EDGES", "0").strip().lower() not in {
         "1",
         "true",
         "yes",
@@ -154,11 +154,11 @@ def _make_roe_guardrail(*, role: str, **_: Any):
     The sink path defaults to ``<workspace>/audit/roe-decisions.jsonl``
     and is resolved lazily on first tool call (workspace_path is not
     yet hydrated at slot-build time). Operators can pin a path with
-    ``DECEPTICON_ROE_AUDIT_PATH``.
+    ``RAPTIX_ROE_AUDIT_PATH``.
     """
     import os
 
-    sink = build_default_sink(os.environ.get("DECEPTICON_WORKSPACE_PATH"))
+    sink = build_default_sink(os.environ.get("RAPTIX_WORKSPACE_PATH"))
     return RoEGuardrailMiddleware(sink=sink)
 
 
@@ -175,7 +175,7 @@ def _make_untrusted_output(*, role: str, **_: Any):
     """
     import os
 
-    ledger = os.environ.get("DECEPTICON_QUARANTINE_LEDGER")
+    ledger = os.environ.get("RAPTIX_QUARANTINE_LEDGER")
     return UntrustedOutputMiddleware(quarantine_path=ledger)
 
 
@@ -248,7 +248,7 @@ def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
         KGStoreUnavailableError,
     )
 
-    if sandbox is None or os.environ.get("DECEPTICON_KG_AUTOINGEST", "0").lower() not in {
+    if sandbox is None or os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {
         "1",
         "true",
         "yes",
@@ -407,12 +407,12 @@ def _make_prompt_injection_shield(**_: Any):
     return PromptInjectionShieldMiddleware(append_policy_to_system=False)
 
 
-# Falsy spellings of DECEPTICON_HITL__ENABLED — anything else enables HITL.
+# Falsy spellings of RAPTIX_HITL__ENABLED — anything else enables HITL.
 _HITL_FALSY: frozenset[str] = frozenset({"", "0", "false", "no", "off"})
 
 
 def _make_hitl(*, role: str, **_: Any):
-    """Operator-approval gate — opt-in via ``DECEPTICON_HITL__ENABLED``.
+    """Operator-approval gate — opt-in via ``RAPTIX_HITL__ENABLED``.
 
     Returns None (slot skipped) unless the env flag is truthy, so default
     engagements never freeze waiting on a human. The transport is left
@@ -425,10 +425,10 @@ def _make_hitl(*, role: str, **_: Any):
     """
     import os
 
-    if os.environ.get("DECEPTICON_HITL__ENABLED", "").strip().lower() in _HITL_FALSY:
+    if os.environ.get("RAPTIX_HITL__ENABLED", "").strip().lower() in _HITL_FALSY:
         return None
 
-    eid = os.environ.get("DECEPTICON_ENGAGEMENT_ID", "default-engagement")
+    eid = os.environ.get("RAPTIX_ENGAGEMENT_ID", "default-engagement")
     return HITLApprovalMiddleware(
         DEFAULT_HIGH_IMPACT_POLICY,
         transport=None,

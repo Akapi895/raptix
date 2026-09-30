@@ -48,7 +48,7 @@ def _write_driver(
             # shutdown handler even gets installed. The handler under test
             # doesn't need any of that boot state, so opt out.
             import os
-            os.environ["DECEPTICON_SKIP_BOOT"] = "1"
+            os.environ["RAPTIX_SKIP_BOOT"] = "1"
 
             import signal
             import sys
@@ -81,9 +81,9 @@ def _write_driver(
 
 
 def _run_driver(script: Path, *, timeout: float = 30.0) -> subprocess.CompletedProcess:
-    # Belt-and-suspenders: also pass DECEPTICON_SKIP_BOOT via env so the
+    # Belt-and-suspenders: also pass RAPTIX_SKIP_BOOT via env so the
     # import-time guard fires even if the script template ever drifts.
-    env = {**os.environ, "DECEPTICON_SKIP_BOOT": "1"}
+    env = {**os.environ, "RAPTIX_SKIP_BOOT": "1"}
     return subprocess.run(
         [sys.executable, str(script)],
         capture_output=True,

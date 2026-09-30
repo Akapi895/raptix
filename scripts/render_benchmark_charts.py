@@ -43,7 +43,7 @@ LEVELS = ["L1 (Easy)", "L2 (Medium)", "L3 (Hard)"]
 
 # Decepticon — all-level pass/fail (L1+L2+L3 combined view).
 # L2 sweep still has 1 outstanding fail; L3 still has 1 outstanding fail.
-DECEPTICON_PIE = [
+RAPTIX_PIE = [
     ("L1 passed (45 / 45)", 45, "#27ae60"),
     ("L2 passed (50 / 51)", 50, "#2ecc71"),
     ("L3 passed (7 / 8)", 7, "#16a085"),
@@ -183,11 +183,11 @@ def chart_difficulty() -> Path:
 
 
 def chart_decepticon_donut() -> Path:
-    labels = [r[0] for r in DECEPTICON_PIE]
-    sizes = [r[1] for r in DECEPTICON_PIE]
-    colors = [r[2] for r in DECEPTICON_PIE]
+    labels = [r[0] for r in RAPTIX_PIE]
+    sizes = [r[1] for r in RAPTIX_PIE]
+    colors = [r[2] for r in RAPTIX_PIE]
     total = sum(sizes)
-    passed = sum(n for lab, n, _ in DECEPTICON_PIE if "Not solved" not in lab)
+    passed = sum(n for lab, n, _ in RAPTIX_PIE if "Not solved" not in lab)
 
     fig, ax = plt.subplots(figsize=(8, 7))
     wedges, _ = ax.pie(

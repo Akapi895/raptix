@@ -14,19 +14,19 @@ HexStrike). It is deliberately additive and self-contained:
 
 Configuration
 -------------
-Operators set ``DECEPTICON_MCP__SERVERS`` to a JSON object mapping
+Operators set ``RAPTIX_MCP__SERVERS`` to a JSON object mapping
 server-name -> per-server config::
 
-    DECEPTICON_MCP__SERVERS='{
+    RAPTIX_MCP__SERVERS='{
         "kali":    {"url": "http://localhost:8000/mcp",
                     "transport": "streamable_http"},
         "hex":     {"command": "uvx", "args": ["hexstrike"],
                     "transport": "stdio"}
     }'
 
-The env-var naming matches the existing ``DECEPTICON_<SECTION>__<KEY>``
-convention used by ``DECEPTICON_BUDGET__*``, ``DECEPTICON_RUNTIME__*``,
-``DECEPTICON_LLM__*``.
+The env-var naming matches the existing ``RAPTIX_<SECTION>__<KEY>``
+convention used by ``RAPTIX_BUDGET__*``, ``RAPTIX_RUNTIME__*``,
+``RAPTIX_LLM__*``.
 """
 
 from __future__ import annotations
@@ -43,7 +43,7 @@ from raptix_core.utils.logging import get_logger
 log = get_logger("tools.mcp")
 
 #: Env var that carries the JSON server map. Empty / unset => MCP off.
-ENV_SERVERS = "DECEPTICON_MCP__SERVERS"
+ENV_SERVERS = "RAPTIX_MCP__SERVERS"
 
 #: Transports recognised by ``langchain-mcp-adapters``' MultiServerMCPClient.
 Transport = Literal["streamable_http", "sse", "stdio"]
@@ -157,7 +157,7 @@ def _parse_one(name: str, entry: Any) -> MCPServerConfig | None:
 
 
 def parse_mcp_servers_env(raw: str | None) -> tuple[MCPServerConfig, ...]:
-    """Parse the JSON value of ``DECEPTICON_MCP__SERVERS``.
+    """Parse the JSON value of ``RAPTIX_MCP__SERVERS``.
 
     Empty / whitespace / unset input returns ``()``. Malformed JSON
     logs a warning and also returns ``()`` (never raises — a busted

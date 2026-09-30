@@ -202,8 +202,8 @@ def create_decepticon_agent(
 #
 # Construction is guarded by ``is_bundle_enabled("standard")`` for
 # symmetry with the plugins bundle's main agent. The OSS default
-# (``DECEPTICON_PLUGINS`` unset or set to ``standard``) keeps this on;
-# if a user explicitly disables standard (e.g. ``DECEPTICON_PLUGINS=plugins``)
+# (``RAPTIX_PLUGINS`` unset or set to ``standard``) keeps this on;
+# if a user explicitly disables standard (e.g. ``RAPTIX_PLUGINS=plugins``)
 # the graph is skipped to avoid empty-subagent crashes.
 if is_bundle_enabled("standard"):
     graph = create_decepticon_agent()

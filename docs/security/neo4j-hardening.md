@@ -5,7 +5,7 @@
 
 ## TL;DR
 
-The Decepticon `neo4j` container hosts the engagement knowledge graph
+The Raptix `neo4j` container hosts the engagement knowledge graph
 and is **dual-homed across `sandbox-net` and `decepticon-net`** so the
 orchestrator on the management plane can read findings written by
 agents from inside the sandbox. That bridge is by design - but it also
@@ -84,7 +84,7 @@ patterns.
 ### What's still allowed
 
 Each entry in the allowlist below was kept because it's used by at
-least one tool in `packages/decepticon/decepticon/tools/research/`:
+least one tool in `packages/raptix/raptix/tools/research/`:
 
 | Procedure family | Why we keep it |
 |------------------|----------------|
@@ -115,11 +115,11 @@ least one tool in `packages/decepticon/decepticon/tools/research/`:
    - `apoc.spatial.geocode` (HTTP egress)
    - `apoc.metrics.*` (host-info disclosure)
 4. Update the client-side allowlist in
-   `packages/decepticon/decepticon/tools/research/_apoc_safety.py` to
+   `packages/raptix/raptix/tools/research/_apoc_safety.py` to
    match - the safety check rejects any procedure not in **both**
    server config and client allowlist.
 5. Extend the test in
-   `packages/decepticon/tests/unit/research/test_apoc_safety.py` to
+   `packages/raptix/tests/unit/research/test_apoc_safety.py` to
    verify the procedure now passes.
 
 ## Client-level controls
@@ -169,7 +169,7 @@ Plan:
   with write access to only that engagement's nodes (via label predicate
   or - on Enterprise - a dedicated database).
 - The `Neo4jConfig.from_env()` factory at
-  `packages/decepticon/decepticon/tools/research/neo4j_store.py` already
+  `packages/raptix/raptix/tools/research/neo4j_store.py` already
   takes a configurable user, so the wiring is in place.
 - Rotate the sandbox token on engagement close.
 

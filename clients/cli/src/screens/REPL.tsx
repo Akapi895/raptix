@@ -60,7 +60,7 @@ export function REPL({ initialMessage, resumeThread }: REPLProps) {
   // Increment to force <Static> re-mount on session switch (resets its internal render history)
   const [sessionKey, setSessionKey] = useState(0);
 
-  // Auto-submit initial message when DECEPTICON_INITIAL_MESSAGE env is set
+  // Auto-submit initial message when RAPTIX_INITIAL_MESSAGE env is set
   const autoStarted = useRef(false);
   useEffect(() => {
     if (!initialMessage || autoStarted.current) return;

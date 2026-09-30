@@ -50,7 +50,7 @@ def _resolve_workspace(workspace_path: str, config: RunnableConfig | None) -> st
     from_config = configurable.get("workspace_path") if isinstance(configurable, dict) else None
     if from_config:
         return str(from_config)
-    return os.environ.get("DECEPTICON_WORKSPACE_PATH", "/workspace")
+    return os.environ.get("RAPTIX_WORKSPACE_PATH", "/workspace")
 
 
 def node_techniques(node: Node) -> set[str]:
@@ -202,7 +202,7 @@ def blue_cell_scan(
 
     Args:
         workspace_path: Engagement workspace root holding ``.sessions/``.
-            Defaults to the runnable config / ``DECEPTICON_WORKSPACE_PATH`` /
+            Defaults to the runnable config / ``RAPTIX_WORKSPACE_PATH`` /
             ``/workspace``.
         rules_path: JSONL file or directory of detection rules. Defaults to
             the bundled baseline ruleset; point this at the Detector's output

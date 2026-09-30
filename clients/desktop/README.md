@@ -1,7 +1,7 @@
-# Decepticon Desktop (deprecated)
+# Raptix Desktop (deprecated)
 
 > **Deprecated.** The Electron desktop shell is no longer the recommended
-> way to run Decepticon. Use the interactive CLI (`decepticon`) or the web
+> way to run Raptix. Use the interactive CLI (`decepticon`) or the web
 > dashboard instead. This package is kept for existing users and will be
 > removed in a future release.
 

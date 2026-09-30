@@ -103,7 +103,7 @@ def _build_proxied_llm(model_id: str, original: BaseChatModel) -> BaseChatModel:
     Mirrors the configuration the LLMFactory uses for the baked-in
     primary so streaming, tool calling, and fallback semantics match.
     Resolves the proxy config via :meth:`LLMFactory._resolve_proxy_config`
-    so we honour ``DECEPTICON_LLM__PROXY_URL`` (e.g. ``http://litellm:4000``
+    so we honour ``RAPTIX_LLM__PROXY_URL`` (e.g. ``http://litellm:4000``
     inside the langgraph container) instead of falling back to the bare
     pydantic defaults — which point at ``http://localhost:4000`` and
     bind to the langgraph container itself, where nothing listens. See

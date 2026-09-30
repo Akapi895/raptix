@@ -13,7 +13,7 @@ class PluginConflictWarning(UserWarning):
     """Two plugins registered the same key (tool / slot / role / skill path).
 
     The warning is non-fatal by default — last-write-wins resolution
-    keeps the registry usable. Strict mode (``DECEPTICON_STRICT_REGISTRY=1``)
+    keeps the registry usable. Strict mode (``RAPTIX_STRICT_REGISTRY=1``)
     converts these warnings to exceptions in Phase 2 framework boot.
 
     Attributes:

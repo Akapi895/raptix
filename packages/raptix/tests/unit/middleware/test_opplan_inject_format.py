@@ -90,21 +90,21 @@ class TestOpplanMaxRowsDefault:
 
 class TestOpplanMaxRowsEnv:
     def test_valid_int_env_sets_max_rows(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_OPPLAN_MAX_ROWS", "5")
+        monkeypatch.setenv("RAPTIX_OPPLAN_MAX_ROWS", "5")
         importlib.reload(opplan_mod)
         try:
             assert opplan_mod._OPPLAN_MAX_ROWS == 5
         finally:
-            monkeypatch.delenv("DECEPTICON_OPPLAN_MAX_ROWS", raising=False)
+            monkeypatch.delenv("RAPTIX_OPPLAN_MAX_ROWS", raising=False)
             importlib.reload(opplan_mod)
 
     def test_invalid_env_falls_back_to_40(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_OPPLAN_MAX_ROWS", "notint")
+        monkeypatch.setenv("RAPTIX_OPPLAN_MAX_ROWS", "notint")
         importlib.reload(opplan_mod)
         try:
             assert opplan_mod._OPPLAN_MAX_ROWS == 40
         finally:
-            monkeypatch.delenv("DECEPTICON_OPPLAN_MAX_ROWS", raising=False)
+            monkeypatch.delenv("RAPTIX_OPPLAN_MAX_ROWS", raising=False)
             importlib.reload(opplan_mod)
 
 

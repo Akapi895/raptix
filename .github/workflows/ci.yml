@@ -156,7 +156,7 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       # The compose files reference a project-local ``.env`` for the
       # runtime stack. CI doesn't ship one (and shouldn't — keys live
-      # in the user's $DECEPTICON_HOME), so the validator runs against
+      # in the user's $RAPTIX_HOME), so the validator runs against
       # an empty .env so it only catches YAML/structure drift.
       - name: Stub empty .env for config-only validation
         run: touch .env
@@ -408,13 +408,13 @@ jobs:
             macOS-X64)   npm install --no-save @rollup/rollup-darwin-x64 ;;
             Windows-X64) npm install --no-save @rollup/rollup-win32-x64-msvc ;;
           esac
-      # @decepticon/streaming now ships as a built ESM package
+      # @raptix/streaming now ships as a built ESM package
       # (package.json main → dist/index.js). cli's tsc + web's next build
       # resolve the workspace by walking that main, so the dist has to
       # exist before either downstream build runs.
       - name: Build shared streaming workspace
         if: needs.changes.outputs.cli == 'true'
-        run: npm run build --workspace=@decepticon/streaming
+        run: npm run build --workspace=@raptix/streaming
       - if: needs.changes.outputs.cli == 'true'
         run: cd clients/cli && npm run typecheck
       - name: Run CLI tests
@@ -487,7 +487,7 @@ jobs:
         run: npm ci
       - name: Build shared streaming workspace
         if: needs.changes.outputs.web == 'true'
-        run: npm run build --workspace=@decepticon/streaming
+        run: npm run build --workspace=@raptix/streaming
       - name: Generate Prisma client
         if: needs.changes.outputs.web == 'true'
         run: cd clients/web && npx prisma generate
@@ -498,7 +498,7 @@ jobs:
         if: needs.changes.outputs.web == 'true'
         run: cd clients/web && npm run build
         env:
-          NEXT_PUBLIC_DECEPTICON_EDITION: oss
+          NEXT_PUBLIC_RAPTIX_EDITION: oss
 
   # Go launcher: vet + test. Mirrors what release.yml runs before GoReleaser
   # builds the binaries on tag push, so a broken `go test ./...` is caught

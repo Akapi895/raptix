@@ -1,10 +1,10 @@
 # decepticon
 
-Opinionated agent framework that builds on top of `decepticon-core`. Carries
+Opinionated agent framework that builds on top of `raptix-core`. Carries
 the 16 agent factories, 11 middleware implementations, tools, LLM router,
 sandbox HTTP client, and skill catalogs.
 
-This package lives in the workspace under `packages/decepticon/`. See the
+This package lives in the workspace under `packages/raptix/`. See the
 umbrella [`README.md`](../../README.md) for the project overview,
 [`docs/`](../../docs/) for architecture, and the spec at
 [`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](../../docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md)
@@ -16,4 +16,4 @@ for the rationale behind the core/framework/sdk split.
 pip install decepticon
 ```
 
-Plugin authors should depend on `decepticon-sdk` instead.
+Plugin authors should depend on `raptix-sdk` instead.

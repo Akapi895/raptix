@@ -40,10 +40,10 @@ func TestLoadEnv(t *testing.T) {
 	content := `# Comment
 ANTHROPIC_API_KEY=sk-ant-real-key
 OPENAI_API_KEY=your-openai-key-here
-DECEPTICON_MODEL_PROFILE=eco
+RAPTIX_MODEL_PROFILE=eco
 
 # Another comment
-DECEPTICON_AUTH_PRIORITY=anthropic_api
+RAPTIX_AUTH_PRIORITY=anthropic_api
 `
 	if err := os.WriteFile(envFile, []byte(content), 0o644); err != nil {
 		t.Fatal(err)
@@ -57,8 +57,8 @@ DECEPTICON_AUTH_PRIORITY=anthropic_api
 	if env["ANTHROPIC_API_KEY"] != "sk-ant-real-key" {
 		t.Errorf("ANTHROPIC_API_KEY = %q, want %q", env["ANTHROPIC_API_KEY"], "sk-ant-real-key")
 	}
-	if env["DECEPTICON_MODEL_PROFILE"] != "eco" {
-		t.Errorf("DECEPTICON_MODEL_PROFILE = %q, want %q", env["DECEPTICON_MODEL_PROFILE"], "eco")
+	if env["RAPTIX_MODEL_PROFILE"] != "eco" {
+		t.Errorf("RAPTIX_MODEL_PROFILE = %q, want %q", env["RAPTIX_MODEL_PROFILE"], "eco")
 	}
 	if len(env) != 4 {
 		t.Errorf("len(env) = %d, want 4", len(env))
@@ -157,10 +157,10 @@ func TestValidateAuth_OAuthSubscriptions(t *testing.T) {
 		configDir string
 		fileFmt   string
 	}{
-		{"DECEPTICON_AUTH_GEMINI", "GEMINI_SESSION_COOKIES", "gemini", "tokens.json"},
-		{"DECEPTICON_AUTH_COPILOT", "COPILOT_REFRESH_TOKEN", "copilot", "tokens.json"},
-		{"DECEPTICON_AUTH_GROK", "GROK_SESSION_TOKEN", "grok", "tokens.json"},
-		{"DECEPTICON_AUTH_PERPLEXITY", "PERPLEXITY_SESSION_TOKEN", "perplexity", "tokens.json"},
+		{"RAPTIX_AUTH_GEMINI", "GEMINI_SESSION_COOKIES", "gemini", "tokens.json"},
+		{"RAPTIX_AUTH_COPILOT", "COPILOT_REFRESH_TOKEN", "copilot", "tokens.json"},
+		{"RAPTIX_AUTH_GROK", "GROK_SESSION_TOKEN", "grok", "tokens.json"},
+		{"RAPTIX_AUTH_PERPLEXITY", "PERPLEXITY_SESSION_TOKEN", "perplexity", "tokens.json"},
 	}
 	for _, c := range cases {
 		t.Run(c.envName+" via env", func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestValidateAuth_ChatGPTNativeOAuth(t *testing.T) {
 		home := t.TempDir()
 		t.Setenv("HOME", home)
 		t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
-		env := map[string]string{"DECEPTICON_AUTH_CHATGPT": "true"}
+		env := map[string]string{"RAPTIX_AUTH_CHATGPT": "true"}
 		if err := ValidateAuth(env); err != nil {
 			t.Errorf("expected native ChatGPT OAuth to pass without launcher-side token input: %v", err)
 		}
@@ -234,7 +234,7 @@ func TestValidateAuth_OllamaLocal(t *testing.T) {
 
 	t.Run("priority+base passes", func(t *testing.T) {
 		env := map[string]string{
-			"DECEPTICON_AUTH_PRIORITY": "ollama_local",
+			"RAPTIX_AUTH_PRIORITY": "ollama_local",
 			"OLLAMA_API_BASE":          "http://host.docker.internal:11434",
 		}
 		if err := ValidateAuth(env); err != nil {
@@ -243,7 +243,7 @@ func TestValidateAuth_OllamaLocal(t *testing.T) {
 	})
 
 	t.Run("priority alone without base fails with helpful message", func(t *testing.T) {
-		env := map[string]string{"DECEPTICON_AUTH_PRIORITY": "ollama_local"}
+		env := map[string]string{"RAPTIX_AUTH_PRIORITY": "ollama_local"}
 		err := ValidateAuth(env)
 		if err == nil {
 			t.Fatal("expected error when ollama_local is selected but base url is missing")
@@ -268,7 +268,7 @@ func TestValidateAuth_OAuth(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
 	// OAuth requested, no API keys configured.
-	env := map[string]string{"DECEPTICON_AUTH_CLAUDE_CODE": "true"}
+	env := map[string]string{"RAPTIX_AUTH_CLAUDE_CODE": "true"}
 
 	// OAuth path without credentials file → error
 	if err := ValidateAuth(env); err == nil {
@@ -332,7 +332,7 @@ func TestValidateAuth_OAuthFallsBackToAPIKey(t *testing.T) {
 	t.Setenv("HOME", home)
 	t.Setenv("USERPROFILE", home) // Windows: os.UserHomeDir reads USERPROFILE
 	env := map[string]string{
-		"DECEPTICON_AUTH_CLAUDE_CODE": "true",
+		"RAPTIX_AUTH_CLAUDE_CODE": "true",
 		"ANTHROPIC_API_KEY":           "sk-ant-api03-realkeythatislongenough",
 	}
 	if err := ValidateAuth(env); err != nil {
@@ -361,7 +361,7 @@ func TestWriteEnv(t *testing.T) {
 	template := `# Config
 ANTHROPIC_API_KEY=your-anthropic-key-here
 OPENAI_API_KEY=your-openai-key-here
-DECEPTICON_MODEL_PROFILE=eco
+RAPTIX_MODEL_PROFILE=eco
 `
 	if err := os.WriteFile(tmplPath, []byte(template), 0o644); err != nil {
 		t.Fatal(err)
@@ -369,7 +369,7 @@ DECEPTICON_MODEL_PROFILE=eco
 
 	values := map[string]string{
 		"ANTHROPIC_API_KEY":        "sk-real-key",
-		"DECEPTICON_MODEL_PROFILE": "max",
+		"RAPTIX_MODEL_PROFILE": "max",
 	}
 
 	if err := WriteEnv(tmplPath, outPath, values); err != nil {
@@ -387,8 +387,8 @@ DECEPTICON_MODEL_PROFILE=eco
 	if env["OPENAI_API_KEY"] != "your-openai-key-here" {
 		t.Errorf("OPENAI_API_KEY should stay as template value")
 	}
-	if env["DECEPTICON_MODEL_PROFILE"] != "max" {
-		t.Errorf("DECEPTICON_MODEL_PROFILE = %q, want %q", env["DECEPTICON_MODEL_PROFILE"], "max")
+	if env["RAPTIX_MODEL_PROFILE"] != "max" {
+		t.Errorf("RAPTIX_MODEL_PROFILE = %q, want %q", env["RAPTIX_MODEL_PROFILE"], "max")
 	}
 }
 
@@ -396,18 +396,18 @@ func TestTelemetryConsentWritesEnv(t *testing.T) {
 	// The onboard wizard writes the telemetry consent choice via the embedded
 	// env.example. Verify the key is in the template and the choice lands.
 	out := filepath.Join(t.TempDir(), ".env")
-	if err := WriteEnvFromEmbed(out, map[string]string{"DECEPTICON_TELEMETRY": "research"}); err != nil {
+	if err := WriteEnvFromEmbed(out, map[string]string{"RAPTIX_TELEMETRY": "research"}); err != nil {
 		t.Fatalf("WriteEnvFromEmbed() error: %v", err)
 	}
 	env, err := LoadEnv(out)
 	if err != nil {
 		t.Fatalf("LoadEnv() error: %v", err)
 	}
-	if env["DECEPTICON_TELEMETRY"] != "research" {
-		t.Errorf("DECEPTICON_TELEMETRY = %q, want %q", env["DECEPTICON_TELEMETRY"], "research")
+	if env["RAPTIX_TELEMETRY"] != "research" {
+		t.Errorf("RAPTIX_TELEMETRY = %q, want %q", env["RAPTIX_TELEMETRY"], "research")
 	}
-	if _, ok := env["DECEPTICON_TELEMETRY_ENDPOINT"]; !ok {
-		t.Error("DECEPTICON_TELEMETRY_ENDPOINT missing from embedded template")
+	if _, ok := env["RAPTIX_TELEMETRY_ENDPOINT"]; !ok {
+		t.Error("RAPTIX_TELEMETRY_ENDPOINT missing from embedded template")
 	}
 }
 
@@ -437,7 +437,7 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 	out := filepath.Join(t.TempDir(), ".env")
 	// Simulate a pre-#706 .env: has telemetry mode but NOT the endpoint,
 	// plus a real user value that must be preserved untouched.
-	seed := "DECEPTICON_TELEMETRY=off\nANTHROPIC_API_KEY=sk-real-user-key\n"
+	seed := "RAPTIX_TELEMETRY=off\nANTHROPIC_API_KEY=sk-real-user-key\n"
 	if err := os.WriteFile(out, []byte(seed), 0o600); err != nil {
 		t.Fatalf("seed .env: %v", err)
 	}
@@ -446,8 +446,8 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 	if err != nil {
 		t.Fatalf("BackfillEnvFromEmbed() error: %v", err)
 	}
-	if !strings.Contains(strings.Join(added, ","), "DECEPTICON_TELEMETRY_ENDPOINT") {
-		t.Errorf("expected DECEPTICON_TELEMETRY_ENDPOINT in added keys, got %v", added)
+	if !strings.Contains(strings.Join(added, ","), "RAPTIX_TELEMETRY_ENDPOINT") {
+		t.Errorf("expected RAPTIX_TELEMETRY_ENDPOINT in added keys, got %v", added)
 	}
 
 	env, err := LoadEnv(out)
@@ -455,12 +455,12 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 		t.Fatalf("LoadEnv() error: %v", err)
 	}
 	// New key backfilled from the template default.
-	if env["DECEPTICON_TELEMETRY_ENDPOINT"] == "" {
-		t.Error("DECEPTICON_TELEMETRY_ENDPOINT not backfilled")
+	if env["RAPTIX_TELEMETRY_ENDPOINT"] == "" {
+		t.Error("RAPTIX_TELEMETRY_ENDPOINT not backfilled")
 	}
 	// Existing values preserved exactly (never overwritten).
-	if env["DECEPTICON_TELEMETRY"] != "off" {
-		t.Errorf("DECEPTICON_TELEMETRY = %q, want preserved %q", env["DECEPTICON_TELEMETRY"], "off")
+	if env["RAPTIX_TELEMETRY"] != "off" {
+		t.Errorf("RAPTIX_TELEMETRY = %q, want preserved %q", env["RAPTIX_TELEMETRY"], "off")
 	}
 	if env["ANTHROPIC_API_KEY"] != "sk-real-user-key" {
 		t.Errorf("ANTHROPIC_API_KEY = %q, want preserved real key", env["ANTHROPIC_API_KEY"])
@@ -482,11 +482,11 @@ func TestBackfillEnvFromEmbed(t *testing.T) {
 
 func TestSetEnvKey(t *testing.T) {
 	out := filepath.Join(t.TempDir(), ".env")
-	if err := os.WriteFile(out, []byte("DECEPTICON_TELEMETRY=off\n# a comment\nFOO=bar\n"), 0o600); err != nil {
+	if err := os.WriteFile(out, []byte("RAPTIX_TELEMETRY=off\n# a comment\nFOO=bar\n"), 0o600); err != nil {
 		t.Fatalf("seed: %v", err)
 	}
 	// Replace an existing key.
-	if err := SetEnvKey(out, "DECEPTICON_TELEMETRY", "research"); err != nil {
+	if err := SetEnvKey(out, "RAPTIX_TELEMETRY", "research"); err != nil {
 		t.Fatalf("SetEnvKey replace: %v", err)
 	}
 	// Append a missing key.
@@ -497,8 +497,8 @@ func TestSetEnvKey(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadEnv: %v", err)
 	}
-	if env["DECEPTICON_TELEMETRY"] != "research" {
-		t.Errorf("DECEPTICON_TELEMETRY = %q, want research", env["DECEPTICON_TELEMETRY"])
+	if env["RAPTIX_TELEMETRY"] != "research" {
+		t.Errorf("RAPTIX_TELEMETRY = %q, want research", env["RAPTIX_TELEMETRY"])
 	}
 	if env["NEW_KEY"] != "val" {
 		t.Errorf("NEW_KEY = %q, want val", env["NEW_KEY"])
@@ -558,14 +558,14 @@ ANTHROPIC_API_KEY=your-anthropic-key-here
 }
 
 func TestDecepticonHome(t *testing.T) {
-	// With DECEPTICON_HOME set
-	t.Setenv("DECEPTICON_HOME", "/custom/path")
+	// With RAPTIX_HOME set
+	t.Setenv("RAPTIX_HOME", "/custom/path")
 	if got := DecepticonHome(); got != "/custom/path" {
 		t.Errorf("DecepticonHome() = %q, want /custom/path", got)
 	}
 
-	// Without DECEPTICON_HOME — falls back to ~/.decepticon
-	t.Setenv("DECEPTICON_HOME", "")
+	// Without RAPTIX_HOME — falls back to ~/.decepticon
+	t.Setenv("RAPTIX_HOME", "")
 	home := DecepticonHome()
 	if !filepath.IsAbs(home) {
 		t.Errorf("DecepticonHome() = %q, want absolute path", home)

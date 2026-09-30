@@ -362,8 +362,8 @@ def test_resolve_transport_distinct_per_workspace(tmp_path: Path):
 
 def test_resolve_transport_falls_back_to_env(tmp_path: Path, monkeypatch):
     """When the request carries no ``workspace_path``, fall back to
-    ``DECEPTICON_WORKSPACE_PATH``."""
-    monkeypatch.setenv("DECEPTICON_WORKSPACE_PATH", str(tmp_path))
+    ``RAPTIX_WORKSPACE_PATH``."""
+    monkeypatch.setenv("RAPTIX_WORKSPACE_PATH", str(tmp_path))
     mw = HITLApprovalMiddleware(policy=[], transport=None)
     transport = mw._resolve_transport(_Req("x", {}))
     assert transport._requests_path == tmp_path / "approvals" / "requests.jsonl"

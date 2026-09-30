@@ -31,7 +31,7 @@ strings /tmp/sample | grep -iE 'vmware|VirtualBox|qemu|xen'
 yara -r /opt/yara-rules/anti_debug.yar /tmp/sample
 ```
 
-Decepticon helper:
+Raptix helper:
 ```
 bin_anti_debug_scan("/tmp/sample")
 ```

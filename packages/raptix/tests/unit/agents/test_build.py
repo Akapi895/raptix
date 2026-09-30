@@ -6,7 +6,7 @@ These pin the contract the 16 agent factories rely on:
     overrides AND explicit kwargs, with explicit winning on conflict.
   - ``resolve_prompt_overrides`` merges plugin + explicit prompt patches.
   - Safety-critical slot/tool overrides raise ``SafetyOverrideViolation``
-    unless ``DECEPTICON_ALLOW_SAFETY_OVERRIDES=1`` is in the environment.
+    unless ``RAPTIX_ALLOW_SAFETY_OVERRIDES=1`` is in the environment.
   - ``PluginBundle.matches_role`` honors ``roles`` scoping.
 """
 
@@ -133,7 +133,7 @@ def test_resolve_overrides_merges_disable_from_plugin_and_explicit():
 def test_safety_gate_blocks_disabling_critical_tool(monkeypatch):
     """``ask_user_question`` is safety-critical — disabling it without
     the env gate raises."""
-    monkeypatch.delenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", raising=False)
+    monkeypatch.delenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", raising=False)
     with pytest.raises(build_module.SafetyOverrideViolation):
         build_module._check_safety_gate(
             role="soundwave",
@@ -147,7 +147,7 @@ def test_safety_gate_blocks_disabling_critical_tool(monkeypatch):
 def test_safety_gate_blocks_replacing_critical_slot(monkeypatch):
     """``engagement-context`` carries RoE scope — replacing it without
     the env gate raises."""
-    monkeypatch.delenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", raising=False)
+    monkeypatch.delenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", raising=False)
     with pytest.raises(build_module.SafetyOverrideViolation):
         build_module._check_safety_gate(
             role="recon",
@@ -159,9 +159,9 @@ def test_safety_gate_blocks_replacing_critical_slot(monkeypatch):
 
 
 def test_safety_gate_env_bypass(monkeypatch):
-    """``DECEPTICON_ALLOW_SAFETY_OVERRIDES=1`` lets safety-critical
+    """``RAPTIX_ALLOW_SAFETY_OVERRIDES=1`` lets safety-critical
     overrides through without raising."""
-    monkeypatch.setenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", "1")
+    monkeypatch.setenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", "1")
     # Should NOT raise
     build_module._check_safety_gate(
         role="soundwave",
@@ -175,7 +175,7 @@ def test_safety_gate_env_bypass(monkeypatch):
 def test_safety_gate_allows_non_critical_overrides(monkeypatch):
     """A non-critical slot like ``prompt-caching`` is safely disable-able
     without the env gate."""
-    monkeypatch.delenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", raising=False)
+    monkeypatch.delenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", raising=False)
     # Should NOT raise
     build_module._check_safety_gate(
         role="soundwave",
@@ -246,7 +246,7 @@ _HEAVY_SLOTS: set[MiddlewareSlot] = {MiddlewareSlot.SUMMARIZATION}
 
 def test_build_middleware_applies_plugin_slot_replacement(monkeypatch):
     """Plugin's ``replaced_middleware`` substitutes the slot factory."""
-    monkeypatch.setenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", "1")
+    monkeypatch.setenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", "1")
     sentinel = MagicMock(name="custom_skills_mw")
 
     def custom_factory(**_):
@@ -270,7 +270,7 @@ def test_build_middleware_applies_plugin_slot_replacement(monkeypatch):
 def test_build_middleware_disable_skips_slot(monkeypatch):
     """An explicit ``disabled_slots`` skip drops the slot's instance from
     the returned list."""
-    monkeypatch.delenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", raising=False)
+    monkeypatch.delenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", raising=False)
 
     with patch.object(build_module, "entry_points", return_value=[]):
         with patch.object(plugin_loader, "entry_points", return_value=[]):
@@ -305,7 +305,7 @@ def test_build_tools_dict_baseline_preserved():
 
 
 def test_build_tools_explicit_disable_drops_name(monkeypatch):
-    monkeypatch.setenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", "1")
+    monkeypatch.setenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", "1")
     baseline = {"keep": MagicMock(name="keep"), "drop": MagicMock(name="drop")}
     with patch.object(build_module, "entry_points", return_value=[]):
         with patch.object(plugin_loader, "entry_points", return_value=[]):
@@ -470,7 +470,7 @@ def _build_skills_stack():
 
 
 def test_build_middleware_keeps_skills_when_skillogy_disabled(monkeypatch):
-    """Explicit opt-out (``DECEPTICON_USE_SKILLOGY=0``): the stack
+    """Explicit opt-out (``RAPTIX_USE_SKILLOGY=0``): the stack
     carries the file-system SkillsMiddleware and no SkillogyMiddleware.
 
     Skillogy is on by default now (see ``raptix.middleware.skillogy._is_enabled``);
@@ -481,8 +481,8 @@ def test_build_middleware_keeps_skills_when_skillogy_disabled(monkeypatch):
     from raptix.middleware.skillogy import SkillogyMiddleware
     from raptix.middleware.skills import SkillsMiddleware
 
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "0")
-    monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "0")
+    monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
     result = _build_skills_stack()
 
     assert any(isinstance(mw, SkillsMiddleware) for mw in result)
@@ -490,12 +490,12 @@ def test_build_middleware_keeps_skills_when_skillogy_disabled(monkeypatch):
 
 
 def test_build_middleware_swaps_to_skillogy_when_enabled(monkeypatch):
-    """``DECEPTICON_USE_SKILLOGY=1``: SkillsMiddleware is replaced by
+    """``RAPTIX_USE_SKILLOGY=1``: SkillsMiddleware is replaced by
     SkillogyMiddleware in the built stack."""
     from raptix.middleware.skillogy import SkillogyMiddleware
     from raptix.middleware.skills import SkillsMiddleware
 
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
     result = _build_skills_stack()
 
     assert any(isinstance(mw, SkillogyMiddleware) for mw in result)
@@ -533,8 +533,8 @@ def _build_exploit_stack(**kwargs):
 def test_exploit_stack_contains_additive_wave2_slots(monkeypatch):
     """Every role gains event-logging + shield + budget; HITL stays out
     by default so engagements never freeze on a missing operator."""
-    monkeypatch.delenv("DECEPTICON_HITL__ENABLED", raising=False)
-    monkeypatch.delenv("DECEPTICON_ALLOW_SAFETY_OVERRIDES", raising=False)
+    monkeypatch.delenv("RAPTIX_HITL__ENABLED", raising=False)
+    monkeypatch.delenv("RAPTIX_ALLOW_SAFETY_OVERRIDES", raising=False)
     stack = _build_exploit_stack()
     assert any(isinstance(m, EventLogMiddleware) for m in stack)
     assert any(isinstance(m, PromptInjectionShieldMiddleware) for m in stack)
@@ -545,7 +545,7 @@ def test_exploit_stack_contains_additive_wave2_slots(monkeypatch):
 def test_exploit_stack_shield_does_not_double_inject_policy(monkeypatch):
     """The registered shield is built with ``append_policy_to_system=False``
     so it does not duplicate UNTRUSTED_OUTPUT's quarantine policy block."""
-    monkeypatch.delenv("DECEPTICON_HITL__ENABLED", raising=False)
+    monkeypatch.delenv("RAPTIX_HITL__ENABLED", raising=False)
     stack = _build_exploit_stack()
     shield = next(m for m in stack if isinstance(m, PromptInjectionShieldMiddleware))
     assert shield._append_policy is False
@@ -553,10 +553,10 @@ def test_exploit_stack_shield_does_not_double_inject_policy(monkeypatch):
 
 @pytest.mark.parametrize("flag", ["1", "true", "yes", "on"])
 def test_exploit_stack_includes_hitl_when_env_enabled(monkeypatch, tmp_path, flag):
-    monkeypatch.setenv("DECEPTICON_HITL__ENABLED", flag)
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_ID", "eng-test")
+    monkeypatch.setenv("RAPTIX_HITL__ENABLED", flag)
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_ID", "eng-test")
     # Workspace is no longer bound at build time — the transport is lazy.
-    monkeypatch.delenv("DECEPTICON_WORKSPACE_PATH", raising=False)
+    monkeypatch.delenv("RAPTIX_WORKSPACE_PATH", raising=False)
     stack = _build_exploit_stack()
     hitl = next(m for m in stack if isinstance(m, HITLApprovalMiddleware))
     # No build-time transport: nothing touches the filesystem until a
@@ -576,7 +576,7 @@ def test_exploit_stack_includes_hitl_when_env_enabled(monkeypatch, tmp_path, fla
 
 @pytest.mark.parametrize("flag", ["", "0", "false", "no", "off"])
 def test_hitl_absent_for_falsy_env(monkeypatch, flag):
-    monkeypatch.setenv("DECEPTICON_HITL__ENABLED", flag)
+    monkeypatch.setenv("RAPTIX_HITL__ENABLED", flag)
     stack = _build_exploit_stack()
     assert not any(isinstance(m, HITLApprovalMiddleware) for m in stack)
 
@@ -638,5 +638,5 @@ def test_hitl_is_safety_critical_and_additive_slots_are_not():
     # PROMPT_INJECTION_SHIELD is a deny-list defense over attacker-controlled
     # tool output and lives in every role's baseline — it MUST be safety-
     # critical so a plugin bundle can't disable it without an explicit
-    # DECEPTICON_ALLOW_SAFETY_OVERRIDES.
+    # RAPTIX_ALLOW_SAFETY_OVERRIDES.
     assert MiddlewareSlot.PROMPT_INJECTION_SHIELD in SAFETY_CRITICAL_SLOTS

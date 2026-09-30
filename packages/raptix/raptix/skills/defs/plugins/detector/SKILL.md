@@ -4,7 +4,7 @@ description: Stage 2 vulnerability detector playbook. Reads source around CANDID
 metadata:
   subdomain: orchestration
   when_to_use: "detector stage 2 vulnerability candidate vulnerability hypothesis read-only source-read pipeline"
-  upstream_ref: "Decepticon vulnresearch pipeline — stage 2 detector role"
+  upstream_ref: "Raptix vulnresearch pipeline — stage 2 detector role"
 ---
 
 # Detector Skill

@@ -32,7 +32,7 @@ def _json(data: Any) -> str:
 
 
 def _workspace() -> Path:
-    return Path(os.environ.get("DECEPTICON_ENGAGEMENT_WORKSPACE") or "/workspace")
+    return Path(os.environ.get("RAPTIX_ENGAGEMENT_WORKSPACE") or "/workspace")
 
 
 def _evidence_dir() -> Path:
@@ -45,7 +45,7 @@ def _evidence_root(workspace_path: str) -> Path:
 
 
 def _hmac_key() -> bytes | None:
-    env_key = os.environ.get("DECEPTICON_AUDIT_HMAC_KEY")
+    env_key = os.environ.get("RAPTIX_AUDIT_HMAC_KEY")
     return env_key.encode("utf-8") if env_key else None
 
 

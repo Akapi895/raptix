@@ -906,7 +906,7 @@ class TestEgressProvisioningHook:
 
     def test_provisions_by_default_for_enforce_mode(self, tmp_path: Path, monkeypatch) -> None:
         # No env set — egress provisioning is on by default.
-        monkeypatch.delenv("DECEPTICON_EGRESS_DISABLE", raising=False)
+        monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         sandbox = _FakeSandbox()
         monkeypatch.setattr("raptix.backends.factory.build_sandbox_backend", lambda: sandbox)
@@ -921,7 +921,7 @@ class TestEgressProvisioningHook:
         assert "10.0.0.0/24" in sandbox.pushed[0].allowed_cidrs
 
     def test_opt_out_env_disables_provisioning(self, tmp_path: Path, monkeypatch) -> None:
-        monkeypatch.setenv("DECEPTICON_EGRESS_DISABLE", "1")
+        monkeypatch.setenv("RAPTIX_EGRESS_DISABLE", "1")
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         calls: list = []
         monkeypatch.setattr(
@@ -933,7 +933,7 @@ class TestEgressProvisioningHook:
         assert calls == []
 
     def test_audit_mode_does_not_provision(self, tmp_path: Path, monkeypatch) -> None:
-        monkeypatch.delenv("DECEPTICON_EGRESS_DISABLE", raising=False)
+        monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "audit", "in_scope": ["10.0.0.0/24"]})
         calls: list = []
         monkeypatch.setattr(
@@ -945,7 +945,7 @@ class TestEgressProvisioningHook:
         assert calls == []
 
     def test_retries_after_provision_failure(self, tmp_path: Path, monkeypatch) -> None:
-        monkeypatch.delenv("DECEPTICON_EGRESS_DISABLE", raising=False)
+        monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         attempts: list = []
 
@@ -1174,17 +1174,17 @@ class TestTcidFallback:
 class TestBuildDefaultSink:
     def test_env_path_used(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         env_target = tmp_path / "env" / "ledger.jsonl"
-        monkeypatch.setenv("DECEPTICON_ROE_AUDIT_PATH", str(env_target))
+        monkeypatch.setenv("RAPTIX_ROE_AUDIT_PATH", str(env_target))
         sink = build_default_sink(str(tmp_path / "workspace"))
         assert sink is not None
         assert sink.path == env_target
 
     def test_no_env_no_workspace_returns_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("DECEPTICON_ROE_AUDIT_PATH", raising=False)
+        monkeypatch.delenv("RAPTIX_ROE_AUDIT_PATH", raising=False)
         assert build_default_sink(None) is None
 
     def test_workspace_path_default(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.delenv("DECEPTICON_ROE_AUDIT_PATH", raising=False)
+        monkeypatch.delenv("RAPTIX_ROE_AUDIT_PATH", raising=False)
         sink = build_default_sink(str(tmp_path))
         assert sink is not None
         assert sink.path == tmp_path / "audit" / "roe-decisions.jsonl"

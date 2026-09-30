@@ -180,7 +180,7 @@ def test_maybe_install_threads_role_acl_into_middleware(monkeypatch):
     calls ``maybe_install_skillogy(role="recon", skill_sources=None)``,
     which must inject a middleware whose backend calls carry the recon
     role's path-prefix allowlist."""
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
     backend = _RecordingBackend()
     monkeypatch.setattr("raptix.middleware.skillogy._backend_factory", lambda: backend)
     stack = [_StubSkillsMiddleware()]
@@ -196,7 +196,7 @@ def test_maybe_install_threads_role_acl_into_middleware(monkeypatch):
 def test_maybe_install_no_role_keeps_acl_unset(monkeypatch):
     """Standalone/library invocation — no role context, ACL stays off so
     the library's unrestricted backend behaviour is preserved."""
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
     backend = _RecordingBackend()
     monkeypatch.setattr("raptix.middleware.skillogy._backend_factory", lambda: backend)
     out = maybe_install_skillogy([_StubSkillsMiddleware()], role=None)

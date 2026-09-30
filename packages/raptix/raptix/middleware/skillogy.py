@@ -1,6 +1,6 @@
 """SkillogyMiddleware — Phase 1a Brain Anatomy thin wrapper around the
 skillogy service (Neo4j-backed). Replaces the file-system-backed
-SkillsMiddleware in agents wired with ``DECEPTICON_SKILL_BACKEND=
+SkillsMiddleware in agents wired with ``RAPTIX_SKILL_BACKEND=
 skillogy_brain``.
 
 Agent tool surface (Phase 1a, three tools — see Amendment v0.2.2)
@@ -136,11 +136,11 @@ _PHASE_FOR_ROLE: dict[str, str] = {
 
 
 def _resolve_skillogy_url() -> str:
-    return os.environ.get("DECEPTICON_SKILLOGY_URL", _DEFAULT_SKILLOGY_URL)
+    return os.environ.get("RAPTIX_SKILLOGY_URL", _DEFAULT_SKILLOGY_URL)
 
 
 def _resolve_skillogy_api_key() -> str | None:
-    return os.environ.get("DECEPTICON_SKILLOGY_API_KEY") or None
+    return os.environ.get("RAPTIX_SKILLOGY_API_KEY") or None
 
 
 _USE_SKILLOGY_FALSY: frozenset[str] = frozenset({"0", "false", "no", "off"})
@@ -150,14 +150,14 @@ def _is_enabled() -> bool:
     # Skillogy is the canonical skill-retrieval backend; the in-process
     # FilesystemBackend stays available as an explicit opt-out for
     # standalone library use and pytest. Treat an unset / blank
-    # ``DECEPTICON_USE_SKILLOGY`` as enabled; honor an explicit falsy
+    # ``RAPTIX_USE_SKILLOGY`` as enabled; honor an explicit falsy
     # value as a disable. Backward compat: the legacy
-    # ``DECEPTICON_SKILL_BACKEND=skillogy_brain`` rail still flips it on
-    # even when ``DECEPTICON_USE_SKILLOGY=0`` (explicit user request via
+    # ``RAPTIX_SKILL_BACKEND=skillogy_brain`` rail still flips it on
+    # even when ``RAPTIX_USE_SKILLOGY=0`` (explicit user request via
     # the new env name wins).
-    if os.environ.get("DECEPTICON_SKILL_BACKEND", "").strip().lower() == "skillogy_brain":
+    if os.environ.get("RAPTIX_SKILL_BACKEND", "").strip().lower() == "skillogy_brain":
         return True
-    raw = os.environ.get("DECEPTICON_USE_SKILLOGY", "").strip().lower()
+    raw = os.environ.get("RAPTIX_USE_SKILLOGY", "").strip().lower()
     return raw not in _USE_SKILLOGY_FALSY
 
 
@@ -318,9 +318,9 @@ class SkillogyMiddleware(AgentMiddleware):
     Activation: **on by default.** Skillogy is the canonical
     skill-retrieval backend; the in-process ``FilesystemBackend`` stays
     available as an explicit opt-out for standalone library use and
-    pytest via ``DECEPTICON_USE_SKILLOGY=0`` (or ``false`` / ``no`` /
-    ``off``). The legacy ``DECEPTICON_SKILL_BACKEND=skillogy_brain`` rail
-    still flips it on even when ``DECEPTICON_USE_SKILLOGY=0`` (explicit
+    pytest via ``RAPTIX_USE_SKILLOGY=0`` (or ``false`` / ``no`` /
+    ``off``). The legacy ``RAPTIX_SKILL_BACKEND=skillogy_brain`` rail
+    still flips it on even when ``RAPTIX_USE_SKILLOGY=0`` (explicit
     user request via the new env name wins). The agent factory's
     ``maybe_install_skillogy`` swaps ``SkillsMiddleware`` for this class
     and threads the agent's role through so the per-phase MoC summary

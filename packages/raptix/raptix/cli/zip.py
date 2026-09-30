@@ -31,7 +31,7 @@ EXIT_CONFIG = 2
 
 
 def _default_workspace() -> Path | None:
-    value = os.environ.get("DECEPTICON_ENGAGEMENT_WORKSPACE")
+    value = os.environ.get("RAPTIX_ENGAGEMENT_WORKSPACE")
     return Path(value) if value else None
 
 
@@ -56,7 +56,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Workspace root containing the engagements/ directory. "
-            "Defaults to $DECEPTICON_ENGAGEMENT_WORKSPACE."
+            "Defaults to $RAPTIX_ENGAGEMENT_WORKSPACE."
         ),
     )
     export.add_argument(
@@ -82,7 +82,7 @@ def _build_parser() -> argparse.ArgumentParser:
         default=None,
         help=(
             "Workspace root to restore into; the engagement lands under "
-            "<workspace>/engagements/<id>. Defaults to $DECEPTICON_ENGAGEMENT_WORKSPACE."
+            "<workspace>/engagements/<id>. Defaults to $RAPTIX_ENGAGEMENT_WORKSPACE."
         ),
     )
     imp.add_argument(
@@ -204,7 +204,7 @@ def main(argv: list[str] | None = None) -> int:
     workspace = _resolve_workspace(args.workspace)
     if workspace is None:
         print(
-            "error: workspace not set; pass --workspace or $DECEPTICON_ENGAGEMENT_WORKSPACE",
+            "error: workspace not set; pass --workspace or $RAPTIX_ENGAGEMENT_WORKSPACE",
             file=sys.stderr,
         )
         return EXIT_CONFIG

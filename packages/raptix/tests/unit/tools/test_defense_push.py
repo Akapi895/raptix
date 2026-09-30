@@ -80,7 +80,7 @@ def _mock_response(status_code: int = 200, text: str = "{}") -> MagicMock:
 class TestConOpsHelpers:
     def test_load_conops_invalid_json(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         (tmp_path / "conops.json").write_text("{ not valid json }", encoding="utf-8")
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         with pytest.raises(conops_mod.ConOpsLookupError, match="not valid JSON"):
             conops_mod._load_conops()
 
@@ -90,7 +90,7 @@ class TestConOpsHelpers:
         (tmp_path / "ConOps.json").write_text(
             json.dumps({"blue_team": {"splunk": {}}}), encoding="utf-8"
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         data = conops_mod._load_conops()
         assert "blue_team" in data
 
@@ -98,41 +98,41 @@ class TestConOpsHelpers:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
         _conops_with(tmp_path, {"splunk": {}, "elastic": {}, "sentinel": {}})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         targets = conops_mod.list_targets()
         assert targets == sorted(["splunk", "elastic", "sentinel"])
 
     def test_list_targets_empty_when_no_conops(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         assert conops_mod.list_targets() == []
 
     def test_list_targets_empty_when_no_blue_team(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
         (tmp_path / "conops.json").write_text(json.dumps({}), encoding="utf-8")
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         assert conops_mod.list_targets() == []
 
     def test_engagement_slug_uses_env_var(self, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_SLUG", "my-slug")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_SLUG", "my-slug")
         assert conops_mod.engagement_slug() == "my-slug"
 
     def test_engagement_slug_from_conops(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
         (tmp_path / "conops.json").write_text(
             json.dumps({"engagement_name": "Red Team Alpha", "blue_team": {}}),
             encoding="utf-8",
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         assert conops_mod.engagement_slug() == "red-team-alpha"
 
     def test_engagement_slug_falls_back_to_unscoped(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ):
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         assert conops_mod.engagement_slug() == "unscoped"
 
     def test_resolve_auth_value_malformed_spec_raises(self, monkeypatch: pytest.MonkeyPatch):
@@ -145,7 +145,7 @@ class TestConOpsHelpers:
         (tmp_path / "conops.json").write_text(
             json.dumps({"engagement_name": "x"}), encoding="utf-8"
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         with pytest.raises(conops_mod.ConOpsLookupError, match="no ``blue_team``"):
             conops_mod.resolve_siem_target("elastic")
 
@@ -462,9 +462,9 @@ class TestPushSavedsearch:
             tmp_path,
             {"splunk": {"url": "https://splunk.example", "auth": "hec_token:SPLUNK_TOKEN"}},
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("SPLUNK_TOKEN", "tok123")
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
 
     def test_success_200(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         self._setup_conops(tmp_path, monkeypatch)
@@ -508,13 +508,13 @@ class TestPushSavedsearch:
         assert "Splunk POST failed" in result["error"]
 
     def test_missing_conops_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_savedsearch("s", "* | head 1")
         assert "error" in result
 
     def test_missing_url_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _conops_with(tmp_path, {"splunk": {"auth": "hec_token:SPLUNK_TOKEN"}})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("SPLUNK_TOKEN", "tok")
         result = push_savedsearch("s", "* | head 1")
         assert "error" in result
@@ -522,7 +522,7 @@ class TestPushSavedsearch:
 
     def test_missing_auth_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _conops_with(tmp_path, {"splunk": {"url": "https://splunk.example"}})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_savedsearch("s", "* | head 1")
         assert "error" in result
 
@@ -533,7 +533,7 @@ class TestPushSavedsearch:
             tmp_path,
             {"splunk": {"url": "https://splunk.example", "auth": "hec_token:MISSING_VAR"}},
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.delenv("MISSING_VAR", raising=False)
         result = push_savedsearch("s", "* | head 1")
         assert "error" in result
@@ -575,9 +575,9 @@ class TestPushDetectionRule:
                 }
             },
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("ELASTIC_KEY", "apikey123")
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
 
     def test_success_200(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         self._setup_conops(tmp_path, monkeypatch)
@@ -682,7 +682,7 @@ class TestPushDetectionRule:
         assert "logs-*" in body["index"]
 
     def test_missing_conops_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_detection_rule("r", "R", "query")
         assert "error" in result
 
@@ -715,9 +715,9 @@ class TestPushAnalyticRule:
                 }
             },
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("AZURE_TOKEN", "bearer-xyz")
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
 
     def test_success_200(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         self._setup_conops(tmp_path, monkeypatch)
@@ -789,7 +789,7 @@ class TestPushAnalyticRule:
         assert "Sentinel PUT failed" in result["error"]
 
     def test_missing_conops_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_analytic_rule("r", "R", "query")
         assert "error" in result
 
@@ -807,7 +807,7 @@ class TestPushAnalyticRule:
                 }
             },
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("AZURE_TOKEN", "tok")
         result = push_analytic_rule("r", "R", "query")
         assert "error" in result
@@ -839,9 +839,9 @@ class TestPushDefenderXdr:
             tmp_path,
             {"defender": {"auth": "oauth:DEFENDER_TOKEN"}},
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("DEFENDER_TOKEN", "def-bearer")
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
 
     _YARA_WITH_TAGS = """
     rule MyRule {
@@ -916,13 +916,13 @@ class TestPushDefenderXdr:
 
     def test_missing_auth_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _conops_with(tmp_path, {"defender": {}})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_defender_xdr_detection("r", self._YARA_WITH_TAGS)
         assert "error" in result
         assert "missing ``auth``" in result["error"]
 
     def test_missing_conops_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_defender_xdr_detection("r", self._YARA_WITH_TAGS)
         assert "error" in result
 
@@ -952,9 +952,9 @@ class TestPushCrowdstrikeIoa:
                 }
             },
         )
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "cs-bearer")
-        monkeypatch.delenv("DECEPTICON_ENGAGEMENT_SLUG", raising=False)
+        monkeypatch.delenv("RAPTIX_ENGAGEMENT_SLUG", raising=False)
 
     def test_success_200(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         self._setup_conops(tmp_path, monkeypatch)
@@ -1042,13 +1042,13 @@ class TestPushCrowdstrikeIoa:
         assert "CrowdStrike POST failed" in result["error"]
 
     def test_missing_conops_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         result = push_crowdstrike_ioa(self._YARA_FULL)
         assert "error" in result
 
     def test_missing_url_returns_error(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         _conops_with(tmp_path, {"crowdstrike": {"auth": "oauth:CS_TOKEN"}})
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         monkeypatch.setenv("CS_TOKEN", "tok")
         result = push_crowdstrike_ioa(self._YARA_FULL)
         assert "error" in result

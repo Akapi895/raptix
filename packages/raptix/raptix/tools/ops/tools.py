@@ -75,7 +75,7 @@ def _current_engagement() -> str | None:
     which is the only way one langgraph process can serve multiple
     engagements concurrently.
 
-    Falls back to the ``DECEPTICON_ENGAGEMENT`` env for daemon-less
+    Falls back to the ``RAPTIX_ENGAGEMENT`` env for daemon-less
     library use and the standalone pytest harness; production wiring
     never depends on the env.
     """
@@ -91,7 +91,7 @@ def _current_engagement() -> str | None:
             # Called outside a LangGraph runnable context — fall through
             # to the env-based last resort.
             pass
-    fallback = os.environ.get("DECEPTICON_ENGAGEMENT") or None
+    fallback = os.environ.get("RAPTIX_ENGAGEMENT") or None
     return fallback
 
 

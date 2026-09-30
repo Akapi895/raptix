@@ -1,6 +1,6 @@
 ---
 name: emulation-overview
-description: "Adversary-emulation playbook catalog — per-actor kill chains that turn an APT/eCrime threat profile into Decepticon CONOPS phases + OPPLAN objectives. Routing skill: pick the actor, seed plan/threat-profile.json, then map each kill-chain phase to the operational skill the executing agent runs. Triggers on: 'emulate', 'adversary emulation', 'APT playbook', 'threat actor playbook', 'emulation plan', 'attack flow'."
+description: "Adversary-emulation playbook catalog — per-actor kill chains that turn an APT/eCrime threat profile into Raptix CONOPS phases + OPPLAN objectives. Routing skill: pick the actor, seed plan/threat-profile.json, then map each kill-chain phase to the operational skill the executing agent runs. Triggers on: 'emulate', 'adversary emulation', 'APT playbook', 'threat actor playbook', 'emulation plan', 'attack flow'."
 allowed-tools: Read Write Edit
 metadata:
   subdomain: planning
@@ -69,7 +69,7 @@ For the one-card quick reference (attribution, targets, full TTP table) on any a
 
 ## Discipline
 
-- **Emulate behavior, not malware.** Decepticon reproduces an actor's *TTPs and sequencing*
+- **Emulate behavior, not malware.** Raptix reproduces an actor's *TTPs and sequencing*
   with its own tooling (Sliver, NetExec, certipy, etc.) — it does not run the actor's real
   implants. Fidelity comes from technique order + OPSEC posture, not from sample reuse.
 - **RoE wins every tie.** If the actor's signature move (spearphishing, deauth, ICS write,

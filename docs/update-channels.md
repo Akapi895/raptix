@@ -1,6 +1,6 @@
 # Update channels
 
-Decepticon publishes two update channels, modeled on
+Raptix publishes two update channels, modeled on
 [Claude Code's release channels](https://code.claude.com/docs/en/setup#configure-release-channel).
 **Both channels deliver only _final_ releases** (never pre-releases /
 betas). The difference is a **bake/soak delay**, not pre-release inclusion.
@@ -16,34 +16,34 @@ conservative users see it.
 
 > **Claude Code parity, with one deliberate difference.** The *semantics*
 > match Claude Code (soak model, final-only). Claude Code defaults to
-> `latest`; Decepticon defaults to **`stable`** because it is an autonomous
+> `latest`; Raptix defaults to **`stable`** because it is an autonomous
 > offensive-security tool where a conservative default is the safer choice.
 
 `latest` is **not** "the main branch." It only moves when a release is
 cut — not on every commit. (To track a git branch's config instead of a
-release, use the separate `DECEPTICON_BRANCH` override.)
+release, use the separate `RAPTIX_BRANCH` override.)
 
 ## Selecting a channel
 
-The channel lives in `DECEPTICON_CHANNEL` in `~/.decepticon/.env` (default
+The channel lives in `RAPTIX_CHANNEL` in `~/.decepticon/.env` (default
 `stable`; unrecognized values resolve to `stable`):
 
 ```bash
 # ~/.decepticon/.env
-DECEPTICON_CHANNEL=latest
+RAPTIX_CHANNEL=latest
 # optional — override the stable soak window (days):
-DECEPTICON_STABLE_SOAK_DAYS=7
+RAPTIX_STABLE_SOAK_DAYS=7
 ```
 
 Three ways to set it:
 
 - **At install** — `CHANNEL=latest curl -fsSL https://decepticon.red/install | bash`.
-- **In `.env`** — `DECEPTICON_CHANNEL=stable|latest`. The launch-time
+- **In `.env`** — `RAPTIX_CHANNEL=stable|latest`. The launch-time
   self-update and `decepticon update` both honor it.
 - **Per command** — `decepticon update --channel latest` (one run only).
 
 Pinning an exact version still wins over the channel: `VERSION=1.2.0
-curl … | bash` (install) or `DECEPTICON_VERSION=1.2.0` (compose).
+curl … | bash` (install) or `RAPTIX_VERSION=1.2.0` (compose).
 
 ## How it works
 
@@ -51,7 +51,7 @@ curl … | bash` (install) or `DECEPTICON_VERSION=1.2.0` (compose).
   - `latest` → GitHub `…/releases/latest` (newest final; the endpoint
     already excludes pre-releases and drafts).
   - `stable` → lists `…/releases` and picks the newest **final** whose
-    `published_at` is at least `DECEPTICON_STABLE_SOAK_DAYS` (default 7) in
+    `published_at` is at least `RAPTIX_STABLE_SOAK_DAYS` (default 7) in
     the past, by SemVer. If nothing has soaked yet, it falls back to the
     newest final so stable always resolves.
 - **Install** (`scripts/install.sh`) resolves the same way (the stable
@@ -63,9 +63,9 @@ curl … | bash` (install) or `DECEPTICON_VERSION=1.2.0` (compose).
   - `:stable` is moved to the newest soaked final by the **scheduled**
     `promote-stable.yml` workflow (daily), *not* on release.
   - Pre-releases move neither tag.
-- **Compose fallback.** When `DECEPTICON_VERSION` is unset, the images in
+- **Compose fallback.** When `RAPTIX_VERSION` is unset, the images in
   `docker-compose.yml` fall back to `:stable` (the conservative default).
-  In normal operation the launcher pins `DECEPTICON_VERSION` to a concrete
+  In normal operation the launcher pins `RAPTIX_VERSION` to a concrete
   version, so the fallback is only a safety net for direct `docker compose`
   use.
 
@@ -74,7 +74,7 @@ curl … | bash` (install) or `DECEPTICON_VERSION=1.2.0` (compose).
 - Pre-releases (`vX.Y.Z-rc.N`) are never auto-selected by either channel.
   Install one explicitly with `VERSION=…` if needed.
 - The channel is independent of `AUTO_UPDATE` (whether updates apply
-  automatically) and `DECEPTICON_BRANCH` (track a git branch's config
+  automatically) and `RAPTIX_BRANCH` (track a git branch's config
   instead of a release tag).
 - Switching from `latest` to `stable` will not downgrade an
   already-installed newer version (updates are forward-only); stable simply

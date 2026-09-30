@@ -102,7 +102,7 @@ def test_shared_secret_rejects_wrong_and_empty_token() -> None:
 
 
 def test_shared_secret_empty_secret_is_error() -> None:
-    with pytest.raises(ValueError, match="DECEPTICON_MCP_TOKEN"):
+    with pytest.raises(ValueError, match="RAPTIX_MCP_TOKEN"):
         build_auth(_cfg(auth_mode="shared-secret"), host="0.0.0.0", port=8765)
 
 

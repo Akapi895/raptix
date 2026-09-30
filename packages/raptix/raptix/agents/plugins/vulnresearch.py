@@ -195,7 +195,7 @@ def create_vulnresearch_agent(
 # which would otherwise cause ``SubAgentMiddleware`` to raise at
 # module-import time. Skipping construction keeps ``import
 # raptix.agents.plugins.vulnresearch`` side-effect-free for default
-# installs; opt-in via ``DECEPTICON_PLUGINS=standard,plugins`` (or the
+# installs; opt-in via ``RAPTIX_PLUGINS=standard,plugins`` (or the
 # equivalent config-file entry) flips this on.
 if is_bundle_enabled("plugins"):
     graph = create_vulnresearch_agent()

@@ -27,7 +27,7 @@ const composeOverlayBody = `# docker-compose.opscontrol.yml — LAUNCHER-MANAGED
 # (cmd/opscontrol/supervisor.go:writeComposeOverlay) so any manual edits are
 # erased on the next boot.
 #
-# DECEPTICON_OPSCONTROL_SOCK_HOST is REQUIRED at compose interpolation
+# RAPTIX_OPSCONTROL_SOCK_HOST is REQUIRED at compose interpolation
 # time. There is no '/dev/null' fallback: a missing socket path means
 # the daemon wiring is broken, and we'd rather fail at boot than mount
 # a character device into the container and surface ECONNREFUSED
@@ -36,11 +36,11 @@ const composeOverlayBody = `# docker-compose.opscontrol.yml — LAUNCHER-MANAGED
 services:
   langgraph:
     volumes:
-      - "${DECEPTICON_OPSCONTROL_SOCK_HOST}:/var/run/decepticon-ops.sock:rw"
+      - "${RAPTIX_OPSCONTROL_SOCK_HOST}:/var/run/decepticon-ops.sock:rw"
 `
 
 // writeComposeOverlay materializes the launcher-managed compose overlay
-// at $DECEPTICON_HOME/docker-compose.opscontrol.yml. Idempotent — same
+// at $RAPTIX_HOME/docker-compose.opscontrol.yml. Idempotent — same
 // content every call. Removed the previous design where this file was
 // downloaded via the release manifest; that made every compose-overlay
 // change a forced point release with sync warnings.
@@ -174,7 +174,7 @@ func ensureRunningLauncherSpawn(socketPath string) (string, error) {
 		cmd.Stderr = logf
 	}
 	setDetached(cmd)
-	cmd.Env = append(os.Environ(), "DECEPTICON_OPSCONTROL_CHILD=1")
+	cmd.Env = append(os.Environ(), "RAPTIX_OPSCONTROL_CHILD=1")
 	if err := cmd.Start(); err != nil {
 		return "", fmt.Errorf("opscontrol: spawn daemon: %w", err)
 	}

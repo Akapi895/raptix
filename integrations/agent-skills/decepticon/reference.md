@@ -1,8 +1,8 @@
-# Decepticon MCP — tool reference
+# Raptix MCP — tool reference
 
 Exact parameters, defaults, clamps, and return schemas for every `decepticon_*`
 tool. Read this when you need precise field names or edge-case behaviour. All
-tools are async and target a running Decepticon LangGraph server.
+tools are async and target a running Raptix LangGraph server.
 
 ## Conventions
 
@@ -131,7 +131,7 @@ Cancel the active run on a thread.
   `status`; do not call a blocking wait.
 - **Cursoring:** always pass the previous `next_index` as `after_index` so you
   narrate only new activity and avoid repeating yourself.
-- **Server required:** all tools need the Decepticon LangGraph server up at
-  `DECEPTICON_API_URL`. A connection error means it isn't running.
+- **Server required:** all tools need the Raptix LangGraph server up at
+  `RAPTIX_API_URL`. A connection error means it isn't running.
 - **Findings lag the run:** `status=running` with `findings_available=false` is
   normal; findings appear as the analyst persists them.

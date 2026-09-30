@@ -491,7 +491,7 @@ func TestCleanupOldBinary_WindowsRemovesStaleBackup(t *testing.T) {
 
 func TestWriteVersion_StripsVPrefix(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("DECEPTICON_HOME", dir)
+	t.Setenv("RAPTIX_HOME", dir)
 
 	if err := WriteVersion("v2.3.4"); err != nil {
 		t.Fatalf("WriteVersion: %v", err)
@@ -507,7 +507,7 @@ func TestWriteVersion_StripsVPrefix(t *testing.T) {
 
 func TestWriteVersion_NoPrefix(t *testing.T) {
 	dir := t.TempDir()
-	t.Setenv("DECEPTICON_HOME", dir)
+	t.Setenv("RAPTIX_HOME", dir)
 
 	if err := WriteVersion("1.0.0"); err != nil {
 		t.Fatalf("WriteVersion: %v", err)

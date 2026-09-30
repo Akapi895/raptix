@@ -60,7 +60,7 @@ deconfliction ack are the operator's legal coverage.
 ## Deconfliction (mandatory)
 
 Every outbound mail carries an engagement header
-(`X-Decepticon-Eng: <slug>`) the SOC allow-lists so simulated phishing
+(`X-Raptix-Eng: <slug>`) the SOC allow-lists so simulated phishing
 is distinguishable from a real attack. The `lure-deconfliction` skill
 is a hard gate before the first send — skipping it is a critical RoE
 violation.

@@ -1,6 +1,6 @@
 ---
 name: apt34-oilrig
-description: "Adversary-emulation profile for APT34 / OilRig (G0049), an Iranian state-sponsored espionage group, mapping its ATT&CK TTPs to Decepticon tooling for authorized red-team emulation."
+description: "Adversary-emulation profile for APT34 / OilRig (G0049), an Iranian state-sponsored espionage group, mapping its ATT&CK TTPs to Raptix tooling for authorized red-team emulation."
 allowed-tools: Bash Read Write
 metadata:
   subdomain: adversary-emulation
@@ -123,10 +123,10 @@ APT34 — tracked as OilRig, Helix Kitten, Hazel Sandstorm, Earth Simnavaz, Cram
 **Custom:** BONDUPDATER (S0360, DGA DNS downloader), POWRUNER (S0184, PowerShell backdoor), Helminth (S0170, VBScript/PowerShell + EXE), ISMInjector (S0189), QUADAGENT (S0269), OopsIE (S0264), SideTwist (S0610), RDAT (S0495, DNS/email-steganography C2), RGDoor (S0258, IIS backdoor), SEASHARPEE (S0185, webshell), PowerExchange (S1173, Exchange-based C2), Solar / Mango (S1166 / S1169), SampleCheck5000 (S1168), ODAgent (S1170), OilCheck (S1171), OilBooster (S1172), ZeroCleare (S1151, wiper). Named (non-MITRE-software) tooling from reporting: STEALHOOK, VALUEVAULT, PICKPOCKET, KEYPUNCH, LONGWATCH, CANDYKING, GOLDIRONY, MKG/CDumper/EDumper.
 **Public / dual-use:** Mimikatz (S0002), LaZagne (S0349), PsExec (S0029), ngrok (S0508), certutil (S0160), Net (S0039), Reg (S0075), Tasklist (S0057), Systeminfo (S0096), netstat (S0104), ipconfig (S0100), ftp (S0095), Plink/PuTTY, SoftPerfect Network Scanner, Wireshark (`usbcapcmd`).
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 **AUTHORIZED USE ONLY — execute these techniques exclusively within the documented scope, rules of engagement, and target list of a signed engagement; never against systems you are not explicitly authorized to test.**
 
-Map APT34's signature behaviors to Decepticon capabilities to reproduce the actor's tradecraft for blue-cell exercise:
+Map APT34's signature behaviors to Raptix capabilities to reproduce the actor's tradecraft for blue-cell exercise:
 - **Initial access (T1566.x / T1204.x):** Use the phishing/social-engineering skill to craft macro-enabled Office or .rtf lures and LinkedIn-style personas (mirroring T1566.003). For web-facing entry (T1190/T1505.003), use the web-exploitation/bash tooling to drop an authorized webshell on an in-scope test server.
 - **Execution (T1059.001/.003/.005, T1047, T1218.001):** Drive PowerShell, cmd, VBScript, WMI, and .chm-loader payloads via the bash/command-execution and defense-evasion skills. Stage a custom-DGA "BONDUPDATER-style" beacon to emulate the actor's loader behavior.
 - **C2 (T1071.004 DNS tunneling, T1071.001 HTTP, T1008 fallback, T1573.002):** Configure your **C2/Sliver** profile for DNS-over-HTTP fallback to replicate APT34's hallmark DNS-tunneling and HTTP-with-DNS-failover beaconing. Use base64 encoding (T1132.001) on C2 traffic to match the actor.

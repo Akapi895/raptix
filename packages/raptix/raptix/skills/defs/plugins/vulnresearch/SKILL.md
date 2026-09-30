@@ -4,7 +4,7 @@ description: Five-stage modular vulnerability pipeline orchestrator. Delegates s
 metadata:
   subdomain: orchestration
   when_to_use: "vulnresearch orchestrator pipeline five-stage scan detect verify patch exploit opplan delegation"
-  upstream_ref: "Decepticon vulnresearch pipeline — top-level orchestrator role"
+  upstream_ref: "Raptix vulnresearch pipeline — top-level orchestrator role"
 ---
 
 # Vulnresearch Orchestrator Skill

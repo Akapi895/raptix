@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
 This directory contains the **Architecture Decision Records** (ADRs) for
-Decepticon — short, numbered, append-only documents that capture
+Raptix — short, numbered, append-only documents that capture
 non-obvious architectural decisions, their context, and their
 consequences.
 

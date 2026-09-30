@@ -132,11 +132,11 @@ Dark Caracal (MITRE ATT&CK **G0070**) is a cyber-espionage and surveillance grou
 
 > Note: Bandook originated as a commercially available RAT circa 2007 but has been extensively modified by Dark Caracal with custom loaders, code-signing, steganography-based payload construction, and Twofish-encrypted variants. Poco RAT shares dropper architecture with Bandook (process hollowing into `iexplore.exe`, dynamic API resolution) and is assessed as Bandook's successor.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never deploy mobile surveillance implants or trojanized messaging apps outside an explicitly sanctioned, isolated lab.
 
-Map Dark Caracal's signature plays to Decepticon's own capabilities:
+Map Dark Caracal's signature plays to Raptix's own capabilities:
 
 - **Initial access — social engineering (T1566.003, T1566.001, T1204.002).** Use the phishing/social-engineering skill to craft **spearphishing messages via messaging platforms** (simulating Facebook/WhatsApp delivery) with links to trojanized application downloads. Stage macro-enabled Word documents inside zip archives as email attachments. For Latin America-themed campaigns, prepare Spanish-language financial lures (fake invoices) with blurred PDF decoys linking to cloud-hosted payloads via link shorteners — this is the group's 2024-2025 signature play.
 - **Watering hole (T1189).** With the web-attack skill, stand up a watering hole page serving malicious content to profiled visitors. Dark Caracal uses simple drive-by techniques rather than exploit kits — redirect to a trojanized download that masquerades as a legitimate software update.

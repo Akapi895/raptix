@@ -13,7 +13,7 @@ High-value capabilities for 0-day discovery and exploit chain construction:
 - ``tools``  — LangChain @tool wrappers exposing all of the above to agents
 
 State is managed exclusively through Neo4j. Configure via environment:
-  DECEPTICON_NEO4J_URI, DECEPTICON_NEO4J_USER, DECEPTICON_NEO4J_PASSWORD
+  RAPTIX_NEO4J_URI, RAPTIX_NEO4J_USER, RAPTIX_NEO4J_PASSWORD
 """
 
 from __future__ import annotations

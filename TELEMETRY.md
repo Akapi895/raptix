@@ -1,7 +1,7 @@
-# Decepticon Telemetry
+# Raptix Telemetry
 
-Decepticon can send **anonymous usage telemetry** to help maintainers see what
-users ask the agents to do and what the agents actually do. Decepticon is
+Raptix can send **anonymous usage telemetry** to help maintainers see what
+users ask the agents to do and what the agents actually do. Raptix is
 free/OSS; this sharing helps fund and improve it. It is **opt-in** — the
 onboard wizard asks for consent (default no) and you can turn it on at any
 time — and designed for a red-team threat model: **raw prompts, targets,
@@ -10,13 +10,13 @@ credentials, and tool output are never transmitted.**
 ## TL;DR
 
 - **Off by default (opt-in).** The onboard wizard asks during setup (default
-  no), writing `DECEPTICON_TELEMETRY=off` unless you choose to share. Existing
+  no), writing `RAPTIX_TELEMETRY=off` unless you choose to share. Existing
   users are re-asked once at `decepticon start` after this policy change.
-- **Turn it on anytime:** set `DECEPTICON_TELEMETRY=research` (or `basic`) in
+- **Turn it on anytime:** set `RAPTIX_TELEMETRY=research` (or `basic`) in
   `~/.decepticon/.env`, or run `decepticon-cli telemetry on`.
-- **Turn it off anytime:** set `DECEPTICON_TELEMETRY=off` (or `basic`) in
+- **Turn it off anytime:** set `RAPTIX_TELEMETRY=off` (or `basic`) in
   `~/.decepticon/.env`, run `decepticon-cli telemetry off`, or `DO_NOT_TRACK=1`.
-- **Nothing is sent** without a `DECEPTICON_TELEMETRY_ENDPOINT` (shipped in the
+- **Nothing is sent** without a `RAPTIX_TELEMETRY_ENDPOINT` (shipped in the
   `.env` template; backfilled into existing installs on update).
 - **See exactly what would be sent:** `decepticon-cli telemetry preview`.
 
@@ -24,10 +24,10 @@ credentials, and tool output are never transmitted.**
 
 | Variable / command | Effect |
 |---|---|
-| `DECEPTICON_TELEMETRY=off\|basic\|research` | consent mode (template default `off`; unset ⇒ `off`) |
+| `RAPTIX_TELEMETRY=off\|basic\|research` | consent mode (template default `off`; unset ⇒ `off`) |
 | `DO_NOT_TRACK=1` | standard kill switch — forces `off` |
 | `BENCHMARK_MODE=1` | forces `off` — benchmark prompts are harness-generated, not user activity |
-| `DECEPTICON_TELEMETRY_ENDPOINT=<url>` | gateway URL; unset ⇒ nothing is sent |
+| `RAPTIX_TELEMETRY_ENDPOINT=<url>` | gateway URL; unset ⇒ nothing is sent |
 | `decepticon-cli telemetry status` | show resolved mode / endpoint / anonymous id |
 | `decepticon-cli telemetry preview` | print the exact payload for a sample run |
 | `decepticon-cli telemetry off` / `on` | persistent opt-out marker (overrides env) |
@@ -81,14 +81,14 @@ Two consent tiers map to the data tiers in the design doc:
   the corpus is handled as sensitive"*, not as anonymization. If your engagement
   cannot tolerate that, use `basic` or `off`.
 
-One extra event type, `telemetry.drop`, reports how many events Decepticon's own
+One extra event type, `telemetry.drop`, reports how many events Raptix's own
 fail-closed scanner **discarded** before sending, counted by class (e.g.
 `{"category": "ipv4", "count": 3}`). It carries the class and a number only —
 never the content that was dropped — and exists so silent over-dropping is
 visible rather than mistaken for an idle install.
 
 Every batch carries a non-identifying envelope: a random `install_id` (a UUID
-minted on first use — never machine- or IP-derived), the Decepticon version, and
+minted on first use — never machine- or IP-derived), the Raptix version, and
 the OS family (`linux`/`darwin`/`windows`).
 
 ### Example (exactly what leaves the machine)
@@ -159,10 +159,10 @@ anonymization.
 
 ## Where it goes, and for how long
 
-- **Recipient:** PurpleAILAB, the Decepticon maintainers. Batches go to a
+- **Recipient:** PurpleAILAB, the Raptix maintainers. Batches go to a
   Cloudflare Worker we operate, which forwards to our PostHog project. The
   Worker never records your IP and disables geo-enrichment.
-- **Purpose:** improving Decepticon, and — for the `research` tier — building a
+- **Purpose:** improving Raptix, and — for the `research` tier — building a
   training corpus for future autonomous red-team agents.
 - **Identity:** a random `install_id` (never machine- or IP-derived) plus a
   per-engagement `session_id` that is a salted hash. Neither is linked to an
@@ -170,7 +170,7 @@ anonymization.
 - **Retention:** data is retained under our analytics backend's default
   retention. A specific published retention window and a self-serve deletion
   path are **not yet in place** — until they are, the reliable control is
-  turning telemetry off (`DECEPTICON_TELEMETRY=off`, `DO_NOT_TRACK=1`, or
+  turning telemetry off (`RAPTIX_TELEMETRY=off`, `DO_NOT_TRACK=1`, or
   `decepticon-cli telemetry off`), which takes effect immediately. If you need
   data already sent to be removed, open an issue with your `install_id`
   (`decepticon-cli telemetry status` prints it).

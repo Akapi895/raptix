@@ -67,7 +67,7 @@ func TestRuntime_Apply_NoOpWhenNoDockerHost(t *testing.T) {
 }
 
 func TestDetect_RespectsInvalidOverride(t *testing.T) {
-	t.Setenv("DECEPTICON_CONTAINER_RUNTIME", "kubernetes")
+	t.Setenv("RAPTIX_CONTAINER_RUNTIME", "kubernetes")
 	_, err := Detect()
 	if err == nil {
 		t.Fatal("Detect() should reject unknown runtime override")

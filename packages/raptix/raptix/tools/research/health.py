@@ -17,9 +17,9 @@ def backend_health() -> dict[str, Any]:
     }
 
     payload["neo4j"] = {
-        "uri": os.environ.get("DECEPTICON_NEO4J_URI", ""),
-        "user": os.environ.get("DECEPTICON_NEO4J_USER", ""),
-        "database": os.environ.get("DECEPTICON_NEO4J_DATABASE", "neo4j"),
+        "uri": os.environ.get("RAPTIX_NEO4J_URI", ""),
+        "user": os.environ.get("RAPTIX_NEO4J_USER", ""),
+        "database": os.environ.get("RAPTIX_NEO4J_DATABASE", "neo4j"),
     }
 
     try:

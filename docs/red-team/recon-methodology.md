@@ -1,6 +1,6 @@
 # Red Team Reconnaissance Methodology
 
-> Decepticon Recon Agent의 도메인 지식 기반 문서.
+> Raptix Recon Agent의 도메인 지식 기반 문서.
 > 프레임워크 참조: MITRE ATT&CK TA0043, OWASP WSTG, PTES, NIST SP 800-115
 
 ---
@@ -9,7 +9,7 @@
 
 ### 1.1 MITRE ATT&CK Reconnaissance (TA0043)
 
-| Technique ID | Name | Decepticon 적용 |
+| Technique ID | Name | Raptix 적용 |
 |---|---|---|
 | T1595 | Active Scanning | nmap, naabu, masscan |
 | T1595.001 | Scanning IP Blocks | nmap -sS on target ranges |
@@ -388,7 +388,7 @@ Subfinder/Amass → puredns → httpx → nuclei → 수동 분석
 
 ---
 
-## 7. Decepticon 에이전트용 도구 분류
+## 7. Raptix 에이전트용 도구 분류
 
 ### Passive Recon Tools
 | 카테고리 | 도구 |

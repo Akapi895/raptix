@@ -18,7 +18,7 @@ NMAP_XML = b"""<nmaprun><host><status state="up"/><address addr="10.0.0.1" addrt
 
 @pytest.fixture(autouse=True)
 def _enable_autoingest(monkeypatch):
-    monkeypatch.setenv("DECEPTICON_KG_AUTOINGEST", "1")
+    monkeypatch.setenv("RAPTIX_KG_AUTOINGEST", "1")
 
 
 class _Store:
@@ -74,7 +74,7 @@ def test_autoingest_slot_only_on_network_roles():
 def test_factory_default_off_does_not_open_kg(monkeypatch):
     from raptix.agents.middleware_slots import _make_kg_autoingest
 
-    monkeypatch.delenv("DECEPTICON_KG_AUTOINGEST")
+    monkeypatch.delenv("RAPTIX_KG_AUTOINGEST")
     assert _make_kg_autoingest(sandbox=_Sandbox(), role="recon") is None
 
 
@@ -136,9 +136,9 @@ async def test_disabled_and_outside_workspace_do_not_fetch(monkeypatch):
     async def handler(_request):
         return result
 
-    monkeypatch.setenv("DECEPTICON_KG_AUTOINGEST", "0")
+    monkeypatch.setenv("RAPTIX_KG_AUTOINGEST", "0")
     assert await hook.awrap_tool_call(_request("nmap -oX /workspace/scan.xml x"), handler) is result
-    monkeypatch.setenv("DECEPTICON_KG_AUTOINGEST", "1")
+    monkeypatch.setenv("RAPTIX_KG_AUTOINGEST", "1")
     assert await hook.awrap_tool_call(_request("nmap -oX /etc/passwd x"), handler) is result
     assert sandbox.downloaded == []
     assert store.writes == []

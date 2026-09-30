@@ -95,7 +95,7 @@ jq -r '.resources[] | select(.type=="aws_lambda_function") |
        .instances[] | .attributes.environment[]?.variables' /tmp/state.tfstate
 ```
 
-Decepticon ingest:
+Raptix ingest:
 ```
 tfstate_audit("/tmp/state.tfstate")
 ```

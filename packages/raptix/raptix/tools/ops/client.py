@@ -19,7 +19,7 @@ from typing import Any
 import httpx
 
 DEFAULT_SOCKET_PATH = "/var/run/decepticon-ops.sock"
-SOCKET_PATH_ENV = "DECEPTICON_OPSCONTROL_SOCK"
+SOCKET_PATH_ENV = "RAPTIX_OPSCONTROL_SOCK"
 
 
 def resolve_socket_path() -> str:

@@ -64,7 +64,7 @@ func applyAutoUpdate(env map[string]string, version string, skip bool) {
 		return
 	}
 	// Which release stream to track (stable | latest). Default stable.
-	ch := updater.ResolveChannel(config.Get(env, "DECEPTICON_CHANNEL", ""))
+	ch := updater.ResolveChannel(config.Get(env, "RAPTIX_CHANNEL", ""))
 	switch strings.ToLower(strings.TrimSpace(config.Get(env, "AUTO_UPDATE", ""))) {
 	case "", "true", "1", "yes", "on":
 		if _, err := autoUpdateFn(version, ch); err != nil {
@@ -172,7 +172,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 		// Use installed version tag; fall back to branch for dev builds
 		ref := "v" + version
 		if version == "dev" || version == "" {
-			ref = config.Get(env, "DECEPTICON_BRANCH", "main")
+			ref = config.Get(env, "RAPTIX_BRANCH", "main")
 		}
 		ui.Info("Downloading configuration files...")
 		// release == nil here: this branch only triggers when compose
@@ -192,11 +192,11 @@ func runStart(cmd *cobra.Command, args []string) error {
 	// write the anonymous install id.
 	_ = os.MkdirAll(filepath.Join(home, "telemetry"), 0o755)
 
-	// Ensure DECEPTICON_HOME is set in .env (Docker Compose needs absolute path)
-	if config.Get(env, "DECEPTICON_HOME", "") == "" {
-		env["DECEPTICON_HOME"] = home
-		if err := config.AppendEnvLine(config.EnvPath(), "DECEPTICON_HOME", home); err != nil {
-			ui.Warning("Could not set DECEPTICON_HOME in .env: " + err.Error())
+	// Ensure RAPTIX_HOME is set in .env (Docker Compose needs absolute path)
+	if config.Get(env, "RAPTIX_HOME", "") == "" {
+		env["RAPTIX_HOME"] = home
+		if err := config.AppendEnvLine(config.EnvPath(), "RAPTIX_HOME", home); err != nil {
+			ui.Warning("Could not set RAPTIX_HOME in .env: " + err.Error())
 		}
 	}
 
@@ -251,7 +251,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	applyAutoUpdate(env, version, skipUpdate)
 
 	// 2.6. One-time GitHub star ask. Idempotent across launches — the
-	// ack file at $DECEPTICON_HOME/.starred suppresses the prompt
+	// ack file at $RAPTIX_HOME/.starred suppresses the prompt
 	// after the user has been through it once. Silent no-op on
 	// non-interactive stdin, so CI / piped invocations are untouched.
 	starprompt.PromptIfNotStarred()
@@ -266,8 +266,8 @@ func runStart(cmd *cobra.Command, args []string) error {
 		return err
 	}
 	// Export the bind path. composeEnv() forwards os.Environ(), so docker
-	// compose interpolates ${DECEPTICON_ENGAGEMENT_WORKSPACE} from this var.
-	if err := os.Setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", choice.WorkspacePath); err != nil {
+	// compose interpolates ${RAPTIX_ENGAGEMENT_WORKSPACE} from this var.
+	if err := os.Setenv("RAPTIX_ENGAGEMENT_WORKSPACE", choice.WorkspacePath); err != nil {
 		return fmt.Errorf("set engagement workspace env: %w", err)
 	}
 
@@ -282,8 +282,8 @@ func runStart(cmd *cobra.Command, args []string) error {
 		// override: agent ops_* tools will return a "daemon
 		// unreachable" diagnostic rather than crashing the boot.
 		ui.Warning("opscontrol daemon not started: " + err.Error())
-	} else if err := os.Setenv("DECEPTICON_OPSCONTROL_SOCK_HOST", sock); err != nil {
-		ui.Warning("set DECEPTICON_OPSCONTROL_SOCK_HOST: " + err.Error())
+	} else if err := os.Setenv("RAPTIX_OPSCONTROL_SOCK_HOST", sock); err != nil {
+		ui.Warning("set RAPTIX_OPSCONTROL_SOCK_HOST: " + err.Error())
 	}
 
 	// 4.5. Refuse to start with default credentials. The compose file
@@ -313,9 +313,9 @@ func runStart(cmd *cobra.Command, args []string) error {
 	ui.Info("Launching Decepticon CLI...")
 
 	cliEnv := map[string]string{
-		"DECEPTICON_VERSION":      version,
-		"DECEPTICON_ASSISTANT_ID": choice.AssistantID,
-		"DECEPTICON_ENGAGEMENT":   choice.Engagement,
+		"RAPTIX_VERSION":      version,
+		"RAPTIX_ASSISTANT_ID": choice.AssistantID,
+		"RAPTIX_ENGAGEMENT":   choice.Engagement,
 	}
 	if port := config.Get(env, "WEB_PORT", "3000"); port != "" {
 		cliEnv["WEB_PORT"] = port
@@ -379,7 +379,7 @@ func checkDefaultCredentials(env map[string]string) error {
 }
 
 func probeOllamaIfSelected(env map[string]string) {
-	priority := strings.ToLower(env["DECEPTICON_AUTH_PRIORITY"])
+	priority := strings.ToLower(env["RAPTIX_AUTH_PRIORITY"])
 	hasOllama := strings.Contains(","+priority+",", ",ollama_local,")
 	base := strings.TrimSpace(env["OLLAMA_API_BASE"])
 	if !hasOllama && base == "" {

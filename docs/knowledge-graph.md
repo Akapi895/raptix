@@ -1,6 +1,6 @@
 # Knowledge Graph
 
-Decepticon uses [Neo4j](https://neo4j.com/) as a persistent attack graph. Every host, service, vulnerability, credential, and finding discovered during an engagement becomes a typed node with typed relationships. This is the agent's long-term memory across iterations — not conversation history.
+Raptix uses [Neo4j](https://neo4j.com/) as a persistent attack graph. Every host, service, vulnerability, credential, and finding discovered during an engagement becomes a typed node with typed relationships. This is the agent's long-term memory across iterations — not conversation history.
 
 The graph lives on `sandbox-net` and is accessible at:
 - **Bolt**: `bolt://localhost:7687` (driver connection)

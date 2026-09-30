@@ -32,7 +32,7 @@ var DefaultAllowlist = []string{
 // AllowlistExtraEnv lets tests / plugin authors append (never remove)
 // names without rebuilding the binary. Removing or overriding the
 // baked-in list is intentionally not possible — see ADR-0006 §1'.
-const AllowlistExtraEnv = "DECEPTICON_OPS_ALLOWLIST_EXTRA"
+const AllowlistExtraEnv = "RAPTIX_OPS_ALLOWLIST_EXTRA"
 
 // workloadName matches the names compose accepts as profile labels
 // (lowercase, digits, dash). The 63-char cap mirrors DNS-label
@@ -46,7 +46,7 @@ type Allowlist struct {
 }
 
 // LoadAllowlist returns the default catalog merged with any extra
-// names from DECEPTICON_OPS_ALLOWLIST_EXTRA. Invalid names in the env
+// names from RAPTIX_OPS_ALLOWLIST_EXTRA. Invalid names in the env
 // variable are reported as an error rather than silently dropped.
 func LoadAllowlist() (*Allowlist, error) {
 	members := make(map[string]struct{}, len(DefaultAllowlist))

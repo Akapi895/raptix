@@ -66,7 +66,7 @@ func TestDetectServiceManager_ReturnsCorrectShape(t *testing.T) {
 }
 
 func TestComposeProjectName_EnvOverrideWins(t *testing.T) {
-	t.Setenv("DECEPTICON_STACK_NAME", "stack2")
+	t.Setenv("RAPTIX_STACK_NAME", "stack2")
 	t.Setenv(ComposeProjectEnv, "decepticon-vendor-dev")
 	if got := ComposeProjectName(); got != "decepticon-vendor-dev" {
 		t.Errorf("ComposeProjectName = %q; want explicit override %q", got, "decepticon-vendor-dev")
@@ -75,23 +75,23 @@ func TestComposeProjectName_EnvOverrideWins(t *testing.T) {
 
 func TestComposeProjectName_FallsBackToStackName(t *testing.T) {
 	t.Setenv(ComposeProjectEnv, "")
-	t.Setenv("DECEPTICON_STACK_NAME", "stack2")
+	t.Setenv("RAPTIX_STACK_NAME", "stack2")
 	if got := ComposeProjectName(); got != "decepticon-stack2" {
 		t.Errorf("ComposeProjectName = %q; want fallback %q", got, "decepticon-stack2")
 	}
-	t.Setenv("DECEPTICON_STACK_NAME", "")
+	t.Setenv("RAPTIX_STACK_NAME", "")
 	if got := ComposeProjectName(); got != "decepticon" {
 		t.Errorf("ComposeProjectName = %q; want fallback %q", got, "decepticon")
 	}
 }
 
 func TestComposeCommandEnv_NormalizesUnsetVars(t *testing.T) {
-	os.Unsetenv("DECEPTICON_STACK_NAME")
+	os.Unsetenv("RAPTIX_STACK_NAME")
 	os.Unsetenv(ComposeProjectEnv)
 	env := ComposeCommandEnv()
 	var sawStack, sawProject bool
 	for _, e := range env {
-		if e == "DECEPTICON_STACK_NAME=" {
+		if e == "RAPTIX_STACK_NAME=" {
 			sawStack = true
 		}
 		if e == ComposeProjectEnv+"=" {
@@ -99,10 +99,10 @@ func TestComposeCommandEnv_NormalizesUnsetVars(t *testing.T) {
 		}
 	}
 	if !sawStack {
-		t.Error("ComposeCommandEnv must inject empty DECEPTICON_STACK_NAME so compose's --env-file does not silently disagree with the launcher")
+		t.Error("ComposeCommandEnv must inject empty RAPTIX_STACK_NAME so compose's --env-file does not silently disagree with the launcher")
 	}
 	if !sawProject {
-		t.Error("ComposeCommandEnv must inject empty DECEPTICON_COMPOSE_PROJECT for the same reason")
+		t.Error("ComposeCommandEnv must inject empty RAPTIX_COMPOSE_PROJECT for the same reason")
 	}
 }
 
@@ -116,7 +116,7 @@ func TestStackName_SanitizesEnv(t *testing.T) {
 		{strings.Repeat("x", 64), strings.Repeat("x", 32)}, // truncated
 	}
 	for _, c := range cases {
-		t.Setenv("DECEPTICON_STACK_NAME", c.in)
+		t.Setenv("RAPTIX_STACK_NAME", c.in)
 		got := StackName()
 		if got != c.want {
 			t.Errorf("StackName(%q) = %q; want %q", c.in, got, c.want)

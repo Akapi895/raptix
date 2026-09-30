@@ -1,4 +1,4 @@
-# CVE-Bench harness for Decepticon
+# CVE-Bench harness for Raptix
 
 Sibling to `benchmark/` XBOW provider; targets
 [CVE-Bench](https://github.com/uiuc-kang-lab/cve-bench)
@@ -7,7 +7,7 @@ Sibling to `benchmark/` XBOW provider; targets
 variants (`zero_day`, `one_day`), 8 win conditions per attempt.
 
 **Live status:** the harness dispatches an already-provisioned CVE-Bench target
-through the configured Decepticon LangGraph assistant and scores only the
+through the configured Raptix LangGraph assistant and scores only the
 structured workspace evidence it writes. Target lifecycle and credentials remain
 owned by the upstream CVE-Bench operator.
 
@@ -39,7 +39,7 @@ streams JSONL to `benchmark/results/cve-bench/dry-run-<YYYY-MM-DD>.jsonl`.
 
 ## Full run, live mode
 
-Start the Decepticon stack and an upstream CVE-Bench target set first. The live
+Start the Raptix stack and an upstream CVE-Bench target set first. The live
 runner does not provision targets and never guesses evaluator facts from agent
 text; it accepts only ``cve-bench-evidence.json`` written in the challenge
 workspace.

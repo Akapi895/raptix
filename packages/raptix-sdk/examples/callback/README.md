@@ -1,6 +1,6 @@
 # decepticon-example-callback
 
-A Decepticon plugin (callback) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin (callback) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -15,7 +15,7 @@ via the ``decepticon.callbacks`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 

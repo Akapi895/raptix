@@ -2,12 +2,12 @@
 
 > If you used an AI agent (Claude, Codex, Copilot, Cursor, Gemini, an
 > in-house tool — anything that drafts code or prose) to produce any
-> material part of a contribution to Decepticon, this document is the
+> material part of a contribution to Raptix, this document is the
 > contract you are operating under. It supplements [CONTRIBUTING.md](CONTRIBUTING.md),
 > [docs/COWORK.md](docs/COWORK.md), and [SECURITY.md](SECURITY.md); it
 > does **not** replace them.
 
-Decepticon is an offensive security platform whose own offensive agents
+Raptix is an offensive security platform whose own offensive agents
 operate under explicit Rules of Engagement. The contribution stream that
 *builds* the platform deserves the same discipline. Without it, the
 volume that AI assistance enables silently lowers the quality bar — and
@@ -18,7 +18,7 @@ The rules below are not aspirational. They are conditions of merge.
 
 > **Read [`docs/QUALITY_BAR.md`](docs/QUALITY_BAR.md) before your first
 > contribution.** That document is the closed contract on what "100%
-> quality" means for Decepticon — the Karpathy four, the diff-size
+> quality" means for Raptix — the Karpathy four, the diff-size
 > budget, the banned patterns, the AI-slop signature catalog, and the
 > self-review standard. This charter is the **process** half; the
 > quality bar is the **code** half. Both apply. See [ADR-0004](docs/adr/0004-zero-ai-slop-policy.md)
@@ -54,7 +54,7 @@ without review, regardless of how green CI is.
    mega-PRs.
 5. **You do not weaken the offensive-security guard rails by accident.**
    Specifically:
-   - You did not remove or soften wording in `packages/decepticon/decepticon/skills/shared/opsec/**`,
+   - You did not remove or soften wording in `packages/raptix/raptix/skills/shared/opsec/**`,
      RoE enforcement, `SafeCommand`, `EngagementContext`, or any
      `decepticon-no-*` Semgrep rule under `.semgrep/` without an
      accompanying ADR and an explicit threat-model paragraph in the
@@ -169,7 +169,7 @@ should be asking someone else to look.
       sufficient; request a review.
 - [ ] **Tier-supply-chain** — `.github/workflows/**`,
       `pyproject.toml` / `uv.lock` / `package*.json` / `go.{mod,sum}`,
-      plugin contracts under `packages/decepticon-core/.../contracts/**`,
+      plugin contracts under `packages/raptix-core/.../contracts/**`,
       `scripts/install.sh`, `docker-compose.yml`,
       `containers/*.Dockerfile`, `.semgrep/**`. A mistake here reaches
       every OSS user on the next release. **Ask for a review and wait
@@ -198,7 +198,7 @@ If you ticked Tier-supply-chain, also confirm:
 - [ ] If you touched `docker-compose.yml`, you ran
       `pytest tests/test_compose_network_isolation.py` locally (or the
       whole `tests/` suite). The isolation invariants are not negotiable.
-- [ ] If you touched any agent prompt under `packages/decepticon/decepticon/agents/**/prompts/`,
+- [ ] If you touched any agent prompt under `packages/raptix/raptix/agents/**/prompts/`,
       you read the diff yourself and confirmed that no DO/DON'T item
       from [tradecraft & OPSEC](https://docs.decepticon.red/en/concepts/tradecraft)
       was weakened. (Prompts are not covered by Python tests; the
@@ -221,7 +221,7 @@ If you ticked Tier-supply-chain, also confirm:
 Symptoms a maintainer will catch if you do not. Save the round-trip by
 catching them yourself first.
 
-| Pattern | Why it bites Decepticon |
+| Pattern | Why it bites Raptix |
 |---|---|
 | Adding a `try/except Exception: pass` to "make a test pass" | Hides real failures in sandbox / network / LLM call paths where flakes are signal. |
 | Inserting `if not …: return None` defaults instead of raising | RoE / OPPLAN code that silently returns `None` produces ghost objectives downstream. Fail loud. |
@@ -249,7 +249,7 @@ catching them yourself first.
 
 ## 5. Why this exists
 
-Tests passing is necessary; it is not sufficient. Decepticon's value
+Tests passing is necessary; it is not sufficient. Raptix's value
 proposition rests on the philosophy in
 [docs/red-team/operations.md](docs/red-team/operations.md), the
 isolation in [docs/security/sandbox-isolation.md](docs/security/sandbox-isolation.md),

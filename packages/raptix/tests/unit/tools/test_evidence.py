@@ -19,9 +19,9 @@ from raptix.tools.evidence.asciicast import (
 def test_segments_split_on_ps1_markers():
     content = (
         "first command output\n"
-        "DECEPTICON_PROMPT_END_a1b2c3\n"
+        "RAPTIX_PROMPT_END_a1b2c3\n"
         "second command output\n"
-        "DECEPTICON_PROMPT_END_a1b2c3\n"
+        "RAPTIX_PROMPT_END_a1b2c3\n"
         "trailing\n"
     )
     segments = _segments_from_markers(content)
@@ -38,7 +38,7 @@ def test_segments_handles_no_markers():
 
 
 def test_segments_drops_empty():
-    content = "DECEPTICON_PROMPT_END_xx\n\n\nDECEPTICON_PROMPT_END_xx"
+    content = "RAPTIX_PROMPT_END_xx\n\n\nRAPTIX_PROMPT_END_xx"
     assert _segments_from_markers(content) == []
 
 
@@ -79,7 +79,7 @@ def test_export_asciicast_missing_log_raises(tmp_path: Path):
 
 def test_export_asciicast_synthetic_timing(tmp_path: Path):
     log = tmp_path / "s.log"
-    log.write_text("first\nDECEPTICON_PROMPT_END_xx\nsecond\nDECEPTICON_PROMPT_END_xx\n")
+    log.write_text("first\nRAPTIX_PROMPT_END_xx\nsecond\nRAPTIX_PROMPT_END_xx\n")
     out = tmp_path / "s.cast"
     manifest = export_asciicast(
         log_path=log,
@@ -99,7 +99,7 @@ def test_export_asciicast_synthetic_timing(tmp_path: Path):
 
 def test_export_asciicast_measured_timing(tmp_path: Path):
     log = tmp_path / "m.log"
-    log.write_text("first\nDECEPTICON_PROMPT_END_xx\nsecond\nDECEPTICON_PROMPT_END_xx\n")
+    log.write_text("first\nRAPTIX_PROMPT_END_xx\nsecond\nRAPTIX_PROMPT_END_xx\n")
     (tmp_path / "m.log.events").write_text("1000.0 dispatched\n1003.5 dispatched\n")
     out = tmp_path / "m.cast"
     manifest = export_asciicast(

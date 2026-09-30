@@ -61,7 +61,7 @@ log = logging.getLogger("raptix.sandbox_kernel.base")
 # workspaces. Root-workspace sessions (bare names like ``main``) could
 # belong to anything on a shared host and are left alone deliberately.
 
-_DECEPTICON_TMUX_SOCKET_PREFIX = "dcptn_"
+_RAPTIX_TMUX_SOCKET_PREFIX = "dcptn_"
 
 
 def _compute_orphan_tmux_sessions(
@@ -77,7 +77,7 @@ def _compute_orphan_tmux_sessions(
     return {
         name
         for name in discovered
-        if name.startswith(_DECEPTICON_TMUX_SOCKET_PREFIX) and name not in tracked
+        if name.startswith(_RAPTIX_TMUX_SOCKET_PREFIX) and name not in tracked
     }
 
 
@@ -92,7 +92,7 @@ def _list_decepticon_tmux_sockets() -> list[str]:
     """
     socket_dir = f"/tmp/tmux-{os.getuid()}"
     try:
-        return [n for n in os.listdir(socket_dir) if n.startswith(_DECEPTICON_TMUX_SOCKET_PREFIX)]
+        return [n for n in os.listdir(socket_dir) if n.startswith(_RAPTIX_TMUX_SOCKET_PREFIX)]
     except FileNotFoundError:
         return []
     except OSError as e:

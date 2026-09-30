@@ -11,7 +11,7 @@ func TestNew(t *testing.T) {
 	// executes the test rather than hardcoding a /tmp path that doesn't
 	// exist on Windows.
 	home := t.TempDir()
-	t.Setenv("DECEPTICON_HOME", home)
+	t.Setenv("RAPTIX_HOME", home)
 	c := New()
 	if c.Home != home {
 		t.Errorf("Home = %q, want %q", c.Home, home)
@@ -46,7 +46,7 @@ func TestAllProfiles(t *testing.T) {
 }
 
 func TestBaseArgs(t *testing.T) {
-	t.Setenv("DECEPTICON_STACK_NAME", "")
+	t.Setenv("RAPTIX_STACK_NAME", "")
 	c := &Compose{
 		Home:        "/test",
 		ComposeFile: "/test/docker-compose.yml",
@@ -76,7 +76,7 @@ func TestBaseArgs(t *testing.T) {
 }
 
 func TestBaseArgs_StackNameOverridesProjectName(t *testing.T) {
-	t.Setenv("DECEPTICON_STACK_NAME", "stack2")
+	t.Setenv("RAPTIX_STACK_NAME", "stack2")
 	c := &Compose{
 		Home:        "/test",
 		ComposeFile: "/test/docker-compose.yml",
@@ -84,7 +84,7 @@ func TestBaseArgs_StackNameOverridesProjectName(t *testing.T) {
 	}
 	args := c.baseArgs()
 	if args[2] != "decepticon-stack2" {
-		t.Errorf("expected -p decepticon-stack2 for DECEPTICON_STACK_NAME=stack2; got args=%v", args)
+		t.Errorf("expected -p decepticon-stack2 for RAPTIX_STACK_NAME=stack2; got args=%v", args)
 	}
 }
 

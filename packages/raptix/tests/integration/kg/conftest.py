@@ -21,18 +21,18 @@ _DEFAULT_TEST_PASSWORD = "decepticon-graph"
 
 
 def _maybe_seed_defaults() -> None:
-    """If the developer hasn't set DECEPTICON_NEO4J_* but the compose
+    """If the developer hasn't set RAPTIX_NEO4J_* but the compose
     stack is running on localhost, fill in the compose defaults so the
     integration suite "just works" on a normal dev box.
 
     No-op when any var is already set — explicit values always win.
     """
-    if not os.environ.get("DECEPTICON_NEO4J_URI"):
-        os.environ.setdefault("DECEPTICON_NEO4J_URI", _DEFAULT_TEST_URI)
-    if not os.environ.get("DECEPTICON_NEO4J_USER"):
-        os.environ.setdefault("DECEPTICON_NEO4J_USER", _DEFAULT_TEST_USER)
-    if not os.environ.get("DECEPTICON_NEO4J_PASSWORD"):
-        os.environ.setdefault("DECEPTICON_NEO4J_PASSWORD", _DEFAULT_TEST_PASSWORD)
+    if not os.environ.get("RAPTIX_NEO4J_URI"):
+        os.environ.setdefault("RAPTIX_NEO4J_URI", _DEFAULT_TEST_URI)
+    if not os.environ.get("RAPTIX_NEO4J_USER"):
+        os.environ.setdefault("RAPTIX_NEO4J_USER", _DEFAULT_TEST_USER)
+    if not os.environ.get("RAPTIX_NEO4J_PASSWORD"):
+        os.environ.setdefault("RAPTIX_NEO4J_PASSWORD", _DEFAULT_TEST_PASSWORD)
 
 
 @pytest.fixture(scope="session")
@@ -74,7 +74,7 @@ def kgstore() -> Iterator[KGStore]:
     except KGStoreConfigError as exc:
         if store is not None:
             store.close()
-        pytest.skip(f"DECEPTICON_NEO4J_* not configured: {exc}")
+        pytest.skip(f"RAPTIX_NEO4J_* not configured: {exc}")
     except Exception as exc:  # pragma: no cover — depends on live service
         if store is not None:
             store.close()

@@ -123,13 +123,13 @@ Volt Typhoon is a People's Republic of China (PRC) state-sponsored cyber actor a
 - **Mimikatz (S0002)** — Credential dumping (LSASS).
 - **Living-off-the-land binaries:** `cmd` (S0106), `certutil` (S0160), `netsh` (S0108), `Net` (S0039), `netstat` (S0104), `Nltest` (S0359), `Ping` (S0097), `PsExec` (S0029), `Reg` (S0075), `Systeminfo` (S0096), `Tasklist` (S0057), `Wevtutil` (S0645), `ipconfig` (S0100), plus `ntdsutil`, `wmic`, `vssadmin`, `wevtutil`. Web shells observed: Awen, `AuditReport.jspx`, `iisstart.aspx`. Recon/post-ex: ScanLine, BrightmetricAgent (UPX-packed).
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized use only.** Execute these TTPs solely within the documented scope and rules of engagement of an explicitly authorized red-team engagement. Do not target out-of-scope systems, real critical-infrastructure OT, or third-party edge devices, and never stage destructive actions — Volt Typhoon's value to emulate is its *stealth and dwell*, not impact.
 
-Map Volt Typhoon's signature to Decepticon capabilities:
+Map Volt Typhoon's signature to Raptix capabilities:
 
-- **Initial access (T1190 / T1133):** Use Decepticon's exploitation/recon tooling to identify and exploit in-scope internet-facing appliances (VPN/SD-WAN/edge). Mirror the edge-device-first pattern. Capture device-stored AD service-account credentials and pivot inward with **valid accounts (T1078)** instead of dropping implants.
+- **Initial access (T1190 / T1133):** Use Raptix's exploitation/recon tooling to identify and exploit in-scope internet-facing appliances (VPN/SD-WAN/edge). Mirror the edge-device-first pattern. Capture device-stored AD service-account credentials and pivot inward with **valid accounts (T1078)** instead of dropping implants.
 - **LOTL execution (T1059.x / T1047 / T1218):** Drive everything through the **bash** skill and native Windows binaries — `wmic`, `powershell`, `cmd`, `netsh`. Forbid yourself from uploading EXEs where a LOLBin works. This is the defining behavior to reproduce.
 - **AD / credential access (T1003.003 / T1003.001 / T1555):** Use the **AD skills** to emulate `ntdsutil`/`ntds.dit` capture and LSASS access; stage hives in `C:\Windows\Temp\`, 7-Zip into password-protected multi-volume archives, and rename with a `.gif` extension to mirror **T1560.001 / T1074.001 / T1036.008**.
 - **Persistence via web shells (T1505.003):** Use the **defense-evasion** / payload skills to plant a minimal web shell on an in-scope server, mimicking VersaMem's auth-hook credential capture rather than a noisy beacon.

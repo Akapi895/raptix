@@ -11,7 +11,7 @@ metadata:
 
 # APT41 (Double Dragon, Wicked Panda, BARIUM) — Adversary Emulation Profile
 
-APT41 (MITRE ATT&CK **G0096**; also tracked as Double Dragon, Wicked Panda, Winnti, BARIUM, and Microsoft's **Brass Typhoon**) is a prolific Chinese threat actor unique for running **state-sponsored cyber-espionage in parallel with financially motivated cybercrime** — often reusing the same non-public malware for both missions. First publicly profiled by FireEye/Mandiant in August 2019, the group has been active since at least 2012, beginning in the video-game economy (virtual-currency theft, ransomware, code-signing certificate theft) and expanding into wide-ranging espionage. APT41 is best known for **software supply-chain compromises** (poisoning legitimately signed installers), rapid weaponization of newly disclosed vulnerabilities, abuse of **stolen code-signing certificates**, and a deep, modular toolset spanning Windows and Linux. This profile maps APT41's documented TTPs to ATT&CK so Decepticon can emulate them under authorized scope and the blue cell can anticipate detection.
+APT41 (MITRE ATT&CK **G0096**; also tracked as Double Dragon, Wicked Panda, Winnti, BARIUM, and Microsoft's **Brass Typhoon**) is a prolific Chinese threat actor unique for running **state-sponsored cyber-espionage in parallel with financially motivated cybercrime** — often reusing the same non-public malware for both missions. First publicly profiled by FireEye/Mandiant in August 2019, the group has been active since at least 2012, beginning in the video-game economy (virtual-currency theft, ransomware, code-signing certificate theft) and expanding into wide-ranging espionage. APT41 is best known for **software supply-chain compromises** (poisoning legitimately signed installers), rapid weaponization of newly disclosed vulnerabilities, abuse of **stolen code-signing certificates**, and a deep, modular toolset spanning Windows and Linux. This profile maps APT41's documented TTPs to ATT&CK so Raptix can emulate them under authorized scope and the blue cell can anticipate detection.
 
 ## Attribution & motivation
 
@@ -133,13 +133,13 @@ APT41 (MITRE ATT&CK **G0096**; also tracked as Double Dragon, Wicked Panda, Winn
 - **Web shells:** ANTSWORD, BLUEBEAM, China Chopper (S0020), ASPXSpy (S0073), custom JScript shells.
 - **Commodity / public / dual-use:** Cobalt Strike BEACON (S0154), Empire (S0363), Mimikatz (S0002), Impacket (S0357 — incl. wmiexec), PowerSploit (S0194), pwdump (S0006), Windows Credential Editor, ProcDump, BrowserGhost, sqlmap (S0225), SQLULDR2 & PINEGROVE (Oracle exfil), NATBypass, CLASSFON, certutil (S0160), BITSAdmin (S0190), and native LOLBins (Net, ipconfig, netstat, ping, dsquery, ftp).
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized use only:** Execute these techniques solely within the documented engagement scope, rules of engagement, and authorization window. Stay inside approved target ranges and obtain explicit sign-off before any destructive or impact-stage action.
 
-Map APT41's signature behaviors to Decepticon's own capabilities:
+Map APT41's signature behaviors to Raptix's own capabilities:
 
-- **Initial access (T1190, T1505.003):** Use Decepticon's recon/scanning and exploitation skills to identify and exploit an in-scope internet-facing app, then drop an in-scope **web shell** (emulate China Chopper / ANTSWORD behavior). Mirror APT41's defining trait: weaponize a recently disclosed CVE *fast* against the approved target.
+- **Initial access (T1190, T1505.003):** Use Raptix's recon/scanning and exploitation skills to identify and exploit an in-scope internet-facing app, then drop an in-scope **web shell** (emulate China Chopper / ANTSWORD behavior). Mirror APT41's defining trait: weaponize a recently disclosed CVE *fast* against the approved target.
 - **Execution & ingress (T1105, T1218.011, T1197):** From the web shell, emulate the DUSTPAN pattern — use `certutil`/BITSAdmin (bash/Windows command skills) to pull a stager, then load via `rundll32` / DLL side-loading.
 - **C2 (T1071.001, T1573.002, T1090, T1102.001):** Stand up **Sliver (c2/sliver skill)** as the BEACON analog over HTTPS. Emulate APT41 tradecraft with the **defense-evasion** kit: domain fronting / CDN proxying, web-service dead-drop resolvers, and DGA-style or non-standard-port profiles where the C2 framework supports it.
 - **Defense evasion (T1574.001, T1027.002, T1553.002, T1562.006):** Use the **defense-evasion skill** for DLL search-order hijacking / side-loading, packing/obfuscation of the implant, signing test payloads with an authorized cert (emulating stolen-cert behavior), and ETW/event-log tampering — log every change for the blue cell.

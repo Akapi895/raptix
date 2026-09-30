@@ -152,14 +152,14 @@ def test_extract_yara_metadata_empty_when_no_meta_block():
 
 
 def test_resolve_siem_target_missing_conops_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     with pytest.raises(conops_mod.ConOpsLookupError):
         conops_mod.resolve_siem_target("splunk")
 
 
 def test_resolve_siem_target_missing_target_raises(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     (tmp_path / "conops.json").write_text(json.dumps({"blue_team": {}}))
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     with pytest.raises(conops_mod.ConOpsLookupError):
         conops_mod.resolve_siem_target("splunk")
 
@@ -174,7 +174,7 @@ def test_resolve_siem_target_success(tmp_path: Path, monkeypatch: pytest.MonkeyP
             }
         )
     )
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     target = conops_mod.resolve_siem_target("splunk")
     assert target["url"] == "https://splunk.example"
 
@@ -250,7 +250,7 @@ def test_push_defender_xdr_kql_built_from_sha256(tmp_path: Path, monkeypatch: py
             }
         )
     )
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     monkeypatch.setenv("DEFENDER_TOKEN", "fake-token")
 
     mock_resp = MagicMock()
@@ -282,7 +282,7 @@ def test_push_defender_xdr_no_indicator_returns_error(
             }
         )
     )
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     monkeypatch.setenv("DEFENDER_TOKEN", "fake-token")
 
     with patch("requests.post") as mock_post:

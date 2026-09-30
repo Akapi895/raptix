@@ -23,7 +23,7 @@ import { statusHtml } from "./ui.mjs";
 
 test("resolveDesktopConfig defaults to the installed Decepticon home and WEB_PORT in local mode", () => {
   const cfg = resolveDesktopConfig(
-    { WEB_PORT: "3999", DECEPTICON_DESKTOP_MODE: "local" },
+    { WEB_PORT: "3999", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/home/alice", platform: "linux" },
   );
 
@@ -39,7 +39,7 @@ test("resolveDesktopConfig defaults to the installed Decepticon home and WEB_POR
 
 test("resolveDesktopConfig auto mode uses cloud when local install is missing", () => {
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: "/tmp/decepticon-missing-install" },
+    { RAPTIX_HOME: "/tmp/decepticon-missing-install" },
     { homedir: () => "/unused", platform: "linux" },
     () => {
       throw new Error("no env");
@@ -59,7 +59,7 @@ test("resolveDesktopConfig auto mode uses local when install config exists", () 
     path.join(home, ".env"),
   ]);
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: home, WEB_PORT: "4310" },
+    { RAPTIX_HOME: home, WEB_PORT: "4310" },
     { homedir: () => "/unused", platform: "linux" },
     () => "WEB_PORT=4310\n",
     (file) => existing.has(file),
@@ -72,7 +72,7 @@ test("resolveDesktopConfig auto mode uses local when install config exists", () 
 
 test("resolveDesktopConfig cloud mode always targets the hosted app", () => {
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_DESKTOP_MODE: "cloud", WEB_PORT: "3000" },
+    { RAPTIX_DESKTOP_MODE: "cloud", WEB_PORT: "3000" },
     { homedir: () => "/home/alice", platform: "linux" },
   );
   assert.equal(cfg.dashboardUrl, CLOUD_APP_URL);
@@ -81,7 +81,7 @@ test("resolveDesktopConfig cloud mode always targets the hosted app", () => {
 
 test("resolveDesktopConfig reads WEB_PORT from the installed env file", () => {
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: "/opt/decepticon", DECEPTICON_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/opt/decepticon", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
     () => "POSTGRES_PASSWORD=secret\nWEB_PORT=4310\n",
   );
@@ -91,9 +91,9 @@ test("resolveDesktopConfig reads WEB_PORT from the installed env file", () => {
 
 test("resolveDesktopConfig prefers explicit Compose project", () => {
   const cfg = resolveDesktopConfig({
-    DECEPTICON_COMPOSE_PROJECT: "vendor-dev",
-    DECEPTICON_STACK_NAME: "lab",
-    DECEPTICON_DESKTOP_MODE: "local",
+    RAPTIX_COMPOSE_PROJECT: "vendor-dev",
+    RAPTIX_STACK_NAME: "lab",
+    RAPTIX_DESKTOP_MODE: "local",
   });
 
   assert.equal(cfg.project, "vendor-dev");
@@ -101,7 +101,7 @@ test("resolveDesktopConfig prefers explicit Compose project", () => {
 
 test("readInstalledVersion pins Compose to the installed CLI version", () => {
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: "/opt/decepticon", DECEPTICON_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/opt/decepticon", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
   );
 
@@ -109,14 +109,14 @@ test("readInstalledVersion pins Compose to the installed CLI version", () => {
   assert.equal(readInstalledVersion(cfg, () => "v1.1.23\n"), "1.1.23");
   assert.equal(readInstalledVersion(cfg, () => ""), "");
   assert.equal(
-    resolveDesktopConfig({ DECEPTICON_STACK_NAME: "lab", DECEPTICON_DESKTOP_MODE: "local" }).webContainer,
+    resolveDesktopConfig({ RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" }).webContainer,
     "decepticon-lab-web",
   );
 });
 
 test("composeUpArgs starts only the dynamic web profile", () => {
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: "/opt/decepticon", DECEPTICON_STACK_NAME: "lab", DECEPTICON_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/opt/decepticon", RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
   );
 
@@ -140,26 +140,26 @@ test("composeUpArgs starts only the dynamic web profile", () => {
 test("composeProcessEnv clears implicit profile activation", () => {
   assert.deepEqual(composeProcessEnv({ COMPOSE_PROFILES: "c2-sliver" }, "1.1.40"), {
     COMPOSE_PROFILES: "",
-    DECEPTICON_COMPOSE_PROJECT: "",
-    DECEPTICON_STACK_NAME: "",
-    DECEPTICON_VERSION: "1.1.40",
+    RAPTIX_COMPOSE_PROJECT: "",
+    RAPTIX_STACK_NAME: "",
+    RAPTIX_VERSION: "1.1.40",
   });
 });
 
 test("composeProcessEnv preserves explicit stack ownership", () => {
   assert.deepEqual(
-    composeProcessEnv({ DECEPTICON_COMPOSE_PROJECT: "vendor-dev", DECEPTICON_STACK_NAME: "lab" }),
+    composeProcessEnv({ RAPTIX_COMPOSE_PROJECT: "vendor-dev", RAPTIX_STACK_NAME: "lab" }),
     {
       COMPOSE_PROFILES: "",
-      DECEPTICON_COMPOSE_PROJECT: "vendor-dev",
-      DECEPTICON_STACK_NAME: "lab",
+      RAPTIX_COMPOSE_PROJECT: "vendor-dev",
+      RAPTIX_STACK_NAME: "lab",
     },
   );
 });
 
 test("missingConfigFiles catches incomplete desktop setup before Compose runs", () => {
   const cfg = resolveDesktopConfig(
-    { DECEPTICON_HOME: "/tmp/decepticon-desktop-smoke", DECEPTICON_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/tmp/decepticon-desktop-smoke", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
   );
   const existing = new Set([path.join("/tmp/decepticon-desktop-smoke", "docker-compose.yml")]);

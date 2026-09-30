@@ -10,7 +10,7 @@ Tool surface (in addition to bash):
     REPORTING_TOOLS, REFERENCES_TOOLS, plus ``kg_record`` and
     ``kg_ingest`` supplied by the KG middleware slot
     (``SLOTS_PER_ROLE["analyst"]`` includes ``MiddlewareSlot.KG``;
-    ``KGMiddleware`` constructs from ``DECEPTICON_NEO4J_*`` env at agent
+    ``KGMiddleware`` constructs from ``RAPTIX_NEO4J_*`` env at agent
     build time and exposes its two tools via ``self.tools``).
 
 REPORTING_TOOLS currently routes through the legacy

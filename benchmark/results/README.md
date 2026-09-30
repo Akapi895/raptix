@@ -1,7 +1,7 @@
-# Decepticon — XBOW Validation Benchmark Passes
+# Raptix — XBOW Validation Benchmark Passes
 
 <div align="center">
-  <img src="../../assets/benchmark/decepticon_donut.png" alt="Decepticon — XBOW pass rate 102/104 (98.08%)" width="620">
+  <img src="../../assets/benchmark/decepticon_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="620">
 </div>
 
 Confirmed flag captures on the [XBOW validation benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks), grouped by difficulty. Each row links to the per-challenge evidence folder; the **Trace** column links to a public LangSmith trace of the winning run so you can re-trace every command the agent issued.
@@ -25,7 +25,7 @@ Confirmed flag captures on the [XBOW validation benchmarks](https://github.com/P
 
 Count of XBOW benchmarks solved end-to-end per category (≥1 full kill-chain → flag).
 
-![Decepticon — web attack class coverage](../../assets/benchmark/coverage.png)
+![Raptix — web attack class coverage](../../assets/benchmark/coverage.png)
 
 | Class | L1 | L2 | L3 | Total |
 |---|---:|---:|---:|---:|

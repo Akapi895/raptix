@@ -130,7 +130,7 @@ class TestActionableMessageFatalLabel:
         assert "non-retryable provider error" in msg
         assert "config/litellm.yaml" in msg
         assert "dynamic environment" in msg
-        assert "DECEPTICON_MODEL" in msg
+        assert "RAPTIX_MODEL" in msg
         assert "restart" in msg.lower()
         assert "startup logs" in msg.lower()
         assert "/v1/models" in msg
@@ -216,7 +216,7 @@ class TestActionableMessage403Forbidden:
         msg = str(info.value)
         assert "refused access (403)" in msg
         assert "non-retryable provider error" in msg
-        assert "DECEPTICON_AUTH_PRIORITY" in msg
+        assert "RAPTIX_AUTH_PRIORITY" in msg
 
     def test_403_message_only_gives_actionable_message(self):
         exc = Exception("litellm.PermissionDeniedError: Error code: 403 - region not allowed")

@@ -21,7 +21,7 @@ import (
 //                     systemd, Linux without per-user systemd)
 //
 // Every method is idempotent. Install on an already-installed unit
-// re-writes the unit file (so binary-path / DECEPTICON_HOME drift
+// re-writes the unit file (so binary-path / RAPTIX_HOME drift
 // gets corrected on the next install run), then re-enables and
 // re-starts. Uninstall on a never-installed unit is a no-op.
 type ServiceManager interface {
@@ -71,12 +71,12 @@ type InstallSpec struct {
 	// /usr/local/bin/decepticon, ~/.local/bin/decepticon).
 	BinaryPath string
 
-	// HomePath is the absolute $DECEPTICON_HOME directory. Templated
+	// HomePath is the absolute $RAPTIX_HOME directory. Templated
 	// into Environment= / EnvironmentVariables= so the daemon resolves
 	// the same socket path the launcher does.
 	HomePath string
 
-	// StackName is the DECEPTICON_STACK_NAME at install time (or
+	// StackName is the RAPTIX_STACK_NAME at install time (or
 	// empty). Templated into the unit name + Environment so two
 	// stacks coexist without colliding socket paths or unit names.
 	StackName string

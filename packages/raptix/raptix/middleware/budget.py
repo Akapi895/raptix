@@ -2,17 +2,17 @@
 
 Decepticon engagements can spin for hours with multiple specialist sub-agents
 running in parallel, each driving an expensive frontier model. The
-LiteLLM-only timeout knob (``DECEPTICON_LLM__TIMEOUT``) is necessary but not
+LiteLLM-only timeout knob (``RAPTIX_LLM__TIMEOUT``) is necessary but not
 sufficient — a long-running engagement on ``claude-opus-4-8 → fallback →
 fallback`` can quietly accrue hundreds of dollars in spend before a human
 operator notices.
 
 This middleware exposes a single financial guardrail::
 
-    DECEPTICON_BUDGET__ENGAGEMENT_USD    hard cap for the whole engagement
-    DECEPTICON_BUDGET__PER_AGENT_USD     hard cap per specialist agent
-    DECEPTICON_BUDGET__SOFT_WARN_AT_PCT  emit a stream warning at this fraction
-    DECEPTICON_BUDGET__POLL_SECONDS      how often to re-query LiteLLM
+    RAPTIX_BUDGET__ENGAGEMENT_USD    hard cap for the whole engagement
+    RAPTIX_BUDGET__PER_AGENT_USD     hard cap per specialist agent
+    RAPTIX_BUDGET__SOFT_WARN_AT_PCT  emit a stream warning at this fraction
+    RAPTIX_BUDGET__POLL_SECONDS      how often to re-query LiteLLM
 
 Spend numbers come from the LiteLLM proxy's ``/spend/tags`` API. The
 middleware tags every outbound completion with its scope keys
@@ -74,7 +74,7 @@ class BudgetExceeded(RuntimeError):
         self.cap_usd = cap_usd
         super().__init__(
             f"Budget exceeded ({scope}): spent ${spent_usd:.4f} of ${cap_usd:.2f} cap. "
-            "Raise the cap via DECEPTICON_BUDGET__* or end the engagement."
+            "Raise the cap via RAPTIX_BUDGET__* or end the engagement."
         )
 
 
@@ -170,22 +170,22 @@ class BudgetEnforcementMiddleware(AgentMiddleware):
         self._engagement_cap = (
             engagement_cap_usd
             if engagement_cap_usd is not None
-            else _env_float("DECEPTICON_BUDGET__ENGAGEMENT_USD", 0.0)
+            else _env_float("RAPTIX_BUDGET__ENGAGEMENT_USD", 0.0)
         )
         self._per_agent_cap = (
             per_agent_cap_usd
             if per_agent_cap_usd is not None
-            else _env_float("DECEPTICON_BUDGET__PER_AGENT_USD", 0.0)
+            else _env_float("RAPTIX_BUDGET__PER_AGENT_USD", 0.0)
         )
         self._soft_warn = (
             soft_warn_at_pct
             if soft_warn_at_pct is not None
-            else _env_float("DECEPTICON_BUDGET__SOFT_WARN_AT_PCT", 0.7)
+            else _env_float("RAPTIX_BUDGET__SOFT_WARN_AT_PCT", 0.7)
         )
         poll = (
             poll_seconds
             if poll_seconds is not None
-            else _env_float("DECEPTICON_BUDGET__POLL_SECONDS", 5.0)
+            else _env_float("RAPTIX_BUDGET__POLL_SECONDS", 5.0)
         )
         self._cache = _SpendCache(ttl_seconds=poll)
         self._spend_provider = spend_provider or _default_litellm_spend_provider
@@ -210,7 +210,7 @@ class BudgetEnforcementMiddleware(AgentMiddleware):
         engagement = (
             get("engagement_name")
             or get("engagement_id")
-            or os.environ.get("DECEPTICON_ENGAGEMENT_ID", "")
+            or os.environ.get("RAPTIX_ENGAGEMENT_ID", "")
             or "default-engagement"
         )
         agent_name = ""
@@ -309,7 +309,7 @@ def _default_litellm_spend_provider(scope_key: str) -> float:
     cardinality, not log volume.
 
     Proxy URL and key come from the same ``DecepticonConfig`` source the LLM
-    factory uses (``DECEPTICON_LLM__PROXY_URL`` / ``__PROXY_API_KEY``), so
+    factory uses (``RAPTIX_LLM__PROXY_URL`` / ``__PROXY_API_KEY``), so
     any environment that can run an agent can also enforce its budget.
 
     Returns 0.0 on any failure — the middleware treats provider exceptions

@@ -18,7 +18,7 @@ Safety: the management plane is discovered *here* (from
 ``/proc/net/route`` — no external binary, as the OSS sandbox image ships
 no ``ip``), never trusted from the wire — so a scope rule can never sever
 the agent↔management link (Neo4j, the daemon, DNS). Enforcement is ON by
-default for an enforcing policy; ``DECEPTICON_EGRESS_DISABLE`` is the
+default for an enforcing policy; ``RAPTIX_EGRESS_DISABLE`` is the
 operator opt-out (passed as ``enabled=False`` by the provisioning hook /
 endpoint) for an environment the in-sandbox firewall doesn't fit.
 """
@@ -361,7 +361,7 @@ def apply_egress(
     """Compile + load the egress ruleset inside the sandbox.
 
     When ``enabled`` is False (the operator opted out via
-    ``DECEPTICON_EGRESS_DISABLE``), nothing touches the network — the
+    ``RAPTIX_EGRESS_DISABLE``), nothing touches the network — the
     rendered ruleset is returned for inspection but never loaded, so the
     management plane is guaranteed intact.
 

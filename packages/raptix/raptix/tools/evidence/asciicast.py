@@ -42,7 +42,7 @@ from typing import Any
 log = logging.getLogger(__name__)
 
 
-_PS1_MARKER = re.compile(r"DECEPTICON_PROMPT_END_\w+")
+_PS1_MARKER = re.compile(r"RAPTIX_PROMPT_END_\w+")
 _DEFAULT_WIDTH = 120
 _DEFAULT_HEIGHT = 30
 _SYNTHETIC_INTERVAL_SECONDS = 0.5

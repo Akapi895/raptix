@@ -18,11 +18,11 @@ var daemonCmd = &cobra.Command{
 	Use:   "daemon",
 	Short: "Run the opscontrol daemon in the foreground",
 	Long: `Runs the opscontrol HTTP server on the Unix domain socket at
-$DECEPTICON_HOME/run/ops.sock. Intended to be supervised by
+$RAPTIX_HOME/run/ops.sock. Intended to be supervised by
 ` + "`decepticon start`" + ` (which spawns it detached and writes the
 PID file). Operators can also invoke it directly for debugging:
 
-    DECEPTICON_HOME=/tmp/dogfood decepticon opscontrol daemon
+    RAPTIX_HOME=/tmp/dogfood decepticon opscontrol daemon
 
 ADR-0006 §1' is the authoritative spec.`,
 	RunE: runDaemon,
@@ -49,7 +49,7 @@ func runDaemon(_ *cobra.Command, _ []string) error {
 		backend.ExtraFiles = append(backend.ExtraFiles, overridePath)
 	}
 
-	// The overlay templates ${DECEPTICON_OPSCONTROL_SOCK_HOST} into
+	// The overlay templates ${RAPTIX_OPSCONTROL_SOCK_HOST} into
 	// langgraph's bind mount. Export it BEFORE the first compose call
 	// so the daemon's spawn of bhce / c2-sliver / … produces the same
 	// langgraph mount the launcher would have produced. Without this
@@ -57,7 +57,7 @@ func runDaemon(_ *cobra.Command, _ []string) error {
 	// or, with the old `:-/dev/null` fallback, silently mounts
 	// /dev/null and the agent-side OpsControlClient hits ECONNREFUSED
 	// at runtime.
-	if err := os.Setenv("DECEPTICON_OPSCONTROL_SOCK_HOST", internal.HostSocketPath()); err != nil {
+	if err := os.Setenv("RAPTIX_OPSCONTROL_SOCK_HOST", internal.HostSocketPath()); err != nil {
 		return fmt.Errorf("opscontrol: export socket path: %w", err)
 	}
 

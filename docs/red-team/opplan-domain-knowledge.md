@@ -53,7 +53,7 @@ Pivoting → Discovery → Privilege Escalation → Execution → Credential Acc
 **OUT Cycle** (Actions on Objectives — 4 phases):
 Collection → Exfiltration → Impact → Objectives
 
-### Practical 5-Phase Model (Decepticon)
+### Practical 5-Phase Model (Raptix)
 
 Maps to sub-agent routing and covers the three UKC cycles:
 

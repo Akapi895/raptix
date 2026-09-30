@@ -614,7 +614,7 @@ jobs:
   # this job succeeds:
   #   - GitHub `releases/latest` keeps returning the previous version, so
   #     the launcher's stable channel never points at images mid-push.
-  #   - The channel tags are not moved, so a `${DECEPTICON_VERSION:-stable}`
+  #   - The channel tags are not moved, so a `${RAPTIX_VERSION:-stable}`
   #     fallback keeps resolving to the previous (working) release.
   publish-release:
     name: Verify images & publish release

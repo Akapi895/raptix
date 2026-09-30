@@ -125,7 +125,7 @@ model_list:
       input_cost_per_token: 0.00000005
       output_cost_per_token: 0.0000004
 
-  # Code-heavy override — opt-in via DECEPTICON_MODEL_<ROLE> for roles
+  # Code-heavy override — opt-in via RAPTIX_MODEL_<ROLE> for roles
   # like patcher, exploiter, contract_auditor that benefit from OpenAI's
   # agentic coding specialization. Not a default tier pick (gpt-5.5 stays
   # HIGH for general agent balance); this route exists so per-agent env
@@ -152,7 +152,7 @@ model_list:
       input_cost_per_token: 0.00000002
 
   # Alternatives for non-OpenAI deployments — select via
-  # DECEPTICON_SKILLOGY_EMBED_MODEL (the helper carries the matching dim:
+  # RAPTIX_SKILLOGY_EMBED_MODEL (the helper carries the matching dim:
   # voyage-3 → 1024, gemini-embedding-001 → 3072). Voyage is Anthropic's
   # official embedding partner, so an Anthropic-ecosystem operator can run
   # skillogy semantics with a VOYAGE_API_KEY and no OpenAI key; Gemini
@@ -208,7 +208,7 @@ model_list:
   # than 2026-10-16); the 3.x GA models below are the migration target.
   # No GA Gemini 3 Pro exists yet (Pro is preview-only: gemini-3.1-pro-preview),
   # so the HIGH tier stays on 2.5-pro until a GA 3.x Pro ships. These are
-  # added as routable options for DECEPTICON_MODEL_<ROLE> overrides plus the
+  # added as routable options for RAPTIX_MODEL_<ROLE> overrides plus the
   # within-family fallback below.
   # Per-1M USD as of 2026-06-11 (Gemini Developer API):
   #   3.5-flash      $1.50 / $9.00
@@ -468,7 +468,7 @@ model_list:
   # NIM is BYO-hardware: the cost is the GPU rental (DGX Cloud, AWS, on-prem),
   # NOT per-token. Pinned to $0 so /spend/logs is honest — token-based cost
   # tracking does not apply. Operators who want to amortize GPU spend across
-  # tokens should override these via DECEPTICON_MODEL_<ROLE> + a custom
+  # tokens should override these via RAPTIX_MODEL_<ROLE> + a custom
   # gateway with their own rate. Explicit ``0`` here also bypasses LiteLLM
   # budget checks (zero-cost models skip all budget enforcement).
   - model_name: nvidia_nim/meta/llama-3.3-70b-instruct
@@ -747,7 +747,7 @@ model_list:
   # ChatGPT (auth/gpt-*), Gemini Advanced (gemini-sub/*), Copilot
   # (copilot/*), SuperGrok (grok-sub/*), and Perplexity Pro (pplx-sub/*)
   # are registered DYNAMICALLY by litellm_dynamic_config.py, gated on
-  # their respective DECEPTICON_AUTH_* flags. Each route dispatches to a
+  # their respective RAPTIX_AUTH_* flags. Each route dispatches to a
   # Decepticon custom handler defined under config/<provider>_handler.py
   # (claude_code, codex_chatgpt, gemini, copilot, grok, perplexity) — all
   # share oauth_token_store.py for atomic token refresh + mtime caching,

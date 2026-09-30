@@ -25,17 +25,17 @@ def _seed_evidence(workspace: Path) -> Path:
 
 
 def test_workspace_default_when_env_unset(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("DECEPTICON_ENGAGEMENT_WORKSPACE", raising=False)
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT_WORKSPACE", raising=False)
     assert evtools._workspace() == Path("/workspace")
 
 
 def test_workspace_returns_path_from_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     assert evtools._workspace() == tmp_path
 
 
 def test_evidence_dir_is_workspace_subpath(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     assert evtools._evidence_dir() == tmp_path / "evidence" / "recordings"
 
 
@@ -47,10 +47,10 @@ def test_json_helper_round_trips_dict() -> None:
 def test_export_session_asciicast_explicit_log_path_success(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     log_file = tmp_path / "cmd.log"
     log_file.write_text(
-        "first\nDECEPTICON_PROMPT_END_xx\nsecond\nDECEPTICON_PROMPT_END_xx\n",
+        "first\nRAPTIX_PROMPT_END_xx\nsecond\nRAPTIX_PROMPT_END_xx\n",
         encoding="utf-8",
     )
     result = json.loads(
@@ -75,12 +75,12 @@ def test_export_session_asciicast_explicit_log_path_success(
 def test_export_session_asciicast_fallback_tmux_log_path(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     tmux_logs_dir = tmp_path / ".tmux-logs"
     tmux_logs_dir.mkdir()
     log_file = tmux_logs_dir / "fb.log"
     log_file.write_text(
-        "output\nDECEPTICON_PROMPT_END_xx\nmore\nDECEPTICON_PROMPT_END_xx\n",
+        "output\nRAPTIX_PROMPT_END_xx\nmore\nRAPTIX_PROMPT_END_xx\n",
         encoding="utf-8",
     )
     result = json.loads(export_session_asciicast.invoke({"session_name": "fb"}))
@@ -95,7 +95,7 @@ def test_export_session_asciicast_fallback_tmux_log_path(
 def test_export_session_asciicast_error_when_log_missing(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     result = json.loads(export_session_asciicast.invoke({"session_name": "missing"}))
     assert "error" in result
     assert "status" not in result
@@ -105,7 +105,7 @@ def test_export_session_asciicast_error_when_log_missing(
 def test_list_session_recordings_empty_when_evidence_dir_absent(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     result = json.loads(list_session_recordings.invoke({}))
     assert result == {"count": 0, "recordings": []}
 
@@ -113,7 +113,7 @@ def test_list_session_recordings_empty_when_evidence_dir_absent(
 def test_list_session_recordings_returns_manifests(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_WORKSPACE", str(tmp_path))
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
     recordings_dir = tmp_path / "evidence" / "recordings"
     recordings_dir.mkdir(parents=True)
     (recordings_dir / "a.cast.manifest.json").write_text(
@@ -189,7 +189,7 @@ def test_verify_evidence_error_when_manifest_absent(tmp_path: Path) -> None:
 def test_verify_evidence_flags_hmac_chain_break(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("DECEPTICON_AUDIT_HMAC_KEY", "secret-key")
+    monkeypatch.setenv("RAPTIX_AUDIT_HMAC_KEY", "secret-key")
     _seed_evidence(tmp_path)
     seal_evidence.invoke({"workspace_path": str(tmp_path)})
     manifest = tmp_path / "evidence" / "chain-of-custody.jsonl"

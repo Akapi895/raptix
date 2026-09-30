@@ -175,10 +175,10 @@ Third-party `Neo4jStore(BaseStore)` implementations exist (e.g., `langchain-neo4
 **Structural gaps that prevent conformance for an attack graph:**
 
 1. **No edge/relationship primitive.** `BaseStore` models `Item` objects (key → dict value), not graph edges. Storing attack-path relationships — `(:Host)-[:CAN_EXPLOIT]->(:Service)` — has no natural representation in `put`/`get`. A `BaseStore` conforming implementation can only store node properties as dicts; edges become invisible.
-2. **No Cypher passthrough.** `BaseStore.search` is a semantic/keyword search over stored values, not a graph traversal query. Decepticon's `kg_query_paths` tool (Dijkstra shortest path, reachability subgraphs) cannot be expressed as a `search(namespace, query=str)` call.
+2. **No Cypher passthrough.** `BaseStore.search` is a semantic/keyword search over stored values, not a graph traversal query. Raptix's `kg_query_paths` tool (Dijkstra shortest path, reachability subgraphs) cannot be expressed as a `search(namespace, query=str)` call.
 3. **No batch transaction semantics.** `put` is single-item; atomic batch upserts across node + edge sets require multi-statement Cypher transactions.
 
-**Conclusion:** Implementing `BaseStore` for Neo4j is feasible for the scalar-memory use case (storing agent findings as blobs) but cannot express graph-native operations. The KGMiddleware should maintain a **separate `KGStore`** (wrapping `neo4j.AsyncDriver`) alongside the LangGraph store, rather than trying to conform to `BaseStore`. The existing `Neo4jStore` in `packages/decepticon/decepticon/tools/research/neo4j_store.py` (787 LOC) is the right foundation.
+**Conclusion:** Implementing `BaseStore` for Neo4j is feasible for the scalar-memory use case (storing agent findings as blobs) but cannot express graph-native operations. The KGMiddleware should maintain a **separate `KGStore`** (wrapping `neo4j.AsyncDriver`) alongside the LangGraph store, rather than trying to conform to `BaseStore`. The existing `Neo4jStore` in `packages/raptix/raptix/tools/research/neo4j_store.py` (787 LOC) is the right foundation.
 
 ---
 
@@ -191,7 +191,7 @@ Third-party `Neo4jStore(BaseStore)` implementations exist (e.g., `langchain-neo4
 
 ### 3.1 `MemoryMiddleware`
 
-`MemoryMiddleware` is a lightweight middleware that loads agent memory from `AGENTS.md` files (markdown skill catalogs) at `before_agent` time. It does not use the LangGraph `BaseStore` interface — it reads from the filesystem via the agent's backend. Decepticon already has an equivalent mechanism via its skill catalog system (markdown files in `packages/decepticon/decepticon/skills/`).
+`MemoryMiddleware` is a lightweight middleware that loads agent memory from `AGENTS.md` files (markdown skill catalogs) at `before_agent` time. It does not use the LangGraph `BaseStore` interface — it reads from the filesystem via the agent's backend. Raptix already has an equivalent mechanism via its skill catalog system (markdown files in `packages/raptix/raptix/skills/`).
 
 ### 3.2 `FilesystemMiddleware`
 
@@ -214,13 +214,13 @@ Exposed tools: `ls`, `read_file`, `write_file`, `edit_file`, `glob`, `grep` (+ `
 
 Storage model: dual-tier via `CompositeBackend`. `StateBackend` handles short-term in-state storage; `StoreBackend` routes paths prefixed with `/memories/` to persistent cross-thread storage (any LangGraph `BaseStore` implementation). Extends `AgentMiddleware` and implements `wrap_model_call`, `awrap_model_call`, `wrap_tool_call`, `awrap_tool_call`.
 
-**Intersection with Decepticon:** Decepticon agents already write `findings/`, `recon/` files via `DockerSandbox.execute_tmux()`. `FilesystemMiddleware` uses a different execution surface (its own `backend`). These are parallel systems — `FilesystemMiddleware` manages an in-graph virtual filesystem; Decepticon's sandbox writes to the real container filesystem. They should not be merged without intentional design. The `KGMiddleware` is not a `FilesystemMiddleware` replacement.
+**Intersection with Raptix:** Raptix agents already write `findings/`, `recon/` files via `DockerSandbox.execute_tmux()`. `FilesystemMiddleware` uses a different execution surface (its own `backend`). These are parallel systems — `FilesystemMiddleware` manages an in-graph virtual filesystem; Raptix's sandbox writes to the real container filesystem. They should not be merged without intentional design. The `KGMiddleware` is not a `FilesystemMiddleware` replacement.
 
 ### 3.3 `SubAgentMiddleware`
 
 Configures subagent dispatch. Subagents are defined with: `name`, `description`, `system_prompt`, `tools`, optional `model`, optional `middleware`. A general-purpose subagent always exists for context-isolation tasks. Subagents can be either simple config objects or `CompiledSubAgent` wrappers around prebuilt LangGraph graphs.
 
-**Relevance to Decepticon's 16-specialist architecture:** Decepticon's specialists are spawned with clean context windows via `create_agent` factory calls in `packages/decepticon/decepticon/agents/`. These are not `SubAgentMiddleware`-managed subagents — they are peer agents in the graph, not children of a supervisor middleware. The `SubAgentMiddleware` pattern is for a different architecture (hierarchical supervisor with delegated subtasks). No migration needed.
+**Relevance to Raptix's 16-specialist architecture:** Raptix's specialists are spawned with clean context windows via `create_agent` factory calls in `packages/raptix/raptix/agents/`. These are not `SubAgentMiddleware`-managed subagents — they are peer agents in the graph, not children of a supervisor middleware. The `SubAgentMiddleware` pattern is for a different architecture (hierarchical supervisor with delegated subtasks). No migration needed.
 
 ### 3.4 Composition of DeepAgents middleware with custom `AgentMiddleware`
 
@@ -278,7 +278,7 @@ CREATE INDEX composite_range_node_index_name FOR (n:Person) ON (n.age, n.country
 
 The `RANGE` keyword is optional (range is the default index type). The `IF NOT EXISTS` clause prevents errors on re-application.
 
-For Decepticon's schema (e.g., Host nodes by engagement + ip):
+For Raptix's schema (e.g., Host nodes by engagement + ip):
 ```cypher
 CREATE INDEX host_scope_idx IF NOT EXISTS
 FOR (n:Host) ON (n.engagement_id, n.ip)
@@ -320,8 +320,8 @@ Available in APOC Core (not Extended), which ships as part of Neo4j 5.x communit
 
 Requires: (1) GDS plugin installed separately, (2) a named graph projection created first (`gds.graph.project`), (3) a dedicated algorithm call. GDS is recommended for production analytic workloads requiring optimized performance, integration with other graph algorithms, or parallelism. GDS does NOT ship with Neo4j Community Edition by default — it requires a separate install and a GDS license for production.
 
-**Verdict for Decepticon (5.24 CE, real-time attack path queries):**
-Keep `apoc.algo.dijkstra` as used in `chain.py`. APOC Core is available in 5.24 CE, returns paths in-query without a projection step, and is appropriate for the query-time (not analytic-batch) pattern Decepticon uses. GDS would require a separate license and a graph projection that must be maintained in sync with live writes — overkill for attack-path lookup during agent turns.
+**Verdict for Raptix (5.24 CE, real-time attack path queries):**
+Keep `apoc.algo.dijkstra` as used in `chain.py`. APOC Core is available in 5.24 CE, returns paths in-query without a projection step, and is appropriate for the query-time (not analytic-batch) pattern Raptix uses. GDS would require a separate license and a graph projection that must be maintained in sync with live writes — overkill for attack-path lookup during agent turns.
 
 ---
 
@@ -335,20 +335,20 @@ Keep `apoc.algo.dijkstra` as used in `chain.py`. APOC Core is available in 5.24 
 
 BloodHound CE architecture as of 2026: Go-based REST API backend + embedded React/Sigma.js frontend + PostgreSQL application database + Neo4j graph database. The dual-database pattern is notable — PostgreSQL for application state (users, jobs, configs), Neo4j exclusively for the attack graph.
 
-**Multi-writer handling:** BloodHound CE does not expose its internal multi-writer Cypher patterns publicly. Based on architecture docs, data ingestion is handled by a single ingestor service pipeline (not concurrent agent writes). This is architecturally different from Decepticon where 16 agents write concurrently.
+**Multi-writer handling:** BloodHound CE does not expose its internal multi-writer Cypher patterns publicly. Based on architecture docs, data ingestion is handled by a single ingestor service pipeline (not concurrent agent writes). This is architecturally different from Raptix where 16 agents write concurrently.
 
 **Schema migration (2026):** The Query Library is deprecating `system_tags`-based conditions in favor of label-based `Privilege Zones` (deadline July 2026, requires BH v2026.03.23+). This is a UI/query migration, not a Neo4j schema migration.
 
-**Programmatic API:** BH CE exposes a REST HTTP API that can be used to drive queries programmatically. The `BloodHound Query Library` (queries.specterops.io, YAML format) was released June 2025. **Bring Your Own Library (BYOL)** (April 2026) allows pointing the query UI at a custom JSON endpoint following the query schema. No formal agent SDK is documented; Decepticon's attack-graph queries are better served by direct Cypher than by proxying through the BH API.
+**Programmatic API:** BH CE exposes a REST HTTP API that can be used to drive queries programmatically. The `BloodHound Query Library` (queries.specterops.io, YAML format) was released June 2025. **Bring Your Own Library (BYOL)** (April 2026) allows pointing the query UI at a custom JSON endpoint following the query schema. No formal agent SDK is documented; Raptix's attack-graph queries are better served by direct Cypher than by proxying through the BH API.
 
-**OpenGraph (2026):** Extends BloodHound beyond AD/Azure to arbitrary identity platforms (Jamf, GitHub, Okta, custom). This is directly relevant to Decepticon's multi-cloud graph model.
+**OpenGraph (2026):** Extends BloodHound beyond AD/Azure to arbitrary identity platforms (Jamf, GitHub, Okta, custom). This is directly relevant to Raptix's multi-cloud graph model.
 
 ### 5.2 Cartography (Lyft / CNCF) — incremental MERGE pattern
 
 **Source:** https://github.com/cartography-cncf/cartography (accessed 2026-06-03)
 **Source:** https://lyft.github.io/cartography/usage/schema.html (accessed 2026-06-03)
 
-Cartography is the most mature open-source reference for incremental Neo4j sync from scanner adapters. Its sync pattern is directly applicable to Decepticon's scanner-to-graph ingestion:
+Cartography is the most mature open-source reference for incremental Neo4j sync from scanner adapters. Its sync pattern is directly applicable to Raptix's scanner-to-graph ingestion:
 
 **Core pattern:**
 
@@ -368,7 +368,7 @@ SET h.lastupdated = $update_tag,
 
 **Duplicate-on-rescan handling:** Because MERGE is idempotent on the identity key, re-scanning the same asset updates in place. No deduplication logic needed in Python; Cypher handles it.
 
-**For Decepticon:** The `kg_ingest` dispatcher should pass `update_tag = int(time.time())` to all write transaction functions. Stale-node cleanup can run as a `before_agent` hook in `KGMiddleware`, scoped to `engagement_id` (never clean across engagements).
+**For Raptix:** The `kg_ingest` dispatcher should pass `update_tag = int(time.time())` to all write transaction functions. Stale-node cleanup can run as a `before_agent` hook in `KGMiddleware`, scoped to `engagement_id` (never clean across engagements).
 
 ### 5.3 Graphiti (Zep) — bi-temporal provenance model
 
@@ -389,7 +389,7 @@ Contradictions cause edge `t_expired` to be set rather than deletion, preserving
 
 **Community subgraphs:** Related entities are clustered into `Community` nodes for higher-level summarization and search.
 
-**Relevance for Decepticon provenance tracking:** Graphiti's episode → entity provenance model directly addresses the question "which agent in which OPPLAN step created which node?" Decepticon could borrow this by:
+**Relevance for Raptix provenance tracking:** Graphiti's episode → entity provenance model directly addresses the question "which agent in which OPPLAN step created which node?" Raptix could borrow this by:
 - Adding `created_by` (agent name string), `created_at_step` (OPPLAN phase), and `episode_id` (UUID linking to the raw tool output) properties on every `Host`, `Service`, `Finding` node.
 - Setting `lastupdated_by` on each MERGE write.
 - Not implementing the full Graphiti bi-temporal model (it requires LLM calls for conflict resolution) — but the property schema is worth adopting.
@@ -398,9 +398,9 @@ Contradictions cause edge `t_expired` to be set rather than deletion, preserving
 
 **Source:** https://github.com/topoteretes/cognee (accessed indirectly via search; direct fetch not performed)
 
-Cognee implements an Extract-Chunk-Load (ECL) pipeline for building knowledge graphs from unstructured documents. Its plugin architecture allows custom `DataPoint` types and custom graph transformation steps. The pattern is relevant for Decepticon plugin authors who want to add new scanner adapters (e.g., a BloodHound ingestor or a custom recon tool output parser) that feed into the attack graph.
+Cognee implements an Extract-Chunk-Load (ECL) pipeline for building knowledge graphs from unstructured documents. Its plugin architecture allows custom `DataPoint` types and custom graph transformation steps. The pattern is relevant for Raptix plugin authors who want to add new scanner adapters (e.g., a BloodHound ingestor or a custom recon tool output parser) that feed into the attack graph.
 
-The key Cognee pattern for Decepticon: each scanner adapter is a pure function `(raw_output: str) -> list[DataPoint]` where `DataPoint` is a Pydantic model. The `kg_ingest(scanner_kind, path)` dispatcher maps `scanner_kind` to a registered adapter function. This mirrors Decepticon's planned collapsing of 12 `kg_ingest_*` tools into a single dispatcher.
+The key Cognee pattern for Raptix: each scanner adapter is a pure function `(raw_output: str) -> list[DataPoint]` where `DataPoint` is a Pydantic model. The `kg_ingest(scanner_kind, path)` dispatcher maps `scanner_kind` to a registered adapter function. This mirrors Raptix's planned collapsing of 12 `kg_ingest_*` tools into a single dispatcher.
 
 ---
 
@@ -414,7 +414,7 @@ The key Cognee pattern for Decepticon: each scanner adapter is a pure function `
 
 4. **Neo4j 5.24 composite range index syntax verified:** `CREATE INDEX name IF NOT EXISTS FOR (n:Label) ON (n.a, n.b)`. Use `IF NOT EXISTS` in migration scripts; RANGE is the default so the keyword is optional. Vector index: `CREATE VECTOR INDEX name IF NOT EXISTS FOR (n:Label) ON (n.embedding) OPTIONS { indexConfig: { \`vector.dimensions\`: 1536, \`vector.similarity_function\`: 'cosine' } }`. Available since 5.13, no EE requirement.
 
-5. **Keep `apoc.algo.dijkstra` (APOC Core) for attack-path queries; do not migrate to GDS.** APOC Core ships with Neo4j 5.24 CE, requires no graph projection, and returns paths inline in Cypher. GDS requires a separate license and a maintained graph projection — both are unsuitable for Decepticon's real-time query-during-agent-turn pattern.
+5. **Keep `apoc.algo.dijkstra` (APOC Core) for attack-path queries; do not migrate to GDS.** APOC Core ships with Neo4j 5.24 CE, requires no graph projection, and returns paths inline in Cypher. GDS requires a separate license and a maintained graph projection — both are unsuitable for Raptix's real-time query-during-agent-turn pattern.
 
 6. **Adopt Cartography's `update_tag` + `lastupdated` + `firstseen` pattern for all `kg_ingest` writes.** Pass `update_tag = int(time.time())` to every `execute_write` transaction function. `firstseen` is set `ON CREATE`. Add a `KGMiddleware.before_agent` hook that runs stale-node cleanup (`lastupdated < engagement_start_ts`) scoped to `engagement_id`. This eliminates ghost nodes from partial scans without complex deduplication logic.
 

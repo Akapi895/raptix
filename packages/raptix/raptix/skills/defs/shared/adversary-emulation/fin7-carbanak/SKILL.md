@@ -1,6 +1,6 @@
 ---
 name: fin7-carbanak
-description: "Adversary-emulation profile for FIN7 (G0046; aka Carbanak, Carbon Spider, Sangria Tempest, GOLD NIAGARA, ELBRUS) \u2014 a financially motivated Russian-speaking crime group, mapping its TTPs to Decepticon tooling for authorized red-team emulation."
+description: "Adversary-emulation profile for FIN7 (G0046; aka Carbanak, Carbon Spider, Sangria Tempest, GOLD NIAGARA, ELBRUS) \u2014 a financially motivated Russian-speaking crime group, mapping its TTPs to Raptix tooling for authorized red-team emulation."
 allowed-tools: Bash Read Write
 metadata:
   subdomain: adversary-emulation
@@ -126,12 +126,12 @@ FIN7 (MITRE ATT&CK **G0046**; also tracked as Carbanak, Carbon Spider, Sangria T
 - **Cobalt Strike (S0154), PowerSploit (S0194), Mimikatz (S0002), AdFind (S0552), CrackMapExec (S0488), Core Impact, Impacket, OpenSSH, TightVNC, Atera RMM** — *public / commercial / cracked* offensive and dual-use tooling.
 - **Ransomware payloads:** Darkside / BlackMatter (*own RaaS*); affiliate use of Maze (S0449), REvil (S0496), Cl0p, Black Basta, ALPHV/BlackCat, LockBit; SystemBC (S9001) as a proxy/loader.
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 > **Authorized use only:** Execute these emulation steps **strictly inside the agreed engagement scope and rules of engagement**, with written authorization, against in-scope assets only — never against third parties or production data you are not cleared to touch. Use benign substitutes for destructive impact actions.
 
-Map FIN7's signature chain to Decepticon's own capabilities:
+Map FIN7's signature chain to Raptix's own capabilities:
 
-- **Initial access (phishing IT staff) — T1566.001/.002, T1204, T1583.001:** Use Decepticon's phishing/social-engineering workflow to stand up a **typosquatted "IT tool" landing page** (mimic Advanced IP Scanner) and deliver a benign tracked payload via a cloud-share link (Dropbox-style). Prioritize recipients with admin rights, mirroring FIN7's IT-staff focus. Stage decoy infra via the cloud skills (look-alike domain + object-storage hosting, T1583.006/T1608.001).
+- **Initial access (phishing IT staff) — T1566.001/.002, T1204, T1583.001:** Use Raptix's phishing/social-engineering workflow to stand up a **typosquatted "IT tool" landing page** (mimic Advanced IP Scanner) and deliver a benign tracked payload via a cloud-share link (Dropbox-style). Prioritize recipients with admin rights, mirroring FIN7's IT-staff focus. Stage decoy infra via the cloud skills (look-alike domain + object-storage hosting, T1583.006/T1608.001).
 - **BadUSB drop — T1091/T1674:** If physical-access testing is in scope, emulate the mailed-USB vector with a HID/keystroke-injection device that triggers a benign PowerShell beacon download. Otherwise document the vector without execution.
 - **Loader & in-memory execution — T1059.001/T1620/T1027:** Use the **bash/PowerShell tooling** plus the **defense-evasion skill** to reproduce a POWERTRASH-style obfuscated reflective PE loader (string fragmentation, junk code, in-memory load) delivering your C2 stage — do not drop a payload to disk.
 - **C2 — T1071.004/T1102.002/T1572/T1219:** Drive C2 through the **c2/sliver** skill. Emulate FIN7's channel diversity: an HTTP(S) Sliver listener, a DNS listener (mirrors T1071.004), web-service C2 (mirror T1102.002), with **OpenSSH reverse-tunnel** egress (T1572) and an RMM-style channel as a fallback. Configure non-standard ports (T1571) to test egress controls.

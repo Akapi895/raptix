@@ -479,7 +479,7 @@ def test_provision_egress_marshals_policy_and_default_on_gate(monkeypatch) -> No
 
     monkeypatch.setattr("raptix.sandbox_kernel.egress.apply_egress", fake_apply)
     # No env set — egress enforcement is ON by default.
-    monkeypatch.delenv("DECEPTICON_EGRESS_DISABLE", raising=False)
+    monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
     with _client(backend) as client:
         resp = client.post("/provision_egress", json={"policy": _POLICY_WIRE})
     assert resp.status_code == 200
@@ -501,7 +501,7 @@ def test_provision_egress_opt_out_env_disables_gate(monkeypatch) -> None:
         return _fake_apply_result("egress enforcement disabled")
 
     monkeypatch.setattr("raptix.sandbox_kernel.egress.apply_egress", fake_apply)
-    monkeypatch.setenv("DECEPTICON_EGRESS_DISABLE", "1")
+    monkeypatch.setenv("RAPTIX_EGRESS_DISABLE", "1")
     with _client(backend) as client:
         resp = client.post("/provision_egress", json={"policy": _POLICY_WIRE})
     assert resp.status_code == 200

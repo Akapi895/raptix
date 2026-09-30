@@ -4,7 +4,7 @@
 (https://github.com/fivetaku/insane-search), MIT-licensed — see <!-- NOTE-BIAS-OK -->
 `INSANE_SEARCH_LICENSE`.
 
-Decepticon adaptations on top of the upstream engine:
+Raptix adaptations on top of the upstream engine:
 - per-hop RoE `scope_check` gating (threaded through probe / grid / phase0 /
   browser fallback) so out-of-scope hosts are refused, not just nftables-blocked
 - `web_search` provider layer (`providers.py`) for allowlisted OSINT search

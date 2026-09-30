@@ -1,12 +1,12 @@
-# Decepticon as a Library
+# Raptix as a Library
 
-Decepticon is built on top of `langchain` / `langgraph` / `deepagents`
+Raptix is built on top of `langchain` / `langgraph` / `deepagents`
 and follows the same composition idiom: opinionated middleware + tools
 + prompts you can either consume pre-built or compose into something
 of your own. This document covers the three usage paths and the
 override surface plugin authors have access to.
 
-If you only run Decepticon via the bundled Docker stack and never
+If you only run Raptix via the bundled Docker stack and never
 touch the Python code, none of this applies — keep using `curl | bash`
 and the CLI launcher. This document is for commercial / research
 integrators building on top of the agent code.
@@ -77,8 +77,8 @@ Available kwargs on every factory:
 
 ### 3. Direct composition with `langchain.create_agent`
 
-For total control, import Decepticon's building blocks and assemble
-with langchain's generic agent constructor. Decepticon's factory is
+For total control, import Raptix's building blocks and assemble
+with langchain's generic agent constructor. Raptix's factory is
 bypassed entirely.
 
 ```python
@@ -124,12 +124,12 @@ agent = create_agent(
 ```
 
 This is the canonical path for commercial / research integrators who want
-to ship their own service on top of Decepticon's agent code.
+to ship their own service on top of Raptix's agent code.
 
 ### 3b. Plugin orchestrator with the OSS slot system (`build_middleware(slots=...)`)
 
 When a downstream product wants to ship a **new orchestrator agent
-type** (not one of the OSS 16) but still wants Decepticon's slot
+type** (not one of the OSS 16) but still wants Raptix's slot
 system, safety gate, and plugin-override pipeline, pass an explicit
 ``slots`` set to ``build_middleware``:
 
@@ -189,7 +189,7 @@ Three plugin-orchestrator escape hatches converge here:
 
 ## Declarative plugin overrides (`PluginBundle`)
 
-Plugin authors who pip-install on top of an existing Decepticon Docker
+Plugin authors who pip-install on top of an existing Raptix Docker
 image (rather than composing a service from scratch) ship a
 `PluginBundle` under the `decepticon.bundles` entry-point group.
 Factories discover and apply it automatically — no factory kwargs
@@ -227,9 +227,9 @@ VENDOR_BUNDLE = PluginBundle(
 vendor = "vendor_pkg.bundles:VENDOR_BUNDLE"
 ```
 
-Activation also honors the existing `DECEPTICON_PLUGINS` env / config
+Activation also honors the existing `RAPTIX_PLUGINS` env / config
 allowlist via `bundle="vendor"`. Set
-`DECEPTICON_PLUGINS=standard,vendor` to opt in.
+`RAPTIX_PLUGINS=standard,vendor` to opt in.
 
 ### Adding skills via entry-points
 
@@ -282,7 +282,7 @@ A small allowlist of slots and tools is flagged safety-critical:
 
 Disabling or replacing any of these (whether via factory kwarg, plugin
 bundle, or both) raises `SafetyOverrideViolation` at agent-construction
-time unless `DECEPTICON_ALLOW_SAFETY_OVERRIDES=1` is set in the
+time unless `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set in the
 environment. The gate exists so an accidentally-installed plugin
 cannot silently subvert the safety story — operators must explicitly
 opt in.
@@ -313,7 +313,7 @@ to honor the original semantics.
 | `decepticon_core.types.kg` | `KnowledgeGraph`, `Node`, `Edge`, `EdgeKind` |
 | `decepticon_core.plugin_loader` | `PluginBundle`, `SubAgentSpec`, `is_bundle_enabled`, `load_plugin_*` |
 
-The schema / contract types live in **`decepticon-core`** (the contracts package); the framework re-exports them via the compat shim in `decepticon/__init__.py` for one minor cycle (`decepticon.core.schemas`, `decepticon.plugin_loader`, `decepticon.agents.middleware_slots`). New code should import from `decepticon_core.*` directly.
+The schema / contract types live in **`raptix-core`** (the contracts package); the framework re-exports them via the compat shim in `decepticon/__init__.py` for one minor cycle (`decepticon.core.schemas`, `decepticon.plugin_loader`, `decepticon.agents.middleware_slots`). New code should import from `decepticon_core.*` directly.
 
 ---
 
@@ -370,7 +370,7 @@ from decepticon.agents.standard.soundwave import create_soundwave_agent
 # This is library-style direct call; for plugin-wide disable, use
 # PluginBundle(disabled_middleware=("prompt-caching",)).
 import os
-os.environ["DECEPTICON_ALLOW_SAFETY_OVERRIDES"] = "0"  # default — only non-critical slots ok
+os.environ["RAPTIX_ALLOW_SAFETY_OVERRIDES"] = "0"  # default — only non-critical slots ok
 # … then use the factory's `middleware=` kwarg with your own composed list,
 # or rely on a plugin bundle.
 ```
@@ -379,7 +379,7 @@ os.environ["DECEPTICON_ALLOW_SAFETY_OVERRIDES"] = "0"  # default — only non-cr
 
 ## Versioning
 
-Decepticon-core follows SemVer 0.x semantics until the API has settled
+Raptix-core follows SemVer 0.x semantics until the API has settled
 through real commercial integrations. Public surface listed above is
 the intended stability target; internals (`_resolve_overrides`,
 private factory helpers, etc.) may change without notice.

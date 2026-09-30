@@ -29,19 +29,19 @@ class ProvenanceCaptureError(RuntimeError):
 
 
 def capture_declared_model_assignments() -> tuple[str, dict[str, list[str]]]:
-    raw_priority = os.environ.get("DECEPTICON_AUTH_PRIORITY", "")
+    raw_priority = os.environ.get("RAPTIX_AUTH_PRIORITY", "")
     tokens = [token.strip().lower() for token in raw_priority.split(",") if token.strip()]
     if not tokens:
         raise ProvenanceCaptureError(
-            "DECEPTICON_AUTH_PRIORITY must be explicit for reproducible benchmarks"
+            "RAPTIX_AUTH_PRIORITY must be explicit for reproducible benchmarks"
         )
     try:
         methods = [AuthMethod(token) for token in tokens]
     except ValueError as exc:
         raise ProvenanceCaptureError("invalid model provenance configuration") from exc
     if len(set(methods)) != len(methods):
-        raise ProvenanceCaptureError("DECEPTICON_AUTH_PRIORITY contains duplicates")
-    stack_name = os.environ.get("DECEPTICON_STACK_NAME", "").strip()
+        raise ProvenanceCaptureError("RAPTIX_AUTH_PRIORITY contains duplicates")
+    stack_name = os.environ.get("RAPTIX_STACK_NAME", "").strip()
     container = f"decepticon-{stack_name}-langgraph" if stack_name else "decepticon-langgraph"
     script = """import json, os
 from raptix.llm.factory import LLMFactory
@@ -50,7 +50,7 @@ chains = {}
 for role, assignment in factory._mapping.assignments.items():
     effective = factory._compose_assignment(role, assignment)
     chains[role] = [effective.primary, *effective.fallbacks]
-os.write(1, ('DECEPTICON_PROVENANCE=' + json.dumps({'auth_priority': os.getenv('DECEPTICON_AUTH_PRIORITY', ''), 'profile': os.getenv('DECEPTICON_MODEL_PROFILE', 'eco'), 'assignments': chains})).encode())
+os.write(1, ('RAPTIX_PROVENANCE=' + json.dumps({'auth_priority': os.getenv('RAPTIX_AUTH_PRIORITY', ''), 'profile': os.getenv('RAPTIX_MODEL_PROFILE', 'eco'), 'assignments': chains})).encode())
 """
     try:
         completed = subprocess.run(
@@ -60,9 +60,9 @@ os.write(1, ('DECEPTICON_PROVENANCE=' + json.dumps({'auth_priority': os.getenv('
             text=True,
         )
         raw = next(
-            line.removeprefix("DECEPTICON_PROVENANCE=")
+            line.removeprefix("RAPTIX_PROVENANCE=")
             for line in reversed(completed.stdout.splitlines())
-            if line.startswith("DECEPTICON_PROVENANCE=")
+            if line.startswith("RAPTIX_PROVENANCE=")
         )
         payload = json.loads(raw)
         profile = payload["profile"]
@@ -88,8 +88,8 @@ os.write(1, ('DECEPTICON_PROVENANCE=' + json.dumps({'auth_priority': os.getenv('
 
 
 def capture_container_images(explicit_refs: list[str]) -> dict[str, str]:
-    stack_name = os.environ.get("DECEPTICON_STACK_NAME", "").strip()
-    project = os.environ.get("DECEPTICON_COMPOSE_PROJECT", "").strip()
+    stack_name = os.environ.get("RAPTIX_STACK_NAME", "").strip()
+    project = os.environ.get("RAPTIX_COMPOSE_PROJECT", "").strip()
     if not project:
         project = f"decepticon-{stack_name}" if stack_name else "decepticon"
     try:

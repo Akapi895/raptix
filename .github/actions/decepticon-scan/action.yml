@@ -93,7 +93,7 @@ runs:
       if: ${{ inputs.langgraph-url == '' }}
       shell: bash
       env:
-        DECEPTICON_VERSION: ${{ inputs.decepticon-version }}
+        RAPTIX_VERSION: ${{ inputs.decepticon-version }}
       run: |
         set -euo pipefail
         if [ -f docker-compose.yml ] && grep -q 'decepticon' docker-compose.yml; then
@@ -114,7 +114,7 @@ runs:
       id: run
       shell: bash
       env:
-        DECEPTICON_API_URL: ${{ inputs.langgraph-url || 'http://localhost:2024' }}
+        RAPTIX_API_URL: ${{ inputs.langgraph-url || 'http://localhost:2024' }}
         DEC_TARGET: ${{ inputs.target }}
         DEC_SCAN_MODE: ${{ inputs.scan-mode }}
         DEC_SCOPE_MODE: ${{ inputs.scope-mode }}

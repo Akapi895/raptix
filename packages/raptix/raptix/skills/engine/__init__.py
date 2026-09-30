@@ -28,7 +28,7 @@ Layout
 - The new ``SkillogyMiddleware`` lives in
   ``raptix.middleware.skillogy`` to mirror the existing
   ``SkillsMiddleware`` location, with an opt-in switch via
-  ``DECEPTICON_USE_SKILLOGY=1``.
+  ``RAPTIX_USE_SKILLOGY=1``.
 """
 
 from raptix.skills.engine.proto import (

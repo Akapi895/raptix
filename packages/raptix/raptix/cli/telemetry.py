@@ -134,7 +134,7 @@ def _enable(arg: str | None) -> int:
     print(_CONSENT_NOTICE, file=sys.stderr)
     set_persisted_mode(mode)
     print(
-        f"Telemetry enabled at '{mode.value}'. Set DECEPTICON_TELEMETRY_ENDPOINT to start sending.",
+        f"Telemetry enabled at '{mode.value}'. Set RAPTIX_TELEMETRY_ENDPOINT to start sending.",
         file=sys.stderr,
     )
     return 0

@@ -190,7 +190,7 @@ def test_bash_uses_engagement_workspace_from_environment(monkeypatch):
     sandbox.execute = MagicMock()
     sandbox.execute_tmux_async = AsyncMock(return_value="ok")
     set_sandbox(sandbox)
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "env-engagement")
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT", "env-engagement")
 
     result = asyncio.run(bash.ainvoke({"command": "pwd", "description": "Print working directory"}))
 

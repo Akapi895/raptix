@@ -1,6 +1,6 @@
 # decepticon-example-prompt
 
-A Decepticon plugin (prompt) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin (prompt) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -15,7 +15,7 @@ via the ``decepticon.prompts`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 

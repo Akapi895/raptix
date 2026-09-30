@@ -5,7 +5,7 @@ allowed-tools: Read Write Bash
 metadata:
   subdomain: analyst
   when_to_use: "patch diff n-day variant analysis vulnerable fixed commit regression source change known advisory"
-  upstream_ref: "Decepticon analyst lane: authorized patch-diff research"
+  upstream_ref: "Raptix analyst lane: authorized patch-diff research"
 ---
 
 # Patch-Diff Research

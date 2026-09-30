@@ -51,7 +51,7 @@ def _build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--env-file",
         default=None,
-        help="Load this .env before inspecting (default: $DECEPTICON_HOME/.env or ~/.decepticon/.env).",
+        help="Load this .env before inspecting (default: $RAPTIX_HOME/.env or ~/.decepticon/.env).",
     )
     p.add_argument(
         "--no-env-file",
@@ -63,7 +63,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 def _default_env_path() -> Path | None:
     candidates: list[Path] = []
-    home = os.environ.get("DECEPTICON_HOME", "").strip()
+    home = os.environ.get("RAPTIX_HOME", "").strip()
     if home:
         candidates.append(Path(home) / ".env")
     candidates.append(Path.home() / ".decepticon" / ".env")
@@ -127,7 +127,7 @@ def _render_text(inv: AuthInventory) -> str:
 
     idle = inv.configured_but_idle
     if idle:
-        lines.append("⚠ Configured but NOT routed (add to DECEPTICON_AUTH_PRIORITY to use):")
+        lines.append("⚠ Configured but NOT routed (add to RAPTIX_AUTH_PRIORITY to use):")
         for s in idle:
             lines.append(f"  - {s.label}  [{s.method.value}]")
         lines.append("")

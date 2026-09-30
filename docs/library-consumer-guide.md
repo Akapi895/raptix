@@ -1,7 +1,7 @@
 # Library Consumer Guide
 
 Audience: a commercial product or downstream framework that embeds
-Decepticon — e.g., a dashboard, a B2B API service, or a research
+Raptix — e.g., a dashboard, a B2B API service, or a research
 toolkit. Library consumers compose agents, override middleware, and
 ship custom plugins layered on top of the OSS stack.
 
@@ -45,8 +45,8 @@ from decepticon.middleware import (
 from decepticon.llm import LLMFactory, create_llm
 ```
 
-Plugin contracts come from `decepticon-core` (or via the
-`decepticon-sdk` re-export):
+Plugin contracts come from `raptix-core` (or via the
+`raptix-sdk` re-export):
 
 ```python
 from decepticon_sdk import (
@@ -196,7 +196,7 @@ if resolution is not None:
 Spec §16 documents the forward-compat design that keeps the contract
 layer suitable for B2B Enterprise integration:
 
-- Pin to `decepticon-core==X.Y.*` for stable integration code (zero
+- Pin to `raptix-core==X.Y.*` for stable integration code (zero
   runtime deps, survives framework refactors for years).
 - Use `RoleRegistry` to ship per-tenant role catalogs without forking.
 - Use `make_agent_backend(extra_routes=...)` for per-tenant asset

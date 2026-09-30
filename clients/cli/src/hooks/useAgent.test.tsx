@@ -31,7 +31,7 @@ vi.mock("../commands/modelOverride.js", () => ({
 }));
 
 // ── Module-level binding (reset per test via dynamic import) ─────────────────
-// useAgent reads INITIAL_ASSISTANT_ID = process.env.DECEPTICON_ASSISTANT_ID at
+// useAgent reads INITIAL_ASSISTANT_ID = process.env.RAPTIX_ASSISTANT_ID at
 // module load time. Static import would capture the value before vi.stubEnv()
 // runs in beforeEach. Dynamic import after stubbing gets the right default.
 let useAgent: (typeof import("./useAgent.js"))["useAgent"];
@@ -49,14 +49,14 @@ describe("useAgent — engagement handoff lifecycle", () => {
   beforeEach(async () => {
     vi.resetModules();
     vi.useFakeTimers();
-    vi.stubEnv("DECEPTICON_API_URL", "http://localhost:2024");
-    vi.stubEnv("DECEPTICON_ASSISTANT_ID", "soundwave");
-    vi.stubEnv("DECEPTICON_ENGAGEMENT", "eng-abc");
-    vi.stubEnv("DECEPTICON_WORKSPACE_PATH", "/tmp/ws");
-    vi.stubEnv("DECEPTICON_TARGET_TYPE", "web_url");
-    vi.stubEnv("DECEPTICON_TARGET", "https://target.example");
-    vi.stubEnv("DECEPTICON_AUTHORIZATION_CONFIRMED", "true");
-    delete process.env.DECEPTICON_THREAD_ID;
+    vi.stubEnv("RAPTIX_API_URL", "http://localhost:2024");
+    vi.stubEnv("RAPTIX_ASSISTANT_ID", "soundwave");
+    vi.stubEnv("RAPTIX_ENGAGEMENT", "eng-abc");
+    vi.stubEnv("RAPTIX_WORKSPACE_PATH", "/tmp/ws");
+    vi.stubEnv("RAPTIX_TARGET_TYPE", "web_url");
+    vi.stubEnv("RAPTIX_TARGET", "https://target.example");
+    vi.stubEnv("RAPTIX_AUTHORIZATION_CONFIRMED", "true");
+    delete process.env.RAPTIX_THREAD_ID;
     mockState.client = createMockClient();
     ({ useAgent } = await import("./useAgent.js"));
   });

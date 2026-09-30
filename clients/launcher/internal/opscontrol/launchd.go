@@ -158,7 +158,7 @@ func (l *LaunchdManager) renderPlist(spec InstallSpec) string {
 	stackEntry := ""
 	if spec.StackName != "" {
 		stackEntry = fmt.Sprintf(`
-        <key>DECEPTICON_STACK_NAME</key>
+        <key>RAPTIX_STACK_NAME</key>
         <string>%s</string>`, spec.StackName)
 	}
 	return fmt.Sprintf(`<?xml version="1.0" encoding="UTF-8"?>
@@ -182,7 +182,7 @@ func (l *LaunchdManager) renderPlist(spec InstallSpec) string {
     </dict>
     <key>EnvironmentVariables</key>
     <dict>
-        <key>DECEPTICON_HOME</key>
+        <key>RAPTIX_HOME</key>
         <string>%s</string>%s
     </dict>
     <key>StandardOutPath</key>

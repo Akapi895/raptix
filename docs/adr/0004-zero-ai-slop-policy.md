@@ -33,7 +33,7 @@ existing CODEOWNERS strategy already say so. This ADR makes the bar
 ## Decision
 
 We adopt `docs/QUALITY_BAR.md` as the closed contract for what
-"100% quality" means for Decepticon. The bar:
+"100% quality" means for Raptix. The bar:
 
 1. Restates the [Karpathy Four](../QUALITY_BAR.md#the-karpathy-four)
    (Think Before Coding / Simplicity First / Surgical Changes /
@@ -106,7 +106,7 @@ it is closed for the same reasons.
   PR that doesn't is not. Per-author tiering creates a political
   surface this project does not need.
 - **Reject all AI-assisted PRs.** Rejected as unenforceable and
-  philosophically inconsistent with what Decepticon *is*. The right
+  philosophically inconsistent with what Raptix *is*. The right
   move is to demand the assisting human do the work the assistant
   cannot.
 

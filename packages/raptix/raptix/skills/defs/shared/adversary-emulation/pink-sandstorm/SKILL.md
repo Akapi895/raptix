@@ -133,11 +133,11 @@ Pink Sandstorm (MITRE ATT&CK **G1030**) is an Iranian threat actor active since 
 | ProtonVPN | (VPN service) | Last-hop anonymization | Public (infrastructure) |
 | GMER64.sys | (anti-rootkit driver) | Abused to kill EDR/security processes | Public (LOLDriver) |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never run destructive (T1485/T1561) or wiper actions outside an explicitly sanctioned, isolated lab.
 
-Map Pink Sandstorm's signature plays to Decepticon's own capabilities:
+Map Pink Sandstorm's signature plays to Raptix's own capabilities:
 
 - **Initial access — VPN exploitation + web shell (T1190, T1505.003).** Use the exploitation skill to target in-scope FortiOS/Pulse Secure VPN appliances (emulate CVE-2018-13379 or equivalent); upon access, deploy an **ASPXSpy variant** (base64-encoded, hidden inside a "Certificate" text file) on the web server. Use ProtonVPN or equivalent for last-hop anonymization — Agrius consistently uses Israeli ProtonVPN exit nodes to blend with legitimate traffic.
 - **Credential access — brute force + dumping (T1110.003, T1003.001, T1003.002).** Drive SMB-based **password spraying** against in-scope domain controllers. Post-access, use Mimikatz for **LSASS dump and SAM extraction** — this is Agrius's standard credential-harvesting sequence.

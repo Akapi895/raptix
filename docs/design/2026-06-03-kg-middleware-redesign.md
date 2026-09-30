@@ -1,4 +1,4 @@
-# Decepticon: KG Middleware Redesign — Design Spec
+# Raptix: KG Middleware Redesign — Design Spec
 
 - **Date:** 2026-06-03
 - **Status:** Drafted, pending review
@@ -12,7 +12,7 @@
 
 ## 1. TL;DR
 
-Replace Decepticon's broken standalone `kg_*` `@tool` decorators with a **`KGMiddleware`** class that owns the Neo4j store, builds the agent-facing tool surface, and handles the lifecycle. The middleware mirrors the existing `OPPLANMiddleware` pattern:
+Replace Raptix's broken standalone `kg_*` `@tool` decorators with a **`KGMiddleware`** class that owns the Neo4j store, builds the agent-facing tool surface, and handles the lifecycle. The middleware mirrors the existing `OPPLANMiddleware` pattern:
 
 ```python
 class KGMiddleware(AgentMiddleware):
@@ -44,13 +44,13 @@ Pre-1.0 status means the OSS plugin contract surface (`decepticon_core.contracts
 | | |
 |---|---|
 | KG-using agents | `analyst`, `ad_operator` (AD_TOOLS only), `contract_auditor` (CONTRACT_TOOLS only). 14 others have zero KG surface. |
-| Tool implementation | Standalone `@tool` functions in `packages/decepticon/decepticon/tools/research/tools.py` (2,386 LOC, 34 @tool). All write paths wrap `with graph_transaction()`. |
-| Backend | `Neo4jStore` (`packages/decepticon/decepticon/tools/research/neo4j_store.py`, 787 LOC). Has correct per-op `upsert_node`, `upsert_edge`, `batch_upsert_*`, `load_graph`, `query_custom`. Currently called only by `chain.py` and indirectly via the broken `graph_transaction()` wrapper in `_state.py`. |
+| Tool implementation | Standalone `@tool` functions in `packages/raptix/raptix/tools/research/tools.py` (2,386 LOC, 34 @tool). All write paths wrap `with graph_transaction()`. |
+| Backend | `Neo4jStore` (`packages/raptix/raptix/tools/research/neo4j_store.py`, 787 LOC). Has correct per-op `upsert_node`, `upsert_edge`, `batch_upsert_*`, `load_graph`, `query_custom`. Currently called only by `chain.py` and indirectly via the broken `graph_transaction()` wrapper in `_state.py`. |
 | Engagement scope | `decepticon_core.utils.engagement_scope` (post-evacuation). Contextvar + label validator. Honored only on `load_graph()`; **not enforced** on `query_custom()`. |
 | Middleware surface | No KG middleware. `engagement.py` sets the active-engagement contextvar via `set_active_engagement`. |
 | CART contract | `runtime/cart.py` docstring promises `AttackGraphProtocol` (line 36) — **no class exists**. Vaporware. |
 | Web dashboard | `clients/web/src/app/api/engagements/[id]/graph/route.ts` reads Neo4j directly via `neo4j-driver`. Will keep working as long as analyst writes findings (which it does via the same broken shim — to be replaced). |
-| Tests | 17 test files under `packages/decepticon/tests/unit/research/` exercise the broken behavior and pass against it. |
+| Tests | 17 test files under `packages/raptix/tests/unit/research/` exercise the broken behavior and pass against it. |
 | Skillogy | Separate concern — uses a separate Neo4j database (`neo4j_backend.py` in `decepticon/skillogy/server/`). Not in scope. |
 
 ### 2.2 The five high-impact problems (from research notes)
@@ -106,7 +106,7 @@ The redesign now starts from a smaller, well-understood blast radius (3 KG-using
 ### 4.1 Module layout
 
 ```
-packages/decepticon/decepticon/middleware/
+packages/raptix/raptix/middleware/
   kg.py                      ← new. KGMiddleware + KGState + tool factory
   kg_internal/
     __init__.py
@@ -122,7 +122,7 @@ Why `kg_internal/` and not `tools/research/`:
 - The middleware's tool factory is *not* a public plugin surface (it is mediated by `KGMiddleware`).
 - Tools imported from `kg_internal` should NEVER be imported by an agent directly — only constructed via the middleware. The `_internal` naming makes that explicit.
 
-`packages/decepticon/decepticon/tools/research/`:
+`packages/raptix/raptix/tools/research/`:
 - `chain.py` and `neo4j_store.py` are *moved* under `middleware/kg_internal/` to consolidate ownership. Imports from outside the middleware are forbidden by a new linter rule (or at minimum a CONTRIBUTING note).
 - `tools.py` is *retired in three slices* (see §6.2). Each slice removes a category of broken tools as the middleware absorbs them.
 - `_state.py`, `_engagement_scope.py` (re-export shim), `bounty.py`, `dedupe.py`, `patch.py`, `scanner_tools.py`, `sarif.py`, `sarif_export.py`, `fuzz.py`, `cve.py`, `poc.py`, `health.py`, `graph.py` — assessed individually in §6.3.
@@ -321,7 +321,7 @@ Notes:
 Fills the docstring vaporware:
 
 ```python
-# packages/decepticon/decepticon/runtime/cart.py
+# packages/raptix/raptix/runtime/cart.py
 
 from typing import Protocol, runtime_checkable
 
@@ -343,7 +343,7 @@ class AttackGraphProtocol(Protocol):
 
 ### 4.8 Composite range indexes
 
-Ship via a new migration file `packages/decepticon/decepticon/middleware/kg_internal/migrations/V002__engagement_composite_indexes.cypher` (V001 = the existing schema in `Neo4jStore.ensure_schema`):
+Ship via a new migration file `packages/raptix/raptix/middleware/kg_internal/migrations/V002__engagement_composite_indexes.cypher` (V001 = the existing schema in `Neo4jStore.ensure_schema`):
 
 ```cypher
 CREATE RANGE INDEX engagement_host_explored IF NOT EXISTS
@@ -417,7 +417,7 @@ The post-1.0 plugin contract needs to absorb the changes:
 | `decepticon.middleware` | existing | Plugin authors can ship their own `KGMiddleware` subclass and have it picked up via the slot system. |
 | `decepticon.bundles` | existing | Bundle authors compose middleware sets including / excluding KG. |
 
-Documentation goes in `packages/decepticon-sdk/decepticon_sdk/scaffold/templates/kg_ingester/` — a `decepticon-sdk plugin new --kind=kg-ingester` template ships in the SDK.
+Documentation goes in `packages/raptix-sdk/decepticon_sdk/scaffold/templates/kg_ingester/` — a `raptix-sdk plugin new --kind=kg-ingester` template ships in the SDK.
 
 ---
 

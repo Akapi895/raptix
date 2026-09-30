@@ -313,7 +313,7 @@ class EventLogMiddleware(AgentMiddleware):
 
     Constructible with no arguments; everything is resolved per-call from
     ``request.state`` (keys ``engagement_name`` / ``workspace_path``) with
-    env (``DECEPTICON_ENGAGEMENT_ID`` / ``DECEPTICON_WORKSPACE_PATH``) and
+    env (``RAPTIX_ENGAGEMENT_ID`` / ``RAPTIX_WORKSPACE_PATH``) and
     hard-coded default fallbacks. Place anywhere in the stack — it only
     observes, never mutates, the request or response.
     """
@@ -347,12 +347,12 @@ class EventLogMiddleware(AgentMiddleware):
         engagement = (
             get("engagement_name")
             or get("engagement_id")
-            or os.environ.get("DECEPTICON_ENGAGEMENT_ID", "")
+            or os.environ.get("RAPTIX_ENGAGEMENT_ID", "")
             or _DEFAULT_ENGAGEMENT
         )
         workspace = (
             get("workspace_path")
-            or os.environ.get("DECEPTICON_WORKSPACE_PATH", "")
+            or os.environ.get("RAPTIX_WORKSPACE_PATH", "")
             or _DEFAULT_WORKSPACE
         )
         agent_name = self._role or ""

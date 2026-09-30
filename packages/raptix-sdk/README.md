@@ -1,6 +1,6 @@
-# decepticon-sdk
+# raptix-sdk
 
-The Decepticon plugin author entrypoint. Re-exports the `decepticon-core`
+The Raptix plugin author entrypoint. Re-exports the `raptix-core`
 contracts, ships pytest fixtures, and provides a scaffolding CLI for
 creating new plugin packages.
 
@@ -13,12 +13,12 @@ See the umbrella [`README.md`](../../README.md) and the design spec at
 ## Install
 
 ```bash
-pip install decepticon-sdk
+pip install raptix-sdk
 ```
 
 For test fixtures and scaffolding:
 
 ```bash
-pip install "decepticon-sdk[testing]"      # FakeBackend / FakeLLM
-pip install "decepticon-sdk[fixtures]"     # live framework-backed fixtures
+pip install "raptix-sdk[testing]"      # FakeBackend / FakeLLM
+pip install "raptix-sdk[fixtures]"     # live framework-backed fixtures
 ```

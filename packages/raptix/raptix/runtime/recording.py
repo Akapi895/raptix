@@ -244,7 +244,7 @@ class RecordingMiddleware(AgentMiddleware):
 
     def __init__(self, *, path: str | Path | None = None) -> None:
         super().__init__()
-        record_path = path or os.environ.get("DECEPTICON_RUNTIME__RECORD_PATH", "")
+        record_path = path or os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "")
         if not record_path:
             self._sink: _Sink | None = None
         else:
@@ -340,7 +340,7 @@ class ReplayMiddleware(AgentMiddleware):
 
     def __init__(self, *, path: str | Path | None = None, strict: bool = True) -> None:
         super().__init__()
-        replay_path = path or os.environ.get("DECEPTICON_RUNTIME__REPLAY_PATH", "")
+        replay_path = path or os.environ.get("RAPTIX_RUNTIME__REPLAY_PATH", "")
         if not replay_path:
             self._replay: _Replay | None = None
         else:

@@ -1,6 +1,6 @@
 ---
 name: bloodhound-bhce
-description: Operate BloodHound Community Edition v9.2.2 via Decepticon's bhce_* tools — health check, Cypher passthrough, SharpHound ZIP ingest. Replaces the in-house ingest + ESC* post-process pipeline per ADR-0005.
+description: Operate BloodHound Community Edition v9.2.2 via Raptix's bhce_* tools — health check, Cypher passthrough, SharpHound ZIP ingest. Replaces the in-house ingest + ESC* post-process pipeline per ADR-0005.
 metadata:
   subdomain: active-directory
   when_to_use: "bloodhound bhce attack path adcs esc dcsync sharphound ingest cypher ad enumeration domain compromise"
@@ -12,9 +12,9 @@ metadata:
   upstream_url: https://bloodhound.specterops.io/
 ---
 
-# BloodHound CE via Decepticon's `bhce_*` Tools
+# BloodHound CE via Raptix's `bhce_*` Tools
 
-Decepticon ships a sidecar BloodHound Community Edition v9.2.2 stack
+Raptix ships a sidecar BloodHound Community Edition v9.2.2 stack
 (see `docs/adr/0005-bloodhound-via-bhce-rest-client.md`).  Three
 `@tool` wrappers expose it to the agent:
 
@@ -38,7 +38,7 @@ red-team operator expects: `ADCSESC1-13`, `GoldenCert`, `DCSync`,
 source.  We deliberately do **not** re-implement these in our
 codebase; the agent leans on BHCE's analyzer instead.
 
-The Decepticon KGStore still owns web, cloud, and smart-contract
+The Raptix KGStore still owns web, cloud, and smart-contract
 findings, and stays canonical for cross-domain chain planning.
 BHCE is the AD layer.
 
@@ -102,7 +102,7 @@ BHCE is the AD layer.
      ```
 
 4. **Cross-domain plays** — when an AD path terminates and the chain
-   needs to cross into the Decepticon KGStore (web exploitation, cloud
+   needs to cross into the Raptix KGStore (web exploitation, cloud
    pivots, smart-contract findings), hand the BHCE finding off to the
    chain planner.  Do not try to write web/cloud nodes into BHCE; BHCE
    is AD-only.

@@ -151,7 +151,7 @@ class TestTranscriptInReturnedState:
     def test_persisted_tool_result_is_capped_while_stream_stays_full(
         self, writer_renderer: None, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_SUBAGENT_TRANSCRIPT_RESULT_CAP", "10")
+        monkeypatch.setenv("RAPTIX_SUBAGENT_TRANSCRIPT_RESULT_CAP", "10")
         big = "A" * 5000
         tool_call_msg = AIMessage(
             content="",

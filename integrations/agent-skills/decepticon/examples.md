@@ -1,4 +1,4 @@
-# Decepticon MCP — worked examples
+# Raptix MCP — worked examples
 
 Concrete tool-call sequences for common requests, with how to narrate to the
 user. Tool calls are shown as `tool(args) -> {key fields}`. Adapt the prose;
@@ -9,7 +9,7 @@ keep updates short.
 ## 1. Bug-bounty engagement, watched from a phone
 
 **User:** "Hunt bugs on `https://app.example.com` and `*.example.com`. Out of
-scope: the billing host `pay.example.com`. Use Decepticon."
+scope: the billing host `pay.example.com`. Use Raptix."
 
 ```
 decepticon_start_engagement(
@@ -109,7 +109,7 @@ decepticon_transcript(thread_id="th_1", after_index=<n>, limit=10)  # read the c
 
 Tell the user what failed (from the last messages) and offer to
 `decepticon_send_message` a correction or start a fresh engagement. If a tool
-errors with a connection problem, the Decepticon server is down — ask the user
+errors with a connection problem, the Raptix server is down — ask the user
 to start it rather than retrying.
 
 ---

@@ -6,7 +6,7 @@ metadata:
   subdomain: orchestration
   when_to_use: "start engagement, new engagement, engagement status, phase transition, go/no-go, deconfliction, emergency stop, engagement complete, wrap up"
   tags: engagement, lifecycle, planning, phase-transition, deconfliction, emergency, completion
-  upstream_ref: "Decepticon engagement lifecycle — orchestrator-level planning skill, no direct attack technique"
+  upstream_ref: "Raptix engagement lifecycle — orchestrator-level planning skill, no direct attack technique"
 ---
 
 # Engagement Lifecycle Management

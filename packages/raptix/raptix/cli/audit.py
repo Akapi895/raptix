@@ -34,7 +34,7 @@ def _build_parser() -> argparse.ArgumentParser:
         "--hmac-key",
         default=None,
         help=(
-            "Operator-held HMAC key. Defaults to $DECEPTICON_AUDIT_HMAC_KEY when set; "
+            "Operator-held HMAC key. Defaults to $RAPTIX_AUDIT_HMAC_KEY when set; "
             "omit both to verify only the hash chain."
         ),
     )
@@ -43,7 +43,7 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def _hmac_key(arg_value: str | None) -> bytes | None:
-    value = arg_value if arg_value is not None else os.environ.get("DECEPTICON_AUDIT_HMAC_KEY")
+    value = arg_value if arg_value is not None else os.environ.get("RAPTIX_AUDIT_HMAC_KEY")
     return value.encode("utf-8") if value else None
 
 

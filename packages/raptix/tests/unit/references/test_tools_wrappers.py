@@ -129,7 +129,7 @@ class TestRefStatus:
     def test_single_slug_success_branch(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: object
     ) -> None:
-        monkeypatch.setenv("DECEPTICON_REFERENCES_ROOT", str(tmp_path))
+        monkeypatch.setenv("RAPTIX_REFERENCES_ROOT", str(tmp_path))
         fake = _FakeCacheStatus(slug="hackerone-reports", present=False, size_bytes=0)
         monkeypatch.setattr(T, "cache_status", lambda slug: fake)
         data = json.loads(_ref_status.invoke({"slug": "hackerone-reports"}))

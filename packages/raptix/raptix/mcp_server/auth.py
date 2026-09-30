@@ -8,7 +8,7 @@ so the SDK installs its ``BearerAuthBackend`` + ``RequireAuthMiddleware`` (401
 on a missing or invalid ``Authorization: Bearer`` token):
 
 - ``shared-secret`` — one token compared in constant time. No external issuer;
-  the operator sets ``DECEPTICON_MCP_TOKEN``. OSS / local default.
+  the operator sets ``RAPTIX_MCP_TOKEN``. OSS / local default.
 - ``jwt`` — validates an RS256/ES256 bearer JWT against a JWKS endpoint or a
   static public key, checking ``iss`` and ``aud``. This is the OAuth 2.1
   resource-server posture the MCP June-2025 spec prescribes for remote servers.
@@ -148,7 +148,7 @@ def open_bind_error(mode: str, transport: str, host: str) -> str | None:
         return None
     return (
         f"Refusing to start: --host {host} binds a non-loopback interface with no "
-        "authentication. Set DECEPTICON_MCP_TOKEN (shared-secret), or "
+        "authentication. Set RAPTIX_MCP_TOKEN (shared-secret), or "
         "--issuer + --jwks-uri/--auth-public-key + --audience (JWT), or bind "
         "--host 127.0.0.1 for local-only access."
     )
@@ -170,7 +170,7 @@ def build_auth(
     resource = config.resource_url or f"http://{host}:{port}/"
     if mode == "shared-secret":
         if not config.auth_token:
-            raise ValueError("shared-secret auth selected but DECEPTICON_MCP_TOKEN is empty")
+            raise ValueError("shared-secret auth selected but RAPTIX_MCP_TOKEN is empty")
         verifier: TokenVerifier = SharedSecretVerifier(config.auth_token, resource=resource)
         return verifier, AuthSettings(
             issuer_url=AnyHttpUrl(resource),

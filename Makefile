@@ -23,7 +23,7 @@ COMPOSE_WATCH := docker compose -f docker-compose.yml -f docker-compose.dev.yml 
 PROFILES_ALL  := --profile cli --profile c2-sliver
 WEB_DIR       := clients/web
 
-# Dogfood: isolated $DECEPTICON_HOME so the launcher can onboard, write .env,
+# Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
 # and stand up the stack without touching the user's real ~/.decepticon. The
 # launcher resolves all relative paths against the compose file's directory,
 # so docker-compose.yml + config/ + containers/ + .env.example are symlinked
@@ -34,16 +34,16 @@ LAUNCHER_BIN  := clients/launcher/bin/decepticon
 # Match the launcher's explicit Compose project without interpolating the
 # environment-controlled stack/project name into Make's shell source.
 define CLEAN_LAUNCHER_STACK
-	@stack="$${DECEPTICON_STACK_NAME:-}"; project="$${DECEPTICON_COMPOSE_PROJECT:-}"; \
-	case "$$stack" in *[!a-z0-9-]* ) echo "invalid DECEPTICON_STACK_NAME: $$stack" >&2; exit 2;; esac; \
+	@stack="$${RAPTIX_STACK_NAME:-}"; project="$${RAPTIX_COMPOSE_PROJECT:-}"; \
+	case "$$stack" in *[!a-z0-9-]* ) echo "invalid RAPTIX_STACK_NAME: $$stack" >&2; exit 2;; esac; \
 	if [ -z "$$project" ]; then project="decepticon$${stack:+-$$stack}"; fi; \
-	case "$$project" in ""|[!a-z0-9]*|*[!a-z0-9_-]* ) echo "invalid DECEPTICON_COMPOSE_PROJECT: $$project" >&2; exit 2;; esac; \
+	case "$$project" in ""|[!a-z0-9]*|*[!a-z0-9_-]* ) echo "invalid RAPTIX_COMPOSE_PROJECT: $$project" >&2; exit 2;; esac; \
 	docker compose -p "$$project" $(PROFILES_ALL) down --volumes --remove-orphans 2>/dev/null; true
 endef
 
 # docker compose cannot expand ~ inside compose-file defaults, so resolve it
 # here before any subprocess inherits the env.
-export DECEPTICON_HOME ?= $(HOME)/.decepticon
+export RAPTIX_HOME ?= $(HOME)/.decepticon
 
 # Mirror the launcher's start.go credential mount logic so `make dev` (and any
 # other target that calls `docker compose`) populates the litellm container's
@@ -123,16 +123,16 @@ dogfood: launcher
 	@ln -sfn $(CURDIR)/.env.example        $(DOGFOOD_HOME)/.env.example
 	@echo ""
 	@echo "[dogfood] Building images from local code (tag :dev)..."
-	DECEPTICON_VERSION=dev $(COMPOSE) --profile cli build
+	RAPTIX_VERSION=dev $(COMPOSE) --profile cli build
 	@echo ""
-	@echo "[dogfood] Launching ./$(LAUNCHER_BIN) (DECEPTICON_HOME=$(DOGFOOD_HOME))"
+	@echo "[dogfood] Launching ./$(LAUNCHER_BIN) (RAPTIX_HOME=$(DOGFOOD_HOME))"
 	@echo ""
-	DECEPTICON_VERSION=dev DECEPTICON_HOME=$(DOGFOOD_HOME) ./$(LAUNCHER_BIN)
+	RAPTIX_VERSION=dev RAPTIX_HOME=$(DOGFOOD_HOME) ./$(LAUNCHER_BIN)
 
 ## Build the Go launcher binary (version=dev, gates auto-update + config sync).
 launcher:
 	cd clients/launcher && go build \
-		-ldflags '-X github.com/PurpleAILAB/Decepticon/clients/launcher/cmd.version=dev' \
+		-ldflags '-X github.com/Akapi895/raptix/clients/launcher/cmd.version=dev' \
 		-o bin/decepticon
 
 ## Compose-only smoke (no launcher, no onboard wizard) — fastest possible
@@ -155,7 +155,7 @@ smoke:
 	@echo ""
 	@echo "[3/4] Starting services (--no-build --wait, OSS launcher flow)..."
 	$(COMPOSE) --profile cli up -d --no-build --wait \
-		--wait-timeout $${DECEPTICON_STARTUP_TIMEOUT_SECONDS:-600}
+		--wait-timeout $${RAPTIX_STARTUP_TIMEOUT_SECONDS:-600}
 	@echo ""
 	@echo "[4/4] Health checks..."
 	@$(MAKE) -s health
@@ -182,17 +182,17 @@ dev:
 ## `node` exits (Ctrl-C).
 cli-dev: infra
 	@$(COMPOSE_WATCH) watch --no-up --quiet langgraph &
-	npm run build --workspace=@decepticon/streaming
+	npm run build --workspace=@raptix/streaming
 	cd clients/cli && npm run build
 	cd clients/cli && npm run dev & TSC_PID=$$!; \
 	  trap "kill $$TSC_PID 2>/dev/null" EXIT INT TERM; \
-	  cd clients/cli && DECEPTICON_API_URL=$${DECEPTICON_API_URL:-http://localhost:2024} node --watch dist/index.js
+	  cd clients/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:2024} node --watch dist/index.js
 
 ## Next.js dev server locally — infra stays in Docker with hot-reload.
 web-dev: infra web-db-ensure node-install
 	# Build streaming first: both the Next dev server and the PTY-spawned CLI
-	# import @decepticon/streaming, which resolves to its dist/ build.
-	npm run build --workspace=@decepticon/streaming
+	# import @raptix/streaming, which resolves to its dist/ build.
+	npm run build --workspace=@raptix/streaming
 	@$(COMPOSE_WATCH) watch --no-up --quiet langgraph &
 	@echo "[web-dev] Starting terminal server (ws://localhost:3003)..."
 	@cd $(WEB_DIR) && npx tsx server/terminal-server.ts &
@@ -288,10 +288,10 @@ ci-test-coverage-report:
 quality-cli: node-install
 	# streaming workspace must be built first — its package.json main
 	# resolves to dist/, which cli's typecheck + build consume.
-	npm run build --workspace=@decepticon/streaming
-	npm run typecheck --workspace=@decepticon/cli
-	npm run build --workspace=@decepticon/cli
-	npm run test --workspace=@decepticon/cli
+	npm run build --workspace=@raptix/streaming
+	npm run typecheck --workspace=@raptix/cli
+	npm run build --workspace=@raptix/cli
+	npm run test --workspace=@raptix/cli
 
 ## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest + CLI + Web).
 ## Use before opening a PR; passing this guarantees CI will pass.
@@ -313,9 +313,9 @@ quality-strict: ci-lint ci-test-coverage quality-cli web-lint web-build
 # into the root node_modules — no separate clients/web/node_modules tree.
 
 web-build: node-install
-	# streaming workspace first — the web resolves @decepticon/streaming to its
+	# streaming workspace first — the web resolves @raptix/streaming to its
 	# dist/ via package exports (no src path alias), so next build needs it.
-	npm run build --workspace=@decepticon/streaming
+	npm run build --workspace=@raptix/streaming
 	cd $(WEB_DIR) && npx prisma generate && npm run build
 
 ## Hot-swap web dashboard into running container (~15s vs ~5min docker build).
@@ -374,7 +374,7 @@ node-install:
 web-db-ensure:
 	@echo "[web-db-ensure] Waiting for PostgreSQL..."
 	@for i in 1 2 3 4 5 6 7 8 9 10; do \
-		docker exec decepticon$${DECEPTICON_STACK_NAME:+-$${DECEPTICON_STACK_NAME}}-postgres pg_isready -U decepticon -q 2>/dev/null && break; \
+		docker exec decepticon$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres pg_isready -U decepticon -q 2>/dev/null && break; \
 		sleep 1; \
 	done
 	@cd $(WEB_DIR) && npx prisma migrate deploy 2>&1 | tail -1
@@ -391,7 +391,7 @@ web-db-ensure:
 ## valid OAuth access token (token TTL ~8h ≫ cycle duration ~30m).
 recreate-litellm:
 	@$(COMPOSE) up -d --no-build --force-recreate litellm
-	@docker exec decepticon$${DECEPTICON_STACK_NAME:+-$${DECEPTICON_STACK_NAME}}-litellm sh -c 'test -s /root/.claude/.credentials.json' \
+	@docker exec decepticon$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-litellm sh -c 'test -s /root/.claude/.credentials.json' \
 		&& echo "recreate-litellm: creds mount OK" \
 		|| (echo "recreate-litellm: creds mount EMPTY — onboard first" && exit 1)
 

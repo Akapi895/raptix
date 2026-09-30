@@ -55,7 +55,7 @@ TRANSCRIPT_STATE_KEY = "subagent_transcripts"
 # Persisted-copy bound. The live ``writer`` event always carries the FULL
 # tool result; only the copy appended to the durable transcript is capped, so
 # the checkpoint doesn't grow without bound on a chatty tool (e.g. a 5MB curl
-# dump). Override with DECEPTICON_SUBAGENT_TRANSCRIPT_RESULT_CAP=0 to disable
+# dump). Override with RAPTIX_SUBAGENT_TRANSCRIPT_RESULT_CAP=0 to disable
 # truncation, or any positive int to change the cap.
 _DEFAULT_TRANSCRIPT_RESULT_CAP = 8000
 _TRANSCRIPT_TRUNCATION_MARKER = "…[truncated]"
@@ -105,7 +105,7 @@ def _transcript_result_cap() -> int:
     Read from the env on each call so tests / operators can flip it without a
     process restart. 0 (or negative / unparseable) disables truncation.
     """
-    raw = os.environ.get("DECEPTICON_SUBAGENT_TRANSCRIPT_RESULT_CAP")
+    raw = os.environ.get("RAPTIX_SUBAGENT_TRANSCRIPT_RESULT_CAP")
     if raw is None:
         return _DEFAULT_TRANSCRIPT_RESULT_CAP
     try:

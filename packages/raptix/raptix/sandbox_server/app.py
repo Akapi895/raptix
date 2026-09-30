@@ -446,12 +446,12 @@ def _egress_enforcement_enabled() -> bool:
 
     Decided sandbox-side (its own env, not trusted from the wire). The
     egress firewall loads by default for any enforcing policy; an operator
-    whose environment it doesn't fit sets ``DECEPTICON_EGRESS_DISABLE=1``
+    whose environment it doesn't fit sets ``RAPTIX_EGRESS_DISABLE=1``
     on the sandbox container to fall back to the parser layer alone. The
     management plane is discovered locally, so default-on can't sever the
     agent↔management (Neo4j / daemon) link.
     """
-    return os.environ.get("DECEPTICON_EGRESS_DISABLE", "").strip().lower() not in {
+    return os.environ.get("RAPTIX_EGRESS_DISABLE", "").strip().lower() not in {
         "1",
         "true",
         "yes",
@@ -468,7 +468,7 @@ def provision_egress(
     Reconstructs the agent-compiled ``EgressPolicy``, folds in the
     locally-discovered management plane + resolver + resolved host IPs,
     and loads the ruleset via ``nft``. Default ON for an enforcing
-    policy; an operator can opt out with ``DECEPTICON_EGRESS_DISABLE``,
+    policy; an operator can opt out with ``RAPTIX_EGRESS_DISABLE``,
     in which case it returns the rendered ruleset for inspection without
     touching the network.
     """

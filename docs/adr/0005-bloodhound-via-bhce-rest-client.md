@@ -164,7 +164,7 @@ the client's tests:
 - **(M1) Embed `mwnickerson/bloodhound_mcp` as a stdio MCP subprocess and
   let `langchain-mcp-adapters` expose its 13 composite tools.** Rejected:
   adds an external dependency on a non-SpecterOps-owned community wrapper
-  (GPL-3.0 vs Decepticon's Apache-2.0 OSS — licensing review needed),
+  (GPL-3.0 vs Raptix's Apache-2.0 OSS — licensing review needed),
   stdio glue is harder to debug, and we still need a Python REST client
   for `file-upload` workflows the MCP doesn't expose cleanly. The MCP's
   composite-tool shape is allowed inspiration, not load-bearing dependency.

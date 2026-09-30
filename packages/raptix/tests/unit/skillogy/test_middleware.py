@@ -95,7 +95,7 @@ def test_middleware_load_skill_tool_returns_error_on_exception():
 
 def test_env_flag_recognizes_truthy_values(monkeypatch):
     for v in ("1", "true", "TRUE", "yes", "on"):
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", v)
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", v)
         assert _is_enabled() is True
 
 
@@ -103,20 +103,20 @@ def test_env_flag_recognizes_falsy_values(monkeypatch):
     """Explicit falsy values disable Skillogy under the default-on
     semantics.  Blank string is NOT a disable — anything that isn't an
     explicit ``0`` / ``false`` / ``no`` / ``off`` keeps the default-on
-    behaviour, so a blank ``DECEPTICON_USE_SKILLOGY`` (often the shape
+    behaviour, so a blank ``RAPTIX_USE_SKILLOGY`` (often the shape
     a misconfigured ``.env`` produces) leaves Skillogy on rather than
     silently swapping back to the file-system backend.
     """
-    monkeypatch.delenv("DECEPTICON_SKILL_BACKEND", raising=False)
+    monkeypatch.delenv("RAPTIX_SKILL_BACKEND", raising=False)
     for v in ("0", "false", "no", "off"):
-        monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", v)
+        monkeypatch.setenv("RAPTIX_USE_SKILLOGY", v)
         assert _is_enabled() is False, f"explicit {v!r} should disable Skillogy"
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "")
     assert _is_enabled() is True, "blank string should NOT disable (default-on)"
 
 
 def test_maybe_install_skillogy_swaps_skills_middleware_when_enabled(monkeypatch):
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
     # Exercise the swap logic, not a live graph: the neo4j driver is an optional
     # extra, so stub the backend factory the constructed middleware would call.
     monkeypatch.setattr("raptix.middleware.skillogy._backend_factory", lambda: _FakeBackend())
@@ -127,7 +127,7 @@ def test_maybe_install_skillogy_swaps_skills_middleware_when_enabled(monkeypatch
 
 
 def test_maybe_install_skillogy_no_op_when_disabled(monkeypatch):
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "0")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "0")
     base_stack = [_FakeSkillsMiddleware()]
     out = maybe_install_skillogy(base_stack)
     assert any(isinstance(mw, SkillsMiddleware) for mw in out)
@@ -138,7 +138,7 @@ def test_maybe_install_skillogy_noop_when_no_skills_present(monkeypatch):
     """Swap-only: with SKILLS intentionally absent (disabled/replaced), an
     enabled flag must NOT inject a fresh SkillogyMiddleware — that would add
     a skill surface the stack opted out of."""
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
     from langchain.agents.middleware import AgentMiddleware
 
     other = AgentMiddleware()
@@ -150,6 +150,6 @@ def test_maybe_install_skillogy_noop_when_no_skills_present(monkeypatch):
 
 def test_maybe_install_skillogy_noop_on_empty_stack(monkeypatch):
     """No SkillsMiddleware to replace -> no-op even on an empty stack."""
-    monkeypatch.setenv("DECEPTICON_USE_SKILLOGY", "1")
+    monkeypatch.setenv("RAPTIX_USE_SKILLOGY", "1")
     out = maybe_install_skillogy([])
     assert out == []

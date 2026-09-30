@@ -461,6 +461,6 @@ Map each actor to a `ThreatProfile.tier` before writing the profile:
 | 2 | `tier-2` | Targeted eCrime (FIN7, Scattered Spider, LockBit/ALPHV/Cl0p affiliates) |
 | 1 | `tier-1` | Opportunistic / commodity (see `adversary-archetypes.md`) |
 
-For full kill-chain emulation plans that translate these profiles into Decepticon
+For full kill-chain emulation plans that translate these profiles into Raptix
 OPPLAN objectives + the operational skills each phase uses, load the emulation
 catalog: `load_skill("/skills/standard/soundwave/threat-profile/emulation/SKILL.md")`.

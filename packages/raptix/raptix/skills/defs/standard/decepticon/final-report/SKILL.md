@@ -6,7 +6,7 @@ metadata:
   subdomain: orchestration
   when_to_use: "final report, generate report, engagement complete, all objectives done, executive summary, technical report"
   tags: report, final, executive-summary, technical-report, remediation, detection-gap
-  upstream_ref: "Decepticon final-engagement report template — deliverable generation, no direct attack technique"
+  upstream_ref: "Raptix final-engagement report template — deliverable generation, no direct attack technique"
 ---
 
 # Final Engagement Report Generation
@@ -62,7 +62,7 @@ Write to `report/executive-summary.md` using the template below. Use plain busin
 
 **Prepared for**: [Client Name]
 **Engagement Period**: [Start Date] – [End Date]
-**Conducted by**: Decepticon Autonomous Red Team
+**Conducted by**: Raptix Autonomous Red Team
 **Classification**: CONFIDENTIAL
 
 ---
@@ -377,10 +377,10 @@ Reference specific FIND-IDs inline where findings were exploited.]
 
 | Role | Agent / Operator |
 |------|-----------------|
-| Red Team Orchestrator | Decepticon |
-| Recon Agent | Decepticon Recon |
-| Exploit Agent | Decepticon Exploit |
-| Post-Exploit Agent | Decepticon PostExploit |
+| Red Team Orchestrator | Raptix |
+| Recon Agent | Raptix Recon |
+| Exploit Agent | Raptix Exploit |
+| Post-Exploit Agent | Raptix PostExploit |
 
 ### C. Glossary
 

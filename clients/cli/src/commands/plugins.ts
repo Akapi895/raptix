@@ -18,7 +18,7 @@
  *
  * Persistence: runtime-only. Bundles activated here do NOT survive a
  * ``decepticon restart``. To make a selection permanent, set
- * ``DECEPTICON_PLUGINS=standard,plugins`` in ``~/.decepticon/.env``.
+ * ``RAPTIX_PLUGINS=standard,plugins`` in ``~/.decepticon/.env``.
  */
 
 import type { Command } from "./types.js";
@@ -41,7 +41,7 @@ interface ToggleResponse {
 }
 
 function apiBase(): string {
-  return process.env.DECEPTICON_API_URL || "http://localhost:2024";
+  return process.env.RAPTIX_API_URL || "http://localhost:2024";
 }
 
 function formatList(data: ListResponse): string {
@@ -62,7 +62,7 @@ function formatList(data: ListResponse): string {
   lines.push(
     "Activations are runtime-only. To persist across `decepticon restart`,",
   );
-  lines.push("set DECEPTICON_PLUGINS in ~/.decepticon/.env (e.g. standard,plugins).");
+  lines.push("set RAPTIX_PLUGINS in ~/.decepticon/.env (e.g. standard,plugins).");
   return lines.join("\n");
 }
 

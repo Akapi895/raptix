@@ -12,7 +12,7 @@
 
 The KG middleware redesign was specified before doing the agent-framework research. Three issues surfaced that justify a design check-in:
 
-1. **A 2026 memory-systems benchmark calls the entire premise into question.** Letta's **filesystem-based agents scored 74% on LoCoMo**, beating Mem0's specialized memory tools at 68.5%. Decepticon's analyst already writes `findings/FIND-NNN.md`, `recon/SUMMARY.md`, `timeline.jsonl` — file-system memory it already produces. **Question: does a dedicated KG middleware enable new capability, or is it tooling for tooling's sake?**
+1. **A 2026 memory-systems benchmark calls the entire premise into question.** Letta's **filesystem-based agents scored 74% on LoCoMo**, beating Mem0's specialized memory tools at 68.5%. Raptix's analyst already writes `findings/FIND-NNN.md`, `recon/SUMMARY.md`, `timeline.jsonl` — file-system memory it already produces. **Question: does a dedicated KG middleware enable new capability, or is it tooling for tooling's sake?**
 
 2. **The tool-design skill's "Stop Constraining Reasoning" principle** argues against specialized tools when primitives suffice. Adding 8 KG tools may constrain the model instead of enabling it.
 
@@ -26,7 +26,7 @@ The recommendation is **NOT** to pick option A (spec-as-written) blindly. The th
 
 | Skill | Key finding for KG middleware |
 |---|---|
-| `framework-selection` | Decepticon is **layered**: LangChain `create_agent` + LangGraph runtime + DeepAgents backend. Middleware = `langchain.agents.middleware.AgentMiddleware`. The spec's OPPLAN-mirror approach is correct in *kind*. |
+| `framework-selection` | Raptix is **layered**: LangChain `create_agent` + LangGraph runtime + DeepAgents backend. Middleware = `langchain.agents.middleware.AgentMiddleware`. The spec's OPPLAN-mirror approach is correct in *kind*. |
 | `langchain-middleware` | 5 hooks confirmed: `before_agent`, `before_model`, `wrap_model_call`, `wrap_tool_call`, `after_model`, `after_agent`. Tool-specific middleware (`tools=[...]` scoped to certain tools) is supported. HITL pattern (`interrupt_on={"kg_add_edge": True}`) is available if we want operator-approved chains. |
 | `deep-agents-core` | DeepAgents' built-in `MemoryMiddleware` + `Store` is the canonical long-term memory pattern. Skills (SKILL.md) and subagent (`task` tool) middlewares already exist. **Custom middleware composes with the built-ins.** |
 | `memory-systems` | LoCoMo benchmark: **Letta filesystem (74%) > Mem0 (68.5%)**. Zep/Graphiti's temporal bi-modeling shows 18.5% LongMemEval improvement + 90% latency reduction via subgraph retrieval. Anti-pattern: "over-engineering early." |
@@ -56,7 +56,7 @@ These came up only after going through the skills. Each one needs a user decisio
 
 ### Q1 — Does a KG middleware enable new capability, or constrain the model?
 
-The memory-systems and tool-design skills both surface the file-system pattern. Decepticon's analyst.md prompt already instructs the model to write `findings/FIND-NNN.md`, `recon/SUMMARY.md`, `timeline.jsonl`. Those files are durable, queryable with `grep`, human-readable, and survive any framework change.
+The memory-systems and tool-design skills both surface the file-system pattern. Raptix's analyst.md prompt already instructs the model to write `findings/FIND-NNN.md`, `recon/SUMMARY.md`, `timeline.jsonl`. Those files are durable, queryable with `grep`, human-readable, and survive any framework change.
 
 What does Neo4j enable that files don't?
 
@@ -537,7 +537,7 @@ The actual store calls receive `engagement=eng` from middleware, never from the 
 ### 10.7 Updated PR-A code surface (concrete file list)
 
 ```
-packages/decepticon/decepticon/middleware/kg_internal/
+packages/raptix/raptix/middleware/kg_internal/
   __init__.py
   store.py                   # KGStore (per-op execute_write/read, engagement-mandatory)
   migrations/
@@ -545,10 +545,10 @@ packages/decepticon/decepticon/middleware/kg_internal/
     V002__engagement_composite_indexes_and_provenance.cypher
   migration_runner.py        # invokes migrations on first boot
 
-packages/decepticon/decepticon/runtime/cart.py
+packages/raptix/raptix/runtime/cart.py
   # add AttackGraphProtocol(Protocol) — fills the docstring vaporware
 
-packages/decepticon/tests/integration/kg/
+packages/raptix/tests/integration/kg/
   test_kgstore_record.py     # observations round-trip
   test_kgstore_ingest.py     # 12 scanner adapters
   test_kgstore_parallel.py   # 16-agent stress test (Q4)

@@ -38,10 +38,10 @@ def proxy_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     ``localhost:4000`` does not work inside a container — issue #186.
     """
     env = {
-        "DECEPTICON_LLM__PROXY_URL": "http://litellm:4000",
-        "DECEPTICON_LLM__PROXY_API_KEY": "sk-decepticon-master",
-        "DECEPTICON_LLM__TIMEOUT": "120",
-        "DECEPTICON_LLM__MAX_RETRIES": "2",
+        "RAPTIX_LLM__PROXY_URL": "http://litellm:4000",
+        "RAPTIX_LLM__PROXY_API_KEY": "sk-decepticon-master",
+        "RAPTIX_LLM__TIMEOUT": "120",
+        "RAPTIX_LLM__MAX_RETRIES": "2",
     }
     for key, value in env.items():
         monkeypatch.setenv(key, value)
@@ -71,14 +71,14 @@ class TestBuildProxiedLLMResolvesConfig:
     """
 
     def test_uses_resolved_proxy_url_from_env(self, proxy_env: dict[str, str]) -> None:
-        """Override must hit the resolved ``DECEPTICON_LLM__PROXY_URL``,
+        """Override must hit the resolved ``RAPTIX_LLM__PROXY_URL``,
         not the pydantic default ``http://localhost:4000``. Inside the
         langgraph container, ``localhost:4000`` is the container itself
         — no listener — and was the root cause of the original report.
         """
         bound = _build_proxied_llm("openai/gpt-5.5", _original_chat_model())
 
-        assert bound.openai_api_base == proxy_env["DECEPTICON_LLM__PROXY_URL"], (
+        assert bound.openai_api_base == proxy_env["RAPTIX_LLM__PROXY_URL"], (
             "_build_proxied_llm must resolve proxy URL through agent config, "
             "not fall back to ProxyConfig() defaults — see issue #186."
         )
@@ -97,7 +97,7 @@ class TestBuildProxiedLLMResolvesConfig:
 
         # ChatOpenAI wraps the api_key in SecretStr; unwrap to compare.
         api_key = bound.openai_api_key.get_secret_value()
-        assert api_key == proxy_env["DECEPTICON_LLM__PROXY_API_KEY"]
+        assert api_key == proxy_env["RAPTIX_LLM__PROXY_API_KEY"]
 
     def test_routes_for_every_override_target_not_just_anthropic(
         self, proxy_env: dict[str, str]
@@ -116,7 +116,7 @@ class TestBuildProxiedLLMResolvesConfig:
         ]
         for target in targets:
             bound = _build_proxied_llm(target, _original_chat_model())
-            assert bound.openai_api_base == proxy_env["DECEPTICON_LLM__PROXY_URL"], (
+            assert bound.openai_api_base == proxy_env["RAPTIX_LLM__PROXY_URL"], (
                 f"override target {target!r} did not resolve proxy URL"
             )
             assert bound.model_name == target
@@ -133,10 +133,10 @@ class TestBuildProxiedLLMResolvesConfig:
         # Strip any test-host env so we observe the config-layer default,
         # not a leak from the developer's shell.
         for var in (
-            "DECEPTICON_LLM__PROXY_URL",
-            "DECEPTICON_LLM__PROXY_API_KEY",
-            "DECEPTICON_LLM__TIMEOUT",
-            "DECEPTICON_LLM__MAX_RETRIES",
+            "RAPTIX_LLM__PROXY_URL",
+            "RAPTIX_LLM__PROXY_API_KEY",
+            "RAPTIX_LLM__TIMEOUT",
+            "RAPTIX_LLM__MAX_RETRIES",
         ):
             monkeypatch.delenv(var, raising=False)
 
@@ -205,7 +205,7 @@ class TestBuildProxiedLLMTemperatureHandling:
         # No temperature passed through → ChatOpenAI's own default applies.
         # Whatever that default is, we just need to confirm we did not
         # crash and we did construct a model bound to the proxy URL.
-        assert bound.openai_api_base == proxy_env["DECEPTICON_LLM__PROXY_URL"]
+        assert bound.openai_api_base == proxy_env["RAPTIX_LLM__PROXY_URL"]
 
 
 # ── Read-override resolution (lightweight smoke for the read path) ──────
@@ -349,7 +349,7 @@ class TestWrapModelCallActiveOverride:
         assert req.override_called
         bound = req.last_override_model
         assert isinstance(bound, ChatOpenAI)
-        assert bound.openai_api_base == proxy_env["DECEPTICON_LLM__PROXY_URL"]
+        assert bound.openai_api_base == proxy_env["RAPTIX_LLM__PROXY_URL"]
         assert bound.model_name == "openai/gpt-5.5"
 
     def test_bind_failure_falls_back_to_original_handler(
@@ -442,7 +442,7 @@ class TestAwrapModelCallActiveOverride:
         assert req.override_called
         bound = req.last_override_model
         assert isinstance(bound, ChatOpenAI)
-        assert bound.openai_api_base == proxy_env["DECEPTICON_LLM__PROXY_URL"]
+        assert bound.openai_api_base == proxy_env["RAPTIX_LLM__PROXY_URL"]
         assert bound.model_name == "groq/llama-3.3-70b-versatile"
 
     async def test_async_bind_failure_falls_back(self, monkeypatch: pytest.MonkeyPatch) -> None:

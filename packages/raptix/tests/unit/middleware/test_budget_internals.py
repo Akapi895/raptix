@@ -33,7 +33,7 @@ from raptix.middleware.budget import (
 
 # ---------------------------------------------------------------- _env_float
 
-_ENV = "DECEPTICON_BUDGET__TEST_CAP"
+_ENV = "RAPTIX_BUDGET__TEST_CAP"
 
 
 def test_env_float_unset_returns_default(monkeypatch: pytest.MonkeyPatch):
@@ -110,14 +110,14 @@ def test_scope_keys_reads_state_and_runtime():
 
 
 def test_scope_keys_falls_back_to_env(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("DECEPTICON_ENGAGEMENT_ID", "env-eng")
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_ID", "env-eng")
     eng, agent = _mw()._scope_keys(_Req(state={}, runtime=None))
     assert eng == "env-eng"
     assert agent == "default-agent"
 
 
 def test_scope_keys_ultimate_defaults(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_ENGAGEMENT_ID", raising=False)
+    monkeypatch.delenv("RAPTIX_ENGAGEMENT_ID", raising=False)
     eng, agent = _mw()._scope_keys(_Req(state=None, runtime=None))
     assert eng == "default-engagement"
     assert agent == "default-agent"
@@ -203,7 +203,7 @@ def test_check_one_concurrent_cold_cache_fetches_once():
 
 
 def test_wrap_model_call_invokes_handler_under_cap(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_BUDGET__PER_AGENT_USD", raising=False)
+    monkeypatch.delenv("RAPTIX_BUDGET__PER_AGENT_USD", raising=False)
     mw = BudgetEnforcementMiddleware(engagement_cap_usd=100.0, spend_provider=lambda _k: 1.0)
     called: dict[str, bool] = {}
 
@@ -227,7 +227,7 @@ def test_wrap_model_call_short_circuits_when_over_cap():
 
 
 async def test_awrap_model_call_invokes_handler_under_cap(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_BUDGET__PER_AGENT_USD", raising=False)
+    monkeypatch.delenv("RAPTIX_BUDGET__PER_AGENT_USD", raising=False)
     mw = BudgetEnforcementMiddleware(engagement_cap_usd=100.0, spend_provider=lambda _k: 1.0)
 
     async def handler(_req: object) -> str:
@@ -248,8 +248,8 @@ async def test_awrap_model_call_short_circuits_when_over_cap():
 
 # ---------------------------------------------------------------- disabled passthrough
 def test_disabled_middleware_is_passthrough(monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.delenv("DECEPTICON_BUDGET__ENGAGEMENT_USD", raising=False)
-    monkeypatch.delenv("DECEPTICON_BUDGET__PER_AGENT_USD", raising=False)
+    monkeypatch.delenv("RAPTIX_BUDGET__ENGAGEMENT_USD", raising=False)
+    monkeypatch.delenv("RAPTIX_BUDGET__PER_AGENT_USD", raising=False)
     mw = BudgetEnforcementMiddleware()  # no caps -> disabled no-op
 
     def handler(_req: object) -> str:

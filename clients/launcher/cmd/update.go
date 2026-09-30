@@ -24,7 +24,7 @@ var updateCmd = &cobra.Command{
 
 func init() {
 	updateCmd.Flags().BoolVarP(&forceUpdate, "force", "f", false, "Refresh config files and Docker images even if version unchanged")
-	updateCmd.Flags().StringVar(&updateChannel, "channel", "", "Update channel for this run: stable (soaked final) or latest (newest final). Default: DECEPTICON_CHANNEL in .env, else stable")
+	updateCmd.Flags().StringVar(&updateChannel, "channel", "", "Update channel for this run: stable (soaked final) or latest (newest final). Default: RAPTIX_CHANNEL in .env, else stable")
 	rootCmd.AddCommand(updateCmd)
 }
 
@@ -38,7 +38,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	// --channel overrides .env for this invocation only.
 	rawChannel := updateChannel
 	if rawChannel == "" {
-		rawChannel = config.Get(env, "DECEPTICON_CHANNEL", "")
+		rawChannel = config.Get(env, "RAPTIX_CHANNEL", "")
 	}
 	ch := updater.ResolveChannel(rawChannel)
 
@@ -62,7 +62,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	ref := release.TagName
-	if branch := strings.TrimSpace(env["DECEPTICON_BRANCH"]); branch != "" {
+	if branch := strings.TrimSpace(env["RAPTIX_BRANCH"]); branch != "" {
 		ref = branch
 	}
 
@@ -78,7 +78,7 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 		ui.Info("Syncing configuration files...")
 		// Mirror ApplyUpdate's release/branch split: pass the Release
 		// through when ref tracks the tag so the manifest verifies, nil
-		// when DECEPTICON_BRANCH is overriding the ref (branch mode).
+		// when RAPTIX_BRANCH is overriding the ref (branch mode).
 		syncRelease := release
 		if ref != release.TagName && ref != strings.TrimPrefix(release.TagName, "v") {
 			syncRelease = nil

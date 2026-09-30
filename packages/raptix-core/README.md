@@ -1,6 +1,6 @@
-# decepticon-core
+# raptix-core
 
-The Decepticon contract layer. Pure types, protocols, plugin contracts,
+The Raptix contract layer. Pure types, protocols, plugin contracts,
 and registry primitives — zero `langchain` / `langgraph` / `deepagents`
 runtime dependency. Suitable to import from any context: CLI tooling,
 serverless workers, type-checking-only environments.
@@ -13,8 +13,8 @@ Stable surface for plugin authors and downstream commercial layers
 ## Install
 
 ```bash
-pip install decepticon-core
+pip install raptix-core
 ```
 
 Most consumers should install `decepticon` (which depends on this) or
-`decepticon-sdk` (the plugin-author entrypoint).
+`raptix-sdk` (the plugin-author entrypoint).

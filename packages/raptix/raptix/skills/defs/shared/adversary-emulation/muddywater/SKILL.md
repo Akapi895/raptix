@@ -220,11 +220,11 @@ MuddyWater (MITRE ATT&CK **G0069**) is a cyber-espionage group assessed to be a 
 | Invoke-Obfuscation | — | PowerShell obfuscation framework | Public |
 | go-socks5 | — | SOCKS5 proxy for firewall/NAT bypass | Public |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never run disruptive (ransomware / "DarkBit"-style) actions outside an explicitly sanctioned, isolated lab.
 
-Map MuddyWater's signature plays to Decepticon's own capabilities:
+Map MuddyWater's signature plays to Raptix's own capabilities:
 
 - **Initial access — spearphishing with macro documents (T1566.001, T1204.002, T1059.005).** Use the phishing/payload-builder skill to craft macro-laden Word/Excel documents with region-specific decoy content (Arabic/Farsi government letterheads, telecom advisories). Stage documents that, on enable-macros, decode and execute a PowerShell stager via VBA — mirroring the POWERSTATS delivery chain. For link-based access (T1566.002), embed links to lure documents on file-sharing services.
 - **Initial access — RMM tool abuse (T1219.002, T1588.002, T1105).** Emulate MuddyWater's signature pivot to legitimate RMM tools: deliver Atera Agent, ScreenConnect, or SimpleHelp installers via spearphishing PDFs with embedded links. Once installed, use the RMM tool's built-in capabilities for interactive remote access, bypassing traditional C2 detection.

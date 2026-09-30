@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 # exception via ``warnings.warn(..., stacklevel=2)`` + filter) on the
 # first collision instead of accumulating warnings. Production
 # deployments that don't want last-write-wins resolution flip this on.
-_STRICT_REGISTRY_ENV = "DECEPTICON_STRICT_REGISTRY"
+_STRICT_REGISTRY_ENV = "RAPTIX_STRICT_REGISTRY"
 
 
 def _strict_registry_enabled() -> bool:
@@ -140,7 +140,7 @@ class PluginRegistry:
                         kind=group,
                     )
                     if _strict_registry_enabled():
-                        # Strict mode (DECEPTICON_STRICT_REGISTRY=1): a
+                        # Strict mode (RAPTIX_STRICT_REGISTRY=1): a
                         # collision is fatal. Production deployments
                         # that want deterministic plugin resolution
                         # flip this so misconfigured installs fail at
@@ -214,7 +214,7 @@ class PluginRegistry:
     def detect_collisions(self) -> tuple[PluginConflictWarning, ...]:
         """Return every collision surfaced during ``load()``.
 
-        Strict mode (``DECEPTICON_STRICT_REGISTRY=1``) is left to the
+        Strict mode (``RAPTIX_STRICT_REGISTRY=1``) is left to the
         framework boot path to enforce — the registry surface itself
         stays non-fatal so introspection consumers don't blow up on a
         misconfigured plugin set.

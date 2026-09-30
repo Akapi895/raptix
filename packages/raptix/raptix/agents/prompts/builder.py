@@ -356,7 +356,7 @@ def load_prompt(
     # so every prompt picks up the same operator-language directive without
     # per-agent edits.
     #
-    # DECEPTICON_LANGUAGE env var pins the output language (e.g. "en", "ko",
+    # RAPTIX_LANGUAGE env var pins the output language (e.g. "en", "ko",
     # "no"). When set, auto-detect is disabled and the agent always responds
     # in the pinned language. When unset, the language.md fragment's
     # auto-detect logic applies.
@@ -365,13 +365,13 @@ def load_prompt(
 
     prompt = PromptBuilder(name).with_tool_prompts(tool_prompts).with_shared(fragments).build()
 
-    # Runtime language pin: when DECEPTICON_LANGUAGE is set, replace the
+    # Runtime language pin: when RAPTIX_LANGUAGE is set, replace the
     # default English policy with a pinned-language directive so every agent
     # replies in the configured locale regardless of input language. The
     # env-based path is the CLI / single-tenant convention; multi-tenant
     # launchers (multi-tenant web) override per-run via config.configurable.language
     # which EngagementContextMiddleware injects as a later SystemMessage.
-    pinned_lang = os.environ.get("DECEPTICON_LANGUAGE", "").strip()
+    pinned_lang = os.environ.get("RAPTIX_LANGUAGE", "").strip()
     lang_policy = build_language_policy(pinned_lang)
     if lang_policy is not None:
         import re

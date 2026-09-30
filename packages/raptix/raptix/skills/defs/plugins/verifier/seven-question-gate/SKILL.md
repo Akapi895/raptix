@@ -174,4 +174,4 @@ which question pass/failed before it reaches the report stage.
 - Verifier agent prompt: `decepticon/agents/prompts/verifier.md`
 - Verifier router: `skills/verifier/SKILL.md`
 - Bounty report skill: `skills/verifier/bounty-report/SKILL.md`
-- Operator's external `triage-validation` skill (Decepticon-external) for the broader gate methodology
+- Operator's external `triage-validation` skill (Raptix-external) for the broader gate methodology

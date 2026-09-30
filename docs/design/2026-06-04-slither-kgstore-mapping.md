@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-04
 **Status:** Draft — review required before implementation
-**Scope:** CONTRACT_TOOLS (`packages/decepticon/decepticon/tools/contracts/`) migration from the legacy `_state` shim + in-memory `KnowledgeGraph` to direct `KGStore.record_observations` calls.
+**Scope:** CONTRACT_TOOLS (`packages/raptix/raptix/tools/contracts/`) migration from the legacy `_state` shim + in-memory `KnowledgeGraph` to direct `KGStore.record_observations` calls.
 **Out of scope:** AD operator migration (see companion RFC `2026-06-04-bloodhound-kgstore-mapping.md`).
 
 ---
@@ -11,7 +11,7 @@
 
 After PR #549 the contract auditor's Slither ingestion still works through the legacy `_state` shim — the shim translates `_load → mutate → _save` into `KGStore.record_observations` calls so `tools/contracts/slither.py` did not need to change. That removes the broken `Neo4jStore` backend but leaves three real gaps:
 
-1. **Schema fidelity** — Slither's `--json` output has 11 distinct element types (`contract`, `function`, `variable`, `node`, `pragma`, `enum`, `struct`, `event`, `custom_error`, `file`, plus the implicit `source_mapping.filename_relative` file scope). The current Decepticon ingest collapses everything onto a single `Vulnerability` node. Path / chain analysis cannot distinguish "the same reentrancy spans both `withdraw()` and `deposit()`" from "two separate findings".
+1. **Schema fidelity** — Slither's `--json` output has 11 distinct element types (`contract`, `function`, `variable`, `node`, `pragma`, `enum`, `struct`, `event`, `custom_error`, `file`, plus the implicit `source_mapping.filename_relative` file scope). The current Raptix ingest collapses everything onto a single `Vulnerability` node. Path / chain analysis cannot distinguish "the same reentrancy spans both `withdraw()` and `deposit()`" from "two separate findings".
 2. **Stable detector ID not used** — Slither emits a `id` field per finding that is a SHA3-256 hash over the concatenated element descriptions. It is stable across re-runs of the same code. Using it as the dedupe key gives idempotent re-ingest; the current code keys on a constructed string and re-creates Vulnerability nodes every run.
 3. **Multi-location findings collapse to a single node** — a reentrancy can list N elements (the call site, the storage write, the function). The right modelling is **one Vulnerability node + N `AFFECTS` edges to Contract / Function / StateVar / CodeLocation**. The current code emits per-element vuln duplicates.
 
@@ -156,7 +156,7 @@ Two options, mirroring the BloodHound RFC.
 - Future tooling (Foundry trace ingest, Hardhat coverage, mythril output) can extend the Solidity node family without re-using overloaded kinds.
 
 **Cons**
-- `decepticon-core` enum churn (~7 new values for the contract auditor on top of the AD RFC's 14).
+- `raptix-core` enum churn (~7 new values for the contract auditor on top of the AD RFC's 14).
 - V003 / V004 migration must add composite-unique constraints + indexes per new label.
 
 ### Option B — Reuse existing kinds with `slither_type` prop
@@ -164,7 +164,7 @@ Two options, mirroring the BloodHound RFC.
 Keep `NodeKind` unchanged. Differentiate via a `slither_type` property (`slither_type="function"` on a `:CodeLocation` etc.).
 
 **Pros**
-- Zero `decepticon-core` change.
+- Zero `raptix-core` change.
 - Existing test patches untouched.
 
 **Cons**
@@ -184,7 +184,7 @@ Each step lands as a separate PR. Steps depend on the BloodHound RFC's 4.1 (`Nod
 
 ### 4.1 `NodeKind` extension for Solidity
 
-- `decepticon-core/types/kg.py`: add `STATE_VAR`, `FUNCTION`, `EVENT`, `CUSTOM_ERROR`, `ENUM`, `STRUCT`, `PRAGMA`. Add `EdgeKind.CALLS`.
+- `raptix-core/types/kg.py`: add `STATE_VAR`, `FUNCTION`, `EVENT`, `CUSTOM_ERROR`, `ENUM`, `STRUCT`, `PRAGMA`. Add `EdgeKind.CALLS`.
 - KGStore `V004__slither_schema.cypher`: composite uniqueness + per-label indexes.
 
 ### 4.2 Slither ingest core

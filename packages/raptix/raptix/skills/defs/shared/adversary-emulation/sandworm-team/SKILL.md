@@ -11,7 +11,7 @@ metadata:
 
 # Sandworm Team (Voodoo Bear, Seashell Blizzard, ELECTRUM) — Adversary Emulation Profile
 
-Sandworm Team (MITRE ATT&CK **G0034**; also tracked as APT44, Voodoo Bear, Seashell Blizzard, ELECTRUM, Telebots, IRON VIKING, IRIDIUM, FROZENBARENTS, and historically BlackEnergy/Quedagh) is a destructive Russian state threat group attributed to the GRU's Main Center for Special Technologies (GTsST), military unit 74455, active since at least 2009. Unlike espionage-focused peers, Sandworm is the GRU's premier *sabotage and influence* unit: it pairs conventional intrusion tradecraft with bespoke ICS/OT attack capability, disk wipers, fake ransomware, hacktivist-persona leaks, and disruptive operations timed to geopolitical and kinetic events. It is the only actor publicly documented to have triggered electric-grid blackouts via cyberattack (Ukraine, 2015 and 2016) and later repeated an OT grid attack in 2022. This profile maps Sandworm's signature TTPs to ATT&CK so Decepticon can emulate them within an authorized engagement and so the blue cell can anticipate detection.
+Sandworm Team (MITRE ATT&CK **G0034**; also tracked as APT44, Voodoo Bear, Seashell Blizzard, ELECTRUM, Telebots, IRON VIKING, IRIDIUM, FROZENBARENTS, and historically BlackEnergy/Quedagh) is a destructive Russian state threat group attributed to the GRU's Main Center for Special Technologies (GTsST), military unit 74455, active since at least 2009. Unlike espionage-focused peers, Sandworm is the GRU's premier *sabotage and influence* unit: it pairs conventional intrusion tradecraft with bespoke ICS/OT attack capability, disk wipers, fake ransomware, hacktivist-persona leaks, and disruptive operations timed to geopolitical and kinetic events. It is the only actor publicly documented to have triggered electric-grid blackouts via cyberattack (Ukraine, 2015 and 2016) and later repeated an OT grid attack in 2022. This profile maps Sandworm's signature TTPs to ATT&CK so Raptix can emulate them within an authorized engagement and so the blue cell can anticipate detection.
 
 ## Attribution & motivation
 
@@ -110,12 +110,12 @@ Sandworm Team (MITRE ATT&CK **G0034**; also tracked as APT44, Voodoo Bear, Seash
 | GOGETTER / TANKTRAP / SHARPIVORY / CredRaptor / plainpwd | — | Custom | Tunneler, PowerShell deployer, dropper, browser-cred stealer, LSASS dumper |
 | Mimikatz / Impacket / Cobalt Strike / Empire / PoshC2 / Invoke-PSImage / SDelete / RemoteExec / Adminer / Neo-REGEORG / intercepter-NG | S0002 / S0357 / S0154 / S0363 / S0378 / S0231 / S0195 / — | Public | Off-the-shelf cred theft, lateral movement, C2, sniffing, exfil, wiping |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 **Authorized use only:** every action below is destructive-capable and must run strictly inside the documented engagement scope, on approved targets, with rules-of-engagement sign-off and (for any wipe/encrypt/OT step) explicit written authorization and reversible/lab-only execution. Never touch real ICS/OT or production data outside an isolated test range.
 
-- **Edge-exploit initial access (BadPilot style, T1190):** Use Decepticon's recon/scanning and exploit tooling against in-scope perimeter apps; emulate ScreenConnect/Fortinet/Exchange-class footholds. Chain to web-shell drop (T1505.003) via the **bash** tool and the **lateral-movement** skill.
-- **Phishing & supply-chain (T1566/T1195):** Drive the spearphishing/credential-harvest path with Decepticon's phishing/initial-access capability; emulate trojanized-installer staging only against engagement-provided artifacts.
+- **Edge-exploit initial access (BadPilot style, T1190):** Use Raptix's recon/scanning and exploit tooling against in-scope perimeter apps; emulate ScreenConnect/Fortinet/Exchange-class footholds. Chain to web-shell drop (T1505.003) via the **bash** tool and the **lateral-movement** skill.
+- **Phishing & supply-chain (T1566/T1195):** Drive the spearphishing/credential-harvest path with Raptix's phishing/initial-access capability; emulate trojanized-installer staging only against engagement-provided artifacts.
 - **Valid-account + AD escalation (T1078.002/T1003/T1087/T1484.001):** Use the **AD skills** to enumerate via LDAP, dump LSASS/NTDS (emulating modified-Mimikatz/`ntdsutil`/`comsvcs.dll`), and reach Domain Admin — Sandworm's defining pivot is GPO-based mass deployment, so practice pushing a benign payload domain-wide via GPO.
 - **C2 (T1071.001/T1572/T1102.002):** Stand up **c2/sliver** with HTTPS and TLS-tunneled (Yamux-like) profiles; emulate Telegram/web-service bidirectional C2 with a benign beacon and internal-proxy pivoting.
 - **Defense evasion (T1027/T1036/T1685.001/T1070.004):** Use the **defense-evasion** skill to pack/obfuscate payloads, masquerade binaries and accounts (`explorer.exe`, `система`), disable event logging, and clean up artifacts — then verify the blue cell catches them.

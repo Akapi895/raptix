@@ -86,7 +86,7 @@ def create_blue_cell_agent(
       - Read-only: no sandbox bash access (no ``sandbox=`` arg, no
         ``set_sandbox()`` call, no ``SandboxNotification`` slot).
       - ``blue_cell_scan`` resolves the engagement workspace from the
-        runnable config / ``DECEPTICON_WORKSPACE_PATH`` and reads
+        runnable config / ``RAPTIX_WORKSPACE_PATH`` and reads
         ``.sessions/`` logs; the agent does not shell out.
 
     Args:

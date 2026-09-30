@@ -60,7 +60,7 @@ _READ = (
 
 
 def _enabled() -> bool:
-    return os.environ.get("DECEPTICON_KG_TRIED_EDGES", "0").strip().lower() in {"1", "true", "yes"}
+    return os.environ.get("RAPTIX_KG_TRIED_EDGES", "0").strip().lower() in {"1", "true", "yes"}
 
 
 def _outcome(message: Any) -> tuple[str, str]:

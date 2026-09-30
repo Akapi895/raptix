@@ -41,7 +41,7 @@ def build_embed_text(name: str, description: str, when_to_use: str) -> str:
 def _input_sha(model: str, text: str) -> str:
     """SHA of the embedding *input identity* — the model PLUS the text.
 
-    Folding the model in means swapping ``DECEPTICON_SKILLOGY_EMBED_MODEL``
+    Folding the model in means swapping ``RAPTIX_SKILLOGY_EMBED_MODEL``
     (even to one with the same dimension) changes every sha, so the next boot
     re-embeds the whole corpus instead of silently serving vectors from the
     old model. Mirrors the disk cache key in ``embeddings._cache_key``.

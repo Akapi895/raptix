@@ -1,6 +1,6 @@
-# Contributing to Decepticon
+# Contributing to Raptix
 
-Thank you for your interest in contributing to Decepticon! Whether you're a security researcher, AI engineer, or documentation enthusiast, we welcome your contributions.
+Thank you for your interest in contributing to Raptix! Whether you're a security researcher, AI engineer, or documentation enthusiast, we welcome your contributions.
 
 ## Getting Started
 
@@ -17,8 +17,8 @@ Thank you for your interest in contributing to Decepticon! Whether you're a secu
 # The benchmark suite uses git submodules (xbow-validation-benchmarks,
 # MHBench). Clone with --recursive to fetch them; they are optional —
 # the main tool builds and runs without them.
-git clone --recursive https://github.com/PurpleAILAB/Decepticon.git
-cd Decepticon
+git clone --recursive https://github.com/Akapi895/raptix.git
+cd Raptix
 
 # Start with hot-reload (builds Docker images + watches for source changes)
 make dev
@@ -40,14 +40,14 @@ make lint-fix      # Auto-fix lint issues
 
 ### Reporting Bugs
 
-Use the [Bug Report](https://github.com/PurpleAILAB/Decepticon/issues/new?template=bug_report.yml) issue template. Include:
+Use the [Bug Report](https://github.com/Akapi895/raptix/issues/new?template=bug_report.yml) issue template. Include:
 - Steps to reproduce
 - Expected vs actual behavior
 - Docker and Python version info
 
 ### Suggesting Features
 
-Use the [Feature Request](https://github.com/PurpleAILAB/Decepticon/issues/new?template=feature_request.yml) issue template.
+Use the [Feature Request](https://github.com/Akapi895/raptix/issues/new?template=feature_request.yml) issue template.
 
 ### Submitting Pull Requests
 
@@ -85,7 +85,7 @@ docs/                Documentation
 
 ## Authoring Skills
 
-Every `packages/decepticon/decepticon/skills/**/SKILL.md` file must
+Every `packages/raptix/raptix/skills/**/SKILL.md` file must
 conform to the schema in [docs/skill-schema.md](docs/skill-schema.md).
 Before opening a PR, run `make audit-skills` locally and fix any
 reported violations. CI runs the same check on every PR.

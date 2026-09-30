@@ -344,7 +344,7 @@ def _request_body(
     elif opts.get("reasoning_effort"):
         body["reasoning"] = {"effort": opts["reasoning_effort"]}
     else:
-        body["reasoning"] = {"effort": os.environ.get("DECEPTICON_GPT_EFFORT", "medium")}
+        body["reasoning"] = {"effort": os.environ.get("RAPTIX_GPT_EFFORT", "medium")}
     return body
 
 

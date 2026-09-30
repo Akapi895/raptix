@@ -1,30 +1,30 @@
 # Plugin Author Guide
 
-Audience: someone shipping a `pip install`-able Decepticon plugin —
+Audience: someone shipping a `pip install`-able Raptix plugin —
 custom tools, middleware, agents, callbacks, skills, or prompt
 fragments.
 
-The Decepticon framework is built around an extensible contract layer
-(`decepticon-core`) and an opinionated runtime (`decepticon`). Plugin
-authors interact only with the SDK package (`decepticon-sdk`), which
+The Raptix framework is built around an extensible contract layer
+(`raptix-core`) and an opinionated runtime (`decepticon`). Plugin
+authors interact only with the SDK package (`raptix-sdk`), which
 re-exports the contract layer and ships scaffolding + test fakes.
 
 ## 1. Install the SDK
 
 ```bash
-pip install decepticon-sdk
+pip install raptix-sdk
 ```
 
 Add test fixtures + scaffolding for development:
 
 ```bash
-pip install "decepticon-sdk[testing]"
+pip install "raptix-sdk[testing]"
 ```
 
 ## 2. Scaffold the plugin
 
 ```bash
-decepticon-sdk plugin new \
+raptix-sdk plugin new \
     --kind=middleware \
     --name=my-plugin \
     --path=./my-plugin
@@ -152,7 +152,7 @@ audit-policy = "my_plugin:get_contribution"
 
 ## 4. Bundle and safety gates
 
-Bundle activation is controlled by `DECEPTICON_PLUGINS` (or the
+Bundle activation is controlled by `RAPTIX_PLUGINS` (or the
 `[tool.decepticon.plugins]` config section). Set `bundle="..."` on
 your contribution so end users can opt in deliberately:
 
@@ -176,14 +176,14 @@ my-plugin-v1 = "my_plugin:get_bundle"
 Operators enable your bundle:
 
 ```bash
-DECEPTICON_PLUGINS=standard,my-plugin python -m decepticon ...
+RAPTIX_PLUGINS=standard,my-plugin python -m decepticon ...
 ```
 
 ### Safety-critical overrides
 
 The framework gates replacement of safety-critical slots and tools
 (`SAFETY_CRITICAL_SLOTS`, `SAFETY_CRITICAL_TOOLS`). Replacements
-require `DECEPTICON_ALLOW_SAFETY_OVERRIDES=1`. To declare *your own*
+require `RAPTIX_ALLOW_SAFETY_OVERRIDES=1`. To declare *your own*
 tool / middleware safety-critical (additive only — never removes
 safety on OSS names):
 
@@ -239,13 +239,13 @@ Strict mode for production deployments — surface collisions as
 errors at boot:
 
 ```bash
-DECEPTICON_STRICT_REGISTRY=1
+RAPTIX_STRICT_REGISTRY=1
 ```
 
 ## 7. Publishing
 
 Standard PyPI workflow — the wheel is built by hatchling and pinned
-against `decepticon-sdk` so consumers automatically get the contract
+against `raptix-sdk` so consumers automatically get the contract
 layer at install time:
 
 ```bash
@@ -262,6 +262,6 @@ user installs the wheel. No registration call needed.
   [`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](superpowers/specs/2026-05-23-core-framework-sdk-split-design.md)
   — full design rationale.
 - Example plugins per kind at
-  [`packages/decepticon-sdk/examples/`](../packages/decepticon-sdk/examples/).
+  [`packages/raptix-sdk/examples/`](../packages/raptix-sdk/examples/).
 - Migration from `0.0.x` legacy imports:
   [`docs/migration/from-0.0.x.md`](migration/from-0.0.x.md).

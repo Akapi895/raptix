@@ -1,6 +1,6 @@
 # Open-web acquisition: `web_search` / `web_fetch`
 
-Two agent tools give Decepticon first-class open-web reach for OSINT and recon,
+Two agent tools give Raptix first-class open-web reach for OSINT and recon,
 backed by a site-agnostic fetch engine that gets past the WAF/anti-bot defenses
 most real targets sit behind. Design record: [ADR-0010](../adr/0010-open-web-acquisition.md).
 
@@ -65,7 +65,7 @@ is the `web_search` provider allowlist (the agreed OSINT entry points).
 
 The engine is precisely derived from [`fivetaku/insane-search`](https://github.com/fivetaku/insane-search)
 (MIT) — its Verdict model, WAF-profile ranking, transform/TLS grid, and
-No-Site-Name rule — with the governance **inverted** for Decepticon: every hop
+No-Site-Name rule — with the governance **inverted** for Raptix: every hop
 RoE-gated (vs anti-allowlist "try everything"), sandbox-only egress (vs
 in-process), build-time deps (vs runtime auto-install), and untrusted-output
 wrapping. See ADR-0010 for the full mapping.

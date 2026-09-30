@@ -1,10 +1,10 @@
 # Release Process
 
-How Decepticon is versioned and released.
+How Raptix is versioned and released.
 
 ## Versioning
 
-Decepticon follows [Semantic Versioning](https://semver.org/). Releases are
+Raptix follows [Semantic Versioning](https://semver.org/). Releases are
 tagged `vMAJOR.MINOR.PATCH` (e.g. `v1.1.1`); pre-releases use a suffix
 (e.g. `v1.2.0-rc.1`).
 

@@ -90,15 +90,15 @@ class TestActiveEngagement:
             set_active_engagement("has space")
 
     def test_env_fallback(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "from-env")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT", "from-env")
         assert get_active_engagement() == "from-env"
 
     def test_env_fallback_ignored_when_invalid(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "has space")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT", "has space")
         assert get_active_engagement() is None
 
     def test_contextvar_precedes_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("DECEPTICON_ENGAGEMENT", "from-env")
+        monkeypatch.setenv("RAPTIX_ENGAGEMENT", "from-env")
         token = set_active_engagement("from-contextvar")
         try:
             assert get_active_engagement() == "from-contextvar"

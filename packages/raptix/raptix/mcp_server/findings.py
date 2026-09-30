@@ -26,7 +26,7 @@ def engagement_workspace(engagement_name: str) -> Path:
     """Resolve the workspace directory for an engagement.
 
     Mirrors ``raptix.cli.scan._load_findings_graph`` so the MCP bridge and
-    the headless CLI resolve the same path (``DECEPTICON_ENGAGEMENT_WORKSPACE``
+    the headless CLI resolve the same path (``RAPTIX_ENGAGEMENT_WORKSPACE``
     override, else ``~/.decepticon/workspace/<slug>``).
 
     ``engagement_name`` arrives from a remote MCP caller, so it is validated
@@ -41,7 +41,7 @@ def engagement_workspace(engagement_name: str) -> Path:
             f"invalid engagement name {engagement_name!r}; must match "
             "[A-Za-z0-9][A-Za-z0-9._-]{0,127} (no path separators or '..')"
         )
-    override = os.environ.get("DECEPTICON_ENGAGEMENT_WORKSPACE")
+    override = os.environ.get("RAPTIX_ENGAGEMENT_WORKSPACE")
     if override:
         return Path(override)
     return Path.home() / ".decepticon" / "workspace" / engagement_name

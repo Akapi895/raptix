@@ -1,6 +1,6 @@
-# Decepticon Context Engineering Architecture
+# Raptix Context Engineering Architecture
 
-> Decepticon 에이전트 프레임워크의 컨텍스트 엔지니어링 설계 문서.
+> Raptix 에이전트 프레임워크의 컨텍스트 엔지니어링 설계 문서.
 > 적용 스킬: context-fundamentals, context-optimization, context-compression,
 > tool-design, filesystem-context, deep-agents-core, deep-agents-memory
 
@@ -52,7 +52,7 @@
 
 ### 2.1 Observation Masking
 
-Tool output은 컨텍스트 소비의 최대 원인입니다. Decepticon은 두 레벨에서 masking을 적용합니다:
+Tool output은 컨텍스트 소비의 최대 원인입니다. Raptix은 두 레벨에서 masking을 적용합니다:
 
 **Level 1 — DockerSandbox Truncation** (`docker_sandbox.py`):
 - 30,000자 초과 출력을 비대칭 절단 (head 60% / tail 40%)

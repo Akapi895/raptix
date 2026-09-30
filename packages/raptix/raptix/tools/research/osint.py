@@ -13,12 +13,12 @@ Operating modes
 - **Mock**: when *no* source credentials are configured the tool falls
   back to a local mock catalog so the agent can develop and test offline.
   The catalog is deterministic (derived from the domain) and may be
-  overridden with a JSON file via ``DECEPTICON_OSINT_CATALOG``.
+  overridden with a JSON file via ``RAPTIX_OSINT_CATALOG``.
 
 Scope safety
 ------------
 Every call is logged and the target is checked against the engagement's
-target-scope rules (``DECEPTICON_OSINT_SCOPE`` — a comma-separated list of
+target-scope rules (``RAPTIX_OSINT_SCOPE`` — a comma-separated list of
 host / ``*.wildcard`` patterns). When a scope is configured and the target
 does not match it, the lookup is refused before any network egress. An
 empty scope means "no scoping configured" and is allowed (consistent with
@@ -72,10 +72,10 @@ def _normalize_domain(domain: str) -> str:
 def _load_scope_patterns() -> list[str]:
     """Return the configured target-scope patterns, lowercased.
 
-    Read from ``DECEPTICON_OSINT_SCOPE`` (comma-separated). An empty /
+    Read from ``RAPTIX_OSINT_SCOPE`` (comma-separated). An empty /
     unset value yields ``[]`` ("no scoping configured").
     """
-    raw = os.environ.get("DECEPTICON_OSINT_SCOPE", "")
+    raw = os.environ.get("RAPTIX_OSINT_SCOPE", "")
     return [p.strip().lower() for p in raw.split(",") if p.strip()]
 
 
@@ -287,11 +287,11 @@ async def _fetch_zoomeye(
 def _load_mock_catalog(domain: str) -> dict[str, list[Any]]:
     """Return mock findings for ``domain``.
 
-    If ``DECEPTICON_OSINT_CATALOG`` points at a JSON file, look the domain
+    If ``RAPTIX_OSINT_CATALOG`` points at a JSON file, look the domain
     up there (the file maps ``domain -> findings``); otherwise synthesize a
     deterministic catalog from the domain so output is stable across runs.
     """
-    catalog_path = os.environ.get("DECEPTICON_OSINT_CATALOG", "").strip()
+    catalog_path = os.environ.get("RAPTIX_OSINT_CATALOG", "").strip()
     if catalog_path:
         try:
             catalog = json.loads(Path(catalog_path).read_text(encoding="utf-8"))
@@ -352,7 +352,7 @@ async def osint_enrich(domain: str) -> str:
     deterministic local mock catalog so it stays usable offline.
 
     The target is checked against the engagement target-scope rules
-    (``DECEPTICON_OSINT_SCOPE``); an out-of-scope target is refused before
+    (``RAPTIX_OSINT_SCOPE``); an out-of-scope target is refused before
     any network egress. Every call is logged.
 
     Args:

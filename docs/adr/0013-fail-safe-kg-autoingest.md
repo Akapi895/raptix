@@ -24,7 +24,7 @@ the bounded bytes in a temporary local file for the adapter, then delete the fil
 Skip commands, paths, or scanner formats we cannot classify reliably. Other existing
 legacy ingesters remain manual until their output and scoped write path are verified.
 
-`DECEPTICON_KG_AUTOINGEST=1` enables the hook (default off until a live validation
+`RAPTIX_KG_AUTOINGEST=1` enables the hook (default off until a live validation
 on a test engagement). The slot degrades
 when KG credentials or the sandbox are unavailable. The tool runs before ingestion;
 errors are logged at debug level and the exact tool result is returned unchanged.

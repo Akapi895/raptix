@@ -60,7 +60,7 @@ func (s *Server) Listen(ctx context.Context, socketPath string) error {
 	if err != nil {
 		return fmt.Errorf("opscontrol: listen unix %s: %w", socketPath, err)
 	}
-	// Tighten permissions so only the user that owns $DECEPTICON_HOME
+	// Tighten permissions so only the user that owns $RAPTIX_HOME
 	// (and root, and processes that share the bind-mount) can connect.
 	if err := os.Chmod(socketPath, 0o600); err != nil {
 		_ = lis.Close()
@@ -104,7 +104,7 @@ func (s *Server) mux() http.Handler {
 
 // healthResponse is the envelope `/v1/health` returns. The allowlist
 // is included so a misconfigured allowlist (e.g., bad
-// DECEPTICON_OPS_ALLOWLIST_EXTRA) is caught by operators without
+// RAPTIX_OPS_ALLOWLIST_EXTRA) is caught by operators without
 // reading daemon logs.
 type healthResponse struct {
 	OK        bool     `json:"ok"`

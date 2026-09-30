@@ -52,10 +52,10 @@ def _default_cache_path() -> Path:
     The cache must live **outside** the LLM-writable ``/workspace`` tree
     so a poisoned engagement cannot persist fake CVE records across
     Ralph iterations (the agent reads these records verbatim).
-    Override via ``DECEPTICON_CVE_CACHE`` for tests or alternate
+    Override via ``RAPTIX_CVE_CACHE`` for tests or alternate
     deployments.
     """
-    override = os.environ.get("DECEPTICON_CVE_CACHE")
+    override = os.environ.get("RAPTIX_CVE_CACHE")
     if override:
         return Path(override)
     return Path.home() / ".decepticon" / "cache" / "cve.json"

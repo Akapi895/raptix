@@ -139,11 +139,11 @@ APT37 (MITRE ATT&CK **G0067**) is a North Korean state-sponsored cyber-espionage
 | ZUMKONG | (no ATT&CK software ID) | Browser credential stealer | Custom |
 | Cobalt Strike | S0154 | Post-exploitation framework (deployed via InkySquid browser exploits) | Public |
 
-## Emulation guidance (Decepticon)
+## Emulation guidance (Raptix)
 
 > **Authorized-use caveat:** Execute the following ONLY within the documented rules of engagement, target scope, and time window of an authorized engagement. Never run destructive (T1561/T1529 MBR wipe) actions outside an explicitly sanctioned, isolated lab.
 
-Map APT37's signature plays to Decepticon's own capabilities:
+Map APT37's signature plays to Raptix's own capabilities:
 
 - **Initial access — HWP/Office spearphishing (T1566.001, T1204.002, T1559.002).** Use the phishing/payload-builder skill to craft weaponized HWP or Office lures with embedded macros/VBA/DDE. APT37 heavily targets Korean-language users with HWP documents — reproduce this with `.hwp`-themed lures or macro-laden `.doc` files relevant to defector/journalist/government themes. Stage delivery with spearphishing pretexts tied to North Korea news, human-rights reports, or ROK government topics.
 - **Initial access — watering hole / strategic web compromise (T1189, T1203).** With the web-compromise skill, emulate RICECURRY-style browser profiling: stand up a compromised page with JavaScript fingerprinting that selectively delivers exploits only to browsers matching the target profile (IE/Edge/Flash). In a lab, reproduce CVE-2020-1380 (IE) or CVE-2021-26411 (Edge) exploitation chains to deliver BLUELIGHT/Cobalt Strike payloads, mirroring the InkySquid campaign pattern.
