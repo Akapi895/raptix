@@ -23,7 +23,7 @@ func TestLabeledComposeOverrideScopesEveryService(t *testing.T) {
 	}
 	for _, service := range []string{"bhce", "bhce-neo4j"} {
 		labels := document["services"][service]["labels"]
-		if labels["decepticon.engagement"] != "eng-1" || labels["decepticon.run"] != "run-1" || labels["decepticon.workload"] != "ad" {
+		if labels["raptix.engagement"] != "eng-1" || labels["raptix.run"] != "run-1" || labels["raptix.workload"] != "ad" {
 			t.Fatalf("%s labels = %#v", service, labels)
 		}
 	}

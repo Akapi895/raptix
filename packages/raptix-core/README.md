@@ -16,5 +16,5 @@ Stable surface for plugin authors and downstream commercial layers
 pip install raptix-core
 ```
 
-Most consumers should install `decepticon` (which depends on this) or
+Most consumers should install `raptix` (which depends on this) or
 `raptix-sdk` (the plugin-author entrypoint).

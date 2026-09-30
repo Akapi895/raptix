@@ -1,7 +1,7 @@
-name: "Decepticon Security Scan"
+name: "Raptix Security Scan"
 description: >
   Run an autonomous red-team scan against the current repository using
-  Decepticon, emit SARIF v2.1.0 results suitable for GitHub Code Scanning,
+  Raptix, emit SARIF v2.1.0 results suitable for GitHub Code Scanning,
   and fail the job when findings hit a configurable severity threshold.
 author: "PurpleAILAB"
 branding:
@@ -35,7 +35,7 @@ inputs:
   sarif-output:
     description: "Path to write the SARIF file."
     required: false
-    default: "decepticon.sarif"
+    default: "raptix.sarif"
   upload-sarif:
     description: >
       When 'true', uploads the SARIF to GitHub Code Scanning via
@@ -57,8 +57,8 @@ inputs:
       from docker-compose for the duration of the scan and tears it down on exit.
     required: false
     default: ""
-  decepticon-version:
-    description: "Decepticon container tag to pull when starting a local stack."
+  raptix-version:
+    description: "Raptix container tag to pull when starting a local stack."
     required: false
     default: "latest"
 
@@ -76,7 +76,7 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Decepticon CLI
+    - name: Install Raptix CLI
       shell: bash
       run: |
         set -euo pipefail
@@ -86,21 +86,21 @@ runs:
           python3 -m pip install -e ./packages/raptix
           python3 -m pip install langgraph-sdk
         else
-          python3 -m pip install "decepticon" "decepticon-core" "langgraph-sdk"
+          python3 -m pip install "raptix" "raptix-core" "langgraph-sdk"
         fi
 
-    - name: Start local Decepticon stack (when no remote URL supplied)
+    - name: Start local Raptix stack (when no remote URL supplied)
       if: ${{ inputs.langgraph-url == '' }}
       shell: bash
       env:
-        RAPTIX_VERSION: ${{ inputs.decepticon-version }}
+        RAPTIX_VERSION: ${{ inputs.raptix-version }}
       run: |
         set -euo pipefail
-        if [ -f docker-compose.yml ] && grep -q 'decepticon' docker-compose.yml; then
+        if [ -f docker-compose.yml ] && grep -q 'raptix' docker-compose.yml; then
           echo "Using repo docker-compose.yml"
         else
-          curl -fsSL https://decepticon.red/docker-compose.yml -o /tmp/decepticon-compose.yml
-          export COMPOSE_FILE=/tmp/decepticon-compose.yml
+          curl -fsSL https://decepticon.red/docker-compose.yml -o /tmp/raptix-compose.yml
+          export COMPOSE_FILE=/tmp/raptix-compose.yml
         fi
         docker compose up -d langgraph
         for i in {1..120}; do
@@ -157,7 +157,7 @@ runs:
       uses: github/codeql-action/upload-sarif@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3.36.2
       with:
         sarif_file: ${{ steps.run.outputs.sarif-path }}
-        category: decepticon
+        category: raptix
 
     - name: Tear down local stack
       if: ${{ always() && inputs.langgraph-url == '' }}

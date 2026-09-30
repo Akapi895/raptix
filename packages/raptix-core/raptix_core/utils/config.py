@@ -31,7 +31,7 @@ def _project_root() -> Path:
     return Path.cwd()
 
 
-_LOCAL_PROXY_KEY = "sk-decepticon-master"  # nosemgrep: raptix-no-hardcoded-default-key
+_LOCAL_PROXY_KEY = "sk-raptix-master"  # nosemgrep: raptix-no-hardcoded-default-key
 
 
 class LLMConfig(BaseModel):

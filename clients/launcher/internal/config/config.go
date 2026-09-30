@@ -14,7 +14,7 @@ import (
 var EnvTemplate string
 
 const (
-	DefaultHome       = ".decepticon"
+	DefaultHome       = ".raptix"
 	EnvFileName       = ".env"
 	EnvExampleName    = ".env.example"
 	PlaceholderSuffix = "-key-here"
@@ -192,7 +192,7 @@ func writePrivateFile(path string, data []byte) (retErr error) {
 // APIKeyNames lists the API key environment variable names to check.
 // Order matters: a valid key in this list satisfies the "at least one
 // credential" startup gate. Keep in sync with keyFormatRules below and
-// with decepticon/llm/factory.py::_API_METHOD_ENV.
+// with raptix/llm/factory.py::_API_METHOD_ENV.
 var APIKeyNames = []string{
 	"ANTHROPIC_API_KEY",
 	"OPENAI_API_KEY",
@@ -322,7 +322,7 @@ func ValidateAPIKeys(env map[string]string) error {
 			msg.WriteString(fmt.Sprintf("\n  %s: %s", name, reason))
 		}
 	}
-	msg.WriteString("\nRun 'decepticon onboard --reset' to reconfigure credentials.")
+	msg.WriteString("\nRun 'raptix onboard --reset' to reconfigure credentials.")
 	return fmt.Errorf("%s", msg.String())
 }
 
@@ -486,7 +486,7 @@ func validateOllamaCredentials(env map[string]string) error {
 		return fmt.Errorf(
 			"ollama_local selected but OLLAMA_API_BASE is empty.\n" +
 				"Set OLLAMA_API_BASE=http://host.docker.internal:11434 (or your Ollama URL) " +
-				"in ~/.decepticon/.env, or run 'decepticon onboard --reset' to reconfigure.",
+				"in ~/.raptix/.env, or run 'raptix onboard --reset' to reconfigure.",
 		)
 	}
 	return nil
@@ -572,7 +572,7 @@ func validateSubscriptionCredentials(env map[string]string, sub subscriptionMeth
 			"Provide one of:\n"+
 			"  - %s env var\n"+
 			"  - %s on disk\n"+
-			"Run 'decepticon onboard --reset' to (re)configure interactively.",
+			"Run 'raptix onboard --reset' to (re)configure interactively.",
 		sub.Label, hints, strings.Join(paths, " or "),
 	)
 }
@@ -723,7 +723,7 @@ func BackfillEnvFromEmbed(envPath string) ([]string, error) {
 	if len(data) > 0 && !strings.HasSuffix(string(data), "\n") {
 		b.WriteByte('\n')
 	}
-	b.WriteString("\n# --- Backfilled by `decepticon start` (new keys from this release) ---\n")
+	b.WriteString("\n# --- Backfilled by `raptix start` (new keys from this release) ---\n")
 	for _, line := range toAppend {
 		b.WriteString(line)
 		b.WriteByte('\n')
@@ -776,12 +776,12 @@ func Get(env map[string]string, key, fallback string) string {
 // line in the .env file.
 //
 // Before ADR-0006 (v1.1.7 and earlier) the OSS .env.example shipped with
-// an active "COMPOSE_PROFILES=c2-sliver" line so `decepticon start`
+// an active "COMPOSE_PROFILES=c2-sliver" line so `raptix start`
 // always brought the Sliver C2 container up. ADR-0006 routes every
 // specialist workload (c2-sliver, ad, reversing, …) through the
 // opscontrol daemon; the orchestrator decides when each plane comes up
 // via `ops_start(...)`. A stale active COMPOSE_PROFILES from a v1.1.7-era
-// .env forces those workloads to spawn on every `decepticon start`,
+// .env forces those workloads to spawn on every `raptix start`,
 // defeating the dynamic-spawn design and re-introducing the idle-cost +
 // attack-surface that ADR-0006 was meant to remove.
 //

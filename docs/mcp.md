@@ -14,7 +14,7 @@ point Raptix at one or more MCP servers via an env var.
 pip install langchain-mcp-adapters
 ```
 
-The dependency is intentionally **not** in `decepticon`'s base
+The dependency is intentionally **not** in `raptix`'s base
 install — operators who don't use MCP don't pay for it. If the
 package is missing when MCP is configured, Raptix logs a single
 warning and continues with built-in tools only.
@@ -47,7 +47,7 @@ Malformed JSON, unknown transports, or unreachable servers are
 ## 3. Programmatic use
 
 ```python
-from decepticon.tools.mcp import load_mcp_tools, mcp_servers_configured
+from raptix.tools.mcp import load_mcp_tools, mcp_servers_configured
 
 if mcp_servers_configured():
     tools = await load_mcp_tools()

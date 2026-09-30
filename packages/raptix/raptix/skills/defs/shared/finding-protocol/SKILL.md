@@ -1,6 +1,6 @@
 ---
 name: finding-protocol
-description: "Operational-tier finding template — minimal fields for sub-agent decision support. Heavyweight deliverable promotion lives in skills/decepticon/final-report."
+description: "Operational-tier finding template — minimal fields for sub-agent decision support. Heavyweight deliverable promotion lives in skills/raptix/final-report."
 allowed-tools: Read Write
 metadata:
   subdomain: reporting
@@ -15,7 +15,7 @@ The operational tier captures the minimum information another agent (or
 the orchestrator) needs to make a decision. It is not the report
 deliverable — the deliverable is generated at engagement end by the
 orchestrator from operational findings + attack-path narrative (see
-`skills/decepticon/final-report/SKILL.md`).
+`skills/raptix/final-report/SKILL.md`).
 
 ## File Naming Convention
 
@@ -141,7 +141,7 @@ operational findings are promoted to deliverable-tier finding documents under
 `report/` with the heavyweight schema (CVSS score + vector, CWE, VRT, MITRE,
 affected_target, affected_component, confidence, phase, detected,
 remediation_priority, plus full body sections). See
-`skills/decepticon/final-report/SKILL.md` for the deliverable template.
+`skills/raptix/final-report/SKILL.md` for the deliverable template.
 
 **Two-tier naming — the key vs. the deliverable:**
 

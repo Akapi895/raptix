@@ -105,7 +105,7 @@ RUN echo "set-option -g history-limit 20000" > /root/.tmux.conf
 # instead of `docker exec`.
 #
 # Only `fastapi` + `uvicorn` + `deepagents` are pulled in here; the
-# heavier decepticon agent / LLM / langgraph SDKs are deliberately
+# heavier raptix agent / LLM / langgraph SDKs are deliberately
 # left out so the sandbox image doesn't bloat for the >95% of users
 # who never enable the daemon.
 RUN pip3 install --break-system-packages --no-cache-dir \
@@ -123,7 +123,7 @@ RUN pip3 install --break-system-packages --no-cache-dir \
 #   * beautifulsoup4 — success-selector proof + DDG result parsing
 #   * pyyaml       — WAF profile loading
 #   * yt-dlp       — Phase 0 media route (YouTube/Vimeo/… --dump-json)
-#   * pydantic*    — decepticon-core dep so the per-hop RoE scope_check
+#   * pydantic*    — raptix-core dep so the per-hop RoE scope_check
 #                    (evaluate_target on <workspace>/plan/roe.json) is live.
 RUN pip3 install --break-system-packages --no-cache-dir \
     "curl_cffi>=0.15.0" \
@@ -224,7 +224,7 @@ COPY packages/raptix/raptix/__init__.py /opt/raptix/__init__.py
 COPY packages/raptix/raptix/sandbox_kernel /opt/raptix/sandbox_kernel
 COPY packages/raptix/raptix/sandbox_server /opt/raptix/sandbox_server
 # Open-web engine (ADR-0010) + the pure contract layer it uses for the
-# per-hop RoE scope_check. decepticon-core imports only pydantic + stdlib
+# per-hop RoE scope_check. raptix-core imports only pydantic + stdlib
 # (never langchain/langgraph), so it is safe to ship to the lean sandbox.
 COPY packages/raptix/raptix/sandbox_web /opt/raptix/sandbox_web
 COPY packages/raptix-core/raptix_core /opt/raptix_core
@@ -240,11 +240,11 @@ RUN cd /opt/raptix/sandbox_web/templates \
     && npm cache clean --force
 
 # Skip the framework boot path on this image — the sandbox container
-# ships only sandbox_kernel + sandbox_server, NOT decepticon-core or
+# ships only sandbox_kernel + sandbox_server, NOT raptix-core or
 # the rest of the framework. ``raptix/__init__.py`` checks this
 # env var and short-circuits the RoleRegistry + PluginRegistry setup
 # so the sandbox process can ``python -m raptix.sandbox_server``
-# without importing decepticon-core (which isn't installed here).
+# without importing raptix-core (which isn't installed here).
 ENV RAPTIX_SKIP_BOOT=1
 
 # Working directory for the agent's virtual filesystem.

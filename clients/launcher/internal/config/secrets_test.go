@@ -7,8 +7,8 @@ import (
 
 func TestNewInstallationSecrets_generates_nondefault_credentials(t *testing.T) {
 	// Given
-	const defaultMasterKey = "sk-decepticon-master"
-	const defaultDatabasePassword = "decepticon"
+	const defaultMasterKey = "sk-raptix-master"
+	const defaultDatabasePassword = "raptix"
 
 	// When
 	secrets, err := NewInstallationSecrets()

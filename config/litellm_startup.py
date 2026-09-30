@@ -37,7 +37,7 @@ def _egress_probe() -> None:
     even when outbound DNS or routing is broken, so the first user request
     sees ``[Errno 101] Network is unreachable`` mid-stream and the langgraph
     SSE drops with "Connection to server lost". A 5-second probe at startup
-    logs the issue to the LiteLLM container stderr where ``decepticon logs
+    logs the issue to the LiteLLM container stderr where ``raptix logs
     litellm`` can find it before the user retries.
 
     Non-fatal: a user with only Gemini / Groq / local Ollama configured does
@@ -76,7 +76,7 @@ def _replace_config_arg() -> None:
             config_path = sys.argv[idx + 1]
             generated = write_dynamic_config(
                 config_path,
-                "/tmp/decepticon-litellm/config.generated.yaml",
+                "/tmp/raptix-litellm/config.generated.yaml",
             )
             sys.argv[idx + 1] = str(generated)
             break
@@ -84,7 +84,7 @@ def _replace_config_arg() -> None:
             config_path = arg.split("=", 1)[1]
             generated = write_dynamic_config(
                 config_path,
-                "/tmp/decepticon-litellm/config.generated.yaml",
+                "/tmp/raptix-litellm/config.generated.yaml",
             )
             sys.argv[idx] = f"--config={generated}"
             break
@@ -94,7 +94,7 @@ def _replace_config_arg() -> None:
         if default_config.exists():
             generated = write_dynamic_config(
                 default_config,
-                "/tmp/decepticon-litellm/config.generated.yaml",
+                "/tmp/raptix-litellm/config.generated.yaml",
             )
             sys.argv.extend(["--config", str(generated)])
 
@@ -103,7 +103,7 @@ def _replace_config_arg() -> None:
         parts.append(f"{len(requested)} model override(s)")
     if needs_subscription:
         parts.append("subscription OAuth route(s)")
-    print(f"[decepticon] registered dynamic config: {', '.join(parts)}", flush=True)
+    print(f"[raptix] registered dynamic config: {', '.join(parts)}", flush=True)
 
 
 _replace_config_arg()
@@ -126,7 +126,7 @@ def _probe_ollama_if_configured() -> None:
         if local_models:
             base = os.environ.get("OLLAMA_API_BASE", "").strip()
             for line in probe(base, local_models):
-                print(f"[decepticon ollama] {line}", flush=True)
+                print(f"[raptix ollama] {line}", flush=True)
 
         cloud_models = extract_ollama_models(requested, prefixes=CLOUD_OLLAMA_PREFIXES)
         if cloud_models:
@@ -136,10 +136,10 @@ def _probe_ollama_if_configured() -> None:
                 or os.environ.get("OLLAMA_API_KEY", "").strip()
             )
             for line in probe_cloud(cloud_base, cloud_models, api_key=cloud_key):
-                print(f"[decepticon ollama-cloud] {line}", flush=True)
+                print(f"[raptix ollama-cloud] {line}", flush=True)
     except Exception as exc:  # noqa: BLE001
         # Observability-only — never let a probe bug crash proxy boot.
-        print(f"[decepticon ollama] probe failed unexpectedly: {exc}", flush=True)
+        print(f"[raptix ollama] probe failed unexpectedly: {exc}", flush=True)
 
 
 _probe_ollama_if_configured()
@@ -187,8 +187,7 @@ custom_llm_setup()
 
 
 print(
-    "[decepticon] auth dispatcher (claude_code, codex_chatgpt) + "
-    "4 subscription handlers registered",
+    "[raptix] auth dispatcher (claude_code, codex_chatgpt) + 4 subscription handlers registered",
     flush=True,
 )
 

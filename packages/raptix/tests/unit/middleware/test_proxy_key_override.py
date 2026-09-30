@@ -25,7 +25,7 @@ from raptix.middleware.proxy_key_override import (
 def proxy_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     env = {
         "RAPTIX_LLM__PROXY_URL": "http://litellm:4000",
-        "RAPTIX_LLM__PROXY_API_KEY": "sk-decepticon-master",
+        "RAPTIX_LLM__PROXY_API_KEY": "sk-raptix-master",
         "RAPTIX_LLM__TIMEOUT": "120",
         "RAPTIX_LLM__MAX_RETRIES": "2",
     }
@@ -40,7 +40,7 @@ def _original_chat_model(
     return ChatOpenAI(
         model=model,
         temperature=temperature,
-        api_key="sk-decepticon-master",
+        api_key="sk-raptix-master",
         base_url="http://litellm:4000",
     )
 

@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 # Sandbox container name — overridable for tests / non-docker setups.
 # Defaults to the OSS Raptix compose name; override via
 # ``RAPTIX_SANDBOX_CONTAINER`` when running outside the standard stack.
-_SANDBOX_CONTAINER = os.environ.get("RAPTIX_SANDBOX_CONTAINER", "decepticon-sandbox")
+_SANDBOX_CONTAINER = os.environ.get("RAPTIX_SANDBOX_CONTAINER", "raptix-sandbox")
 _SANDBOX_READ_TIMEOUT_S = 10
 
 # LiteLLM proxy admin endpoints for offline cost attribution. The harness

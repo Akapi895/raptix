@@ -19,7 +19,7 @@ var dockerProbe = func(args ...string) bool {
 	return exec.Command("docker", args...).Run() == nil
 }
 
-// SystemInfo is a one-shot snapshot of the host environment. `decepticon
+// SystemInfo is a one-shot snapshot of the host environment. `raptix
 // onboard` renders it so the user can confirm — before configuring any
 // credentials — that the machine they are on is actually able to run the
 // Docker stack, on whichever OS/architecture they happen to be using.

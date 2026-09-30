@@ -49,7 +49,7 @@ func New() *Compose {
 
 // Profiles defines the Docker Compose profile names this launcher
 // recognizes. The shipped catalog (cli + every specialist workload)
-// is the union — `cli` is always activated by `decepticon start`;
+// is the union — `cli` is always activated by `raptix start`;
 // the specialist workloads come up on demand through ADR-0006's
 // opscontrol daemon. The launcher keeps the names here as constants
 // only so `down` / `stop` can sweep every container regardless of
@@ -128,16 +128,16 @@ func fileExists(path string) bool {
 // ContainerName builds the docker container name for a Raptix
 // service, mirroring the “${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}“
 // template used by docker-compose.yml (#216). Unset/empty → today's
-// “decepticon-<svc>“ name verbatim; “stack2“ → “decepticon-stack2-<svc>“.
+// “raptix-<svc>“ name verbatim; “stack2“ → “raptix-stack2-<svc>“.
 // Keeps the Go launcher and YAML naming convention in lockstep so
 // “docker exec“/“logs“/“stop“ resolve the right container in
 // dual-stack runs.
 func ContainerName(svc string) string {
 	stack := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
 	if stack == "" {
-		return "decepticon-" + svc
+		return "raptix-" + svc
 	}
-	return "decepticon-" + stack + "-" + svc
+	return "raptix-" + stack + "-" + svc
 }
 
 // readVersion returns the installed version from $RAPTIX_HOME/.version,
@@ -231,7 +231,7 @@ func (c *Compose) Down() error {
 }
 
 // DownAndPurge tears down containers, networks, and named volumes. Used by
-// `decepticon remove` so a full uninstall doesn't leave gigabytes of
+// `raptix remove` so a full uninstall doesn't leave gigabytes of
 // postgres/neo4j data behind.
 func (c *Compose) DownAndPurge() error {
 	args := AllProfiles()
@@ -341,9 +341,9 @@ func (c *Compose) RemoveOrphanedCLI() {
 	// so we don't accidentally match unrelated containers. Use the detected
 	// runtime binary (docker / podman / nerdctl) and its env.
 	stack := strings.TrimSpace(os.Getenv("RAPTIX_STACK_NAME"))
-	prefix := "decepticon"
+	prefix := "raptix"
 	if stack != "" {
-		prefix = "decepticon-" + stack
+		prefix = "raptix-" + stack
 	}
 	ps := exec.Command(c.Runtime.Bin, "ps", "-aq", "--filter", fmt.Sprintf("name=^%s-cli", prefix))
 	ps.Env = c.composeEnv()

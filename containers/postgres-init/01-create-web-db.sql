@@ -1,11 +1,11 @@
--- Create the decepticon_web database used by the Web dashboard.
+-- Create the raptix_web database used by the Web dashboard.
 --
 -- Postgres auto-runs files in /docker-entrypoint-initdb.d/ on first startup
--- (only when data volume is empty). This ensures decepticon_web exists
+-- (only when data volume is empty). This ensures raptix_web exists
 -- alongside the litellm database created by POSTGRES_DB.
 --
 -- To apply to an existing deployment without data loss, create the DB
--- manually: `docker exec decepticon-postgres psql -U decepticon -c "CREATE DATABASE decepticon_web;"`
+-- manually: `docker exec raptix-postgres psql -U raptix -c "CREATE DATABASE raptix_web;"`
 
-CREATE DATABASE decepticon_web;
-GRANT ALL PRIVILEGES ON DATABASE decepticon_web TO decepticon;
+CREATE DATABASE raptix_web;
+GRANT ALL PRIVILEGES ON DATABASE raptix_web TO raptix;

@@ -48,7 +48,7 @@ OSS install targets and what we test against:
 | **Windows amd64** (Windows 10/11, native) | `windows/amd64` | Native. Install via `irm https://decepticon.red/install.ps1 \| iex` in PowerShell. Requires Docker Desktop. |
 | **Windows arm64** (Surface Pro X, ARM laptops) | `windows/arm64` | Native. Same PowerShell installer. |
 
-Native Windows is supported alongside WSL2 — choose whichever fits your toolchain. The Go launcher detects the OS during `decepticon onboard` and adapts its remediation hints (Docker Desktop install URL, daemon-not-running fix, missing Compose v2).
+Native Windows is supported alongside WSL2 — choose whichever fits your toolchain. The Go launcher detects the OS during `raptix onboard` and adapts its remediation hints (Docker Desktop install URL, daemon-not-running fix, missing Compose v2).
 
 ### WSL2 notes
 
@@ -66,14 +66,14 @@ OLLAMA_HOST=0.0.0.0:11434 ollama serve
 ```
 
 Other WSL caveats:
-- Install Raptix under your WSL home (`~/.decepticon`), not on a Windows-mounted drive (`/mnt/c/...`) — bind-mounted I/O across the boundary is much slower.
+- Install Raptix under your WSL home (`~/.raptix`), not on a Windows-mounted drive (`/mnt/c/...`) — bind-mounted I/O across the boundary is much slower.
 - WSL2 mirrored networking (Windows 11 22H2+) collapses the *Windows host ↔ WSL distro* split, but Docker bridge networks remain isolated. The `host.docker.internal` requirement still applies.
 
 #### WSL2 + Ollama troubleshooting flowchart
 
 If `OLLAMA_API_BASE=http://host.docker.internal:11434` is failing
 from the litellm container on WSL2, work through these checks in
-order. The `[decepticon ollama]` log lines in `decepticon logs
+order. The `[raptix ollama]` log lines in `raptix logs
 litellm` will identify which class of failure you're hitting; this
 section names each class and its fix.
 
@@ -109,7 +109,7 @@ override).
 
 Verify from inside the container:
 ```bash
-decepticon exec litellm getent hosts host.docker.internal
+raptix exec litellm getent hosts host.docker.internal
 # Expected: 172.x.x.1  host.docker.internal
 # Wrong:    (no output)
 ```
@@ -122,7 +122,7 @@ Fix: confirm `docker-compose.yml` litellm service has:
 Workaround (if your override removed it): pin WSL distro IP in `.env`:
 ```bash
 WSL_IP=$(ip -4 addr show eth0 | awk '/inet / {print $2}' | cut -d/ -f1)
-echo "OLLAMA_API_BASE=http://$WSL_IP:11434" >> ~/.decepticon/.env
+echo "OLLAMA_API_BASE=http://$WSL_IP:11434" >> ~/.raptix/.env
 ```
 Note: the WSL IP changes across reboots. Prefer fixing the bridge
 resolution.
@@ -188,7 +188,7 @@ emits WSL2-specific guidance for every error class.
 curl -fsSL https://decepticon.red/install | bash
 ```
 
-This downloads the `decepticon` CLI binary for your platform and places it in your PATH.
+This downloads the `raptix` CLI binary for your platform and places it in your PATH.
 
 ### Using Podman instead of Docker
 
@@ -198,7 +198,7 @@ Raptix detects Podman 4.4+ automatically. The launcher prefers Docker when both 
 # Linux (rootless Podman, recommended)
 systemctl --user enable --now podman.socket          # enable the API socket
 export RAPTIX_CONTAINER_RUNTIME=podman           # force Podman selection
-decepticon start                                      # launcher detects + uses podman compose
+raptix start                                      # launcher detects + uses podman compose
 ```
 
 What the launcher handles for you:
@@ -214,7 +214,7 @@ Rootless Podman caveats:
 
 ```bash
 export RAPTIX_CONTAINER_RUNTIME=nerdctl
-decepticon start
+raptix start
 ```
 
 Requires nerdctl ≥ 0.16 (built-in compose) and a running containerd (`containerd` or `Rancher Desktop` with the containerd engine).
@@ -226,7 +226,7 @@ Requires nerdctl ≥ 0.16 (built-in compose) and a running containerd (`containe
 and the CLI all execute exactly as the `curl | bash` install path. The
 launcher and every service image come from the current checkout (tag
 `:dev`), with an isolated `$RAPTIX_HOME` under `.dogfood/` so your
-real `~/.decepticon` is untouched.
+real `~/.raptix` is untouched.
 
 ```bash
 git clone https://github.com/Akapi895/raptix.git
@@ -237,27 +237,27 @@ make dogfood
 ### Verify Installation
 
 ```bash
-decepticon version
+raptix version
 ```
 
 ---
 
 ## Authentication Methods
 
-Raptix supports three authentication modes. Choose one during `decepticon onboard`.
+Raptix supports three authentication modes. Choose one during `raptix onboard`.
 
 ### API Keys
 
 Standard pay-per-token access through provider APIs. Set the appropriate environment variable for your provider.
 
 ```bash
-decepticon onboard
+raptix onboard
 # Select: API Key
 # Select: Your provider
 # Enter: Your API key
 ```
 
-Or edit `~/.decepticon/.env` directly:
+Or edit `~/.raptix/.env` directly:
 
 ```bash
 RAPTIX_AUTH_PRIORITY=anthropic_api,openai_api
@@ -356,7 +356,7 @@ billing, no key.
    ```
    On systems where Ollama runs as a service (e.g. systemd), set
    `Environment=OLLAMA_HOST=0.0.0.0:11434` in the unit and restart it.
-4. Run `decepticon onboard` and pick **"Local LLM (Ollama)"**. The
+4. Run `raptix onboard` and pick **"Local LLM (Ollama)"**. The
    wizard prompts for:
    - `OLLAMA_API_BASE` — leave the default `http://host.docker.internal:11434`.
      This works on macOS, Linux, and WSL2 (with or without Docker
@@ -372,12 +372,12 @@ billing, no key.
      break on the first request. If the wizard finds nothing
      tool-capable (or cannot reach Ollama), it refuses to write `.env`
      and prints the exact remediation steps.
-5. Run `decepticon`. A second probe inside the litellm container
+5. Run `raptix`. A second probe inside the litellm container
    re-verifies reachability and tool-capability after the stack starts
    — the in-wizard host probe can't tell whether Ollama is bound to
    `0.0.0.0` (visible to the container) versus `127.0.0.1` only
    (invisible). Either probe failing prints a clear diagnostic in
-   `decepticon logs litellm`.
+   `raptix logs litellm`.
 
 **How it works:**
 
@@ -441,13 +441,13 @@ cat ~/.claude/.credentials.json
 3. Configure Raptix to use OAuth:
 
 ```bash
-decepticon onboard
+raptix onboard
 # Select: Claude Sub
 # Select: Claude Code
 # Select: Profile (eco/max/test)
 ```
 
-Or edit `~/.decepticon/.env`:
+Or edit `~/.raptix/.env`:
 
 ```bash
 RAPTIX_AUTH_PRIORITY=anthropic_oauth,anthropic_api
@@ -458,7 +458,7 @@ RAPTIX_MODEL_PROFILE=eco
 4. Launch:
 
 ```bash
-decepticon
+raptix
 ```
 
 **How it works:**
@@ -501,12 +501,12 @@ Use your ChatGPT Pro, Plus, or Team subscription instead of OpenAI API billing.
 1. Configure Raptix:
 
 ```bash
-decepticon onboard
+raptix onboard
 # Select: ChatGPT
 # Select: Profile (eco/max/test)
 ```
 
-Or edit `~/.decepticon/.env`:
+Or edit `~/.raptix/.env`:
 
 ```bash
 RAPTIX_AUTH_CHATGPT=true
@@ -515,7 +515,7 @@ RAPTIX_AUTH_CHATGPT=true
 2. Launch:
 
 ```bash
-decepticon
+raptix
 ```
 
 **How it works:**
@@ -683,7 +683,7 @@ RAPTIX_LITELLM_MODELS=groq/llama-3.3-70b-versatile,together/deepseek-ai/DeepSeek
 | `test` | Development and CI — Haiku only | $ |
 | `custom` | Bring your own model via `RAPTIX_MODEL` | Varies |
 
-Set in `~/.decepticon/.env`:
+Set in `~/.raptix/.env`:
 
 ```bash
 RAPTIX_MODEL_PROFILE=eco
@@ -720,7 +720,7 @@ http://localhost:3000
 **Custom port:**
 
 ```bash
-# In ~/.decepticon/.env
+# In ~/.raptix/.env
 WEB_PORT=8080
 ```
 
@@ -733,24 +733,24 @@ See [Web Dashboard](web-dashboard.md) for the full feature reference.
 ### Core Commands
 
 ```bash
-decepticon                  # Launch the core stack + interactive CLI
-decepticon onboard          # Setup wizard (auth, provider, profile)
-decepticon onboard --reset  # Re-run setup from scratch
-decepticon stop             # Stop all services, keep data
-decepticon status           # Show running services
-decepticon logs [service]   # Follow service logs
-decepticon update           # Explicitly refresh config/images and upgrade when available
-decepticon remove           # Uninstall Raptix completely
-decepticon --version        # Show installed version
+raptix                  # Launch the core stack + interactive CLI
+raptix onboard          # Setup wizard (auth, provider, profile)
+raptix onboard --reset  # Re-run setup from scratch
+raptix stop             # Stop all services, keep data
+raptix status           # Show running services
+raptix logs [service]   # Follow service logs
+raptix update           # Explicitly refresh config/images and upgrade when available
+raptix remove           # Uninstall Raptix completely
+raptix --version        # Show installed version
 ```
 
 ### Service Management
 
 ```bash
-decepticon logs litellm     # LiteLLM proxy logs
-decepticon logs langgraph   # LangGraph agent logs
-decepticon logs neo4j       # Knowledge graph logs
-decepticon kg-health        # Neo4j connection diagnostics
+raptix logs litellm     # LiteLLM proxy logs
+raptix logs langgraph   # LangGraph agent logs
+raptix logs neo4j       # Knowledge graph logs
+raptix kg-health        # Neo4j connection diagnostics
 ```
 
 See [CLI Reference](cli-reference.md) for the complete command list.
@@ -776,13 +776,13 @@ make install
 Verify:
 
 ```bash
-decepticon version
+raptix version
 ```
 
 ### Step 2: Run the Setup Wizard
 
 ```bash
-decepticon onboard
+raptix onboard
 ```
 
 The wizard walks through 6 screens:
@@ -796,12 +796,12 @@ The wizard walks through 6 screens:
 | 5 | Profile | `eco` (balanced), `max` (performance), `test` (dev), `custom` (any model) |
 | 6 | Observability | Optional LangSmith tracing |
 
-Configuration saves to `~/.decepticon/.env`. Re-run anytime with `decepticon onboard --reset`.
+Configuration saves to `~/.raptix/.env`. Re-run anytime with `raptix onboard --reset`.
 
 ### Step 3: Launch the Platform
 
 ```bash
-decepticon
+raptix
 ```
 
 This single command:
@@ -914,19 +914,19 @@ All commands execute inside the **sandboxed Kali container** — zero host expos
 
 ```bash
 # View findings
-ls ~/.decepticon/workspace/<engagement>/findings/
+ls ~/.raptix/workspace/<engagement>/findings/
 
 # View generated documents
-ls ~/.decepticon/workspace/<engagement>/plan/
+ls ~/.raptix/workspace/<engagement>/plan/
 
 # Export knowledge graph
-decepticon logs neo4j
+raptix logs neo4j
 
 # Stop services (preserves data)
-decepticon stop
+raptix stop
 
 # Full reset (removes all data)
-cd ~/.decepticon && docker compose down -v
+cd ~/.raptix && docker compose down -v
 ```
 
 ### Quick Reference — Common Workflows
@@ -934,32 +934,32 @@ cd ~/.decepticon && docker compose down -v
 **Resume a previous engagement:**
 
 ```bash
-decepticon           # Shows engagement picker → select existing
+raptix           # Shows engagement picker → select existing
 # Or from CLI: /resume → select from session list
 ```
 
 **Switch model provider mid-session:**
 
 ```bash
-decepticon stop
-# Edit ~/.decepticon/.env → change RAPTIX_AUTH_PRIORITY, RAPTIX_AUTH_* toggles, or API keys
-decepticon
+raptix stop
+# Edit ~/.raptix/.env → change RAPTIX_AUTH_PRIORITY, RAPTIX_AUTH_* toggles, or API keys
+raptix
 ```
 
 **Check service health:**
 
 ```bash
-decepticon status       # Container status (docker compose ps)
-decepticon kg-health    # Knowledge graph diagnostics (LangGraph + Neo4j connection)
+raptix status       # Container status (docker compose ps)
+raptix kg-health    # Knowledge graph diagnostics (LangGraph + Neo4j connection)
 ```
 
 **View logs for specific service:**
 
 ```bash
-decepticon logs              # LangGraph (default)
-decepticon logs litellm      # LLM proxy
-decepticon logs neo4j        # Knowledge graph
-decepticon logs web          # Web dashboard
+raptix logs              # LangGraph (default)
+raptix logs litellm      # LLM proxy
+raptix logs neo4j        # Knowledge graph
+raptix logs web          # Web dashboard
 ```
 
 ---
@@ -994,7 +994,7 @@ GEMINI_API_KEY=AIza...                # Fallback: Gemini via API key
 ```bash
 LANGSMITH_TRACING=true
 LANGSMITH_API_KEY=lsv2_...
-LANGSMITH_PROJECT=decepticon
+LANGSMITH_PROJECT=raptix
 ```
 
 ### Custom Ports
@@ -1039,7 +1039,7 @@ picks up the refreshed file automatically (no container restart needed).
 
 ```bash
 # Verify key format
-grep _API_KEY ~/.decepticon/.env | head -5
+grep _API_KEY ~/.raptix/.env | head -5
 
 # Test directly
 curl -s https://api.anthropic.com/v1/messages \
@@ -1057,16 +1057,16 @@ Every container image is published multi-arch (linux/amd64 + linux/arm64), so th
 **Solution:** pull the latest config files:
 
 ```bash
-decepticon update
+raptix update
 ```
 
-If your host arch is *not* amd64 or arm64 (rare — armv7, ppc64le, ...), the manifest list won't match. Force the amd64 fallback by adding `platform: linux/amd64` under the `sandbox:` and `c2-sliver:` services in `~/.decepticon/docker-compose.yml` and enable "Use Rosetta for x86_64/amd64 emulation" in Docker Desktop settings (or QEMU on Linux).
+If your host arch is *not* amd64 or arm64 (rare — armv7, ppc64le, ...), the manifest list won't match. Force the amd64 fallback by adding `platform: linux/amd64` under the `sandbox:` and `c2-sliver:` services in `~/.raptix/docker-compose.yml` and enable "Use Rosetta for x86_64/amd64 emulation" in Docker Desktop settings (or QEMU on Linux).
 
 **Services won't start:**
 
 ```bash
-decepticon status          # Which services are down?
-decepticon logs litellm    # Check LiteLLM for config errors
+raptix status          # Which services are down?
+raptix logs litellm    # Check LiteLLM for config errors
 docker compose ps          # Raw container status
 ```
 
@@ -1080,14 +1080,14 @@ docker compose exec litellm curl -s https://api.anthropic.com/v1/messages -I
 **Neo4j connection refused:**
 
 ```bash
-decepticon kg-health
+raptix kg-health
 ```
 
 ### Reset Everything
 
 ```bash
-decepticon stop
-cd ~/.decepticon && docker compose down -v   # Remove all volumes
-decepticon onboard --reset                    # Re-run setup
-decepticon                                    # Fresh start
+raptix stop
+cd ~/.raptix && docker compose down -v   # Remove all volumes
+raptix onboard --reset                    # Re-run setup
+raptix                                    # Fresh start
 ```

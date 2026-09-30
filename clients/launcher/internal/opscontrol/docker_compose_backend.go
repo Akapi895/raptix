@@ -87,9 +87,9 @@ func labeledComposeOverride(services []string, workload, engagement, runID strin
 	for _, service := range services {
 		override["services"][service] = map[string]map[string]string{
 			"labels": {
-				"decepticon.engagement": engagement,
-				"decepticon.run":        runID,
-				"decepticon.workload":   workload,
+				"raptix.engagement": engagement,
+				"raptix.run":        runID,
+				"raptix.workload":   workload,
 			},
 		}
 	}
@@ -97,7 +97,7 @@ func labeledComposeOverride(services []string, workload, engagement, runID strin
 	if err != nil {
 		return "", fmt.Errorf("encode workload labels: %w", err)
 	}
-	file, err := os.CreateTemp("", "decepticon-ops-labels-*.json")
+	file, err := os.CreateTemp("", "raptix-ops-labels-*.json")
 	if err != nil {
 		return "", fmt.Errorf("create workload label override: %w", err)
 	}
@@ -192,9 +192,9 @@ func (b *DockerComposeBackend) Stop(ctx context.Context, workload string) error 
 	run := value.(workloadRun)
 	filterArgs := []string{
 		"ps", "-aq",
-		"--filter", "label=decepticon.engagement=" + run.engagement,
-		"--filter", "label=decepticon.run=" + run.runID,
-		"--filter", "label=decepticon.workload=" + workload,
+		"--filter", "label=raptix.engagement=" + run.engagement,
+		"--filter", "label=raptix.run=" + run.runID,
+		"--filter", "label=raptix.workload=" + workload,
 	}
 	psCmd := exec.CommandContext(ctx, "docker", filterArgs...)
 	out, err := psCmd.Output()

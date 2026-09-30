@@ -16,14 +16,14 @@ import (
 
 // composeOverlayBody is the docker-compose overlay that bind-mounts
 // the opscontrol UDS into the langgraph container. It is
-// LAUNCHER-OWNED: written by EnsureRunning on every `decepticon start`,
+// LAUNCHER-OWNED: written by EnsureRunning on every `raptix start`,
 // never shipped via the release manifest, never hand-edited. Keeping
 // it embedded in the launcher binary collapses the previous
 // "release.yml manifest must list every config file" failure mode
 // (which caused the v1.1.10 upgrade warning) into a single binary —
 // the overlay is now versioned in lockstep with the launcher.
 const composeOverlayBody = `# docker-compose.opscontrol.yml — LAUNCHER-MANAGED runtime overlay (ADR-0006).
-# Do NOT hand-edit. The launcher rewrites this file on every ` + "`decepticon start`" + `
+# Do NOT hand-edit. The launcher rewrites this file on every ` + "`raptix start`" + `
 # (cmd/opscontrol/supervisor.go:writeComposeOverlay) so any manual edits are
 # erased on the next boot.
 #
@@ -36,7 +36,7 @@ const composeOverlayBody = `# docker-compose.opscontrol.yml — LAUNCHER-MANAGED
 services:
   langgraph:
     volumes:
-      - "${RAPTIX_OPSCONTROL_SOCK_HOST}:/var/run/decepticon-ops.sock:rw"
+      - "${RAPTIX_OPSCONTROL_SOCK_HOST}:/var/run/raptix-ops.sock:rw"
 `
 
 // writeComposeOverlay materializes the launcher-managed compose overlay
@@ -49,7 +49,7 @@ func writeComposeOverlay() error {
 	return os.WriteFile(target, []byte(composeOverlayBody), 0o644)
 }
 
-// EnsureRunning is the launcher-side entry point: `decepticon start`
+// EnsureRunning is the launcher-side entry point: `raptix start`
 // calls it before `compose up`. It returns the host socket path so
 // the caller can export it to docker compose (used by
 // docker-compose.opscontrol.yml).
@@ -65,7 +65,7 @@ func writeComposeOverlay() error {
 //     warming up).
 //
 //  2. **Managed-service-but-inactive**: the unit is installed but
-//     stopped (e.g., operator ran `decepticon opscontrol stop` by
+//     stopped (e.g., operator ran `raptix opscontrol stop` by
 //     hand). EnsureRunning asks the manager to start it.
 //
 //  3. **Launcher-spawn fallback**: no service manager is available
@@ -80,7 +80,7 @@ func EnsureRunning() (socketPath string, err error) {
 		return "", err
 	}
 	// Write the docker-compose overlay BEFORE the daemon starts; the
-	// compose layer in `decepticon start` calls baseArgs immediately
+	// compose layer in `raptix start` calls baseArgs immediately
 	// after, and baseArgs only attaches `-f docker-compose.opscontrol.yml`
 	// when the file exists on disk. Embedded body + idempotent write
 	// = the overlay is always current with the launcher binary.
@@ -107,13 +107,13 @@ func EnsureRunning() (socketPath string, err error) {
 			}
 			if err := waitForSocket(socketPath, 5*time.Second); err != nil {
 				return "", fmt.Errorf("opscontrol: managed service did not bind socket: %w "+
-					"(check `decepticon opscontrol status`)", err)
+					"(check `raptix opscontrol status`)", err)
 			}
 			return socketPath, nil
 		}
 		// Service manager is available but no unit installed yet —
 		// fall through to launcher-spawn. The user can opt into
-		// managed-service mode later with `decepticon opscontrol
+		// managed-service mode later with `raptix opscontrol
 		// install`.
 	}
 
@@ -122,12 +122,12 @@ func EnsureRunning() (socketPath string, err error) {
 	return ensureRunningLauncherSpawn(socketPath)
 }
 
-// Stop is called by `decepticon stop` AFTER `compose down`. In
+// Stop is called by `raptix stop` AFTER `compose down`. In
 // managed-service mode the daemon is intentionally NOT killed — it
-// lives across launcher sessions so `decepticon start` does not pay
+// lives across launcher sessions so `raptix start` does not pay
 // the daemon-warmup cost every time. Operators who want the daemon
-// down call `decepticon opscontrol stop` explicitly or run
-// `decepticon opscontrol uninstall`.
+// down call `raptix opscontrol stop` explicitly or run
+// `raptix opscontrol uninstall`.
 //
 // In launcher-spawn fallback mode Stop sends SIGTERM and waits up to
 // 5s for the daemon to exit, then unlinks the socket.

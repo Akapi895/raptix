@@ -67,21 +67,21 @@ func TestDetectServiceManager_ReturnsCorrectShape(t *testing.T) {
 
 func TestComposeProjectName_EnvOverrideWins(t *testing.T) {
 	t.Setenv("RAPTIX_STACK_NAME", "stack2")
-	t.Setenv(ComposeProjectEnv, "decepticon-vendor-dev")
-	if got := ComposeProjectName(); got != "decepticon-vendor-dev" {
-		t.Errorf("ComposeProjectName = %q; want explicit override %q", got, "decepticon-vendor-dev")
+	t.Setenv(ComposeProjectEnv, "raptix-vendor-dev")
+	if got := ComposeProjectName(); got != "raptix-vendor-dev" {
+		t.Errorf("ComposeProjectName = %q; want explicit override %q", got, "raptix-vendor-dev")
 	}
 }
 
 func TestComposeProjectName_FallsBackToStackName(t *testing.T) {
 	t.Setenv(ComposeProjectEnv, "")
 	t.Setenv("RAPTIX_STACK_NAME", "stack2")
-	if got := ComposeProjectName(); got != "decepticon-stack2" {
-		t.Errorf("ComposeProjectName = %q; want fallback %q", got, "decepticon-stack2")
+	if got := ComposeProjectName(); got != "raptix-stack2" {
+		t.Errorf("ComposeProjectName = %q; want fallback %q", got, "raptix-stack2")
 	}
 	t.Setenv("RAPTIX_STACK_NAME", "")
-	if got := ComposeProjectName(); got != "decepticon" {
-		t.Errorf("ComposeProjectName = %q; want fallback %q", got, "decepticon")
+	if got := ComposeProjectName(); got != "raptix" {
+		t.Errorf("ComposeProjectName = %q; want fallback %q", got, "raptix")
 	}
 }
 

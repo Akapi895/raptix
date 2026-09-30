@@ -911,7 +911,7 @@ Relationship types: `USES_TECHNIQUE`, `RELATED_TO`, `EXPLOITS_WEAKNESS`,
 BRON is a **static import** — it does not handle concurrent writes or live
 updates. Its value to Raptix is the **schema pattern**: ATT&CK Techniques
 mapping to CVEs via Weaknesses is exactly the `Technique → CVE → Vulnerability`
-chain Raptix's `decepticon_core/types/kg.py` models. BRON validates that
+chain Raptix's `raptix_core/types/kg.py` models. BRON validates that
 this is the correct graph topology for offensive intelligence.
 
 **Sources**:

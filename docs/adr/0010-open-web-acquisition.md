@@ -42,7 +42,7 @@ Adopt an **insane-search-derived fetch engine, shipped inside the sandbox**, and
 expose it through two RoE-gated agent tools. We keep insane-search's engine
 intelligence and invert its governance.
 
-1. **Engine (`decepticon/sandbox_web/`), runs in the sandbox.** Ported,
+1. **Engine (`raptix/sandbox_web/`), runs in the sandbox.** Ported,
    site-agnostic: `validators` (4-layer Verdict), `waf_detector` +
    `waf_profiles.yaml` (ranked WAF-product detection with graceful in-code
    fallback), `url_transforms`, `fetch_chain` (probe → detect → grid →
@@ -52,7 +52,7 @@ intelligence and invert its governance.
    `user_hint`.
 
 2. **Egress is sandbox-only, reached over the existing bash surface.** The tool
-   wrappers run the engine as `python3 -m decepticon.sandbox_web …` through
+   wrappers run the engine as `python3 -m raptix.sandbox_web …` through
    `DockerSandbox.execute_tmux()`. No new HTTP route, no side channel. Physical
    egress happens in `sandbox-net` behind the Layer-2 nftables/DNS allowlist.
 
@@ -82,8 +82,8 @@ intelligence and invert its governance.
 - **Given up:** insane-search's zero-friction posture — no auto-install, no
   unconditional "try everything," no in-process browser. Convenience is traded
   for scope/isolation discipline.
-- **Migration:** new package `decepticon/sandbox_web/`; `beautifulsoup4` added to
-  the framework install set (sandbox mounts decepticon, per the FastAPI/uvicorn
+- **Migration:** new package `raptix/sandbox_web/`; `beautifulsoup4` added to
+  the framework install set (sandbox mounts raptix, per the FastAPI/uvicorn
   precedent); `containers/sandbox` gains the engine deps; `web_search`/`web_fetch`
   added to `GATED_TOOL_NAMES`, `NETWORK_TARGET_EXTRACTORS`, and
   `UNTRUSTED_TOOL_NAMES`; `bias_check` wired as a CI gate. No change to existing

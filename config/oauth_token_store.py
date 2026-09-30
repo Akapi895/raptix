@@ -19,7 +19,7 @@ Design:
     that takes a ``force_refresh`` flag; the wrapper calls once normally,
     once with force_refresh on 401.
 
-This module is self-contained — it does NOT import the ``decepticon``
+This module is self-contained — it does NOT import the ``raptix``
 package because LiteLLM mounts only the handler files into ``/app``.
 """
 

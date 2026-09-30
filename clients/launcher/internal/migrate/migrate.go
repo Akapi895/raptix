@@ -1,5 +1,5 @@
 // Package migrate runs idempotent, ordered upgrade steps at
-// `decepticon start` so that already-onboarded users — who never re-run
+// `raptix start` so that already-onboarded users — who never re-run
 // the onboard wizard (cmd/start.go only invokes it when .env is absent) —
 // still pick up config keys and policy changes introduced by later
 // releases.

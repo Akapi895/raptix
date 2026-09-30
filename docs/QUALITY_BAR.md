@@ -254,7 +254,7 @@ justification.
 print(f"got result {result}")
 
 # REQUIRED
-from decepticon.core.logging import get_logger
+from raptix.core.logging import get_logger
 log = get_logger("agents.recon.scanner")
 log.info("recon scan complete", extra={"host_count": len(hosts)})
 ```

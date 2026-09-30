@@ -57,7 +57,7 @@ For the one-card quick reference (attribution, targets, full TTP table) on any a
 
 ## Playbook anatomy (every leaf has these)
 
-- **ThreatProfile seed** — a valid `decepticon.core.schemas.ThreatProfile` JSON (drop your
+- **ThreatProfile seed** — a valid `raptix.core.schemas.ThreatProfile` JSON (drop your
   `engagement_name`).
 - **Kill-chain emulation table** — `# | phase | MITRE | emulated action | executing agent → skill`.
 - **CONOPS kill_chain** — the phase order to copy into `conops.json`.

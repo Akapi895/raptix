@@ -13,7 +13,7 @@ Manual testing procedures for verifying the LLM gateway features.
 **Providers:** Anthropic, OpenAI, Google, MiniMax
 
 ### Steps
-1. Set API key(s) in `~/.decepticon/.env`:
+1. Set API key(s) in `~/.raptix/.env`:
    ```
    ANTHROPIC_API_KEY=sk-ant-...
    ```
@@ -22,7 +22,7 @@ Manual testing procedures for verifying the LLM gateway features.
 4. Test model routing:
    ```bash
    curl -X POST http://localhost:4000/chat/completions \
-     -H "Authorization: Bearer sk-decepticon-master" \
+     -H "Authorization: Bearer sk-raptix-master" \
      -H "Content-Type: application/json" \
      -d '{"model": "anthropic/claude-haiku-4-5", "messages": [{"role": "user", "content": "Say hello"}]}'
    ```
@@ -54,7 +54,7 @@ Manual testing procedures for verifying the LLM gateway features.
 4. Test the custom route:
    ```bash
    curl -X POST http://localhost:4000/chat/completions \
-     -H "Authorization: Bearer sk-decepticon-master" \
+     -H "Authorization: Bearer sk-raptix-master" \
      -H "Content-Type: application/json" \
      -d '{"model": "openrouter/anthropic/claude-3.7-sonnet", "messages": [{"role": "user", "content": "Say hello"}]}'
    ```
@@ -125,7 +125,7 @@ Manual testing procedures for verifying the LLM gateway features.
 4. Test Ollama routing:
    ```bash
    curl -X POST http://localhost:4000/chat/completions \
-     -H "Authorization: Bearer sk-decepticon-master" \
+     -H "Authorization: Bearer sk-raptix-master" \
      -H "Content-Type: application/json" \
      -d '{"model": "ollama_chat/llama3.2", "messages": [{"role": "user", "content": "Say hello"}]}'
    ```
@@ -155,7 +155,7 @@ Manual testing procedures for verifying the LLM gateway features.
 ## Scenario 5: Onboard Wizard Complete Flow
 
 ### Steps
-1. Run: `decepticon onboard`
+1. Run: `raptix onboard`
 2. Step through all wizard steps:
    - Select a provider (e.g., Anthropic, OpenRouter, custom gateway, or Ollama)
    - Choose API-key auth or the existing local Claude handler
@@ -165,12 +165,12 @@ Manual testing procedures for verifying the LLM gateway features.
    - Confirm `.env` generation
 3. Verify output:
    ```bash
-   cat ~/.decepticon/.env
+   cat ~/.raptix/.env
    ```
 
 ### Expected
 - Interactive wizard completes all setup steps
-- `.env` file written to `~/.decepticon/.env`
+- `.env` file written to `~/.raptix/.env`
 
 
 ## Scenario 6: Fallback Chain Activation
@@ -206,6 +206,6 @@ After all scenarios, verify no tokens leak into logs:
 
 ```bash
 # Should return zero matches (except test fixtures)
-grep -r "sk-ant-oat01" decepticon/ --include="*.py" | grep -v test | grep -v fixture
+grep -r "sk-ant-oat01" raptix/ --include="*.py" | grep -v test | grep -v fixture
 docker compose logs litellm 2>&1 | grep -c "sk-ant-oat01"  # Should be 0
 ```

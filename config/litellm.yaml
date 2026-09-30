@@ -1,10 +1,10 @@
 # =============================================================================
-# LiteLLM Proxy Configuration for Decepticon
+# LiteLLM Proxy Configuration for Raptix
 # =============================================================================
 # This file configures the LiteLLM Proxy server as the central LLM gateway.
 #
 # Model names use LiteLLM provider-prefix format (e.g., "anthropic/claude-opus-4-7")
-# matching the names in decepticon/llm/models.py. Agents send these names directly;
+# matching the names in raptix/llm/models.py. Agents send these names directly;
 # the proxy resolves them to the correct provider endpoint + API key.
 #
 # Features:
@@ -17,7 +17,7 @@
 # Docs: https://docs.litellm.ai/docs/proxy/configs
 
 # --- Model Definitions ---
-# model_name must match the constants in decepticon/llm/models.py exactly.
+# model_name must match the constants in raptix/llm/models.py exactly.
 
 model_list:
   # ── Anthropic ────────────────────────────────────────────────────────
@@ -501,7 +501,7 @@ model_list:
   # Xiaomi MiMo block above). The user-facing model_name keeps the gateway
   # prefix so two gateways exposing the same upstream slug never collide.
   # These mirror config/litellm_dynamic_config.OPENAI_COMPAT_GATEWAYS and
-  # decepticon_core.types.llm.METHOD_MODELS. Per-1M USD costs come from the
+  # raptix_core.types.llm.METHOD_MODELS. Per-1M USD costs come from the
   # gateway's published rate card; subscription / flat-plan / region-priced
   # gateways are pinned to $0 (honest — not per-token billed).
 
@@ -748,7 +748,7 @@ model_list:
   # (copilot/*), SuperGrok (grok-sub/*), and Perplexity Pro (pplx-sub/*)
   # are registered DYNAMICALLY by litellm_dynamic_config.py, gated on
   # their respective RAPTIX_AUTH_* flags. Each route dispatches to a
-  # Decepticon custom handler defined under config/<provider>_handler.py
+  # Raptix custom handler defined under config/<provider>_handler.py
   # (claude_code, codex_chatgpt, gemini, copilot, grok, perplexity) — all
   # share oauth_token_store.py for atomic token refresh + mtime caching,
   # so a host-side ``codex login`` / Claude Code rotation is picked up by

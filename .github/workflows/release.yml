@@ -11,16 +11,16 @@ permissions:
   attestations: write
 
 jobs:
-  # Publish all three workspace wheels (decepticon-core, decepticon,
-  # decepticon-sdk) to PyPI via Trusted Publishing (OIDC). Lockstep
+  # Publish all three workspace wheels (raptix-core, raptix,
+  # raptix-sdk) to PyPI via Trusted Publishing (OIDC). Lockstep
   # release per spec §13.1 — all three share one version string and
   # publish in one job so the dependency closure is consistent.
   #
   # PyPI side requires a Trusted Publisher config per project on
   # pypi.org before the first successful publish:
-  #   - decepticon-core  -> repo BitterSecurity/Decepticon, workflow release.yml
-  #   - decepticon       -> same
-  #   - decepticon-sdk   -> same
+  #   - raptix-core  -> repo BitterSecurity/Raptix, workflow release.yml
+  #   - raptix       -> same
+  #   - raptix-sdk   -> same
   # See: https://docs.pypi.org/trusted-publishers/
   publish-pypi:
     name: Publish three workspace wheels to PyPI
@@ -57,9 +57,9 @@ jobs:
         run: |
           # uv build --all-packages from the workspace root produces wheel
           # + sdist for every workspace member into ./dist/:
-          #   dist/decepticon_core-<v>-py3-none-any.whl  + .tar.gz
-          #   dist/decepticon-<v>-py3-none-any.whl       + .tar.gz
-          #   dist/decepticon_sdk-<v>-py3-none-any.whl   + .tar.gz
+          #   dist/raptix_core-<v>-py3-none-any.whl  + .tar.gz
+          #   dist/raptix-<v>-py3-none-any.whl       + .tar.gz
+          #   dist/raptix_sdk-<v>-py3-none-any.whl   + .tar.gz
           uv build --all-packages
 
       - name: Publish to PyPI (all three wheels atomically)
@@ -142,21 +142,21 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: decepticon-litellm
+          - image: raptix-litellm
             dockerfile: containers/litellm.Dockerfile
             platforms: linux/amd64,linux/arm64
-          - image: decepticon-langgraph
+          - image: raptix-langgraph
             dockerfile: containers/langgraph.Dockerfile
             platforms: linux/amd64,linux/arm64
-          - image: decepticon-cli
+          - image: raptix-cli
             dockerfile: containers/cli.Dockerfile
             platforms: linux/amd64,linux/arm64
           # Skillogy server: lean python:3.13-slim (no Kali/heavy apt layers),
           # so multi-arch under QEMU is cheap like cli/langgraph. The compose
           # `skillogy` service has no `profiles:`, so it is ALWAYS started by
-          # `decepticon start` — it MUST be published or every start fails to
-          # pull ghcr.io/bittersecurity/decepticon-skillogy:<version>.
-          - image: decepticon-skillogy
+          # `raptix start` — it MUST be published or every start fails to
+          # pull ghcr.io/akapi895/raptix-skillogy:<version>.
+          - image: raptix-skillogy
             dockerfile: containers/skillogy.Dockerfile
             platforms: linux/amd64,linux/arm64
     steps:
@@ -229,7 +229,7 @@ jobs:
       # `--tlog-upload` flag controls whether the entry is also pushed to
       # the public Sigstore Rekor transparency log.
       #
-      # decepticon-sandbox: SBOM is ~7 MB (Kali rolling base + full pentest
+      # raptix-sandbox: SBOM is ~7 MB (Kali rolling base + full pentest
       # toolchain ⇒ thousands of dpkg components). Rekor's per-entry size
       # cap (~5 MiB) deterministically rejects the upload, so we attach
       # the attestation to the OCI artifact only. Verifiers can still run
@@ -250,9 +250,9 @@ jobs:
           target="ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
           predicate="sbom-${{ matrix.image }}.cdx.json"
           extra=()
-          if [ "${{ matrix.image }}" = "decepticon-sandbox" ]; then
+          if [ "${{ matrix.image }}" = "raptix-sandbox" ]; then
             extra+=(--tlog-upload=false)
-            echo "decepticon-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
+            echo "raptix-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
           fi
           for attempt in 1 2 3 4 5; do
             echo "Attestation attempt ${attempt}/5 for ${target}"
@@ -291,19 +291,19 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: decepticon-sandbox
+          - image: raptix-sandbox
             dockerfile: containers/sandbox.Dockerfile
             platform: amd64
             runs-on: ubuntu-latest
-          - image: decepticon-sandbox
+          - image: raptix-sandbox
             dockerfile: containers/sandbox.Dockerfile
             platform: arm64
             runs-on: ubuntu-24.04-arm
-          - image: decepticon-c2-sliver
+          - image: raptix-c2-sliver
             dockerfile: containers/c2-sliver.Dockerfile
             platform: amd64
             runs-on: ubuntu-latest
-          - image: decepticon-c2-sliver
+          - image: raptix-c2-sliver
             dockerfile: containers/c2-sliver.Dockerfile
             platform: arm64
             runs-on: ubuntu-24.04-arm
@@ -331,7 +331,7 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/${{ matrix.platform }}
           provenance: mode=max
-          sbom: ${{ matrix.image != 'decepticon-sandbox' }}
+          sbom: ${{ matrix.image != 'raptix-sandbox' }}
           outputs: type=image,name=ghcr.io/bittersecurity/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.platform }}
@@ -360,7 +360,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [decepticon-sandbox, decepticon-c2-sliver]
+        image: [raptix-sandbox, raptix-c2-sliver]
     runs-on: ubuntu-latest
     environment: pypi-release
     steps:
@@ -425,9 +425,9 @@ jobs:
           target="ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
           predicate="sbom-${{ matrix.image }}.cdx.json"
           extra=()
-          if [ "${{ matrix.image }}" = "decepticon-sandbox" ]; then
+          if [ "${{ matrix.image }}" = "raptix-sandbox" ]; then
             extra+=(--tlog-upload=false)
-            echo "decepticon-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
+            echo "raptix-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
           fi
           for attempt in 1 2 3 4 5; do
             echo "Attestation attempt ${attempt}/5 for ${target}"
@@ -458,7 +458,7 @@ jobs:
   # docker-web-merge stitches the digests into a multi-arch manifest.
   # Pattern: https://docs.docker.com/build/ci/github-actions/multi-platform/
   docker-web:
-    name: Build & push decepticon-web (${{ matrix.platform }})
+    name: Build & push raptix-web (${{ matrix.platform }})
     environment: pypi-release
     strategy:
       fail-fast: false
@@ -497,7 +497,7 @@ jobs:
           # time (web image embeds clients/cli for the terminal-server PTY).
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
-          outputs: type=image,name=ghcr.io/bittersecurity/decepticon-web,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/akapi895/raptix-web,push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=web-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=web-${{ matrix.platform }}
 
@@ -553,10 +553,10 @@ jobs:
           # `:latest` is promoted by publish-release after verification.
           # shellcheck disable=SC2046  # intentional word-split: one image ref arg per digest file
           docker buildx imagetools create \
-            --tag ghcr.io/bittersecurity/decepticon-web:${{ steps.version.outputs.version }} \
-            $(printf 'ghcr.io/bittersecurity/decepticon-web@sha256:%s ' *)
+            --tag ghcr.io/akapi895/raptix-web:${{ steps.version.outputs.version }} \
+            $(printf 'ghcr.io/akapi895/raptix-web@sha256:%s ' *)
           digest=$(docker buildx imagetools inspect \
-            ghcr.io/bittersecurity/decepticon-web:${{ steps.version.outputs.version }} \
+            ghcr.io/akapi895/raptix-web:${{ steps.version.outputs.version }} \
             --format '{{json .Manifest}}' | jq -r '.digest')
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
@@ -566,14 +566,14 @@ jobs:
           DIGEST: ${{ steps.manifest.outputs.digest }}
         run: |
           cosign sign --yes \
-            "ghcr.io/bittersecurity/decepticon-web@${DIGEST}"
+            "ghcr.io/akapi895/raptix-web@${DIGEST}"
 
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ghcr.io/bittersecurity/decepticon-web:${{ steps.version.outputs.version }}
+          image: ghcr.io/akapi895/raptix-web:${{ steps.version.outputs.version }}
           format: cyclonedx-json
-          output-file: sbom-decepticon-web.cdx.json
+          output-file: sbom-raptix-web.cdx.json
 
       # Same retry+warning policy as the matrix attest step above; see comment there.
       - name: Attest SBOM with cosign
@@ -582,8 +582,8 @@ jobs:
           DIGEST: ${{ steps.manifest.outputs.digest }}
         run: |
           set -uo pipefail
-          target="ghcr.io/bittersecurity/decepticon-web@${DIGEST}"
-          predicate="sbom-decepticon-web.cdx.json"
+          target="ghcr.io/akapi895/raptix-web@${DIGEST}"
+          predicate="sbom-raptix-web.cdx.json"
           for attempt in 1 2 3 4 5; do
             echo "Attestation attempt ${attempt}/5 for ${target}"
             if cosign attest --yes \
@@ -604,8 +604,8 @@ jobs:
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: sbom-decepticon-web
-          path: sbom-decepticon-web.cdx.json
+          name: sbom-raptix-web
+          path: sbom-raptix-web.cdx.json
 
   # Atomic release gate. Waits until every Docker image AND the launcher
   # binaries are pushed, verifies each :<version> manifest exists on GHCR,
@@ -649,13 +649,13 @@ jobs:
         run: |
           set -euo pipefail
           images=(
-            decepticon-litellm
-            decepticon-langgraph
-            decepticon-sandbox
-            decepticon-cli
-            decepticon-skillogy
-            decepticon-c2-sliver
-            decepticon-web
+            raptix-litellm
+            raptix-langgraph
+            raptix-sandbox
+            raptix-cli
+            raptix-skillogy
+            raptix-c2-sliver
+            raptix-web
           )
           for img in "${images[@]}"; do
             ref="ghcr.io/bittersecurity/${img}:${VERSION}"
@@ -678,13 +678,13 @@ jobs:
         run: |
           set -euo pipefail
           images=(
-            decepticon-litellm
-            decepticon-langgraph
-            decepticon-sandbox
-            decepticon-cli
-            decepticon-skillogy
-            decepticon-c2-sliver
-            decepticon-web
+            raptix-litellm
+            raptix-langgraph
+            raptix-sandbox
+            raptix-cli
+            raptix-skillogy
+            raptix-c2-sliver
+            raptix-web
           )
           for img in "${images[@]}"; do
             src="ghcr.io/bittersecurity/${img}:${VERSION}"

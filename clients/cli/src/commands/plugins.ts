@@ -17,8 +17,8 @@
  * For ``plugins`` that means ``vulnresearch`` becomes selectable.
  *
  * Persistence: runtime-only. Bundles activated here do NOT survive a
- * ``decepticon restart``. To make a selection permanent, set
- * ``RAPTIX_PLUGINS=standard,plugins`` in ``~/.decepticon/.env``.
+ * ``raptix restart``. To make a selection permanent, set
+ * ``RAPTIX_PLUGINS=standard,plugins`` in ``~/.raptix/.env``.
  */
 
 import type { Command } from "./types.js";
@@ -60,9 +60,9 @@ function formatList(data: ListResponse): string {
   lines.push("  /agent <orchestrator>     Switch active orchestrator after enabling");
   lines.push("");
   lines.push(
-    "Activations are runtime-only. To persist across `decepticon restart`,",
+    "Activations are runtime-only. To persist across `raptix restart`,",
   );
-  lines.push("set RAPTIX_PLUGINS in ~/.decepticon/.env (e.g. standard,plugins).");
+  lines.push("set RAPTIX_PLUGINS in ~/.raptix/.env (e.g. standard,plugins).");
   return lines.join("\n");
 }
 
@@ -100,7 +100,7 @@ const plugins: Command = {
         } catch (err) {
           ctx.addSystemEvent(
             `Could not reach plugin bundles API at ${apiBase()}: ${err instanceof Error ? err.message : String(err)}\n` +
-              "Is the decepticon stack running?",
+              "Is the raptix stack running?",
           );
         }
       })();

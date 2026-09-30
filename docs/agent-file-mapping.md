@@ -26,7 +26,7 @@
 > per-item resolution.
 
 All paths are relative to the engagement workspace root (`/workspace`, which
-maps to `~/.decepticon/workspace/<engagement-slug>/` on the host).
+maps to `~/.raptix/workspace/<engagement-slug>/` on the host).
 
 ---
 
@@ -163,11 +163,11 @@ Skills that define a file template, naming scheme, or write step.
 | `standard/recon/reporting/SKILL.md` | Recon finding docs in `findings/`; evidence `findings/evidence/FIND-{NNN}_{tool}.txt`; consolidated `report_<target>_final.md` | recon/reporting:36,83,420 |
 | `standard/exploit/reporting/SKILL.md` | `findings/FIND-{NNN}.md` (heavyweight CVSS 4.0 template); `exploit/shells.json` (SHELL-NNN→finding_id); `exploit/creds_initial.json` (CRED-NNN→finding_id); attack paths `findings/attack-paths/PATH-{NNN}.md`; evidence under `findings/evidence/` | exploit/reporting:19,194,219,252 |
 | `standard/post-exploit/reporting/SKILL.md` | Phase-specific `findings/FIND-{NNN}.md` (cred-access/privesc/lateral); attack paths `findings/attack-paths/PATH-{NNN}.md`; creds `post-exploit/creds/`; `network_map.json`; detection-gap matrix | post-exploit/reporting:27,396,509 |
-| `standard/decepticon/final-report/SKILL.md` | Reads all `findings/*.md` + `findings/attack-paths/PATH-*.md` + `timeline.jsonl` + `plan/*.json`; writes `report/executive-summary.md` and `report/technical-report.md` | final-report:14,19–25 |
+| `standard/raptix/final-report/SKILL.md` | Reads all `findings/*.md` + `findings/attack-paths/PATH-*.md` + `timeline.jsonl` + `plan/*.json`; writes `report/executive-summary.md` and `report/technical-report.md` | final-report:14,19–25 |
 
 ### Soundwave planning templates
 
-Each template validates against a `decepticon_core.types` schema and writes
+Each template validates against a `raptix_core.types` schema and writes
 to `plan/`:
 
 | Skill | Output file | Schema |
@@ -273,7 +273,7 @@ item below records the original conflict and its **Resolution**.
    the planning bundle to `plan/*.json`. But several prompts and skills
    referenced the docs **without** the `plan/` prefix (e.g. analyst/exploit/
    postexploit "check `roe.json`", soundwave templates "Read/Write `roe.json`",
-   `decepticon/orchestration` and `exploit/reporting` file-layout trees showing
+   `raptix/orchestration` and `exploit/reporting` file-layout trees showing
    root-level docs). **Resolution:** every *path-action* reference (read / write
    / check / update / file-layout tree) was normalized to the `plan/` prefix
    across the standard prompts and skills. Purely conceptual document-name

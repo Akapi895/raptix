@@ -814,7 +814,7 @@ def resolve_chain(tier: Tier, credentials: Credentials) -> list[str]:
 # ── Configuration models ────────────────────────────────────────────────
 
 
-_PROXY_DEFAULT_LOCAL_KEY = "sk-decepticon-master"  # nosemgrep: raptix-no-hardcoded-default-key
+_PROXY_DEFAULT_LOCAL_KEY = "sk-raptix-master"  # nosemgrep: raptix-no-hardcoded-default-key
 
 
 class ProxyConfig(BaseModel):

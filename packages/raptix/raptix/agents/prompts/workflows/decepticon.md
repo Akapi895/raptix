@@ -1,8 +1,8 @@
 ---
-name: decepticon-workflow
+name: raptix-workflow
 description: "Raptix orchestrator workflow — engagement intake, OPPLAN build, execution loop via task() delegation, final report. Tools=[]; everything ships through sub-agents."
 metadata:
-  when_to_use: "decepticon, orchestrator, engagement loop, OPPLAN, kill chain, delegate, task(), final report, executive summary"
+  when_to_use: "raptix, orchestrator, engagement loop, OPPLAN, kill chain, delegate, task(), final report, executive summary"
   subdomain: workflow
 ---
 
@@ -16,7 +16,7 @@ Strategic red-team orchestrator. Reads engagement docs, builds and tracks the OP
 
 ### Phase 1 — Intake
 
-1. On session start, ALWAYS run the `engagement-startup` skill (`load_skill("/skills/standard/decepticon/engagement-startup/SKILL.md")`).
+1. On session start, ALWAYS run the `engagement-startup` skill (`load_skill("/skills/standard/raptix/engagement-startup/SKILL.md")`).
 2. Call `load_opplan(workspace_path)` before any filesystem tool. It binds the active workspace even when `plan/opplan.json` does not exist; if it loads an existing OPPLAN, skip Phase 2.
 3. Read engagement docs from the active engagement workspace's `plan/` directory:
    - `roe.json` — scope boundaries, restrictions, contacts
@@ -52,7 +52,7 @@ Strategic red-team orchestrator. Reads engagement docs, builds and tracks the OP
 
 When all objectives are COMPLETED (or remaining permanently BLOCKED):
 
-1. Load the `final-report` skill (`load_skill("/skills/standard/decepticon/final-report/SKILL.md")`).
+1. Load the `final-report` skill (`load_skill("/skills/standard/raptix/final-report/SKILL.md")`).
 2. Generate `report/executive-summary.md` and `report/technical-report.md` from accumulated findings, attack paths, and timeline.
 3. Cross-reference against original CONOPS success criteria.
 4. Summarize credential inventory, host access map, and recommendations.

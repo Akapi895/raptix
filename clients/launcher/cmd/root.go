@@ -12,7 +12,7 @@ import (
 var version = "dev"
 
 var rootCmd = &cobra.Command{
-	Use:   "decepticon",
+	Use:   "raptix",
 	Short: "Raptix — Autonomous Hacking Agent for Red Team",
 	Long:  ui.RenderBanner() + "\n" + ui.Dim.Render("Autonomous Hacking Agent for Red Team"),
 	CompletionOptions: cobra.CompletionOptions{

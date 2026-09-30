@@ -1,6 +1,6 @@
 # Makefile Reference
 
-The Makefile is for **local development and pre-release verification**. Every Docker target builds from your local checkout. End users install via `curl | bash` and run `decepticon` — they don't use `make`.
+The Makefile is for **local development and pre-release verification**. Every Docker target builds from your local checkout. End users install via `curl | bash` and run `raptix` — they don't use `make`.
 
 Run `make help` for a quick summary. Full reference below.
 
@@ -14,9 +14,9 @@ The primary purpose of this Makefile. Run these before tagging a release.
 |--------|-------------|
 | `make dogfood` | Full OSS UX on local code: builds the Go launcher + every service image (`:dev` tag), wires up an isolated `$RAPTIX_HOME` under `.dogfood/`, then runs the launcher. The onboard wizard, engagement picker, `compose up`, health checks, and CLI all execute exactly as a `curl \| bash` install. |
 | `make smoke` | Compose-only smoke (no launcher, no onboard wizard) — fastest possible release-shape check. Replicates only the launcher's `compose up` step: clean → build images locally → `up -d --no-build --wait` → health checks. Use when you only changed the compose stack. |
-| `make launcher` | Build the Go launcher binary at `clients/launcher/bin/decepticon`. Embedded version is `dev`, which skips release update notices and versioned config sync inside the launcher. Invoked automatically by `make dogfood`. |
+| `make launcher` | Build the Go launcher binary at `clients/launcher/bin/raptix`. Embedded version is `dev`, which skips release update notices and versioned config sync inside the launcher. Invoked automatically by `make dogfood`. |
 
-`make dogfood` runs against an isolated `.dogfood/` directory so the user's real `~/.decepticon` is never touched. `make clean` purges both the compose volumes and `.dogfood/` when you want a fresh onboard.
+`make dogfood` runs against an isolated `.dogfood/` directory so the user's real `~/.raptix` is never touched. `make clean` purges both the compose volumes and `.dogfood/` when you want a fresh onboard.
 
 ---
 
@@ -87,7 +87,7 @@ To regenerate just the Prisma client (without a full build): `cd clients/web && 
 |--------|-------------|
 | `make status` | Show running service status (`docker compose ps`) |
 | `make logs [SVC=service]` | Follow logs (default: `langgraph`). Override: `make logs SVC=litellm` |
-| `make health` | KG backend + Neo4j health checks, plus Web when it is running (broader than `decepticon kg-health`, which only checks the KG) |
+| `make health` | KG backend + Neo4j health checks, plus Web when it is running (broader than `raptix kg-health`, which only checks the KG) |
 | `make clean` | Full teardown: stop services, remove volumes, **and remove `.dogfood/`**. Use this when you want the next `make dogfood` to start from a fresh onboard wizard. |
 
 ---

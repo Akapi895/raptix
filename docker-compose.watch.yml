@@ -22,7 +22,7 @@ services:
           path: ./packages/raptix/raptix
           target: /app/packages/raptix/raptix
         - action: sync
-          # decepticon-core changes also live-sync into the editable
+          # raptix-core changes also live-sync into the editable
           # install so plugin registry / role registry tweaks land
           # without a full image rebuild.
           path: ./packages/raptix-core/raptix_core

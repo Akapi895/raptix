@@ -34,7 +34,7 @@
 4. **WP-L2b** (extend parsers) — narrow; only real gaps.
 5. **WP-L9** (structure knob) — lowest; likely defer until an in-scope toggle exists.
 
-Repo anchors: middleware use `wrap_tool_call`/`awrap_tool_call`/`after_model`/`wrap_model_call` hooks (see `middleware/kg.py`, `middleware/event_logging.py`); `KGMiddleware` (`middleware/kg.py`) provides `kg_ingest`, KG-context injection (`_inject_kg_context`), and `KGStore` (`middleware/kg_internal/store.py`). Its scoped scanner adapters live in `middleware/kg_internal/ingest.py` (nmap/httpx/nuclei/SARIF); the broader legacy `kg_ingest_*` tools in `tools/research/tools.py` use a compatibility shim. `MiddlewareSlot` and `SLOTS_PER_ROLE` live in `decepticon_core.contracts.slots`, default factories in `agents/middleware_slots.py`, assembled by `agents/build.py::build_middleware`. Scanner files live in the HTTP sandbox, not the LangGraph container.
+Repo anchors: middleware use `wrap_tool_call`/`awrap_tool_call`/`after_model`/`wrap_model_call` hooks (see `middleware/kg.py`, `middleware/event_logging.py`); `KGMiddleware` (`middleware/kg.py`) provides `kg_ingest`, KG-context injection (`_inject_kg_context`), and `KGStore` (`middleware/kg_internal/store.py`). Its scoped scanner adapters live in `middleware/kg_internal/ingest.py` (nmap/httpx/nuclei/SARIF); the broader legacy `kg_ingest_*` tools in `tools/research/tools.py` use a compatibility shim. `MiddlewareSlot` and `SLOTS_PER_ROLE` live in `raptix_core.contracts.slots`, default factories in `agents/middleware_slots.py`, assembled by `agents/build.py::build_middleware`. Scanner files live in the HTTP sandbox, not the LangGraph container.
 
 ---
 
@@ -47,7 +47,7 @@ call `kg_ingest`. This makes downstream state trustworthy (kills a class of
 
 **In scope**
 - New middleware `packages/raptix/raptix/middleware/kg_autoingest.py`.
-- Register a new `MiddlewareSlot` member + add it to `SLOTS_PER_ROLE` for network roles only (`recon`, `exploit`, `postexploit`, `ad_operator`, `cloud_hunter`) in `decepticon_core.contracts.slots`.
+- Register a new `MiddlewareSlot` member + add it to `SLOTS_PER_ROLE` for network roles only (`recon`, `exploit`, `postexploit`, `ad_operator`, `cloud_hunter`) in `raptix_core.contracts.slots`.
 - Register its default factory in `agents/middleware_slots.py`; `agents/build.py::build_middleware` assembles it without special-case logic.
 - A **curated allowlist** mapping `{tool/command signature → existing scoped adapter}` in `middleware/kg_internal/ingest.py`, without modifying legacy parsers.
 
@@ -81,7 +81,7 @@ post-tool middleware that calls the scoped KGStore adapters after allowlisted
 network scanners (nmap/httpx/nuclei).
 New file `middleware/kg_autoingest.py` implementing `awrap_tool_call` that runs the
 tool via `handler`, then ingests in a try/except that ALWAYS returns the original
-result unchanged. Register a new `MiddlewareSlot` in `decepticon_core.contracts.slots`
+result unchanged. Register a new `MiddlewareSlot` in `raptix_core.contracts.slots`
 (network roles only) and its factory in `agents/middleware_slots.py`. Reuse existing
 `middleware/kg_internal/ingest.py` adapters; do not modify `tools/bash/*` or guardrails.
 Gate on `RAPTIX_KG_AUTOINGEST` (default off). Write an ADR (`docs/adr/`) and T0
@@ -233,7 +233,7 @@ change needs the toggle; if so, add a default-no-op config field + T0 test. Foll
 
 | WP | In scope (files) | Never touch | Value | Risk | Effort | Dispatch |
 |----|------------------|-------------|-------|------|--------|----------|
-| **L2a** | new `middleware/kg_autoingest.py`, `decepticon_core/contracts/slots.py`, `agents/middleware_slots.py` | `tools/bash/*`, guardrails, `middleware/kg.py` logic | High | Low | Low-Med | 1st |
+| **L2a** | new `middleware/kg_autoingest.py`, `raptix_core/contracts/slots.py`, `agents/middleware_slots.py` | `tools/bash/*`, guardrails, `middleware/kg.py` logic | High | Low | Low-Med | 1st |
 | **L7-obs** | `middleware/kg.py::_inject_kg_context`, `tools/research/chain.py`/`_state.py`, `KGStore` | any blocking/gating | Med | Med | Low | 2nd |
 | **L6** | memo → maybe `wrap_model_call` middleware, `agents/build.py`, `llm/` | decision content, LiteLLM routing | Med (format) | Low | Med | 3rd (may defer) |
 | **L2b** | `tools/research/tools.py`, (maybe) `graph_db/schema_keys.py` | existing ingesters | Med | Med | Ongoing | 4th |

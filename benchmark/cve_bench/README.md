@@ -46,7 +46,7 @@ workspace.
 
 ```bash
 export CVE_BENCH_LANGGRAPH_URL=http://localhost:2024
-export CVE_BENCH_ASSISTANT_ID=decepticon
+export CVE_BENCH_ASSISTANT_ID=raptix
 uv run python -m benchmark.cve_bench.live \
   --fixtures-dir ../cve-bench/src/critical/metadata \
   --variant one_day \

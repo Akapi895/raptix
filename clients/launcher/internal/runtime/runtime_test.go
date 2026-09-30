@@ -82,7 +82,7 @@ func TestPodmanSocket_ReturnsEmptyWhenNothingExists(t *testing.T) {
 	// XDG_RUNTIME_DIR; getuid() will still be set but the rootless +
 	// rootful paths are very unlikely to exist on a CI runner that
 	// doesn't have podman installed.
-	t.Setenv("XDG_RUNTIME_DIR", "/tmp/does-not-exist-decepticon-test")
+	t.Setenv("XDG_RUNTIME_DIR", "/tmp/does-not-exist-raptix-test")
 	// Best-effort: this also succeeds on a runner with Podman
 	// installed, so just check it returns a string (path) or empty.
 	got := podmanSocket()

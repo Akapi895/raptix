@@ -16,7 +16,7 @@ Raptix runs on two Docker networks. Management infrastructure (LLM proxy, databa
 └──────────┬───────────────────────────────────────────────────┘
            │                              │ Docker socket only
 ┌──────────▼──────────┐                   │
-│   decepticon-net    │       ┌───────────▼──────────────────┐
+│   raptix-net    │       ┌───────────▼──────────────────┐
 │                     │       │       sandbox-net            │
 │  LiteLLM    :4000   │       │                              │
 │  PostgreSQL :5432   │       │  Sandbox (Kali Linux)        │
@@ -28,7 +28,7 @@ Raptix runs on two Docker networks. Management infrastructure (LLM proxy, databa
 │                     │       │                              │
 │  BHCE       :8081   │       │                              │
 │  BHCE-Neo4j (intl.) │       │                              │
-│  (AD attack-graph sidecar, decepticon-net only)             │
+│  (AD attack-graph sidecar, raptix-net only)             │
 └─────────────────────┘       └──────────────────────────────┘
        Management                       Operations
    (LLM, persistence, UI)        (exploitation, C2, targets)
@@ -38,13 +38,13 @@ Raptix runs on two Docker networks. Management infrastructure (LLM proxy, databa
 
 **KGStore Neo4j is the one cross-network shared service** — it sits on both networks because the sandbox writes findings into it (`bolt://neo4j:7687` from inside Kali) and the agent reads them back (`bolt://neo4j:7687` from inside LangGraph). It's a knowledge store, not a privileged service: the agent's credentials never traverse it, and a compromised sandbox can't pivot through Neo4j to LiteLLM or the API surface.
 
-**BHCE has its own dedicated Neo4j** on `decepticon-net` only. Neo4j Community Edition allows one user database per server and KGStore already occupies it, so BHCE gets a separate instance to avoid label/constraint collisions with its `dawgs` driver. See [ADR-0005](adr/0005-bloodhound-via-bhce-rest-client.md). The sandbox does **not** see the BHCE Neo4j — the AD attack-graph pipeline is a management-plane concern only; the sandbox produces SharpHound ZIPs and hands them to the agent, never talks to BHCE directly.
+**BHCE has its own dedicated Neo4j** on `raptix-net` only. Neo4j Community Edition allows one user database per server and KGStore already occupies it, so BHCE gets a separate instance to avoid label/constraint collisions with its `dawgs` driver. See [ADR-0005](adr/0005-bloodhound-via-bhce-rest-client.md). The sandbox does **not** see the BHCE Neo4j — the AD attack-graph pipeline is a management-plane concern only; the sandbox produces SharpHound ZIPs and hands them to the agent, never talks to BHCE directly.
 
 ---
 
 ## Components
 
-### LiteLLM Proxy (`decepticon-net`, port 4000)
+### LiteLLM Proxy (`raptix-net`, port 4000)
 
 Routes all LLM requests to provider backends (Anthropic, OpenAI, Google, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM, Ollama, plus 6 subscription OAuth handlers). Provides:
 - Unified API endpoint for all agents
@@ -54,7 +54,7 @@ Routes all LLM requests to provider backends (Anthropic, OpenAI, Google, MiniMax
 
 Configuration: `config/litellm.yaml`. Dynamic model registration: `config/litellm_dynamic_config.py` (Ollama, custom gateways, ad-hoc overrides).
 
-### LangGraph Platform (`decepticon-net`, port 2024)
+### LangGraph Platform (`raptix-net`, port 2024)
 
 Hosts and orchestrates all agents. Provides:
 - Agent lifecycle management (spawn, execute, terminate)
@@ -62,16 +62,16 @@ Hosts and orchestrates all agents. Provides:
 - State persistence between agent runs
 - The LangGraph SDK endpoint consumed by both the CLI and Web Dashboard
 
-### PostgreSQL (`decepticon-net`, port 5432)
+### PostgreSQL (`raptix-net`, port 5432)
 
 Persistent relational storage for:
 - LiteLLM virtual keys, spend logs, user budgets
 - Web dashboard data (engagements, findings, OPPLAN objectives, defense actions)
 - The single local user record
 
-Two logical databases: `litellm` (managed by LiteLLM) and `decepticon_web` (managed via Prisma in the web dashboard).
+Two logical databases: `litellm` (managed by LiteLLM) and `raptix_web` (managed via Prisma in the web dashboard).
 
-### Neo4j Knowledge Graph — KGStore (`sandbox-net` + `decepticon-net`, port 7687 / browser 7474)
+### Neo4j Knowledge Graph — KGStore (`sandbox-net` + `raptix-net`, port 7687 / browser 7474)
 
 Graph database for the cross-domain attack graph (web, cloud, smart-contract findings plus the chain planner's view across all domains). Stores:
 - Hosts, services, vulnerabilities, credentials, accounts
@@ -80,7 +80,7 @@ Graph database for the cross-domain attack graph (web, cloud, smart-contract fin
 
 **Dual-homed by design**: the sandbox writes operational findings into the graph (`cypher-shell` from inside Kali), and the agent in LangGraph reads them back to plan the next objective. Both networks see the same Neo4j instance on the same `bolt://neo4j:7687` URI.
 
-### BloodHound Community Edition sidecar (`decepticon-net`, BHCE API on host port 8081)
+### BloodHound Community Edition sidecar (`raptix-net`, BHCE API on host port 8081)
 
 AD attack-graph layer, introduced by [ADR-0005](adr/0005-bloodhound-via-bhce-rest-client.md). Two containers:
 
@@ -89,9 +89,9 @@ AD attack-graph layer, introduced by [ADR-0005](adr/0005-bloodhound-via-bhce-res
 
 Postgres is reused from the existing `postgres` container — `containers/postgres-init/02-bloodhound-db.sh` pre-creates the `bloodhound` database plus the `pg_trgm` extension so BHCE's goose migrations bootstrap cleanly on first boot.
 
-Agents call BHCE through `decepticon.tools.ad.bh_tools.bhce_status` / `bhce_cypher` / `bhce_ingest_zip` and the shared `decepticon.tools.ad.bhce_client.BHCEClient` HMAC-3-chain signer. The in-house `bh_ingest_zip` / `adcs_post_process` / `dcsync_check` / `delegation_audit` / `gpo_audit` / `shadow_creds_audit` / `adcs_audit` tools emit `DeprecationWarning` on every call and will move to `decepticon.compat` next minor.
+Agents call BHCE through `raptix.tools.ad.bh_tools.bhce_status` / `bhce_cypher` / `bhce_ingest_zip` and the shared `raptix.tools.ad.bhce_client.BHCEClient` HMAC-3-chain signer. The in-house `bh_ingest_zip` / `adcs_post_process` / `dcsync_check` / `delegation_audit` / `gpo_audit` / `shadow_creds_audit` / `adcs_audit` tools emit `DeprecationWarning` on every call and will move to `decepticon.compat` next minor.
 
-### Skillogy (`decepticon-net`, REST API on host port 9100)
+### Skillogy (`raptix-net`, REST API on host port 9100)
 
 Standalone skill catalog service introduced by [ADR-0008](adr/0008-skillogy-hard-acl-phase1a.md). Three pieces:
 
@@ -128,11 +128,11 @@ Sliver team server runs alongside the sandbox on the operational network. Featur
 - Implant generation (Windows, Linux, macOS)
 - Session management for post-exploitation
 
-Brought up on demand by the orchestrator via `ops_start("c2-sliver")` after a foothold is gained — see [ADR-0006](adr/0006-agent-driven-container-lifecycle.md). Default `decepticon start` keeps the C2 plane cold. Future profile: `c2-havoc` (slated for a later release; the orchestrator's prompt and the opscontrol allowlist already accept it).
+Brought up on demand by the orchestrator via `ops_start("c2-sliver")` after a foothold is gained — see [ADR-0006](adr/0006-agent-driven-container-lifecycle.md). Default `raptix start` keeps the C2 plane cold. Future profile: `c2-havoc` (slated for a later release; the orchestrator's prompt and the opscontrol allowlist already accept it).
 
-### Web Dashboard (`decepticon-net`, port 3000 + terminal WebSocket on 3003 — dynamic-spawn)
+### Web Dashboard (`raptix-net`, port 3000 + terminal WebSocket on 3003 — dynamic-spawn)
 
-Next.js 16 application providing a browser-based control plane. v1.1.8 made this dynamic: it no longer comes up on `decepticon start`. From inside the CLI, run `/web` to spawn it; `/web url` prints the URL; `/web down` stops the container without removing it. See [Web Dashboard](web-dashboard.md).
+Next.js 16 application providing a browser-based control plane. v1.1.8 made this dynamic: it no longer comes up on `raptix start`. From inside the CLI, run `/web` to spawn it; `/web url` prints the URL; `/web down` stops the container without removing it. See [Web Dashboard](web-dashboard.md).
 
 ### Dynamic Workload Lifecycle ([ADR-0006](adr/0006-agent-driven-container-lifecycle.md))
 
@@ -211,6 +211,6 @@ Orchestrator reads OPPLAN
 | Sandbox → Management services | Separate Docker networks; LiteLLM/PostgreSQL/LangGraph/Web are not routable from `sandbox-net` |
 | LangGraph → Sandbox | Docker socket only (no TCP) |
 | Sandbox → KGStore Neo4j | Allowed (intentional shared service for cross-domain attack graph writes) |
-| Sandbox → BHCE API / BHCE Neo4j | Blocked — BHCE lives on `decepticon-net` only; the sandbox produces SharpHound ZIPs and hands them to the agent, which then ingests via `bhce_ingest_zip`. There is no sandbox-side bolt or REST path into BHCE. |
-| Credential isolation | Provider API keys + the BHCE HMAC token live on `decepticon-net`; the sandbox never sees them |
+| Sandbox → BHCE API / BHCE Neo4j | Blocked — BHCE lives on `raptix-net` only; the sandbox produces SharpHound ZIPs and hands them to the agent, which then ingests via `bhce_ingest_zip`. There is no sandbox-side bolt or REST path into BHCE. |
+| Credential isolation | Provider API keys + the BHCE HMAC token live on `raptix-net`; the sandbox never sees them |
 | Host isolation | All commands run inside Docker; no host filesystem access except the engagement-scoped `/workspace` bind mount |

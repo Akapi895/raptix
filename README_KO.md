@@ -64,8 +64,8 @@ Docker 설치 없이 — 브라우저에서 바로 자율 레드팀 엔게이지
 
 ```bash
 curl -fsSL https://decepticon.red/install | bash
-decepticon onboard   # 대화형 설정 위자드 (프로바이더, API 키, 모델 프로필)
-decepticon           # 전체 실행: 터미널 CLI + 웹 대시보드 (http://localhost:3000)
+raptix onboard   # 대화형 설정 위자드 (프로바이더, API 키, 모델 프로필)
+raptix           # 전체 실행: 터미널 CLI + 웹 대시보드 (http://localhost:3000)
 ```
 
 → **[빠른 시작](docs/getting-started.md)** · **[전체 셋업 가이드](docs/setup-guide.md)**
@@ -75,11 +75,11 @@ decepticon           # 전체 실행: 터미널 CLI + 웹 대시보드 (http://l
 에이전트 위에 무언가를 만드시나요 — 제품, 연구 통합, 커스텀 오케스트레이터? SDK 를 PyPI 에서 설치하세요:
 
 ```bash
-pip install decepticon              # 코어 SDK
-pip install "decepticon[neo4j]"     # + 지식그래프 공격체인 도구
+pip install raptix              # 코어 SDK
+pip install "raptix[neo4j]"     # + 지식그래프 공격체인 도구
 ```
 
-`decepticon` 은 **클라이언트 SDK** 입니다 — 에이전트 팩토리·미들웨어·도구·스킬을 담고 있고, LLM 호출과 샌드박스 실행은 런타임 서비스로 HTTP 라우팅합니다 (`RAPTIX_LLM__PROXY_URL`, `SANDBOX_URL`). 에이전트를 실제로 돌리려면 그 서비스들이 필요합니다 — 위 Docker 스택을 쓰거나 URL 을 직접 가리키세요. 팩토리 오버라이드 surface, 선언적 `PluginBundle` 플러그인, 안전 게이트는 **[라이브러리로서의 Raptix](docs/library-usage.md)** 참고.
+`raptix` 은 **클라이언트 SDK** 입니다 — 에이전트 팩토리·미들웨어·도구·스킬을 담고 있고, LLM 호출과 샌드박스 실행은 런타임 서비스로 HTTP 라우팅합니다 (`RAPTIX_LLM__PROXY_URL`, `SANDBOX_URL`). 에이전트를 실제로 돌리려면 그 서비스들이 필요합니다 — 위 Docker 스택을 쓰거나 URL 을 직접 가리키세요. 팩토리 오버라이드 surface, 선언적 `PluginBundle` 플러그인, 안전 게이트는 **[라이브러리로서의 Raptix](docs/library-usage.md)** 참고.
 
 ---
 
@@ -94,7 +94,7 @@ AI 기반 위협 환경에 맞선 **공격형 백신**을 지향하고 있습니
 ## 벤치마크
 
 <div align="center">
-  <img src="assets/benchmark/decepticon_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
+  <img src="assets/benchmark/raptix_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
 </div>
 
 | 벤치마크 | 난이도 | 통과율 |
@@ -127,7 +127,7 @@ AI + 해킹 도구들은 대부분 nmap 돌리고 리포트 출력하는 데모�
 
 **진짜 인터랙티브 셸.** 실제 공격 도구들은 인터랙티브합니다 (`msfconsole`, `sliver-client`, `evil-winrm`). Raptix은 영구 tmux 세션에서 명령을 실행하고 인터랙티브 프롬프트를 자동 감지합니다 — 도구가 프롬프트를 띄우면 우회책 없이 후속 명령을 보냅니다.
 
-**하드닝된 샌드박스 격리.** 모든 명령은 운영 네트워크(`sandbox-net`)의 Kali Linux 샌드박스에서 실행되며, 관리망(`decepticon-net`)과 분리되어 있습니다. LangGraph는 Docker 소켓으로 샌드박스를 제어합니다. → **[아키텍처](docs/architecture.md)**
+**하드닝된 샌드박스 격리.** 모든 명령은 운영 네트워크(`sandbox-net`)의 Kali Linux 샌드박스에서 실행되며, 관리망(`raptix-net`)과 분리되어 있습니다. LangGraph는 Docker 소켓으로 샌드박스를 제어합니다. → **[아키텍처](docs/architecture.md)**
 
 **공격이 방어를 만든다.** 계획 중인 [공격형 백신](docs/offensive-vaccine.md) 루프는 발견된 취약점을 공격 → 방어 → 검증 사이클로 전환하는 방향입니다.
 
@@ -136,10 +136,10 @@ AI + 해킹 도구들은 대부분 nmap 돌리고 리포트 출력하는 데모�
 ## 아키텍처
 
 <div align="center">
-  <img src="assets/decepticon_infra.svg" alt="Raptix Infrastructure" width="680">
+  <img src="assets/raptix_infra.svg" alt="Raptix Infrastructure" width="680">
 </div>
 
-두 개의 네트워크로 분리된 설계 — 관리 서비스(LiteLLM, PostgreSQL, LangGraph, Web)는 `decepticon-net`, 샌드박스 / C2 서버 / 타깃은 `sandbox-net`. Neo4j는 양 네트워크에 듀얼-홈으로 두어 관리망의 에이전트가 샌드박스 내부에서 기록한 발견 사항을 영속화할 수 있게 합니다.
+두 개의 네트워크로 분리된 설계 — 관리 서비스(LiteLLM, PostgreSQL, LangGraph, Web)는 `raptix-net`, 샌드박스 / C2 서버 / 타깃은 `sandbox-net`. Neo4j는 양 네트워크에 듀얼-홈으로 두어 관리망의 에이전트가 샌드박스 내부에서 기록한 발견 사항을 영속화할 수 있게 합니다.
 
 → **[아키텍처 상세](docs/architecture.md)** · **[지식 그래프](docs/knowledge-graph.md)**
 
@@ -168,7 +168,7 @@ Tier 기반 자격증명-aware 폴백 체인. 사용 가능한 자격증명을 �
 **Tier가 매핑된 프로바이더**: Anthropic, OpenAI, Google Gemini, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM, Ollama (로컬).
 **구독 OAuth**: Claude Max/Pro/Team, ChatGPT Pro/Plus/Team, Gemini Advanced, Copilot Pro, SuperGrok, Perplexity Pro.
 
-`decepticon onboard`로 설정. → **[모델 전체 레퍼런스 및 폴백 예시](docs/models.md)**
+`raptix onboard`로 설정. → **[모델 전체 레퍼런스 및 폴백 예시](docs/models.md)**
 
 ---
 

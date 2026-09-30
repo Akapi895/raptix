@@ -43,7 +43,7 @@ let cookiesImported = false;
 
 app.setName("Raptix");
 if (process.platform === "win32") {
-  app.setAppUserModelId("red.decepticon.desktop");
+  app.setAppUserModelId("red.raptix.desktop");
 }
 if (process.platform === "darwin" && app.dock) {
   try {

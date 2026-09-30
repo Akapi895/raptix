@@ -684,7 +684,7 @@ def build_model_entry(model_name: str) -> dict[str, Any]:
             # The onboarding wizard (onboard.go) and setup docs write the
             # key as OLLAMA_CLOUD_API_KEY; the official Ollama convention is
             # OLLAMA_API_KEY. Accept either, preferring the namespaced
-            # _CLOUD_ form, so a user who followed `decepticon onboard`
+            # _CLOUD_ form, so a user who followed `raptix onboard`
             # authenticates instead of sending an empty Bearer token and
             # 401-ing on every turn — the "stuck in the Soundwave interview"
             # loop reported on Ollama Cloud.

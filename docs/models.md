@@ -55,7 +55,7 @@ Each agent runs at the tier suited to its workload:
 
 | Tier  | Agents                                                                                          |
 |-------|-------------------------------------------------------------------------------------------------|
-| HIGH  | `decepticon`, `exploit`, `exploiter`, `patcher`, `contract_auditor`, `analyst`, `vulnresearch`   |
+| HIGH  | `raptix`, `exploit`, `exploiter`, `patcher`, `contract_auditor`, `analyst`, `vulnresearch`   |
 | MID   | `detector`, `verifier`, `blue_cell`, `postexploit`, `ad_operator`, `cloud_hunter`, `reverser`, `phisher`, `mobile_operator`, `iot_operator`, `ics_operator`, `forensicator`, `supply_chain_operator` |
 | LOW   | `soundwave`, `recon`, `scanner`, `wireless_operator`, `osint_operator`                          |
 
@@ -71,14 +71,14 @@ For development / CI. Forces every agent to the cheapest tier (Haiku-class).
 
 ## Credentials inventory
 
-Your inventory is built at startup from environment variables, written by `decepticon onboard`.
+Your inventory is built at startup from environment variables, written by `raptix onboard`.
 
 ```bash
 # Priority order (first = preferred). When unset, the factory's built-in
 # `_DEFAULT_AUTH_PRIORITY` order applies (OAuth subscriptions ahead of their
 # paid per-token peers, hosted providers before local endpoints, with
 # unconfigured methods skipped at runtime). See `_DEFAULT_AUTH_PRIORITY` in
-# `decepticon/llm/factory.py` for the full ordered list.
+# `raptix/llm/factory.py` for the full ordered list.
 RAPTIX_AUTH_PRIORITY=anthropic_oauth,openai_api
 
 # Set true if you have an active Claude Code OAuth subscription
@@ -119,7 +119,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 | Agent (tier)     | Primary                       | Fallback |
 |------------------|-------------------------------|----------|
-| decepticon (HIGH)| `anthropic/claude-opus-4-7`   | —        |
+| raptix (HIGH)| `anthropic/claude-opus-4-7`   | —        |
 | detector (MID)   | `anthropic/claude-sonnet-4-6` | —        |
 | recon (LOW)      | `anthropic/claude-haiku-4-5`  | —        |
 
@@ -134,7 +134,7 @@ OPENAI_API_KEY=sk-...
 
 | Agent (tier)     | Primary               | Fallback |
 |------------------|------------------------|----------|
-| decepticon (HIGH)| `openai/gpt-5.5`      | —        |
+| raptix (HIGH)| `openai/gpt-5.5`      | —        |
 | detector (MID)   | `openai/gpt-5.4`      | —        |
 | recon (LOW)      | `openai/gpt-5-nano` | —        |
 
@@ -148,7 +148,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 | Agent (tier)     | Primary                  | Fallback                         |
 |------------------|---------------------------|----------------------------------|
-| decepticon (HIGH)| `auth/claude-opus-4-7`   | `anthropic/claude-opus-4-7`     |
+| raptix (HIGH)| `auth/claude-opus-4-7`   | `anthropic/claude-opus-4-7`     |
 | detector (MID)   | `auth/claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6`   |
 | recon (LOW)      | `auth/claude-haiku-4-5`  | `anthropic/claude-haiku-4-5`    |
 
@@ -164,7 +164,7 @@ OPENAI_API_KEY=sk-...
 
 | Agent (tier)     | Primary                       | Fallback                |
 |------------------|-------------------------------|-------------------------|
-| decepticon (HIGH)| `anthropic/claude-opus-4-7`   | `openai/gpt-5.5`        |
+| raptix (HIGH)| `anthropic/claude-opus-4-7`   | `openai/gpt-5.5`        |
 | detector (MID)   | `anthropic/claude-sonnet-4-6` | `openai/gpt-5.4`        |
 | recon (LOW)      | `anthropic/claude-haiku-4-5`  | `openai/gpt-5-nano`   |
 
@@ -180,7 +180,7 @@ OLLAMA_MODEL=qwen3-coder:30b
 
 | Agent (tier)     | Primary                          | Fallback |
 |------------------|----------------------------------|----------|
-| decepticon (HIGH)| `ollama_chat/qwen3-coder:30b`    | —        |
+| raptix (HIGH)| `ollama_chat/qwen3-coder:30b`    | —        |
 | detector (MID)   | `ollama_chat/qwen3-coder:30b`    | —        |
 | recon (LOW)      | `ollama_chat/qwen3-coder:30b`    | —        |
 
@@ -193,7 +193,7 @@ Raptix agents always emit tool calls.
 
 Two probes guard the wiring end-to-end:
 
-1. **`decepticon onboard`** — the wizard hits `/api/tags` and
+1. **`raptix onboard`** — the wizard hits `/api/tags` and
    `/api/show` on the host, filters to models that report `tools` in
    their capabilities, and presents only that list as the
    `OLLAMA_MODEL` choice. If Ollama is unreachable or has no
@@ -204,8 +204,8 @@ Two probes guard the wiring end-to-end:
    inside the container, the only place that can detect
    `OLLAMA_HOST=127.0.0.1`-only bindings (which look fine to the
    wizard's host probe but are invisible from the container). Every
-   diagnostic appears in `decepticon logs litellm` prefixed with
-   `[decepticon ollama]`.
+   diagnostic appears in `raptix logs litellm` prefixed with
+   `[raptix ollama]`.
 
 ### Local Ollama + cloud fallback
 
@@ -218,7 +218,7 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 | Agent (tier)     | Primary                          | Fallback                       |
 |------------------|----------------------------------|--------------------------------|
-| decepticon (HIGH)| `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-opus-4-7`    |
+| raptix (HIGH)| `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-opus-4-7`    |
 | detector (MID)   | `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-sonnet-4-6`  |
 | recon (LOW)      | `ollama_chat/qwen3-coder:30b`    | `anthropic/claude-haiku-4-5`   |
 
@@ -237,7 +237,7 @@ LLAMACPP_MODEL=qwen2.5-coder-7b-instruct-q4_k_m
 
 | Agent (tier)     | Primary                                                  | Fallback |
 |------------------|----------------------------------------------------------|----------|
-| decepticon (HIGH)| `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
+| raptix (HIGH)| `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
 | detector (MID)   | `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
 | recon (LOW)      | `llamacpp/qwen2.5-coder-7b-instruct-q4_k_m`              | —        |
 
@@ -271,7 +271,7 @@ MINIMAX_API_KEY=eyJ...
 
 | Agent (tier)     | Primary                | Notes                                     |
 |------------------|------------------------|-------------------------------------------|
-| decepticon (HIGH)| `minimax/MiniMax-M3` | OK                                        |
+| raptix (HIGH)| `minimax/MiniMax-M3` | OK                                        |
 | detector (MID)   | `minimax/MiniMax-M2.7-highspeed` | OK                                        |
 | recon (LOW)      | *(role unassigned)*    | MiniMax has no LOW model and no fallback method |
 
@@ -305,7 +305,7 @@ Configuration: `config/litellm.yaml`. Authentication: `LITELLM_MASTER_KEY` in `.
 To wire in a new provider model:
 
 1. Add a `model_list` entry to `config/litellm.yaml` with the LiteLLM `provider/model` identifier and the env var that holds the key.
-2. Add the model identifier to the appropriate cell of `METHOD_MODELS` in `decepticon_core.types.llm`.
+2. Add the model identifier to the appropriate cell of `METHOD_MODELS` in `raptix_core.types.llm`.
 3. If introducing a new AuthMethod, also add it to `AuthMethod`, the factory's `_API_METHOD_ENV` map, and the onboard wizard's option list.
 
 Tests in `tests/unit/llm/test_models.py` will catch dropped tiers or missing matrix entries.
@@ -324,7 +324,7 @@ startup:
 | `RAPTIX_LITELLM_MODELS=<a,b,c>` | Bulk register multiple ids without editing YAML. |
 | `CUSTOM_OPENAI_API_BASE` + `CUSTOM_OPENAI_API_KEY` | OpenAI-compatible gateway. Use `custom/<model>` in the override env. |
 
-The proxy logs `[decepticon] registered N dynamic model route(s)` at
+The proxy logs `[raptix] registered N dynamic model route(s)` at
 startup so you can confirm what got picked up.
 
 ---

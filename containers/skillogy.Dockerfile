@@ -44,7 +44,7 @@ USER skillogy
 # Bind / port
 ENV SKILLOGY_REST_PORT=9100
 
-# Neo4j connection — overridable per environment. The decepticon-net
+# Neo4j connection — overridable per environment. The raptix-net
 # compose hostname is ``neo4j``; standalone tests may point this at
 # ``bolt://localhost:7687``.
 ENV SKILLOGY_NEO4J_URI=bolt://neo4j:7687

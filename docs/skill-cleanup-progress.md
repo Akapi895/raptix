@@ -28,7 +28,7 @@ Final scan (2026-06-03 after Phase 0 cleanup):
 | `standard/analyst/` | — | 57 | pending | — | largest batch; mostly non-offensive (analyst/) so likely missing required fields, not attribution |
 | `standard/exploit/` | — | 35 | pending | — | mixed offensive, mostly attribution |
 | `standard/reverser/` | — | 17 | pending | — | alias → `reverse-engineering` rewrite required |
-| `standard/decepticon/` | — | 14 | pending | — | core orchestrator skills |
+| `standard/raptix/` | — | 14 | pending | — | core orchestrator skills |
 | `standard/contracts/` | — | 11 | pending | — | alias → `smart-contracts` rewrite required |
 | `standard/soundwave/` | — | 10 | pending | — | template skills (no MITRE); may need `kind=reporting` path move OR upstream_ref |
 | `standard/cloud/` | — | 10 | pending | — | — |

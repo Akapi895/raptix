@@ -34,7 +34,7 @@ const (
 	// AckFileName is the zero-byte sentinel inside RAPTIX_HOME.
 	// Presence alone is the signal — contents are intentionally empty
 	// so an operator can suppress the prompt forever with
-	// `touch ~/.decepticon/.starred` and re-enable it with `rm` of the
+	// `touch ~/.raptix/.starred` and re-enable it with `rm` of the
 	// same path.
 	AckFileName = ".starred"
 

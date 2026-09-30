@@ -899,7 +899,7 @@ class MHBenchProvider(BaseBenchmarkProvider):
     def _stage_ssh_key(self, config_abs: Path, challenge_id: str) -> Path:
         """Copy MHBench's SSH private key into the per-challenge workspace.
 
-        The sandbox container bind-mounts ``~/.decepticon/workspace/`` to
+        The sandbox container bind-mounts ``~/.raptix/workspace/`` to
         ``/workspace/`` so the agent reads the key at e.g.
         ``/workspace/benchmark-mhbench/chain2hosts/perry_key``.
         """
@@ -1098,7 +1098,7 @@ class _PostSetupError(RuntimeError):
 
 
 def _workspace_root() -> Path:
-    return (Path.home() / ".decepticon" / "workspace").resolve()
+    return (Path.home() / ".raptix" / "workspace").resolve()
 
 
 def _expected_flag(challenge_id: str) -> str:

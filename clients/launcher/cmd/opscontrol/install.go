@@ -19,8 +19,8 @@ var installCmd = &cobra.Command{
 including WSL2 with systemd=true) or a launchd LaunchAgent (macOS).
 
 After install the daemon survives reboots, restarts automatically on
-crash, and runs independently of the launcher — ` + "`decepticon start`" + ` /
-` + "`decepticon stop`" + ` only manage the compose stack, not the daemon.
+crash, and runs independently of the launcher — ` + "`raptix start`" + ` /
+` + "`raptix stop`" + ` only manage the compose stack, not the daemon.
 
 When the host does not have a recognized init system (Windows, WSL2
 without systemd, Linux without per-user systemd), this command exits
@@ -33,7 +33,7 @@ func runInstall(_ *cobra.Command, _ []string) error {
 	return EnsureInstalled()
 }
 
-// EnsureInstalled is the shared entry point used by `decepticon
+// EnsureInstalled is the shared entry point used by `raptix
 // opscontrol install` and by the onboard wizard's post-config hook.
 // Idempotent: re-running rewrites the unit (so a launcher upgrade
 // updates the ExecStart path), then re-enables and restarts.
@@ -58,7 +58,7 @@ func EnsureInstalled() error {
 	// namespace if the path does not exist yet. Pre-create the home
 	// directory and its run/ subdirectory so the very first start
 	// after install succeeds. (Onboard normally creates these too;
-	// this is the standalone `decepticon opscontrol install` path.)
+	// this is the standalone `raptix opscontrol install` path.)
 	homePath := config.RaptixHome()
 	if err := os.MkdirAll(homePath, 0o700); err != nil {
 		return fmt.Errorf("opscontrol: pre-create home: %w", err)

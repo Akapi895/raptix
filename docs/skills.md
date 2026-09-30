@@ -40,7 +40,7 @@ Available Skills:
 
 ## Skill Categories
 
-Skills ship as package data under `decepticon/skills/` and are served in-process
+Skills ship as package data under `raptix/skills/` and are served in-process
 at the virtual prefix `/skills/`. The tree has three roots:
 
 - `/skills/standard/<dir>/` — built-in OSS roles. The default source list for a
@@ -66,7 +66,7 @@ at the virtual prefix `/skills/`. The tree has three roots:
 | `/skills/standard/phisher/` | Phisher | Lure deconfliction and phishing operations |
 | `/skills/standard/mobile/` | MobileOperator | Android / iOS application attacks |
 | `/skills/standard/wireless/` | WirelessOperator | Wireless / RF attacks |
-| `/skills/standard/decepticon/` | Raptix | Core orchestration procedures (engagement lifecycle, kill-chain analysis, final report) |
+| `/skills/standard/raptix/` | Raptix | Core orchestration procedures (engagement lifecycle, kill-chain analysis, final report) |
 | `/skills/plugins/scanner/` | Scanner | Vulnerability scanning, automated tool integration |
 | `/skills/plugins/exploiter/` | Exploiter | PoC generation, CVE reproduction, weaponization |
 | `/skills/plugins/verifier/` | Verifier | Multi-method vulnerability confirmation |
@@ -245,7 +245,7 @@ plugins (scanner, exploiter, detector, verifier, patcher) additionally pull
 
 | Agent (role) | Skill sources |
 |-------|--------------|
-| Raptix (`decepticon`) | `/skills/standard/decepticon/`, `/skills/shared/` |
+| Raptix (`raptix`) | `/skills/standard/raptix/`, `/skills/shared/` |
 | Soundwave (`soundwave`) | `/skills/standard/soundwave/`, `/skills/shared/` |
 | Recon (`recon`) | `/skills/standard/recon/`, `/skills/shared/` |
 | Exploit (`exploit`) | `/skills/standard/exploit/`, `/skills/shared/` |
@@ -268,7 +268,7 @@ plugins (scanner, exploiter, detector, verifier, patcher) additionally pull
 `/skills/shared/` (OPSEC, defense evasion, workflow) is appended to every standard
 role's default source list — including Soundwave, which uses the same
 `skills_sources_for(role)` fallback. The `SKILLS` middleware slot is part of the base
-slot set (`decepticon_core/contracts/slots.py`), so every role carries it.
+slot set (`raptix_core/contracts/slots.py`), so every role carries it.
 
 When `BENCHMARK_MODE=1`, `/skills/benchmark/` is appended to a role's sources
 (`agents/_benchmark_mode.py`).

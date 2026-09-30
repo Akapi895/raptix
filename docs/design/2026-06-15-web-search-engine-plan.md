@@ -59,7 +59,7 @@ web_search(query) / web_fetch(url)   [management process — the @tool wrapper]
   │     (web_search: provider-allowlisted + OSINT target-exempt + audited;
   │      web_fetch: target-gated)
   │  2. dispatch into sandbox via the bash surface:
-  │     execute_tmux("python3 -m decepticon_web <verb> <args> --json")
+  │     execute_tmux("python3 -m raptix_web <verb> <args> --json")
   ▼
 [sandbox container, sandbox-net]
   engine: probe → detect → grid → (browser fallback) → validate
@@ -79,8 +79,8 @@ the authoritative sandbox-edge nftables egress allowlist. Stealth/browser tiers
 can only reach in-scope, allowlisted destinations.
 
 Open question for the ADR: the engine ships as a sandbox-side package. Decide its
-home — `containers/sandbox/` payload vs a `decepticon` subpackage copied into the
-image. Leaning: a self-contained `decepticon/sandbox_web/` engine package
+home — `containers/sandbox/` payload vs a `raptix` subpackage copied into the
+image. Leaning: a self-contained `raptix/sandbox_web/` engine package
 installed into the sandbox image (testable in-repo, shipped to sandbox).
 
 ## 4. Module layout (proposed)
@@ -89,7 +89,7 @@ installed into the sandbox image (testable in-repo, shipped to sandbox).
 packages/raptix/raptix/
   sandbox_web/                 # the engine — runs INSIDE the sandbox
     __init__.py                # fetch() public contract
-    __main__.py                # `python3 -m decepticon_web <verb> ...` CLI (JSON out)
+    __main__.py                # `python3 -m raptix_web <verb> ...` CLI (JSON out)
     validators.py              # Verdict + 4-layer validate()  [port]
     waf_detector.py            # ranking detect() + profile loader  [port]
     waf_profiles.yaml          # WAF product profiles  [port, site-agnostic]

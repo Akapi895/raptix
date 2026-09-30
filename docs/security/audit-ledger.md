@@ -102,7 +102,7 @@ silently.
   LangGraph orchestrator runs one event loop per engagement workspace;
   the append-then-fsync is atomic per record on POSIX append-only files,
   and on Windows for buffer sizes under 4096 bytes.
-- The **`decepticon audit verify` CLI hook is a TODO** — call
+- The **`raptix audit verify` CLI hook is a TODO** — call
   `verify_ledger` directly until it lands.
 
 ## See also
@@ -111,5 +111,5 @@ silently.
   these records and the decision codes they carry.
 - [Security Controls](./security-controls.md) — the runtime-guard
   knob/default table, including the audit env vars.
-- [Threat Model](./decepticon-threat-model.md) — the ledger as the
+- [Threat Model](./raptix-threat-model.md) — the ledger as the
   repudiation control for the sandbox and orchestrator assets.

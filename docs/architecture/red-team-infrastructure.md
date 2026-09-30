@@ -99,7 +99,7 @@ Raptix은 통제된 Docker 환경에서 운영되므로 OPSEC 기반 인프라 �
 graph TB
     subgraph HostMachine["Host Machine"]
 
-        subgraph RaptixNet["decepticon-net (인프라 네트워크)"]
+        subgraph RaptixNet["raptix-net (인프라 네트워크)"]
             CLI["Ink CLI<br/>(사용자 인터페이스)"]
             LG["LangGraph Server :2024<br/>(에이전트 오케스트레이션)"]
             LLM["LiteLLM :4000<br/>(LLM API 게이트웨이)"]
@@ -146,7 +146,7 @@ graph TB
 
 ```mermaid
 graph LR
-    subgraph decepticon-net
+    subgraph raptix-net
         A[LiteLLM :4000]
         B[PostgreSQL :5432]
         C[LangGraph :2024]
@@ -163,11 +163,11 @@ graph LR
     E -->|sliver-client<br/>gRPC| F
     F <-->|beacon| T
 
-    style decepticon-net fill:#1a1a2e,stroke:#e94560,color:#fff
+    style raptix-net fill:#1a1a2e,stroke:#e94560,color:#fff
     style sandbox-net fill:#0f3460,stroke:#e94560,color:#fff
 ```
 
-- **decepticon-net**: 인프라 서비스 전용. 외부 포트는 `127.0.0.1`에만 바인딩
+- **raptix-net**: 인프라 서비스 전용. 외부 포트는 `127.0.0.1`에만 바인딩
 - **sandbox-net**: 공격 환경 전용. 인프라 서비스에 대한 네트워크 접근 불가
 - **연결 방식**: LangGraph → Docker socket(RO) → `docker exec` → Kali sandbox
 - **C2 통신**: Kali의 `sliver-client` → C2 컨테이너 gRPC(:31337) → 비콘 관리
@@ -392,7 +392,7 @@ sequenceDiagram
 
 | 항목 | 값 |
 |------|-----|
-| 이미지 | `decepticon-sandbox` (Kali rolling) |
+| 이미지 | `raptix-sandbox` (Kali rolling) |
 | 메모리 | 4GB |
 | CPU | 2코어 |
 | PID 제한 | 1024 |
@@ -414,7 +414,7 @@ sequenceDiagram
 
 | 항목 | 값 |
 |------|-----|
-| 이미지 | `decepticon-c2-sliver` (Kali rolling) |
+| 이미지 | `raptix-c2-sliver` (Kali rolling) |
 | Profile | `c2-sliver` |
 | 메모리 | 2GB |
 | CPU | 1코어 |
@@ -474,7 +474,7 @@ flowchart TB
         TARGET
     end
 
-    subgraph decepticon-net
+    subgraph raptix-net
         CLI
         LG
         LITELLM
@@ -486,9 +486,9 @@ flowchart TB
 
 | 서비스 | 포트 | 바인딩 | 네트워크 |
 |--------|------|--------|----------|
-| LangGraph API | 2024 | 127.0.0.1 | decepticon-net |
-| LiteLLM Proxy | 4000 | 127.0.0.1 | decepticon-net |
-| PostgreSQL | 5432 | 127.0.0.1 | decepticon-net |
+| LangGraph API | 2024 | 127.0.0.1 | raptix-net |
+| LiteLLM Proxy | 4000 | 127.0.0.1 | raptix-net |
+| PostgreSQL | 5432 | 127.0.0.1 | raptix-net |
 | Sliver gRPC (operator) | 31337 | sandbox 내부 | sandbox-net |
 | Sliver HTTPS Listener | 443 | sandbox 내부 | sandbox-net |
 | Sliver DNS Listener | 53 | sandbox 내부 | sandbox-net |

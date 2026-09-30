@@ -67,7 +67,7 @@ curl -sS "http://target/avatar?file=../../../../etc/passwd"
 ### Insecure deserialization
 
 Write a tmp sentinel file from the gadget payload, success pattern =
-sentinel file exists after request (use `ls /tmp/decepticon-sentinel`).
+sentinel file exists after request (use `ls /tmp/raptix-sentinel`).
 
 ## CVSS vector cheat-sheet
 

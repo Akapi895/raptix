@@ -29,7 +29,7 @@ import (
 const AssistantSoundwave = "soundwave"
 
 // AssistantRaptix drives kill-chain execution against an existing engagement.
-const AssistantRaptix = "decepticon"
+const AssistantRaptix = "raptix"
 
 // Slug regex: lowercase alphanumeric with internal hyphens, 3-64 chars.
 var slugRe = regexp.MustCompile(`^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$`)
@@ -244,7 +244,7 @@ func (m *pickerModel) resizeList() {
 func (m pickerModel) renderConfirmOverlay() string {
 	body := lipgloss.JoinVertical(lipgloss.Left,
 		confirmTextStyle.Render(fmt.Sprintf("Permanently delete '%s'?", m.deleteTarget)),
-		confirmHintStyle.Render("Removes ~/.decepticon/workspace/"+m.deleteTarget+"/ and all contents."),
+		confirmHintStyle.Render("Removes ~/.raptix/workspace/"+m.deleteTarget+"/ and all contents."),
 		confirmHintStyle.Render("Press [y] to confirm, [n] / [esc] to cancel."),
 	)
 	return confirmStyle.Render(body)

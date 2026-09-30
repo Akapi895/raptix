@@ -28,18 +28,18 @@ test("resolveDesktopConfig defaults to the installed Raptix home and WEB_PORT in
   );
 
   assert.equal(cfg.dashboardUrl, "http://localhost:3999");
-  assert.equal(cfg.decepticonHome, path.join("/home/alice", ".decepticon"));
-  assert.equal(cfg.composeFile, path.join("/home/alice", ".decepticon", "docker-compose.yml"));
-  assert.equal(cfg.envFile, path.join("/home/alice", ".decepticon", ".env"));
-  assert.equal(cfg.webContainer, "decepticon-web");
-  assert.equal(cfg.project, "decepticon");
+  assert.equal(cfg.raptixHome, path.join("/home/alice", ".raptix"));
+  assert.equal(cfg.composeFile, path.join("/home/alice", ".raptix", "docker-compose.yml"));
+  assert.equal(cfg.envFile, path.join("/home/alice", ".raptix", ".env"));
+  assert.equal(cfg.webContainer, "raptix-web");
+  assert.equal(cfg.project, "raptix");
   assert.equal(cfg.isCloud, false);
   assert.equal(cfg.mode, "local");
 });
 
 test("resolveDesktopConfig auto mode uses cloud when local install is missing", () => {
   const cfg = resolveDesktopConfig(
-    { RAPTIX_HOME: "/tmp/decepticon-missing-install" },
+    { RAPTIX_HOME: "/tmp/raptix-missing-install" },
     { homedir: () => "/unused", platform: "linux" },
     () => {
       throw new Error("no env");
@@ -53,7 +53,7 @@ test("resolveDesktopConfig auto mode uses cloud when local install is missing", 
 });
 
 test("resolveDesktopConfig auto mode uses local when install config exists", () => {
-  const home = "/opt/decepticon";
+  const home = "/opt/raptix";
   const existing = new Set([
     path.join(home, "docker-compose.yml"),
     path.join(home, ".env"),
@@ -81,7 +81,7 @@ test("resolveDesktopConfig cloud mode always targets the hosted app", () => {
 
 test("resolveDesktopConfig reads WEB_PORT from the installed env file", () => {
   const cfg = resolveDesktopConfig(
-    { RAPTIX_HOME: "/opt/decepticon", RAPTIX_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/opt/raptix", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
     () => "POSTGRES_PASSWORD=secret\nWEB_PORT=4310\n",
   );
@@ -101,33 +101,33 @@ test("resolveDesktopConfig prefers explicit Compose project", () => {
 
 test("readInstalledVersion pins Compose to the installed CLI version", () => {
   const cfg = resolveDesktopConfig(
-    { RAPTIX_HOME: "/opt/decepticon", RAPTIX_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/opt/raptix", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
   );
 
-  assert.equal(cfg.versionFile, path.join("/opt/decepticon", ".version"));
+  assert.equal(cfg.versionFile, path.join("/opt/raptix", ".version"));
   assert.equal(readInstalledVersion(cfg, () => "v1.1.23\n"), "1.1.23");
   assert.equal(readInstalledVersion(cfg, () => ""), "");
   assert.equal(
     resolveDesktopConfig({ RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" }).webContainer,
-    "decepticon-lab-web",
+    "raptix-lab-web",
   );
 });
 
 test("composeUpArgs starts only the dynamic web profile", () => {
   const cfg = resolveDesktopConfig(
-    { RAPTIX_HOME: "/opt/decepticon", RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/opt/raptix", RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
   );
 
   assert.deepEqual(composeUpArgs(cfg), [
     "compose",
     "-p",
-    "decepticon-lab",
+    "raptix-lab",
     "-f",
-    path.join("/opt/decepticon", "docker-compose.yml"),
+    path.join("/opt/raptix", "docker-compose.yml"),
     "--env-file",
-    path.join("/opt/decepticon", ".env"),
+    path.join("/opt/raptix", ".env"),
     "--profile",
     "web",
     "up",
@@ -159,13 +159,13 @@ test("composeProcessEnv preserves explicit stack ownership", () => {
 
 test("missingConfigFiles catches incomplete desktop setup before Compose runs", () => {
   const cfg = resolveDesktopConfig(
-    { RAPTIX_HOME: "/tmp/decepticon-desktop-smoke", RAPTIX_DESKTOP_MODE: "local" },
+    { RAPTIX_HOME: "/tmp/raptix-desktop-smoke", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
   );
-  const existing = new Set([path.join("/tmp/decepticon-desktop-smoke", "docker-compose.yml")]);
+  const existing = new Set([path.join("/tmp/raptix-desktop-smoke", "docker-compose.yml")]);
 
   assert.deepEqual(missingConfigFiles(cfg, (file) => existing.has(file)), [
-    ["environment file", path.join("/tmp/decepticon-desktop-smoke", ".env")],
+    ["environment file", path.join("/tmp/raptix-desktop-smoke", ".env")],
   ]);
 });
 
@@ -226,7 +226,7 @@ test("canOpenExternal allows web URLs", () => {
 
 test("canOpenExternal rejects non-web protocols", () => {
   assert.equal(canOpenExternal("file:///etc/passwd"), false);
-  assert.equal(canOpenExternal("decepticon://run"), false);
+  assert.equal(canOpenExternal("raptix://run"), false);
   assert.equal(canOpenExternal("not a url"), false);
 });
 
@@ -256,8 +256,8 @@ test("setupGuide gives OS-specific install and onboarding commands", () => {
   assert.match(setupGuide("linux").installCommand, /curl/);
   assert.match(setupGuide("darwin").installCommand, /curl/);
   assert.match(setupGuide("win32").installCommand, /install\.ps1/);
-  assert.equal(setupGuide("linux").onboardCommand, "decepticon onboard");
-  assert.equal(setupGuide("linux").apiKeyCommand, "decepticon onboard --reset");
+  assert.equal(setupGuide("linux").onboardCommand, "raptix onboard");
+  assert.equal(setupGuide("linux").apiKeyCommand, "raptix onboard --reset");
   assert.equal(setupGuide("linux").cloudAppUrl, CLOUD_APP_URL);
 });
 
@@ -314,7 +314,7 @@ test("statusHtml renders product branding and cloud actions", () => {
     {
       dashboardUrl: CLOUD_APP_URL,
       cloudAppUrl: CLOUD_APP_URL,
-      decepticonHome: "/home/alice/.decepticon",
+      raptixHome: "/home/alice/.raptix",
       iconDataUrl: "data:image/png;base64,chameleon",
       installedVersion: "1.1.23",
       isCloud: true,

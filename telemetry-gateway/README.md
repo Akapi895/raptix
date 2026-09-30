@@ -11,7 +11,7 @@ cannot, and to hold the backend secret so the OSS client never has to.
 > forward + rate-limit) **plus** a Python client that emits to it: consent
 > resolution, sanitizer, batch exporter, and a sink wired into
 > `EventLogMiddleware` (`packages/raptix/raptix/telemetry/`), the
-> `decepticon-cli telemetry` subcommand, and `TELEMETRY.md`. Remaining: MITRE
+> `raptix-cli telemetry` subcommand, and `TELEMETRY.md`. Remaining: MITRE
 > tagging at the agent layer (the heatmap source) and production hardening.
 
 ## Why a gateway (and not client → a third-party analytics backend directly)
@@ -89,6 +89,6 @@ change the other (a generator can replace the hand-mirror later).
 ## Next steps (not in this PoC)
 
 1. Python client emitter — reuse `event_log.py` shapes, POST Tier-A batches.
-2. Consent CLI — `decepticon telemetry status|off|preview`, honor `DO_NOT_TRACK`.
+2. Consent CLI — `raptix telemetry status|off|preview`, honor `DO_NOT_TRACK`.
 3. `TELEMETRY.md` — every field, the redaction rules, the endpoint.
 4. Tier-B classification/redaction behind `extended` consent.

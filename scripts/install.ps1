@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────
-# Decepticon — Windows installer (PowerShell)
+# Raptix — Windows installer (PowerShell)
 #
 # The Windows-native counterpart of scripts/install.sh. Windows 10/11 ship
 # Windows PowerShell 5.1; this script also runs unchanged under PowerShell 7+.
@@ -9,7 +9,7 @@
 #
 # Environment variables:
 #   RAPTIX_VERSION   — install a specific version (default: latest)
-#   RAPTIX_HOME      — install directory (default: %USERPROFILE%\.decepticon)
+#   RAPTIX_HOME      — install directory (default: %USERPROFILE%\.raptix)
 #   SKIP_PULL            — set to "true" to skip the Docker image pull
 #   RAPTIX_SKIP_VERIFY — set to "1" to opt out of checksum verification
 # ─────────────────────────────────────────────────────────────────────
@@ -17,7 +17,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$Repo        = 'BitterSecurity/Decepticon'
+$Repo        = 'BitterSecurity/Raptix'
 $Branch      = if ($env:BRANCH) { $env:BRANCH } else { 'main' }
 $RawBase     = "https://raw.githubusercontent.com/$Repo/$Branch"
 $ReleaseBase = "https://github.com/$Repo/releases/download"
@@ -68,7 +68,7 @@ function Resolve-Version {
     Write-Info 'Fetching latest version...'
     try {
         $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" `
-            -Headers @{ 'User-Agent' = 'decepticon-installer' }
+            -Headers @{ 'User-Agent' = 'raptix-installer' }
         return ($rel.tag_name -replace '^v', '')
     } catch {
         Write-Err 'Could not resolve a release version automatically.'
@@ -102,7 +102,7 @@ function Assert-Sha256 {
 # ── Main ─────────────────────────────────────────────────────────────
 function Main {
     Write-Host ''
-    Write-Host 'Decepticon' -ForegroundColor White -NoNewline
+    Write-Host 'Raptix' -ForegroundColor White -NoNewline
     Write-Host ' - Windows Installer'
     Write-Host ''
 
@@ -110,10 +110,10 @@ function Main {
 
     $version    = Resolve-Version
     $arch       = Get-Arch
-    $installDir = if ($env:RAPTIX_HOME) { $env:RAPTIX_HOME } else { Join-Path $env:USERPROFILE '.decepticon' }
+    $installDir = if ($env:RAPTIX_HOME) { $env:RAPTIX_HOME } else { Join-Path $env:USERPROFILE '.raptix' }
     $binDir     = Join-Path $installDir 'bin'
 
-    Write-Info "Installing Decepticon $version  (windows/$arch)"
+    Write-Info "Installing Raptix $version  (windows/$arch)"
     Write-Info "Directory: $installDir"
     Write-Host ''
 
@@ -149,8 +149,8 @@ function Main {
     Write-Success 'Configuration files downloaded.'
 
     # ── Launcher binary ──────────────────────────────────────────────
-    $binaryName = "decepticon-windows-$arch.exe"
-    $binaryPath = Join-Path $binDir 'decepticon.exe'
+    $binaryName = "raptix-windows-$arch.exe"
+    $binaryPath = Join-Path $binDir 'raptix.exe'
     Write-Info "Downloading launcher binary ($binaryName)..."
     try {
         Invoke-WebRequest -Uri "$ReleaseBase/v$version/$binaryName" -OutFile $binaryPath
@@ -159,7 +159,7 @@ function Main {
         exit 1
     }
     if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
-        $sumsPath = Join-Path $env:TEMP 'decepticon-checksums.txt'
+        $sumsPath = Join-Path $env:TEMP 'raptix-checksums.txt'
         try {
             Invoke-WebRequest -Uri "$ReleaseBase/v$version/checksums.txt" -OutFile $sumsPath
             $expected = $null
@@ -193,17 +193,17 @@ function Main {
         Push-Location $installDir
         $env:RAPTIX_VERSION = $version
         $env:RAPTIX_HOME    = $installDir
-        try { docker compose --profile cli pull } catch { Write-Warn 'Warning: failed to pull some images - run "decepticon update" later.' }
+        try { docker compose --profile cli pull } catch { Write-Warn 'Warning: failed to pull some images - run "raptix update" later.' }
         Pop-Location
     }
 
     Write-Host ''
     Write-Success '─────────────────────────────────────────────'
-    Write-Success '  Decepticon installed successfully!'
+    Write-Success '  Raptix installed successfully!'
     Write-Success '─────────────────────────────────────────────'
     Write-Host ''
-    Write-Host '  1. Configure your API keys:  ' -NoNewline; Write-Host 'decepticon onboard' -ForegroundColor White
-    Write-Host '  2. Start Decepticon:         ' -NoNewline; Write-Host 'decepticon' -ForegroundColor White
+    Write-Host '  1. Configure your API keys:  ' -NoNewline; Write-Host 'raptix onboard' -ForegroundColor White
+    Write-Host '  2. Start Raptix:         ' -NoNewline; Write-Host 'raptix' -ForegroundColor White
     Write-Host ''
     Write-Info '  Open a new terminal so the updated PATH takes effect.'
     Write-Host ''

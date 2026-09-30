@@ -7,7 +7,7 @@ import (
 
 // ServiceManager abstracts the OS-native init system that owns the
 // opscontrol daemon's lifecycle in Alt A (ADR-0006 supervision
-// addendum). The launcher's `decepticon start` / `decepticon stop`
+// addendum). The launcher's `raptix start` / `raptix stop`
 // flows defer to whichever ServiceManager is active on the host;
 // when none is, they fall back to the pre-Alt-A pattern of spawning
 // the daemon as a launcher child.
@@ -61,14 +61,14 @@ type ServiceManager interface {
 }
 
 // InstallSpec carries every value the manager needs to template the
-// unit file. Built once by `decepticon opscontrol install` from the
+// unit file. Built once by `raptix opscontrol install` from the
 // launcher's resolved config (binary path via os.Executable(), home
 // path via config.RaptixHome()).
 type InstallSpec struct {
-	// BinaryPath is the absolute path of the `decepticon` binary the
+	// BinaryPath is the absolute path of the `raptix` binary the
 	// service will exec. Resolved via os.Executable() so the service
 	// targets whichever copy the user just installed (homebrew, deb,
-	// /usr/local/bin/decepticon, ~/.local/bin/decepticon).
+	// /usr/local/bin/raptix, ~/.local/bin/raptix).
 	BinaryPath string
 
 	// HomePath is the absolute $RAPTIX_HOME directory. Templated
@@ -107,7 +107,7 @@ func DetectServiceManager() ServiceManager {
 }
 
 // ErrNotInstalled is returned by Start when the unit is not present.
-var ErrNotInstalled = errors.New("opscontrol: service is not installed; run `decepticon opscontrol install` first")
+var ErrNotInstalled = errors.New("opscontrol: service is not installed; run `raptix opscontrol install` first")
 
 // noopManager is the fallback for environments without a recognized
 // init system. Every method is a benign no-op (or returns false) so

@@ -7,7 +7,7 @@ export const DASHBOARD_READY_DELAY_MS = 1500;
 
 /** Hosted product app (same UI as https://app.decepticon.red). */
 export const CLOUD_APP_URL = "https://app.decepticon.red";
-export const SESSION_PARTITION = "persist:decepticon-desktop";
+export const SESSION_PARTITION = "persist:raptix-desktop";
 
 /** OAuth / IdP hosts that must stay in-app so session cookies land in Electron. */
 export const AUTH_HOST_SUFFIXES = [
@@ -71,25 +71,25 @@ export function isAuthHost(hostname) {
  * - auto  — local when install config exists, otherwise cloud (default)
  */
 export function resolveDesktopConfig(env = process.env, host = os, readFile = fs.readFileSync, exists = fs.existsSync) {
-  const decepticonHome = env.RAPTIX_HOME || path.join(host.homedir(), ".decepticon");
-  const envFile = env.RAPTIX_COMPOSE_ENV_FILE || path.join(decepticonHome, ".env");
+  const raptixHome = env.RAPTIX_HOME || path.join(host.homedir(), ".raptix");
+  const envFile = env.RAPTIX_COMPOSE_ENV_FILE || path.join(raptixHome, ".env");
   const webPort = env.WEB_PORT?.trim() || readInstalledWebPort(envFile, readFile) || "3000";
   const stackName = env.RAPTIX_STACK_NAME?.trim() || "";
   const project = env.RAPTIX_COMPOSE_PROJECT?.trim()
-    || (stackName ? `decepticon-${stackName}` : "decepticon");
-  const versionFile = env.RAPTIX_VERSION_FILE || path.join(decepticonHome, ".version");
+    || (stackName ? `raptix-${stackName}` : "raptix");
+  const versionFile = env.RAPTIX_VERSION_FILE || path.join(raptixHome, ".version");
   const localDashboardUrl = `http://localhost:${webPort}`;
   const explicitUrl = env.RAPTIX_DESKTOP_URL?.trim() || "";
   const modeRaw = (env.RAPTIX_DESKTOP_MODE || "auto").trim().toLowerCase();
   const mode = ["cloud", "local", "auto"].includes(modeRaw) ? modeRaw : "auto";
 
   const provisional = {
-    decepticonHome,
-    composeFile: env.RAPTIX_COMPOSE_FILE || path.join(decepticonHome, "docker-compose.yml"),
+    raptixHome,
+    composeFile: env.RAPTIX_COMPOSE_FILE || path.join(raptixHome, "docker-compose.yml"),
     envFile,
     versionFile,
     project,
-    webContainer: stackName ? `decepticon-${stackName}-web` : "decepticon-web",
+    webContainer: stackName ? `raptix-${stackName}-web` : "raptix-web",
   };
 
   let dashboardUrl = explicitUrl;
@@ -109,7 +109,7 @@ export function resolveDesktopConfig(env = process.env, host = os, readFile = fs
   }
 
   const cookiesPath = env.RAPTIX_DESKTOP_COOKIES?.trim()
-    || path.join(decepticonHome, "desktop-cookies.txt");
+    || path.join(raptixHome, "desktop-cookies.txt");
 
   return {
     ...provisional,
@@ -152,12 +152,12 @@ export function setupGuide(platform = os.platform()) {
   const installCommand = platform === "win32"
     ? "winget install Docker.DockerDesktop; iwr -useb https://decepticon.red/install.ps1 | iex"
     : "curl -fsSL https://decepticon.red/install.sh | bash";
-  const onboardCommand = "decepticon onboard";
+  const onboardCommand = "raptix onboard";
   return {
     platform,
     installCommand,
     onboardCommand,
-    apiKeyCommand: "decepticon onboard --reset",
+    apiKeyCommand: "raptix onboard --reset",
     downloadUrl: "https://github.com/Akapi895/raptix/releases/latest",
     docsUrl: "https://docs.decepticon.red",
     cloudAppUrl: CLOUD_APP_URL,

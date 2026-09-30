@@ -1,5 +1,5 @@
 #!/bin/sh
-# Entrypoint for decepticon-web container.
+# Entrypoint for raptix-web container.
 #
 # Process model:
 #   PID 1  — this script (trap handler, keeps container alive)

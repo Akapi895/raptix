@@ -56,7 +56,7 @@ func stackSuffix() string {
 }
 
 // HostSocketPath returns the host-side path of the opscontrol UDS.
-// ADR-0006 §1' specifies /var/run/decepticon-ops.sock for the
+// ADR-0006 §1' specifies /var/run/raptix-ops.sock for the
 // container-internal mount; the host path is rooted under
 // $RAPTIX_HOME so rootless / WSL2 / Mac users do not need write
 // access to /var/run. Compose maps the host path → the ADR-mandated
@@ -73,11 +73,11 @@ func HostSocketPath() string {
 // langgraph container. The Python OpsControlClient defaults to it.
 // This path is stack-agnostic — each stack gets its own langgraph
 // container, so the in-container path can stay constant.
-const ContainerSocketPath = "/var/run/decepticon-ops.sock"
+const ContainerSocketPath = "/var/run/raptix-ops.sock"
 
 // PIDFilePath returns the location of the daemon's PID file. Used by
-// `decepticon start` to detect whether a daemon is already running
-// and by `decepticon stop` to send SIGTERM.
+// `raptix start` to detect whether a daemon is already running
+// and by `raptix stop` to send SIGTERM.
 //
 // Stack-scoped form: $RAPTIX_HOME/run/opscontrol.stack2.pid
 func PIDFilePath() string {
@@ -93,20 +93,20 @@ func EnsureRunDir() error {
 
 // ServiceUnitName returns the OS-native service identifier for the
 // current stack. systemd uses it as the .service basename; launchd
-// uses it as the label. Stack-scoped form: "decepticon-opscontrol-stack2".
+// uses it as the label. Stack-scoped form: "raptix-opscontrol-stack2".
 func ServiceUnitName() string {
 	suffix := StackName()
 	if suffix == "" {
-		return "decepticon-opscontrol"
+		return "raptix-opscontrol"
 	}
-	return "decepticon-opscontrol-" + suffix
+	return "raptix-opscontrol-" + suffix
 }
 
 // ComposeProjectEnv is the explicit override env var. Setting it pins
 // both the launcher's and the daemon's compose project so dynamic
 // workloads spawn INTO that project alongside any services the user
 // already manages there (vendor-dev compose stack, plugin-managed
-// projects, etc.) rather than into a separate "decepticon" project.
+// projects, etc.) rather than into a separate "raptix" project.
 const ComposeProjectEnv = "RAPTIX_COMPOSE_PROJECT"
 
 // ComposeProjectName returns the docker compose `-p PROJECT` value
@@ -116,17 +116,17 @@ const ComposeProjectEnv = "RAPTIX_COMPOSE_PROJECT"
 //
 //  1. RAPTIX_COMPOSE_PROJECT env — explicit user override. Use
 //     this to target an existing compose project (e.g. set
-//     RAPTIX_COMPOSE_PROJECT=decepticon-vendor-dev so ops_start("ad")
+//     RAPTIX_COMPOSE_PROJECT=raptix-vendor-dev so ops_start("ad")
 //     adds bhce to the running vendor-dev stack rather than spinning
-//     up its own decepticon-* containers).
-//  2. Stack-name fallback — "decepticon[-${RAPTIX_STACK_NAME}]".
+//     up its own raptix-* containers).
+//  2. Stack-name fallback — "raptix[-${RAPTIX_STACK_NAME}]".
 //     Stable, deterministic, never hardcoded into the binary.
 //
 // The point of having a single helper called from both sides is that
 // "container_name:" fields in docker-compose.yml are global to the
 // docker daemon — two compose projects competing for the same
 // container_name produce "Conflict. The container name
-// '/decepticon-…' is already in use". This helper plus
+// '/raptix-…' is already in use". This helper plus
 // ComposeCommandEnv guarantee the launcher and the opscontrol daemon
 // agree on the same project.
 func ComposeProjectName() string {
@@ -135,9 +135,9 @@ func ComposeProjectName() string {
 	}
 	suffix := StackName()
 	if suffix == "" {
-		return "decepticon"
+		return "raptix"
 	}
-	return "decepticon-" + suffix
+	return "raptix-" + suffix
 }
 
 // ComposeCommandEnv returns the environment every docker compose call

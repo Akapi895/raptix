@@ -62,7 +62,7 @@ public rule packs can't express:
 | `raptix-no-blanket-type-ignore` | `# type: ignore` without a `[code]` — disables ALL checks on the line |
 | `raptix-no-weak-hash` | `hashlib.md5/sha1` without `usedforsecurity=False` documenting non-crypto intent |
 | `raptix-no-verify-false` | `verify=False` on requests/httpx — disables TLS verification |
-| `raptix-no-hardcoded-default-key` | `sk-decepticon-master` literal — the publicly documented LiteLLM default |
+| `raptix-no-hardcoded-default-key` | `sk-raptix-master` literal — the publicly documented LiteLLM default |
 | `raptix-no-assert-in-prod` | `assert` in middleware/tools/sandbox/runtime — stripped by `python -O` |
 
 ## Suppression syntax

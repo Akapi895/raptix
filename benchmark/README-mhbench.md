@@ -65,7 +65,7 @@ cd benchmark/MHBench
 uv sync
 ```
 
-The submodule is pinned to the `decepticon` branch of
+The submodule is pinned to the `raptix` branch of
 `PurpleAILAB/MHBench`. As of PR 1 the branch has zero patches on top of
 upstream `bsinger98/MHBench@main` — it exists as a stable place to land
 Raptix-side adjustments later.
@@ -186,7 +186,7 @@ Per-challenge, the provider does the following — no operator intervention:
    is invoked verbatim; no fork patch needed.
 4. **SSH key staging** — the operator's private key (from
    `openstack_config.ssh_key_path`) is copied into the per-challenge
-   workspace at `~/.decepticon/workspace/benchmark-<id>/perry_key` with
+   workspace at `~/.raptix/workspace/benchmark-<id>/perry_key` with
    `0600` permissions. The sandbox bind-mount surfaces it inside the
    container at `/workspace/benchmark-<id>/perry_key`.
 5. **Connection brief written for the agent** — `MHBENCH_CONNECT.md` is

@@ -39,7 +39,7 @@ def proxy_env(monkeypatch: pytest.MonkeyPatch) -> dict[str, str]:
     """
     env = {
         "RAPTIX_LLM__PROXY_URL": "http://litellm:4000",
-        "RAPTIX_LLM__PROXY_API_KEY": "sk-decepticon-master",
+        "RAPTIX_LLM__PROXY_API_KEY": "sk-raptix-master",
         "RAPTIX_LLM__TIMEOUT": "120",
         "RAPTIX_LLM__MAX_RETRIES": "2",
     }
@@ -87,7 +87,7 @@ class TestBuildProxiedLLMResolvesConfig:
     def test_uses_resolved_api_key_from_env(self, proxy_env: dict[str, str]) -> None:
         """Same path: api_key is sourced from config, not pydantic defaults.
 
-        Bare default would be ``sk-decepticon-master`` which happens to
+        Bare default would be ``sk-raptix-master`` which happens to
         match a stock proxy install — the bug here is that the *whole*
         config object is unresolved, so a non-default key would also be
         ignored. Use the explicit env value to confirm the resolution

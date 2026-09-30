@@ -231,7 +231,7 @@ func (r Runtime) Apply(env []string) []string {
 }
 
 // String renders a one-line diagnostic for the onboard System Check
-// panel and the `decepticon version` output.
+// panel and the `raptix version` output.
 func (r Runtime) String() string {
 	bits := []string{r.Name}
 	if r.Version != "" {
