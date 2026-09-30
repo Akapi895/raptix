@@ -45,6 +45,14 @@ def test_registry_builds_deterministic_unique_sessions() -> None:
     assert all(cell["session"] == session_name_for_cell(cell["cell_id"]) for cell in first)
     assert {cell["vuln_class"] for cell in first} >= {"sqli", "xss", "graphql"}
 
+    search_sessions = {
+        cell["session_name"] for cell in first if cell["surface_key"].endswith("/search")
+    }
+    assert search_sessions == {
+        session_name_for_cell("sqli::endpoint::GET::https://app.test/search"),
+        session_name_for_cell("xss::endpoint::GET::https://app.test/search"),
+    }
+
 
 def test_surface_exploit_role_has_kg_and_autoingest() -> None:
     slots = SLOTS_PER_ROLE["surface_exploit"]

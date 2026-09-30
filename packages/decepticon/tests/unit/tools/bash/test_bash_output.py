@@ -1,10 +1,12 @@
 """bash_output / bash_kill / bash_status tool unit tests."""
 
 import asyncio
+from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, MagicMock
 
 from decepticon.sandbox_kernel import BackgroundJobTracker
 from decepticon.tools.bash.bash import (
+    _passive_read_state,
     bash,
     bash_kill,
     bash_output,
@@ -18,6 +20,69 @@ def _fake_sandbox():
     sandbox = MagicMock()
     sandbox._jobs = BackgroundJobTracker()
     return sandbox
+
+
+@dataclass
+class _FakeSessionState:
+    cwd: str
+    history: list[str] = field(default_factory=list)
+    files: dict[str, str] = field(default_factory=dict)
+
+
+class _SessionIsolatingSandbox:
+    """Deterministic stand-in for the tmux daemon's session contract."""
+
+    def __init__(self) -> None:
+        self.sessions: dict[tuple[str, str], _FakeSessionState] = {}
+        self.calls: list[tuple[str, str, str]] = []
+
+    def execute(self, command: str, *, timeout: int | None = None) -> None:
+        del command, timeout
+
+    async def execute_tmux_async(
+        self,
+        *,
+        command: str,
+        session: str,
+        workspace_path: str,
+        timeout: int,
+        is_input: bool,
+    ) -> str:
+        del timeout, is_input
+        key = (workspace_path, session)
+        state = self.sessions.setdefault(key, _FakeSessionState(cwd=workspace_path))
+        self.calls.append((workspace_path, session, command))
+        if command.startswith("cd "):
+            state.cwd = command[3:]
+            state.history.append(command)
+            return state.cwd
+        if command.startswith("write "):
+            _, name, value = command.split(" ", 2)
+            state.files[name] = value
+            state.history.append(command)
+            return "written"
+        if command == "pwd":
+            state.history.append(command)
+            return state.cwd
+        if command == "cat result.txt":
+            state.history.append(command)
+            return state.files.get("result.txt", "missing")
+        if command == "history":
+            return "\n".join(state.history)
+        return "stable screen"
+
+
+def _invoke_bash(command: str, session: str) -> str:
+    with bash_workspace("/workspace/b0-isolation"):
+        return asyncio.run(
+            bash.ainvoke(
+                {
+                    "command": command,
+                    "session": session,
+                    "description": "Exercise deterministic session isolation",
+                }
+            )
+        )
 
 
 def test_bash_output_running_job_returns_running_marker():
@@ -155,3 +220,33 @@ def test_large_output_without_engagement_workspace_does_not_create_root_scratch(
     assert "/workspace/.scratch" not in result
     assert "not written" in result
     sandbox.execute.assert_not_called()
+
+
+def test_named_sessions_isolate_workdir_history_files_and_stale_reads():
+    sandbox = _SessionIsolatingSandbox()
+    set_sandbox(sandbox)
+    _passive_read_state.clear()
+
+    _invoke_bash("cd /workspace/b0-isolation/a", "b0-cell-a")
+    _invoke_bash("write result.txt only-a", "b0-cell-a")
+    _invoke_bash("cd /workspace/b0-isolation/b", "b0-cell-b")
+    _invoke_bash("write result.txt only-b", "b0-cell-b")
+
+    assert set(sandbox.sessions) == {
+        ("/workspace/b0-isolation", "b0-cell-a"),
+        ("/workspace/b0-isolation", "b0-cell-b"),
+    }
+    assert _invoke_bash("pwd", "b0-cell-a") == "/workspace/b0-isolation/a"
+    assert _invoke_bash("pwd", "b0-cell-b") == "/workspace/b0-isolation/b"
+    assert _invoke_bash("cat result.txt", "b0-cell-a") == "only-a"
+    assert _invoke_bash("cat result.txt", "b0-cell-b") == "only-b"
+    assert "only-a" in _invoke_bash("history", "b0-cell-a")
+    assert "only-a" not in _invoke_bash("history", "b0-cell-b")
+
+    first_a = _invoke_bash("", "b0-cell-a")
+    second_a = _invoke_bash("", "b0-cell-a")
+    third_a = _invoke_bash("", "b0-cell-a")
+    first_b = _invoke_bash("", "b0-cell-b")
+    assert "[STALE]" not in first_a + second_a
+    assert "[STALE]" in third_a
+    assert "[STALE]" not in first_b
