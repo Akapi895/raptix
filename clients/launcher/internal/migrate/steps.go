@@ -8,7 +8,7 @@ import (
 
 	"charm.land/huh/v2"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/config"
+	"github.com/Akapi895/raptix/clients/launcher/internal/config"
 )
 
 // TelemetryPolicyID identifies the one-time telemetry re-consent prompt.

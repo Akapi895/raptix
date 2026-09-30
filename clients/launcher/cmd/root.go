@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/ui"
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/updater"
+	"github.com/Akapi895/raptix/clients/launcher/internal/ui"
+	"github.com/Akapi895/raptix/clients/launcher/internal/updater"
 	"github.com/spf13/cobra"
 )
 

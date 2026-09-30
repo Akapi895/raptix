@@ -22,7 +22,7 @@ import (
 	"charm.land/huh/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/ui"
+	"github.com/Akapi895/raptix/clients/launcher/internal/ui"
 )
 
 // AssistantSoundwave drives the document-writing interview for a fresh engagement.

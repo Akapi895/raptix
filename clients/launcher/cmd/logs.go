@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"github.com/PurpleAILAB/Decepticon/clients/launcher/internal/compose"
+	"github.com/Akapi895/raptix/clients/launcher/internal/compose"
 	"github.com/spf13/cobra"
 )
 
