@@ -1,6 +1,6 @@
 # Canonical :Phase nodes seeded into the skill graph.
 # Mirrors the canonical subdomains list in
-# packages/decepticon/decepticon/skill_audit/subdomains.yaml — kept here
+# packages/raptix/raptix/skill_audit/subdomains.yaml — kept here
 # (not imported) so the builder package has zero runtime dependency on
 # the validator package, and so future divergence between "phases the
 # graph traverses" and "subdomains an author may declare" is explicit.

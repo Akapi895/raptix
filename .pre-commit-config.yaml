@@ -27,7 +27,7 @@ default_stages: [pre-commit]
 #   assets/.*
 #   reference/.*
 #   benchmark/results/.*
-#   packages/decepticon/decepticon/skills/_corpus/.*
+#   packages/raptix/raptix/skills/_corpus/.*
 #   .*\.snap
 #   .*\.lock
 
@@ -41,7 +41,7 @@ repos:
             assets/.*|
             reference/.*|
             benchmark/results/.*|
-            packages/decepticon/decepticon/skills/_corpus/.*|
+            packages/raptix/raptix/skills/_corpus/.*|
             .*\.snap|
             .*\.lock
           )$
@@ -51,7 +51,7 @@ repos:
             assets/.*|
             reference/.*|
             benchmark/results/.*|
-            packages/decepticon/decepticon/skills/_corpus/.*|
+            packages/raptix/raptix/skills/_corpus/.*|
             .*\.snap|
             .*\.lock|
             clients/web/public/.*\.svg
@@ -64,7 +64,7 @@ repos:
       - id: detect-private-key
         # tests/unit/cloud/test_cloud.py contains a test fixture private
         # key (intentionally — it's verifying the AWS credential parser).
-        exclude: ^packages/decepticon/tests/unit/cloud/test_cloud\.py$
+        exclude: ^packages/raptix/tests/unit/cloud/test_cloud\.py$
       - id: mixed-line-ending
         args: ["--fix=lf"]
         # PowerShell / Windows shell scripts intentionally use CRLF per

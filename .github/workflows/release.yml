@@ -49,9 +49,9 @@ jobs:
           # invariants happy.
           sed -i 's/^version = "[^"]*"/version = "'"$version"'"/' \
               pyproject.toml \
-              packages/decepticon-core/pyproject.toml \
-              packages/decepticon/pyproject.toml \
-              packages/decepticon-sdk/pyproject.toml
+              packages/raptix-core/pyproject.toml \
+              packages/raptix/pyproject.toml \
+              packages/raptix-sdk/pyproject.toml
 
       - name: Build three workspace wheels + sdists
         run: |
