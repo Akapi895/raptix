@@ -89,7 +89,7 @@ var skipUpdate bool
 
 var startCmd = &cobra.Command{
 	Use:   "start",
-	Short: "Start Decepticon services and launch the CLI",
+	Short: "Start Raptix services and launch the CLI",
 	RunE:  runStart,
 }
 
@@ -166,7 +166,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	probeOllamaIfSelected(env)
 
 	// 2.3. Ensure config files exist (docker-compose.yml, litellm.yaml, workspace)
-	home := config.DecepticonHome()
+	home := config.RaptixHome()
 	composePath := filepath.Join(home, "docker-compose.yml")
 	if _, err := os.Stat(composePath); os.IsNotExist(err) {
 		// Use installed version tag; fall back to branch for dev builds
@@ -298,7 +298,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 	// 5. Start services
 	c := compose.New()
 
-	ui.Info("Starting Decepticon services...")
+	ui.Info("Starting Raptix services...")
 	if err := c.Up(compose.Profiles.CLI); err != nil {
 		return fmt.Errorf("start services: %w", err)
 	}
@@ -310,7 +310,7 @@ func runStart(cmd *cobra.Command, args []string) error {
 
 	// 6. Launch CLI
 	fmt.Println()
-	ui.Info("Launching Decepticon CLI...")
+	ui.Info("Launching Raptix CLI...")
 
 	cliEnv := map[string]string{
 		"RAPTIX_VERSION":      version,

@@ -30,7 +30,7 @@ from benchmark.scorer import Scorer
 _PROVIDER_CHOICES = ("xbow", "exploitbench", "mhbench", "cybench", "cybergym")
 
 log = logging.getLogger(__name__)
-app = typer.Typer(name="benchmark", help="Decepticon Benchmark Runner")
+app = typer.Typer(name="benchmark", help="Raptix Benchmark Runner")
 
 
 def _build_run_provenance(

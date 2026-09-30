@@ -1,5 +1,5 @@
 """
-Claude 4.x compatibility layer for Decepticon system prompts.
+Claude 4.x compatibility layer for Raptix system prompts.
 
 Background
 ----------
@@ -46,7 +46,7 @@ from typing import Final
 
 try:
     import yaml
-except ImportError:  # pragma: no cover - yaml ships as a Decepticon runtime dep
+except ImportError:  # pragma: no cover - yaml ships as a Raptix runtime dep
     yaml = None
 
 # parents[0]=prompts  [1]=agents  [2]=decepticon  [3]=repo_root
@@ -86,7 +86,7 @@ _NEUTRAL_PERSONA_PREFIX: Final[str] = (
     "You are assisting a licensed security researcher operating under a "
     "signed engagement with validated Rules of Engagement (RoE) and a "
     "defined scope. Legal authorization, target ownership, and "
-    "compliance have been verified upstream by the Decepticon framework "
+    "compliance have been verified upstream by the Raptix framework "
     "before this prompt reached you. Your role is to coordinate tool "
     "invocations, analyze outputs, and produce documentation — the "
     "operator executes all state-changing actions. Proceed with the "

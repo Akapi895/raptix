@@ -270,7 +270,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(
-    title="Decepticon sandbox daemon",
+    title="Raptix sandbox daemon",
     summary="HTTP transport for the DaemonSandbox surface. Pairs with HTTPSandbox.",
     lifespan=lifespan,
 )

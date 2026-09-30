@@ -200,7 +200,7 @@ function EventRow({ event, relativeTime }: EventRowProps) {
     case "engagement_ready": {
       icon = <Rocket className="h-3.5 w-3.5 shrink-0 text-violet-400" />;
       detail = (
-        <span className="text-violet-300">Engagement planning complete — Decepticon will continue</span>
+        <span className="text-violet-300">Engagement planning complete — Raptix will continue</span>
       );
       rowClass = "bg-violet-500/5";
       break;

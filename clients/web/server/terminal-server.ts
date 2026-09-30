@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Terminal WebSocket Server — spawns Decepticon CLI in a PTY.
+ * Terminal WebSocket Server — spawns Raptix CLI in a PTY.
  *
  * Session-persistent architecture:
  *   PTY processes are keyed by engagement slug and survive WebSocket

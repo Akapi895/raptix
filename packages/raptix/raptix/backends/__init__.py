@@ -61,7 +61,7 @@ def make_agent_backend(
     *,
     extra_routes: Mapping[str, Any] | None = None,
 ) -> CompositeBackend:
-    """Compose the runtime backend for a Decepticon agent.
+    """Compose the runtime backend for a Raptix agent.
 
     Routes ``/skills/`` to a local ``FilesystemBackend`` reading the
     package's ``decepticon/skills`` tree in-process, and routes everything

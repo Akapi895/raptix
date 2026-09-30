@@ -2,7 +2,7 @@
 
 Loads challenges, dispatches each to a swappable agent callable, scores
 the returned evidence, and (optionally) streams JSONL. Live mode requires
-the Decepticon stack + LLM credentials — see ``_default_agent``. Dry-run
+the Raptix stack + LLM credentials — see ``_default_agent``. Dry-run
 mode passes ``dry_run.mock_agent`` instead.
 """
 

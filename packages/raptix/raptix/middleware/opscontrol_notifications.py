@@ -26,7 +26,7 @@ delivery mechanism. The model is told (via the orchestrator prompt
 ready, and to delegate to the specialist on that turn.
 
 Convergent industry pattern: Claude Code's ``Bash(run_in_background)``
-→ background-completion notification, Decepticon's own
+→ background-completion notification, Raptix's own
 ``SandboxNotificationMiddleware`` for tmux session completions, and the
 LangChain ``async-deep-agents`` reference implementation all use this
 shape. See docs/adr/0006 §6 for the full reference list.

@@ -27,7 +27,7 @@ from raptix.telemetry.sink import TelemetrySink
 
 # Plain-language disclosure shown on `enable` — the OSS consent contract.
 _CONSENT_NOTICE = """\
-Decepticon usage telemetry — what you are consenting to share:
+Raptix usage telemetry — what you are consenting to share:
 
   basic     Anonymous STRUCTURAL ground truth the engagement produces: event
             type, agent name, tool name (e.g. nmap), status, bucketed sizes,
@@ -94,7 +94,7 @@ _SAMPLE_EVENTS = [
 
 
 def _status(cfg: TelemetryConfig) -> int:
-    print("Decepticon telemetry")
+    print("Raptix telemetry")
     print(f"  mode:      {cfg.mode.value}")
     print(f"  enabled:   {cfg.enabled}  (needs mode != off AND an endpoint)")
     print(f"  endpoint:  {cfg.endpoint or '(unset)'}")

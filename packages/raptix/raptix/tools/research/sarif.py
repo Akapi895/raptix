@@ -3,7 +3,7 @@
 SARIF (Static Analysis Results Interchange Format — OASIS standard) is the
 common output format for modern scanners: semgrep, CodeQL, bandit, gitleaks,
 trivy, snyk, nuclei (optional), grype. Rather than writing a bespoke parser
-per tool, Decepticon ingests SARIF universally and lifts every ``result`` into
+per tool, Raptix ingests SARIF universally and lifts every ``result`` into
 a Vulnerability/Finding pair in the knowledge graph.
 
 Example flow

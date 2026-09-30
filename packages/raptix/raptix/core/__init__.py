@@ -1,1 +1,1 @@
-"""Decepticon core module — configuration, logging, schemas, and streaming helpers."""
+"""Raptix core module — configuration, logging, schemas, and streaming helpers."""

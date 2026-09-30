@@ -1,6 +1,6 @@
-"""Plugin discovery for Decepticon.
+"""Plugin discovery for Raptix.
 
-Decepticon supports adding tools, middleware, agents, and callback handlers
+Raptix supports adding tools, middleware, agents, and callback handlers
 without modifying the OSS codebase. External packages declare their
 contributions via Python entry-points; agent factories pick them up at
 construction time.

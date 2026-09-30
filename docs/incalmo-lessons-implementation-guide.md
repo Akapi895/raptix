@@ -12,7 +12,7 @@
 
 ## Global rules (recap — full text in AGENTS.md)
 
-- **Never touch** the exploit-execution path (`tools/bash/*`, sandbox dispatch, Sliver/msf/impacket) or the guardrail stack (`SafeCommand`, `middleware/roe.py`, `EngagementContext`, `middleware/egress.py`, `middleware/hitl.py`, `.semgrep/decepticon-no-*`).
+- **Never touch** the exploit-execution path (`tools/bash/*`, sandbox dispatch, Sliver/msf/impacket) or the guardrail stack (`SafeCommand`, `middleware/roe.py`, `EngagementContext`, `middleware/egress.py`, `middleware/hitl.py`, `.semgrep/raptix-no-*`).
 - **Fail-safe hooks**: any post-tool hook wraps work in try/except and returns the original tool result unchanged on error — a hook failure can never break/alter/delay tool execution.
 - **KG is canonical**; auto-ingest is an added trusted write path, not a second source of truth.
 - **Per WP**: one ADR (`docs/adr/`, follow 0001/0002) + one PR ≤400 runtime lines / ≤10 files / one concern.

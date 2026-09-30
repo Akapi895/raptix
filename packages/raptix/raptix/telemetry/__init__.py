@@ -1,4 +1,4 @@
-"""Optional OpenTelemetry helpers for Decepticon.
+"""Optional OpenTelemetry helpers for Raptix.
 
 Default off. When ``OTEL_ENABLED`` is set and the ``opentelemetry`` packages
 are installed, helpers emit OTLP spans for engagement / agent / tool / LLM

@@ -59,7 +59,7 @@ export const KILL_CHAIN_PHASES: KillChainPhase[] = [
 
 export const AGENT_DISPLAY_CONFIG: Record<string, AgentDisplayMeta> = {
   decepticon: {
-    name: "Decepticon",
+    name: "Raptix",
     description: "Main orchestrator — commands the full kill chain",
     role: "Orchestrator",
     color: "#ef4444",

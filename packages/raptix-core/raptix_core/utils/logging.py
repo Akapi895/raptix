@@ -1,4 +1,4 @@
-"""Decepticon logging — stdlib wrapper with optional structured JSON output.
+"""Raptix logging — stdlib wrapper with optional structured JSON output.
 
 Use plain text logs for local dev, JSON for production / containers / CI.
 Toggle via env vars (read once at import / first ``configure_logging`` call):

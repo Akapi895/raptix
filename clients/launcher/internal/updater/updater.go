@@ -32,7 +32,7 @@ const ConfigManifestAsset = "config-checksums.txt"
 const BinaryChecksumsAsset = "checksums.txt"
 
 const (
-	Repo       = "BitterSecurity/Decepticon"
+	Repo       = "BitterSecurity/Raptix"
 	RawBaseURL = "https://raw.githubusercontent.com/" + Repo
 )
 
@@ -56,7 +56,7 @@ var executableFn = os.Executable
 //   - ChannelLatest: the newest FINAL release, immediately (GitHub
 //     "latest", which excludes pre-releases). Maps to GHCR ":latest".
 //
-// Decepticon defaults to stable (conservative for an offensive-security
+// Raptix defaults to stable (conservative for an offensive-security
 // tool); the channel semantics match Claude Code's soak model, only the
 // default differs (Claude Code defaults to latest). Selected via the
 // "RAPTIX_CHANNEL" key in ".env".
@@ -350,7 +350,7 @@ func parseUint(s string) (int, bool) {
 // asset available) fall back to the legacy download-without-verify
 // behavior with a warning. “release == nil“ exists for this path.
 func SyncConfigFiles(branch string, release *Release) error {
-	home := config.DecepticonHome()
+	home := config.RaptixHome()
 	files := map[string]string{
 		// docker-compose.opscontrol.yml is intentionally absent: it is
 		// LAUNCHER-MANAGED (cmd/opscontrol/supervisor.go embeds the
@@ -633,7 +633,7 @@ func SelfUpdate(release *Release) error {
 
 // WriteVersion writes the version to .version file.
 func WriteVersion(version string) error {
-	versionFile := filepath.Join(config.DecepticonHome(), ".version")
+	versionFile := filepath.Join(config.RaptixHome(), ".version")
 	return os.WriteFile(versionFile, []byte(strings.TrimPrefix(version, "v")), 0o644)
 }
 
@@ -749,7 +749,7 @@ func PromptIfUpdateAvailable(currentVersion string, ch Channel) (bool, error) {
 		Title(fmt.Sprintf("Install %s now?", release.TagName)).
 		Description(
 			"Updates the launcher binary, docker-compose config, and pulls\n" +
-				"the matching Docker images. Decepticon will restart with\n" +
+				"the matching Docker images. Raptix will restart with\n" +
 				"the new version once the update finishes.",
 		).
 		Affirmative("Yes, update").

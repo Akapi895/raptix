@@ -2,7 +2,7 @@
 
 When ``OTEL_ENABLED`` is unset the helpers must produce zero spans. When
 set, they must emit the engagement -> agent_run -> (tool_call | llm_call)
-hierarchy with the documented Decepticon attributes. Tests install an
+hierarchy with the documented Raptix attributes. Tests install an
 ``InMemorySpanExporter`` directly on the global TracerProvider so we
 exercise the real OpenTelemetry SDK without hitting the network.
 """

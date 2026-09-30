@@ -62,7 +62,7 @@ def small_registry() -> list[SkillRecord]:
         ),
         _make_record(
             "/skills/standard/decepticon/reporting/SKILL.md",
-            description="Decepticon reporting guide.",
+            description="Raptix reporting guide.",
         ),
     ]
 

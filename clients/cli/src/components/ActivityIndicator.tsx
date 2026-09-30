@@ -23,7 +23,7 @@ function formatTokens(n: number): string {
   return String(n);
 }
 
-// Shimmer gradient palette — Decepticon red theme
+// Shimmer gradient palette — Raptix red theme
 const SHIMMER_COLORS = [
   "#b91c1c", // red-700
   "#dc2626", // red-600

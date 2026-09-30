@@ -3,7 +3,7 @@
 Two checks: ``GET /api/tags`` for reachability (with diagnostics for
 the localhost trap and the 127.0.0.1-binding case), and
 ``POST /api/show`` to require the model's ``capabilities`` includes
-``tools`` — Decepticon agents always emit tool calls. Best-effort:
+``tools`` — Raptix agents always emit tool calls. Best-effort:
 never blocks proxy boot, just logs ``[decepticon ollama]`` lines.
 
 Lives next to ``litellm_startup.py`` rather than inside it so the
@@ -133,7 +133,7 @@ def _default_opener(url_or_request: Any, timeout: float) -> Any:
 def _running_in_wsl2() -> bool:
     """Detect whether the probe is running in (or talking to) a WSL2 host.
 
-    Multiple signals — Decepticon agents run inside Docker containers,
+    Multiple signals — Raptix agents run inside Docker containers,
     but the LiteLLM container can inspect environment variables passed
     in from the host. Most reliable signals:
     - ``/proc/version`` contains 'microsoft' or 'WSL'
@@ -358,7 +358,7 @@ def tool_capability(
     return ProbeResult(
         False,
         f"Model {model!r} does not advertise the 'tools' capability "
-        f"(reported: {capabilities}). Decepticon agents always emit "
+        f"(reported: {capabilities}). Raptix agents always emit "
         "tool calls — pull a tool-capable model instead "
         "(e.g. qwen3-coder, llama3.3, mistral-small3) and set "
         "OLLAMA_MODEL accordingly.",
@@ -416,7 +416,7 @@ def probe_cloud(
             "onboard` writes OLLAMA_CLOUD_API_KEY — set it (or "
             "OLLAMA_API_KEY) to a key from "
             "https://ollama.com/settings/keys, otherwise every request "
-            "401s and the Soundwave interview can't hand off to Decepticon."
+            "401s and the Soundwave interview can't hand off to Raptix."
         )
         return lines
 

@@ -115,7 +115,7 @@ def build_app(
         title="Skillogy",
         version="0.2.0",
         description=(
-            "Decepticon skill catalog service (Phase 1a, Neo4j-backed). "
+            "Raptix skill catalog service (Phase 1a, Neo4j-backed). "
             "Three relationship-aware operations plus a per-phase MoC "
             "summary; see /openapi.json for the wire schema."
         ),

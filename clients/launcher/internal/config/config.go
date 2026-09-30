@@ -20,14 +20,14 @@ const (
 	PlaceholderSuffix = "-key-here"
 )
 
-// Config holds the Decepticon launcher configuration.
+// Config holds the Raptix launcher configuration.
 type Config struct {
 	Home string
 	Env  map[string]string
 }
 
-// DecepticonHome returns the resolved RAPTIX_HOME path.
-func DecepticonHome() string {
+// RaptixHome returns the resolved RAPTIX_HOME path.
+func RaptixHome() string {
 	if h := os.Getenv("RAPTIX_HOME"); h != "" {
 		return h
 	}
@@ -40,7 +40,7 @@ func DecepticonHome() string {
 
 // EnvPath returns the full path to the .env file.
 func EnvPath() string {
-	return filepath.Join(DecepticonHome(), EnvFileName)
+	return filepath.Join(RaptixHome(), EnvFileName)
 }
 
 // EnvExists checks whether .env exists.
@@ -339,7 +339,7 @@ func ValidateAPIKeys(env map[string]string) error {
 //     instead of a single session token. accept either env name.
 //   - Copilot Pro uses a refresh-token rotation (COPILOT_REFRESH_TOKEN)
 //     instead of a session cookie. Same fall-through, different env name.
-//   - ChatGPT uses Decepticon's auth/ handler reading the Codex CLI
+//   - ChatGPT uses Raptix's auth/ handler reading the Codex CLI
 //     credential store at ~/.codex/auth.json. The launcher mounts that
 //     file into the container so a host-side `codex login` is visible
 //     to the running proxy without rebuilding.

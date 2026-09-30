@@ -1,6 +1,6 @@
 """MCP (Model Context Protocol) tool-server client integration.
 
-Opt-in bridge so Decepticon agents can use tools exposed by external
+Opt-in bridge so Raptix agents can use tools exposed by external
 MCP servers (e.g. Kali MCP server, HexStrike). Activation is purely
 env-driven (``RAPTIX_MCP__SERVERS``) and requires the optional
 ``langchain-mcp-adapters`` package to be installed separately —

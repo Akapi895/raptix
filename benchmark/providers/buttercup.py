@@ -4,13 +4,13 @@ Buttercup is Trail of Bits' AIxCC Final entry (2nd place, $3M prize),
 released open-source at https://github.com/trailofbits/buttercup. The
 suite ships ~28 verified vulnerabilities across ~20 CWE categories with
 known-working exploits and patches — a perfect external validation set
-for Decepticon's offensive-vaccine pipeline.
+for Raptix's offensive-vaccine pipeline.
 
 This provider:
 
 1. Pulls a pinned Buttercup commit into ``benchmark/buttercup/upstream/``.
 2. Enumerates challenges from Buttercup's ``challenges/`` directory.
-3. Maps each Buttercup challenge to a Decepticon :class:`Challenge`.
+3. Maps each Buttercup challenge to a Raptix :class:`Challenge`.
 4. Sets up each challenge's docker-compose stack on demand.
 5. Evaluates pass/fail by running Buttercup's own oracle script against
    the engagement workspace.
@@ -97,7 +97,7 @@ def _read_challenge_metadata(challenge_dir: Path) -> dict:
 
 
 class ButtercupProvider(BaseBenchmarkProvider):
-    """Run Decepticon engagements against the AIxCC Buttercup OSS challenge suite."""
+    """Run Raptix engagements against the AIxCC Buttercup OSS challenge suite."""
 
     def __init__(self, *, upstream_dir: Path | None = None) -> None:
         super().__init__()

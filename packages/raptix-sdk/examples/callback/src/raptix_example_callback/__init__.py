@@ -1,4 +1,4 @@
-"""Custom callback handler contributed to Decepticon."""
+"""Custom callback handler contributed to Raptix."""
 
 from __future__ import annotations
 

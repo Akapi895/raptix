@@ -104,7 +104,7 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.plugin_loader", "load_subagents_for_parent"),
     ("raptix_core.plugin_loader", "load_plugin_agents"),
     # raptix_core.utils
-    ("raptix_core.utils.config", "DecepticonConfig"),
+    ("raptix_core.utils.config", "RaptixConfig"),
     ("raptix_core.utils.config", "LLMConfig"),
     ("raptix_core.utils.config", "load_config"),
     ("raptix_core.utils.logging", "configure_logging"),

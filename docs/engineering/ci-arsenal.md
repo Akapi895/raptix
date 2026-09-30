@@ -40,7 +40,7 @@ indefinitely "pending":
 | Tool | Surface | Hard-gate | Notes |
 |------|---------|-----------|-------|
 | **CodeQL** | Python + JS/TS | findings → Security tab | `security-and-quality` query suite |
-| **Semgrep** | repo rules | yes (ERROR severity) | `.semgrep/decepticon-rules.yml` invariants only — public packs are covered by CodeQL |
+| **Semgrep** | repo rules | yes (ERROR severity) | `.semgrep/raptix-rules.yml` invariants only — public packs are covered by CodeQL |
 | **Trivy** | deps (fs) + IaC/Dockerfile (config) | report (SARIF) | CRITICAL/HIGH/MEDIUM, `ignore-unfixed` |
 | **TruffleHog** | secrets across the diff | yes (`--only-verified`) | verified secrets fail the run |
 | **dependency-review** | new deps on PRs | high severity | advisory until the repo dependency graph is confirmed enabled |
@@ -53,17 +53,17 @@ gitleaks) run locally in pre-commit instead.
 
 ## Custom Semgrep rules
 
-`/.semgrep/decepticon-rules.yml` enforces Raptix-specific invariants that
+`/.semgrep/raptix-rules.yml` enforces Raptix-specific invariants that
 public rule packs can't express:
 
 | Rule | What it catches |
 |------|-----------------|
-| `decepticon-no-shell-true-outside-sandbox` | `subprocess.run(..., shell=True)` outside `sandbox_kernel/` — command-injection vector |
-| `decepticon-no-blanket-type-ignore` | `# type: ignore` without a `[code]` — disables ALL checks on the line |
-| `decepticon-no-weak-hash` | `hashlib.md5/sha1` without `usedforsecurity=False` documenting non-crypto intent |
-| `decepticon-no-verify-false` | `verify=False` on requests/httpx — disables TLS verification |
-| `decepticon-no-hardcoded-default-key` | `sk-decepticon-master` literal — the publicly documented LiteLLM default |
-| `decepticon-no-assert-in-prod` | `assert` in middleware/tools/sandbox/runtime — stripped by `python -O` |
+| `raptix-no-shell-true-outside-sandbox` | `subprocess.run(..., shell=True)` outside `sandbox_kernel/` — command-injection vector |
+| `raptix-no-blanket-type-ignore` | `# type: ignore` without a `[code]` — disables ALL checks on the line |
+| `raptix-no-weak-hash` | `hashlib.md5/sha1` without `usedforsecurity=False` documenting non-crypto intent |
+| `raptix-no-verify-false` | `verify=False` on requests/httpx — disables TLS verification |
+| `raptix-no-hardcoded-default-key` | `sk-decepticon-master` literal — the publicly documented LiteLLM default |
+| `raptix-no-assert-in-prod` | `assert` in middleware/tools/sandbox/runtime — stripped by `python -O` |
 
 ## Suppression syntax
 
@@ -73,7 +73,7 @@ Use the precise directive for the tool that flagged the finding:
 |------|---------|---------|
 | Ruff | `# noqa: <code>` | `# noqa: F401` |
 | basedpyright | `# pyright: ignore[<code>]` | `# pyright: ignore[reportAttributeAccessIssue]` |
-| Semgrep | `# nosemgrep: <rule>` | `# nosemgrep: decepticon-no-hardcoded-default-key` |
+| Semgrep | `# nosemgrep: <rule>` | `# nosemgrep: raptix-no-hardcoded-default-key` |
 | CodeQL | `# lgtm[<rule>]` | `# lgtm[py/unused-global-variable]` |
 
 **Bare suppressions (`# type: ignore` with no code) are rejected** — they

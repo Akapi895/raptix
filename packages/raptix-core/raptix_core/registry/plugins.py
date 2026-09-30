@@ -1,7 +1,7 @@
 """Plugin registry — central read-only view of discovered plugins.
 
 Closes gaps §8 #4 (collision detection) and §8 #7 (introspection API).
-``PluginRegistry.load()`` walks the eight Decepticon entry-point
+``PluginRegistry.load()`` walks the eight Raptix entry-point
 groups, snapshots every contribution, and exposes the result to
 introspection consumers (audit pipelines, plugin-author guides,
 the future B2B Enterprise API tier).
@@ -96,7 +96,7 @@ class PluginRegistry:
     def load(cls) -> PluginRegistry:
         """Return the singleton, building it on first call.
 
-        Walks every Decepticon entry-point group via
+        Walks every Raptix entry-point group via
         ``importlib.metadata.entry_points`` and snapshots the result.
         Same-key contributions from different packages produce
         ``PluginConflictWarning`` entries surfaced via

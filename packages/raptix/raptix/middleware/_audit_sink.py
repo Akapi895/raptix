@@ -21,7 +21,7 @@ shipping (S3, syslog, Loki via mTLS) belongs in a follow-up - the
 local file is the primary integrity boundary and the simplest thing
 to audit at engagement out-brief.
 
-Concurrency: a single writer is assumed per file. The Decepticon
+Concurrency: a single writer is assumed per file. The Raptix
 runtime guarantees this because the LangGraph orchestrator runs one
 event loop per engagement workspace; the writer's append-then-fsync
 is atomic per record on POSIX append-only files. On Windows the

@@ -23,10 +23,10 @@ interface PromptProps {
 
 const DEBOUNCE_MS = 150;
 
-/** Compact status line: [Decepticon#1.0.0 | ActiveAgent].
+/** Compact status line: [Raptix#1.0.0 | ActiveAgent].
  *
  * Shows the streaming subagent (red, blinking) when one is active, otherwise
- * falls back to the persistent assistant id (Soundwave / Decepticon).
+ * falls back to the persistent assistant id (Soundwave / Raptix).
  */
 const StatusLine = React.memo(function StatusLine({
   activeAgent,
@@ -43,7 +43,7 @@ const StatusLine = React.memo(function StatusLine({
   return (
     <Text>
       <Text dimColor>{"["}</Text>
-      <Text dimColor>{`Decepticon#${CLI_VERSION}`}</Text>
+      <Text dimColor>{`Raptix#${CLI_VERSION}`}</Text>
       <Text dimColor>{" | "}</Text>
       {activeAgent ? (
         <Text color="#ef4444" bold={bright} dimColor={!bright}>

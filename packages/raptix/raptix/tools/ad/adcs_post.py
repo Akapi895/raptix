@@ -3,7 +3,7 @@
 BloodHound CE's server walks the ingested raw graph and synthesises
 the high-signal attack edges (``DCSync``, ``GoldenCert``,
 ``ADCS_ESC1`` … ``ESC13``, etc.) that chain planners actually
-reason about. The Decepticon ingest in ``bloodhound.py`` only writes
+reason about. The Raptix ingest in ``bloodhound.py`` only writes
 the raw collector data; this module is where the synthesis runs.
 
 Scope of this first cut (intentionally narrow — see the BloodHound

@@ -45,7 +45,7 @@ def _cffi_get(
     timeout: int = 15,
     scope_check: Optional[Callable[[str], bool]] = None,
 ):
-    # Decepticon security adaptation: Phase-0 reaches THIRD-PARTY hosts
+    # Raptix security adaptation: Phase-0 reaches THIRD-PARTY hosts
     # (syndication CDNs, oEmbed). Gate every fetch by RoE scope (when supplied)
     # and ALWAYS by SSRF safety so an attacker-influenced URL cannot pivot the
     # sandbox onto internal/metadata addresses.

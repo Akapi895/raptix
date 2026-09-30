@@ -278,7 +278,7 @@ func (s *SystemdManager) renderUnit(spec InstallSpec) string {
 	// ports, passwords, …) the launcher saw. The leading `-` keeps
 	// install tolerant of `.env` not existing yet.
 	return fmt.Sprintf(`[Unit]
-Description=Decepticon opscontrol daemon (ADR-0006)
+Description=Raptix opscontrol daemon (ADR-0006)
 Documentation=https://github.com/Akapi895/raptix/blob/main/docs/adr/0006-agent-driven-container-lifecycle.md
 After=network-online.target
 Wants=network-online.target

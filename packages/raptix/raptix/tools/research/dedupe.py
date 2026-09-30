@@ -1,6 +1,6 @@
 """Semantic deduplication for knowledge-graph finding/vulnerability nodes.
 
-Decepticon's graph dedups writes by deterministic node ID (SHA1 of kind +
+Raptix's graph dedups writes by deterministic node ID (SHA1 of kind +
 canonical key — see :mod:`raptix_core.types.kg`). That collapses
 *byte-identical* writes, but the multi-agent design (recon / exploit /
 analyst / vulnresearch each running with fresh context) structurally
@@ -299,7 +299,7 @@ def kg_dedupe_findings(min_cluster_size: int = 2) -> str:
 
     WHEN TO USE: Before writing a report, to surface findings that describe
     the SAME underlying bug but were recorded as separate nodes by
-    different agents (recon / exploit / analyst / vulnresearch). Decepticon
+    different agents (recon / exploit / analyst / vulnresearch). Raptix
     already dedups byte-identical writes by node id; this catches semantic
     duplicates — same host/endpoint/CWE, different wording.
 

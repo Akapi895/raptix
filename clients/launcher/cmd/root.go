@@ -13,7 +13,7 @@ var version = "dev"
 
 var rootCmd = &cobra.Command{
 	Use:   "decepticon",
-	Short: "Decepticon — Autonomous Hacking Agent for Red Team",
+	Short: "Raptix — Autonomous Hacking Agent for Red Team",
 	Long:  ui.RenderBanner() + "\n" + ui.Dim.Render("Autonomous Hacking Agent for Red Team"),
 	CompletionOptions: cobra.CompletionOptions{
 		HiddenDefaultCmd: true,
@@ -32,5 +32,5 @@ func Execute() {
 
 func init() {
 	rootCmd.Version = version
-	rootCmd.SetVersionTemplate(fmt.Sprintf("Decepticon %s\n", version))
+	rootCmd.SetVersionTemplate(fmt.Sprintf("Raptix %s\n", version))
 }

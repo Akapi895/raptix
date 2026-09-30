@@ -1,4 +1,4 @@
-"""Custom tool contributed to Decepticon."""
+"""Custom tool contributed to Raptix."""
 
 from __future__ import annotations
 

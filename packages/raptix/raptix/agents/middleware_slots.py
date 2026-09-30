@@ -1,6 +1,6 @@
 """Middleware slot registry — the plugin-override foundation.
 
-Every Decepticon agent factory composes its middleware stack from a
+Every Raptix agent factory composes its middleware stack from a
 fixed, canonically-ordered list of named slots. Plugins replace or
 disable slots by name via ``PluginBundle.replaced_middleware`` /
 ``PluginBundle.disabled_middleware`` — no inline middleware construction

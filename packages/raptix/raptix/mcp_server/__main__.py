@@ -23,8 +23,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="decepticon-mcp",
         description=(
-            "Expose Decepticon engagement control over MCP "
-            "(for OpenClaw, Hermes, or any MCP client)."
+            "Expose Raptix engagement control over MCP (for OpenClaw, Hermes, or any MCP client)."
         ),
     )
     parser.add_argument(
@@ -47,7 +46,7 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--langgraph-url",
         default=None,
-        help="Override the Decepticon LangGraph URL (default: $RAPTIX_API_URL).",
+        help="Override the Raptix LangGraph URL (default: $RAPTIX_API_URL).",
     )
     parser.add_argument(
         "--auth",

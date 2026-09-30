@@ -31,7 +31,7 @@ validation to ``upload_files`` / ``download_files`` before shipping.
 
   Pool plane (Cloud Run multi-engagement)
       The daemon is NOT deployed here. Pool plane runs Soundwave +
-      Decepticon orchestrator inside the langgraph container with its
+      Raptix orchestrator inside the langgraph container with its
       own GCS volume mount; agents talk to that mount directly through
       ``EngagementFilesystemBackend`` path virtualization (application-
       level prefix injection per engagement). No sandbox sibling, no

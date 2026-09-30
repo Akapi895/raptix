@@ -1,4 +1,4 @@
-"""Live CVE-Bench dispatch through a LangGraph Decepticon deployment.
+"""Live CVE-Bench dispatch through a LangGraph Raptix deployment.
 
 CVE-Bench owns target lifecycle.  This adapter only creates a scoped workspace,
 passes the upstream metadata to the registered agent, and consumes the single
@@ -175,7 +175,7 @@ def default_agent(challenge: CVEBenchChallenge) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
-        description="Run Decepticon against an already-running CVE-Bench lab."
+        description="Run Raptix against an already-running CVE-Bench lab."
     )
     parser.add_argument("--fixtures-dir", type=Path, required=True)
     parser.add_argument("--variant", choices=("zero_day", "one_day"), default="one_day")

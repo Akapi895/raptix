@@ -1,4 +1,4 @@
-"""Skill loading tools for Decepticon agents."""
+"""Skill loading tools for Raptix agents."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from raptix.tools.skills_registry import (
 )
 
 # ── load_skill tool ──────────────────────────────────────────────────────────
-# A Decepticon-specific replacement for `load_skill("/skills/...")` that
+# A Raptix-specific replacement for `load_skill("/skills/...")` that
 # returns the full skill body without the deepagents 100-line limit, plus a
 # base-directory header and an index of references/* in the same directory.
 
@@ -240,7 +240,7 @@ def build_load_skill_tool(
 
     @tool
     def load_skill(skill_path: str, include_siblings: bool = False) -> str:
-        """Load a Decepticon skill file (full body, no line-limit truncation).
+        """Load a Raptix skill file (full body, no line-limit truncation).
 
         Use this for skill markdown instead of ``read_file``. ``skill_path`` may
         be an exact ``/skills/.../*.md`` path, a relative path under ``/skills/``,

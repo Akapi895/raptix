@@ -2,7 +2,7 @@
 
 LangGraph Platform expects a graph manifest (``langgraph.json``) or the
 ``LANGSERVE_GRAPHS`` environment variable mapping each graph name to a
-``module:attr`` path. Decepticon's built-in agents are listed in the
+``module:attr`` path. Raptix's built-in agents are listed in the
 ``langgraph.json`` shipped with the repo. External packages add their own
 agents by declaring entry-points in the ``raptix.agents`` group.
 

@@ -1,4 +1,4 @@
-"""Tests for the Decepticon ``load_skill`` tool."""
+"""Tests for the Raptix ``load_skill`` tool."""
 
 from __future__ import annotations
 

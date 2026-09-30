@@ -1,4 +1,4 @@
-"""Typed result models for the Decepticon engagement MCP server.
+"""Typed result models for the Raptix engagement MCP server.
 
 These models are the structured payloads the MCP tools in
 :mod:`raptix.mcp_server.server` return to external agent runtimes
@@ -18,7 +18,7 @@ ScanMode = Literal["quick", "standard", "deep"]
 
 
 class GraphInfo(BaseModel):
-    """A single engagement graph (assistant) exposed by the Decepticon server."""
+    """A single engagement graph (assistant) exposed by the Raptix server."""
 
     model_config = ConfigDict(frozen=True)
 

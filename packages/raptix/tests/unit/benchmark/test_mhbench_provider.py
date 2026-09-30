@@ -563,7 +563,7 @@ class TestExternalModeSetup:
     ) -> None:
         """ssh_config exposes the ``jump`` / ``foothold`` / ``victim`` aliases.
 
-        Decepticon's command-shape contract relies on these three alias names
+        Raptix's command-shape contract relies on these three alias names
         existing — MHBENCH_CONNECT.md and the docs both use
         ``ssh -F <config> foothold '<cmd>'``. Also asserts ProxyCommand wiring
         rather than ProxyJump (``-J`` does not propagate ``-i``).

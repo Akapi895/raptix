@@ -139,7 +139,7 @@ REFERENCES: tuple[ReferenceEntry, ...] = (
         ),
         description=(
             "Competing multi-agent pentest platform — useful to compare "
-            "Decepticon's orchestrator + sub-agent architecture against."
+            "Raptix's orchestrator + sub-agent architecture against."
         ),
     ),
     ReferenceEntry(
@@ -286,7 +286,7 @@ REFERENCES: tuple[ReferenceEntry, ...] = (
         ),
         description=(
             "Usestrix's autonomous security agent — compare workflow "
-            "decomposition against Decepticon's orchestrator."
+            "decomposition against Raptix's orchestrator."
         ),
     ),
     ReferenceEntry(

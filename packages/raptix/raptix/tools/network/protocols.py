@@ -81,7 +81,7 @@ async def http_recon(
     if user_agent:
         headers["User-Agent"] = user_agent
     else:
-        headers["User-Agent"] = "Mozilla/5.0 (compatible; Decepticon/1.0)"
+        headers["User-Agent"] = "Mozilla/5.0 (compatible; Raptix/1.0)"
 
     try:
         async with aiohttp.ClientSession() as session:

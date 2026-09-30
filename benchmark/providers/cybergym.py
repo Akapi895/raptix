@@ -1,7 +1,7 @@
 """CyberGym benchmark provider.
 
 Wires [CyberGym](https://cybergym.io) (arXiv:2506.02548, UC Berkeley —
-~1,500 real-world vulnerability-reproduction tasks) into the Decepticon
+~1,500 real-world vulnerability-reproduction tasks) into the Raptix
 harness. CyberGym is the real-world-CVE benchmark the frontier labs are
 migrating to as professional-CTF suites saturate (Anthropic reports
 CyberGym pass@1 in the Opus 4.x/5 system cards), so it is the highest-value

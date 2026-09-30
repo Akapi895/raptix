@@ -1,4 +1,4 @@
-"""Plugin-author Protocols for the Decepticon contract layer.
+"""Plugin-author Protocols for the Raptix contract layer.
 
 Each Protocol declares the duck-type interface plugin authors must
 implement to contribute a tool, middleware, callback, etc. Decorated

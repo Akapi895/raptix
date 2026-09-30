@@ -1,8 +1,8 @@
-"""Decepticon engagement MCP server.
+"""Raptix engagement MCP server.
 
-Exposes Decepticon engagement control — list graphs, start/monitor/cancel an
+Exposes Raptix engagement control — list graphs, start/monitor/cancel an
 engagement, and pull findings — over the Model Context Protocol so external
-agent runtimes such as OpenClaw and Hermes can drive Decepticon as a tool.
+agent runtimes such as OpenClaw and Hermes can drive Raptix as a tool.
 
 The server SDK (``mcp``) is an optional dependency: install with
 ``pip install 'decepticon[mcp]'``. Importing this package is safe without it;

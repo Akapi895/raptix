@@ -66,7 +66,7 @@ func stackSuffix() string {
 //
 //	$RAPTIX_HOME/run/ops.stack2.sock
 func HostSocketPath() string {
-	return filepath.Join(config.DecepticonHome(), "run", "ops"+stackSuffix()+".sock")
+	return filepath.Join(config.RaptixHome(), "run", "ops"+stackSuffix()+".sock")
 }
 
 // ContainerSocketPath is the ADR-0006 §1' mandated path inside the
@@ -81,14 +81,14 @@ const ContainerSocketPath = "/var/run/decepticon-ops.sock"
 //
 // Stack-scoped form: $RAPTIX_HOME/run/opscontrol.stack2.pid
 func PIDFilePath() string {
-	return filepath.Join(config.DecepticonHome(), "run", "opscontrol"+stackSuffix()+".pid")
+	return filepath.Join(config.RaptixHome(), "run", "opscontrol"+stackSuffix()+".pid")
 }
 
 // EnsureRunDir creates $RAPTIX_HOME/run with mode 0700. Idempotent.
 // Used by both the launcher (before spawning the daemon) and the
 // daemon itself (before binding the socket).
 func EnsureRunDir() error {
-	return os.MkdirAll(filepath.Join(config.DecepticonHome(), "run"), 0o700)
+	return os.MkdirAll(filepath.Join(config.RaptixHome(), "run"), 0o700)
 }
 
 // ServiceUnitName returns the OS-native service identifier for the

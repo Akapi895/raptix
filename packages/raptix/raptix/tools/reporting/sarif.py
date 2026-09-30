@@ -23,7 +23,7 @@ SARIF_VERSION = "2.1.0"
 SARIF_SCHEMA = (
     "https://docs.oasis-open.org/sarif/sarif/v2.1.0/errata01/os/schemas/sarif-schema-2.1.0.json"
 )
-DRIVER_NAME = "Decepticon"
+DRIVER_NAME = "Raptix"
 DRIVER_INFORMATION_URI = "https://github.com/Akapi895/raptix"
 
 _DEFAULT_INCLUDE_KINDS: tuple[NodeKind, ...] = (NodeKind.VULNERABILITY, NodeKind.FINDING)

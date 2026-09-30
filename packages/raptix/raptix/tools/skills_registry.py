@@ -1,4 +1,4 @@
-"""Decepticon skill registry + slug / fuzzy resolver.
+"""Raptix skill registry + slug / fuzzy resolver.
 
 This module is the data-layer counterpart to ``raptix.tools.skills``.
 The existing ``load_skill`` tool reads a single fully-qualified

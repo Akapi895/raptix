@@ -1,6 +1,6 @@
 """Sub-agent streaming — live event emission during sub-agent execution.
 
-When the Decepticon orchestrator delegates to a sub-agent via task(),
+When the Raptix orchestrator delegates to a sub-agent via task(),
 SubAgentMiddleware calls runnable.invoke() or runnable.ainvoke().
 
 This module wraps the runnable so that both invoke() and ainvoke() use

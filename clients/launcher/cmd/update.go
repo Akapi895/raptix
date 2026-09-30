@@ -95,6 +95,6 @@ func runUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	ui.Success("Update complete")
-	ui.DimText("Restart Decepticon to use the new version")
+	ui.DimText("Restart Raptix to use the new version")
 	return nil
 }

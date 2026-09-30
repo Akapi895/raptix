@@ -13,7 +13,7 @@ import (
 	"github.com/Akapi895/raptix/clients/launcher/internal/runtime"
 )
 
-// Compose wraps Docker Compose commands for Decepticon services.
+// Compose wraps Docker Compose commands for Raptix services.
 type Compose struct {
 	Home        string
 	ComposeFile string
@@ -24,13 +24,13 @@ type Compose struct {
 	Runtime runtime.Runtime
 }
 
-// New creates a Compose instance using the Decepticon home directory.
+// New creates a Compose instance using the Raptix home directory.
 // The container runtime is detected at construction time so every
 // subsequent call uses the same binary. Falls back to "docker" if no
 // runtime is reachable so existing tests and dev workflows that don't
 // have Podman installed keep working unchanged.
 func New() *Compose {
-	home := config.DecepticonHome()
+	home := config.RaptixHome()
 	rt, err := runtime.Detect()
 	if err != nil {
 		// No runtime available right now — fall back to assuming
@@ -125,7 +125,7 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-// ContainerName builds the docker container name for a Decepticon
+// ContainerName builds the docker container name for a Raptix
 // service, mirroring the “${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}“
 // template used by docker-compose.yml (#216). Unset/empty → today's
 // “decepticon-<svc>“ name verbatim; “stack2“ → “decepticon-stack2-<svc>“.

@@ -12,14 +12,14 @@ SARIF spec: https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html
 
 Mapping
 -------
-Decepticon Finding → SARIF result. Vulnerability/CVE/Weakness nodes
+Raptix Finding → SARIF result. Vulnerability/CVE/Weakness nodes
 attached via ``VALIDATES`` / ``MAPS_TO`` / ``INSTANCE_OF`` edges enrich
 the result's ``ruleId``, ``properties.security-severity`` (CVSS), and
 ``taxa`` (CWE).
 
 Severity:
 
-  Decepticon → SARIF level     → security-severity
+  Raptix → SARIF level     → security-severity
   critical    error             10.0
   high        error              7.0
   medium      warning            5.0
@@ -33,7 +33,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-_TOOL_NAME = "Decepticon"
+_TOOL_NAME = "Raptix"
 _TOOL_INFORMATION_URI = "https://decepticon.red"
 
 _LEVEL_MAP = {
@@ -163,7 +163,7 @@ def _iter_findings(graph: Any):
 def export_findings_to_sarif(
     graph: Any,
     *,
-    engagement_name: str = "Decepticon Engagement",
+    engagement_name: str = "Raptix Engagement",
     tool_version: str = "0.0.0",
 ) -> dict[str, Any]:
     """Build a SARIF v2.1.0 document from a KnowledgeGraph's findings.
@@ -229,7 +229,7 @@ def write_sarif(
     graph: Any,
     output_path: str | Path,
     *,
-    engagement_name: str = "Decepticon Engagement",
+    engagement_name: str = "Raptix Engagement",
     tool_version: str = "0.0.0",
 ) -> Path:
     """Serialize :func:`export_findings_to_sarif` to ``output_path``."""

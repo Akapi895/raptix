@@ -1,6 +1,6 @@
 """Analyst Agent — vulnerability research specialist.
 
-The Analyst is Decepticon's high-value discovery lane: source code review,
+The Analyst is Raptix's high-value discovery lane: source code review,
 static analysis, CVE correlation, fuzzing, and exploit chain construction.
 Unlike the recon/exploit agents which work primarily black-box, the
 Analyst reads source, builds a persistent knowledge graph, and reasons
@@ -44,7 +44,7 @@ cleanly:
      discovers and applies it automatically.
   3. **Full custom** (library composer): import building blocks from
      ``raptix.middleware`` / ``raptix.tools`` and compose with
-     ``langchain.agents.create_agent`` directly. Decepticon's factory
+     ``langchain.agents.create_agent`` directly. Raptix's factory
      is bypassed entirely.
 
 Middleware slots (per ``SLOTS_PER_ROLE["analyst"]``):

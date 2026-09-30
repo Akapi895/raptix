@@ -166,7 +166,7 @@ def render_nftables(
     policy_verb = "drop" if policy.default_drop or deny_all_external else "accept"
     lines = [
         "#!/usr/sbin/nft -f",
-        "# Decepticon RoE egress guardrail — generated; do not hand-edit.",
+        "# Raptix RoE egress guardrail — generated; do not hand-edit.",
         # `add` then `delete` makes the destroy idempotent on first run
         # (delete of a missing table is an error; add-then-delete is not).
         f"add table {_NFT_TABLE}",

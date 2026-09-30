@@ -1,4 +1,4 @@
-"""Filesystem tool-surface helpers for Decepticon middleware."""
+"""Filesystem tool-surface helpers for Raptix middleware."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from typing import Any
 def filesystem_tools_without_execute(tools: Sequence[Any]) -> list[Any]:
     """Return filesystem tools with the generic execute tool removed.
 
-    Decepticon routes command execution through its dedicated bash tools, while
+    Raptix routes command execution through its dedicated bash tools, while
     Deep Agents' filesystem middleware owns file operations. Keeping this
     selection helper in ``raptix.tools`` makes the public tool surface
     explicit and keeps middleware focused on backend scoping.

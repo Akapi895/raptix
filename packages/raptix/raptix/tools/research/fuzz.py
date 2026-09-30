@@ -1,6 +1,6 @@
 """Fuzzing orchestration — harness synthesis + campaign launching.
 
-Decepticon treats fuzzing as first-class for 0-day discovery. This module:
+Raptix treats fuzzing as first-class for 0-day discovery. This module:
 
 1. Classifies a target (C/C++, Rust, Go, Java, JS, Python) from source
    layout hints so the agent picks the right fuzzer.

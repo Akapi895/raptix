@@ -76,7 +76,7 @@ class TopologySnapshot:
 
 @dataclass(frozen=True)
 class TopologySpec:
-    """Decepticon-side metadata for one upstream MHBench topology.
+    """Raptix-side metadata for one upstream MHBench topology.
 
     Adding a new topology = adding a :class:`TopologySpec` entry to
     :data:`_TOPOLOGIES`. The provider stays unchanged.
@@ -188,7 +188,7 @@ def _load_generated_topologies(submodule_dir: Path) -> dict[str, TopologySpec]:
     ``src/environments/generated/generated_network_*.json``. The JSON
     encodes the full network model (subnets, hosts, vulnerabilities,
     attack paths, goals). This loader extracts the minimal subset the
-    Decepticon provider needs (foothold name, victim host name
+    Raptix provider needs (foothold name, victim host name
     prefixes) so each generated topology becomes runnable via
     ``--ids mhbench/generated_network_<N>`` with zero hand-coded
     metadata.
@@ -278,14 +278,14 @@ _TOPOLOGIES: dict[str, TopologySpec] = {
 class MHBenchProvider(BaseBenchmarkProvider):
     """Benchmark provider wrapping the upstream MHBench CLI.
 
-    Decepticon delegates topology lifecycle (setup / teardown) to MHBench's
+    Raptix delegates topology lifecycle (setup / teardown) to MHBench's
     ``main.py`` and assumes an external OpenStack tenant is reachable from
     the host. No local Docker is involved — all targets live as VMs in the
     OpenStack project named by the operator's MHBench ``config.json``.
 
     ``setup()`` plants a deterministic ``FLAG{<sha256>}`` on the
     topology-selected victim via upstream's ``ansible/goals/addFlag.yml``.
-    Decepticon's evaluator pattern-matches that flag in agent output the
+    Raptix's evaluator pattern-matches that flag in agent output the
     same way XBOWProvider does.
 
     **Foothold-first semantics.** MHBench's research framing is
@@ -305,7 +305,7 @@ class MHBenchProvider(BaseBenchmarkProvider):
 
     **Topology-agnostic.** All per-topology data (env_type, victim name
     prefixes, flag selector, level, tags) lives in :data:`_TOPOLOGIES`.
-    Adding a new MHBench topology to Decepticon's benchmark suite is a
+    Adding a new MHBench topology to Raptix's benchmark suite is a
     metadata edit — no provider code change.
     """
 
@@ -409,7 +409,7 @@ class MHBenchProvider(BaseBenchmarkProvider):
         # endpoint (typically a NAT port on a public IP). The provider
         # skips ``main.py setup`` + OpenStack discovery entirely and uses
         # the operator-provided IPs to seed the flag and stage the
-        # agent's ssh_config. Use this when Decepticon's stack runs on a
+        # agent's ssh_config. Use this when Raptix's stack runs on a
         # different machine than the OpenStack tenant (e.g., local
         # workstation attacking a cloud-hosted DevStack).
         external = _resolve_external_topology(config_abs)
@@ -728,7 +728,7 @@ class MHBenchProvider(BaseBenchmarkProvider):
 
         Runs a tiny snippet inside the MHBench submodule's venv so we reuse
         upstream's already-installed ``openstacksdk`` and ``ConfigService``
-        without adding a Decepticon-side dep. The snippet does pure
+        without adding a Raptix-side dep. The snippet does pure
         discovery (returns every server + its addresses); classification
         into jump / foothold / victims / others happens here in Python so
         the policy is testable and trivially extendable when JSON-based
@@ -1128,7 +1128,7 @@ def _resolve_ssh_key_path(config_abs: Path) -> Path | None:
 class ExternalTopology:
     """Operator-provided endpoint info for an already-deployed topology.
 
-    Use when Decepticon's stack runs on a different machine than the
+    Use when Raptix's stack runs on a different machine than the
     OpenStack tenant — e.g., local workstation attacking a cloud-hosted
     DevStack via a NAT'd jump port. Populated from the optional
     ``external_topology`` section of MHBench's ``config.json``:

@@ -334,7 +334,7 @@ def _rebind_sandbox_per_run(backend: BackendProtocol, runtime: Any = None) -> Ba
 
 
 class FilesystemMiddleware(BaseFilesystemMiddleware):
-    """FilesystemMiddleware with Decepticon's bash tool as the only executor."""
+    """FilesystemMiddleware with Raptix's bash tool as the only executor."""
 
     def __init__(self, **kwargs: object) -> None:
         super().__init__(**kwargs)  # type: ignore[arg-type]

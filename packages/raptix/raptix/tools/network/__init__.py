@@ -1,4 +1,4 @@
-"""Network Reconnaissance Tools for Decepticon.
+"""Network Reconnaissance Tools for Raptix.
 
 This module provides network reconnaissance capabilities including:
 - Network scanning and service discovery

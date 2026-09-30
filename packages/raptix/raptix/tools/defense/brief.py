@@ -183,11 +183,11 @@ def build_navigator_layer(brief: dict[str, Any]) -> dict[str, Any]:
         for technique in brief["missed_techniques"]
     ]
     return {
-        "name": f"Decepticon Detection Coverage — {brief['engagement']}",
+        "name": f"Raptix Detection Coverage — {brief['engagement']}",
         "versions": {"layer": "4.5", "navigator": "4.9.5", "attack": "15"},
         "domain": "enterprise-attack",
         "description": (
-            "Proven detection coverage from the Decepticon Offensive Vaccine loop. "
+            "Proven detection coverage from the Raptix Offensive Vaccine loop. "
             "Green = a detection rule fired on this technique during the engagement; "
             "red = the technique ran but nothing detected it."
         ),

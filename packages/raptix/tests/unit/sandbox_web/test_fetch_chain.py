@@ -1,4 +1,4 @@
-"""Unit tests for the fetch chain — grid logic + the Decepticon RoE per-hop
+"""Unit tests for the fetch chain — grid logic + the Raptix RoE per-hop
 scope gate.
 
 No real egress: ``_curl_probe`` is monkeypatched and the session pool (warmup),

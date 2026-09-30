@@ -104,7 +104,7 @@ bundles (e.g. the `plugins` bundle that ships `vulnresearch`), use the
    ```
 3. **`pyproject.toml` in CWD** — project-default opt-in:
    ```toml
-   [tool.decepticon.plugins]
+   [tool.raptix.plugins]
    enabled = ["standard", "plugins"]
    ```
 4. **Hardcoded default** — `["standard"]`.

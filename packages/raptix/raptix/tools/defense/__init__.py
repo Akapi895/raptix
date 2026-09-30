@@ -27,7 +27,7 @@ All push tools share a contract:
   ``conops.blue_team.<target>``. Tools refuse to push to undeclared
   endpoints; the agent gets a structured error pointing at the missing
   ConOps key.
-- Every pushed rule carries a Decepticon-scoped tag prefix
+- Every pushed rule carries a Raptix-scoped tag prefix
   (``decepticon-eng-<slug>``) so blue-team operators can identify and
   disable the rule after the engagement ends.
 - Tools are idempotent: re-pushing the same rule replaces the prior copy

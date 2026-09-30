@@ -126,9 +126,9 @@ func DimText(msg string) {
 	fmt.Println(Dim.Render(msg))
 }
 
-// DecepticonTheme returns a custom huh theme with Decepticon red branding.
+// RaptixTheme returns a custom huh theme with Raptix red branding.
 // Based on ThemeCharm for polished visuals, recolored to red.
-func DecepticonTheme(isDark bool) *huh.Styles {
+func RaptixTheme(isDark bool) *huh.Styles {
 	t := huh.ThemeCharm(isDark)
 
 	red := lipgloss.Color("#FF3333")

@@ -1,4 +1,4 @@
-"""raptix-core — contract layer for the Decepticon agent framework.
+"""raptix-core — contract layer for the Raptix agent framework.
 
 Pure types, protocols, plugin contracts, and registry primitives. This
 package never imports ``langchain``, ``langgraph``, ``deepagents``,

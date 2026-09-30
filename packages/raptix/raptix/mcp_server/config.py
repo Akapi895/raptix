@@ -1,6 +1,6 @@
 """Environment-driven configuration for the engagement MCP server.
 
-The bridge drives a *running* Decepticon LangGraph server. The default URL
+The bridge drives a *running* Raptix LangGraph server. The default URL
 matches ``raptix.cli.scan``'s ``--langgraph-url`` default and the same
 ``RAPTIX_API_URL`` env var, so the MCP server, the headless CLI, and the
 web client all agree on where the platform lives.

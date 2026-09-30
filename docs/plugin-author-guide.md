@@ -153,7 +153,7 @@ audit-policy = "my_plugin:get_contribution"
 ## 4. Bundle and safety gates
 
 Bundle activation is controlled by `RAPTIX_PLUGINS` (or the
-`[tool.decepticon.plugins]` config section). Set `bundle="..."` on
+`[tool.raptix.plugins]` config section). Set `bundle="..."` on
 your contribution so end users can opt in deliberately:
 
 ```python

@@ -201,7 +201,7 @@ export function AgentDetailPanel({
               agent.id === "decepticon" ? (
                 <div className="py-4 text-center text-xs text-zinc-500 space-y-2">
                   <p className="font-medium text-zinc-400">Orchestrator</p>
-                  <p>Decepticon coordinates sub-agents via task() delegation.</p>
+                  <p>Raptix coordinates sub-agents via task() delegation.</p>
                   <p>Activity appears on the sub-agent nodes, not here.</p>
                   <p className="text-zinc-600 mt-2">Click a sub-agent node in the graph to see its activity.</p>
                 </div>

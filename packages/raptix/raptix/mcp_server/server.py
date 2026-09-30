@@ -1,7 +1,7 @@
-"""FastMCP server exposing Decepticon engagement control to external agents.
+"""FastMCP server exposing Raptix engagement control to external agents.
 
 This is the seam that makes external agent runtimes (OpenClaw, Hermes, or any
-MCP client) able to *drive* Decepticon like its CLI — from a phone, via those
+MCP client) able to *drive* Raptix like its CLI — from a phone, via those
 agents' chat channels. The full surface:
 
 - ``decepticon_list_graphs`` / ``decepticon_list_engagements`` — discover & resume
@@ -14,7 +14,7 @@ agents' chat channels. The full surface:
 - ``decepticon_cancel_engagement`` — stop a run
 
 The server is a thin control plane. The red-team work runs inside the
-Decepticon LangGraph server (RoE enforcement, sandbox, knowledge-graph
+Raptix LangGraph server (RoE enforcement, sandbox, knowledge-graph
 persistence); this module only translates MCP tool calls into LangGraph runs
 and reads persisted state/findings back.
 """
@@ -39,7 +39,7 @@ def build_server(
     host: str = "127.0.0.1",
     port: int = 8765,
 ) -> FastMCP:
-    """Construct the Decepticon engagement MCP server with all tools registered.
+    """Construct the Raptix engagement MCP server with all tools registered.
 
     ``client`` injects a pre-built LangGraph SDK client (tests/embedding);
     production callers leave it ``None`` so it is created from ``config``.

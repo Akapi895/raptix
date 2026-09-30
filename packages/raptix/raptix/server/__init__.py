@@ -1,4 +1,4 @@
-"""Decepticon server-side custom HTTP surface mounted on LangGraph platform.
+"""Raptix server-side custom HTTP surface mounted on LangGraph platform.
 
 LangGraph Platform's ``langgraph.json`` allows mounting a user-defined
 ASGI app via the ``http.app`` field. We use that hook to add endpoints

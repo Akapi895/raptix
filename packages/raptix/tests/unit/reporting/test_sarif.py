@@ -62,7 +62,7 @@ class TestRenderSarifShape:
         assert payload["$schema"] == SARIF_SCHEMA
         assert len(payload["runs"]) == 1
         run = payload["runs"][0]
-        assert run["tool"]["driver"]["name"] == "Decepticon"
+        assert run["tool"]["driver"]["name"] == "Raptix"
         assert run["automationDetails"]["id"] == "eng-1/sarif"
         assert len(run["results"]) == 2
 

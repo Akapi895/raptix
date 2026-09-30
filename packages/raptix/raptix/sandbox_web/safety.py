@@ -27,7 +27,7 @@ def allow_private_default() -> bool:
 
 
 def _resolve_fail_open() -> bool:
-    """Decepticon: in the sandbox we FAIL-CLOSED on resolver errors by default
+    """Raptix: in the sandbox we FAIL-CLOSED on resolver errors by default
     (an unresolvable host is refused rather than allowed). Set
     ``INSANE_RESOLVE_FAIL_OPEN=1`` to restore upstream's permissive behaviour."""
     return os.environ.get("INSANE_RESOLVE_FAIL_OPEN", "") in ("1", "true", "yes")
@@ -92,7 +92,7 @@ def classify_url(url: str, allow_private: bool = False) -> tuple[bool, str]:
         infos = socket.getaddrinfo(host, port, proto=socket.IPPROTO_TCP)
         ips = {info[4][0] for info in infos}
     except Exception:
-        # Decepticon: fail-CLOSED on resolver errors inside the sandbox — an
+        # Raptix: fail-CLOSED on resolver errors inside the sandbox — an
         # unresolvable host is refused, not allowed (upstream failed open here).
         # This also closes the DNS-rebinding gap where the classifier resolves
         # one way and the fetcher another. Opt out with INSANE_RESOLVE_FAIL_OPEN=1.

@@ -1,6 +1,6 @@
 """MCP tool registration — interactive engagement control (list / steer / watch).
 
-These tools make the MCP surface feel like the Decepticon CLI from a phone:
+These tools make the MCP surface feel like the Raptix CLI from a phone:
 browse and resume engagements, send operator messages to steer a run, read the
 transcript to watch progress, inspect OPPLAN/scope, and tail the live stream.
 """

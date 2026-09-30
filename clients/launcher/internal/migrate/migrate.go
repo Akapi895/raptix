@@ -71,7 +71,7 @@ var (
 // registered steps. env is the already-loaded .env map; steps may mutate
 // it so the rest of `start` sees post-migration values.
 func RunAll(env map[string]string) {
-	home := config.DecepticonHome()
+	home := config.RaptixHome()
 	c := &Ctx{
 		EnvPath: config.EnvPath(),
 		Env:     env,

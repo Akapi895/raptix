@@ -21,7 +21,7 @@ import {
 } from "./config.mjs";
 import { statusHtml } from "./ui.mjs";
 
-test("resolveDesktopConfig defaults to the installed Decepticon home and WEB_PORT in local mode", () => {
+test("resolveDesktopConfig defaults to the installed Raptix home and WEB_PORT in local mode", () => {
   const cfg = resolveDesktopConfig(
     { WEB_PORT: "3999", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/home/alice", platform: "linux" },
@@ -320,10 +320,10 @@ test("statusHtml renders product branding and cloud actions", () => {
       isCloud: true,
       setup: setupGuide("linux"),
     },
-    "connecting to Decepticon cloud…",
+    "connecting to Raptix cloud…",
   );
 
-  assert.match(html, /alt="Decepticon chameleon"/);
+  assert.match(html, /alt="Raptix chameleon"/);
   assert.ok(html.includes("PurpleAILAB"));
   assert.ok(html.includes("An AI red team under your command."));
   assert.ok(html.includes("app.decepticon.red"));

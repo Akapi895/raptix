@@ -242,7 +242,7 @@ METHOD_MODELS: dict[AuthMethod, dict[Tier, str]] = {
         # ``OLLAMA_MODEL`` so an OSS user can pick anything they pulled
         # locally (qwen3-coder:30b, llama3.2, deepseek-r1, ...). The
         # ``ollama_chat/`` provider prefix routes to /api/chat — the
-        # endpoint that supports tool/function calling, which Decepticon
+        # endpoint that supports tool/function calling, which Raptix
         # agents depend on. The values below are placeholders kept so
         # METHOD_MODELS stays exhaustive; resolve_chain branches before
         # reading them when method == OLLAMA_LOCAL.
@@ -334,7 +334,7 @@ METHOD_MODELS: dict[AuthMethod, dict[Tier, str]] = {
     },
     # Fireworks AI — fireworks_ai/<model>. All three default to Llama
     # variants because Fireworks-hosted Mixtral does not reliably honor
-    # the OpenAI tools schema and Decepticon agents always emit tool
+    # the OpenAI tools schema and Raptix agents always emit tool
     # calls. Override via RAPTIX_MODEL_<ROLE> for non-tool roles.
     AuthMethod.FIREWORKS_API: {
         Tier.HIGH: "fireworks_ai/accounts/fireworks/models/llama-v3p3-70b-instruct",
@@ -343,7 +343,7 @@ METHOD_MODELS: dict[AuthMethod, dict[Tier, str]] = {
     },
     # Cohere Command — cohere_chat/<model> (v2 API, supports tool use).
     # The bare ``cohere/`` prefix routes to the legacy completion
-    # endpoint which silently drops the ``tools`` parameter; Decepticon
+    # endpoint which silently drops the ``tools`` parameter; Raptix
     # agents always emit tool calls so v2 is the only viable route.
     AuthMethod.COHERE_API: {
         Tier.HIGH: "cohere_chat/command-a-03-2025",
@@ -653,7 +653,7 @@ def _resolve_ollama_model() -> str | None:
     The user picks the model via ``OLLAMA_MODEL`` (free-form, e.g.
     ``qwen3-coder:30b``). We normalize to the ``ollama_chat/`` provider
     prefix so requests hit Ollama's ``/api/chat`` endpoint — the only
-    one that exposes tool/function calling, which every Decepticon agent
+    one that exposes tool/function calling, which every Raptix agent
     relies on.
 
     Returns None when the user hasn't opted in (OLLAMA_API_BASE empty
@@ -814,7 +814,7 @@ def resolve_chain(tier: Tier, credentials: Credentials) -> list[str]:
 # ── Configuration models ────────────────────────────────────────────────
 
 
-_PROXY_DEFAULT_LOCAL_KEY = "sk-decepticon-master"  # nosemgrep: decepticon-no-hardcoded-default-key
+_PROXY_DEFAULT_LOCAL_KEY = "sk-decepticon-master"  # nosemgrep: raptix-no-hardcoded-default-key
 
 
 class ProxyConfig(BaseModel):
@@ -823,7 +823,7 @@ class ProxyConfig(BaseModel):
     The ``api_key`` default is the well-known local-dev placeholder
     documented in .env.example. Production deployments MUST override it
     via RAPTIX_LLM__PROXY_API_KEY. The placeholder exists so
-    module-level agent constructors (Decepticon imports its agents at
+    module-level agent constructors (Raptix imports its agents at
     package init time for the ``raptix.agents.plugins.*`` entry
     points to register) can build a ChatOpenAI instance against the
     LiteLLM proxy without credentials in the local-dev path.

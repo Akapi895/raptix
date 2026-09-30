@@ -7,7 +7,7 @@ import (
 
 var statusCmd = &cobra.Command{
 	Use:   "status",
-	Short: "Show Decepticon service status",
+	Short: "Show Raptix service status",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return compose.New().Ps()
 	},

@@ -41,7 +41,7 @@ let mainWindow;
 let starting = false;
 let cookiesImported = false;
 
-app.setName("Decepticon");
+app.setName("Raptix");
 if (process.platform === "win32") {
   app.setAppUserModelId("red.decepticon.desktop");
 }
@@ -149,7 +149,7 @@ async function loadDashboard() {
 
 async function bootstrapDashboard() {
   if (config.isCloud) {
-    await loadStatus("connecting to Decepticon cloud…");
+    await loadStatus("connecting to Raptix cloud…");
     if (await dashboardReady()) {
       await loadDashboard();
       return;
@@ -189,7 +189,7 @@ function startWebProfile() {
   const missing = missingConfigFiles(config);
   if (missing.length > 0) {
     const detail = [
-      "Missing required Decepticon config file(s):",
+      "Missing required Raptix config file(s):",
       ...missing.map(([label, file]) => `- ${label}: ${file}`),
       "",
       "Use the buttons below to open the cloud app, copy the installer, or run onboarding.",

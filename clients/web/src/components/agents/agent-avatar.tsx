@@ -10,7 +10,7 @@ interface AgentAvatarProps {
 
 /**
  * Agent avatar.
- * Decepticon uses an image; sub-agents render as text initials.
+ * Raptix uses an image; sub-agents render as text initials.
  */
 export function AgentAvatar({ agent, size = 64 }: AgentAvatarProps) {
   if (agent.imagePath) {

@@ -12,7 +12,7 @@ Format (JSON Lines):
     [<elapsed-seconds>, "o", "<output bytes>"]
     [<elapsed-seconds>, "i", "<input bytes>"]
 
-Decepticon's pipe-pane log is raw terminal output (escape sequences and
+Raptix's pipe-pane log is raw terminal output (escape sequences and
 all) with no embedded timing information. The reconstruction strategy:
 
 1. Read the pipe-pane log as raw bytes.
@@ -141,7 +141,7 @@ def export_asciicast(
         "env": {"SHELL": "/bin/bash", "TERM": "xterm-256color"},
     }
     if title or session_name:
-        header["title"] = title or f"Decepticon session {session_name}"
+        header["title"] = title or f"Raptix session {session_name}"
 
     out_p.parent.mkdir(parents=True, exist_ok=True)
     with out_p.open("w", encoding="utf-8") as fh:

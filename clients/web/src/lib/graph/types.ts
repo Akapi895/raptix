@@ -3,7 +3,7 @@
  *
  * Graph topology mirrors octogent's hierarchy:
  *
- *   ORCHESTRATOR (Decepticon, center hub)
+ *   ORCHESTRATOR (Raptix, center hub)
  *   ├── AGENT (kill-chain workers, arranged in circle)
  *   │   ├── TOOL-SESSION (active tool call, small satellite node)
  *   │   └── COMPLETED-SESSION (finished tool, dimmed satellite)

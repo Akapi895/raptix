@@ -59,7 +59,7 @@ def register_legacy_imports() -> None:
         _REGISTERED = True
         return
 
-    lines = ["Decepticon Phase 1 compat shims active. Migrate the following paths before 2.0.0:"]
+    lines = ["Raptix Phase 1 compat shims active. Migrate the following paths before 2.0.0:"]
     for legacy, canonical in _LEGACY_PATH_NOTES:
         lines.append(f"  - {legacy}  ->  {canonical}")
     warnings.warn(

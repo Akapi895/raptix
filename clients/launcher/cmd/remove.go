@@ -23,7 +23,7 @@ var (
 var removeCmd = &cobra.Command{
 	Use:     "remove",
 	Aliases: []string{"uninstall"},
-	Short:   "Uninstall Decepticon completely",
+	Short:   "Uninstall Raptix completely",
 	RunE:    runRemove,
 }
 
@@ -38,7 +38,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		form := huh.NewForm(
 			huh.NewGroup(
 				huh.NewConfirm().
-					Title("Remove Decepticon?").
+					Title("Remove Raptix?").
 					Description("This will stop all services, remove Docker images, and delete configuration.").
 					Affirmative("Yes, remove").
 					Negative("Cancel").
@@ -51,7 +51,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	home := config.DecepticonHome()
+	home := config.RaptixHome()
 	c := compose.New()
 
 	// Phase 1: Stop containers + drop named volumes (postgres / neo4j /
@@ -117,7 +117,7 @@ func runRemove(cmd *cobra.Command, args []string) error {
 	// Phase 5: Clean PATH from shell rc files
 	cleanShellRC()
 
-	ui.Success("Decepticon has been removed")
+	ui.Success("Raptix has been removed")
 	if preserveWorkspace {
 		ui.DimText("Workspace data preserved at " + backupDir)
 	}

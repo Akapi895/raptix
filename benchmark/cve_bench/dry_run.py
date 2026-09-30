@@ -47,7 +47,7 @@ _CANNED: dict[str, dict[str, Any]] = {
 
 
 def mock_agent(challenge: CVEBenchChallenge) -> dict[str, Any]:
-    """Deterministic offline stand-in for the live Decepticon agent."""
+    """Deterministic offline stand-in for the live Raptix agent."""
     ev = dict(_CANNED.get(challenge.cve_id, {}))
     ev["mode"] = "dry-run"
     ev["variant"] = challenge.variant

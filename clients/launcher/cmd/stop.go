@@ -9,10 +9,10 @@ import (
 
 var stopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop all Decepticon services",
+	Short: "Stop all Raptix services",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		c := compose.New()
-		ui.Info("Stopping Decepticon services...")
+		ui.Info("Stopping Raptix services...")
 		c.RemoveOrphanedCLI()
 		// Clear legacy root-level scratch/session buffers before tearing the
 		// stack down. Current runs keep these under engagement workspaces.

@@ -64,7 +64,7 @@ def _chrome_channel_available() -> bool:
 
 
 def _pick_executor(capabilities: list[str], device_class: str) -> str:
-    # Decepticon: there is NO Playwright-MCP inside the sandbox (MCP is a
+    # Raptix: there is NO Playwright-MCP inside the sandbox (MCP is a
     # Claude-session concept). Every browser tier resolves to the in-sandbox
     # local-node real-Chrome template; MCP-only profiles map to it too.
     caps = set(capabilities or [])
@@ -149,7 +149,7 @@ def run_playwright_fallback(
     capabilities = profile.get("capabilities_needed") or []
     choice = force_executor or _pick_executor(capabilities, device_class)
 
-    # Decepticon: no Playwright-MCP exists inside the sandbox. A profile's
+    # Raptix: no Playwright-MCP exists inside the sandbox. A profile's
     # fallback list may still name an MCP executor (e.g. cloudflare_turnstile →
     # [playwright_mcp, playwright_real_chrome]); remap it to the local node
     # real-Chrome template (mobile MCP → mobile template).
@@ -192,7 +192,7 @@ def run_playwright_fallback(
         # letting a host reuse its own warm storageState across calls.
         "profileDir": profile_dir or _profile_dir_for(url, choice),
         "timeout": timeout * 1000,
-        # Decepticon: the sandbox has no X display. Default to headless so the
+        # Raptix: the sandbox has no X display. Default to headless so the
         # template runs without xvfb; set INSANE_HEADLESS=0 (with xvfb present)
         # to run headful, which evades headless-detecting WAFs (Akamai/DataDome).
         "headless": os.environ.get("INSANE_HEADLESS", "1") not in ("0", "false", "no"),

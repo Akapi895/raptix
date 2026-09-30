@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// withTempHome redirects config.DecepticonHome() output via env so each
+// withTempHome redirects config.RaptixHome() output via env so each
 // test owns its own ack-file directory.
 func withTempHome(t *testing.T) string {
 	t.Helper()
@@ -305,7 +305,7 @@ func TestPromptIfNotStarred_GhPath_TitleSet(t *testing.T) {
 
 	PromptIfNotStarred()
 
-	if s.confirmTitle != "★ Star Decepticon on GitHub?" {
+	if s.confirmTitle != "★ Star Raptix on GitHub?" {
 		t.Errorf("title = %q, want gh-path star ask", s.confirmTitle)
 	}
 }

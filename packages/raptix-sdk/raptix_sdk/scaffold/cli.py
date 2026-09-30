@@ -23,7 +23,7 @@ from raptix_sdk.scaffold.templates import TEMPLATES, pyproject_for
 
 app = typer.Typer(
     name="decepticon-sdk",
-    help="Decepticon plugin author SDK — scaffold + utilities.",
+    help="Raptix plugin author SDK — scaffold + utilities.",
     no_args_is_help=True,
 )
 
@@ -59,7 +59,7 @@ def plugin_new(
         help="Overwrite existing files in --path.",
     ),
 ) -> None:
-    """Scaffold a new Decepticon plugin package."""
+    """Scaffold a new Raptix plugin package."""
     if kind not in TEMPLATES:
         raise typer.BadParameter(f"unknown --kind={kind!r}; expected one of {sorted(TEMPLATES)}")
     template = TEMPLATES[kind]
