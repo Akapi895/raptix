@@ -97,6 +97,7 @@ def test_kg_inventory_and_objective_payload_are_deterministic() -> None:
         "sqli::endpoint::GET::https://app.test/search",
         "xss::endpoint::GET::https://app.test/search",
     ]
+    assert {cell["gen"] for cell in cells} == {0}
     assert payload["parent_id"] == "OBJ-001"
     assert all(child["owner"] == "surface_exploit" for child in payload["children"])
     assert all(child["mitre"] == ["T1190"] for child in payload["children"])

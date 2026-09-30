@@ -143,7 +143,7 @@ def _decode_props(value: Any) -> dict[str, Any]:
     return {}
 
 
-def surfaces_from_kg_inventory(rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def surfaces_from_kg_inventory(rows: Sequence[Mapping[str, Any]]) -> list[dict[str, Any]]:
     """Normalize scoped Endpoint rows and their typed KG children."""
     surfaces: list[dict[str, Any]] = []
     for row in rows:
@@ -220,7 +220,16 @@ def session_name_for_cell(cell_id: str) -> str:
     return f"se-{digest}"
 
 
-def build_coverage_matrix(surfaces: list[Surface]) -> list[dict[str, Any]]:
+def _surface_generation(surface: Surface) -> int:
+    props = _props(surface)
+    raw = surface.get("gen", props.get("gen", 0))
+    try:
+        return max(0, int(raw))
+    except (TypeError, ValueError):
+        return 0
+
+
+def build_coverage_matrix(surfaces: Sequence[Surface]) -> list[dict[str, Any]]:
     """Expand normalized surfaces into deterministic coverage cells."""
     cells: list[dict[str, Any]] = []
     unique_surfaces: dict[str, Surface] = {}
@@ -234,19 +243,23 @@ def build_coverage_matrix(surfaces: list[Surface]) -> list[dict[str, Any]]:
         for vuln_class in applicable_vuln_classes(surface):
             spec = VULN_CLASSES[vuln_class]
             cell_id = f"{vuln_class}::{surface_key}"
-            cells.append(
-                {
-                    "cell_id": cell_id,
-                    "vuln_class": vuln_class,
-                    "surface_key": surface_key,
-                    "skill_path": spec.skill_path,
-                    "mitre": spec.mitre,
-                    "tool_hints": list(spec.tool_hints),
-                    "session": session_name_for_cell(cell_id),
-                    "session_name": session_name_for_cell(cell_id),
-                    "status": "pending",
-                }
-            )
+            cell = {
+                "cell_id": cell_id,
+                "vuln_class": vuln_class,
+                "surface_key": surface_key,
+                "skill_path": spec.skill_path,
+                "mitre": spec.mitre,
+                "tool_hints": list(spec.tool_hints),
+                "session": session_name_for_cell(cell_id),
+                "session_name": session_name_for_cell(cell_id),
+                "gen": _surface_generation(surface),
+                "status": "pending",
+            }
+            for metadata_key in ("discovered_by", "via_cell"):
+                metadata = surface.get(metadata_key, props.get(metadata_key))
+                if metadata:
+                    cell[metadata_key] = str(metadata)
+            cells.append(cell)
     return cells
 
 
@@ -262,6 +275,10 @@ def build_objective_expand_payload(
         session_name = str(cell.get("session_name") or cell.get("session") or "")
         mitre = cell.get("mitre", [])
         mitre_list = [item.strip() for item in str(mitre).split(",") if item.strip()]
+        notes = [f"cell_id={cell_id}", f"session_name={session_name}"]
+        via_cell = cell.get("via_cell")
+        if via_cell:
+            notes.append(f"via_cell={via_cell}")
         children.append(
             {
                 "title": f"Surface exploit: {vuln_class} @ {surface_key}",
@@ -277,7 +294,7 @@ def build_objective_expand_payload(
                 "priority": priority,
                 "mitre": mitre_list,
                 "owner": "surface_exploit",
-                "notes": f"cell_id={cell_id}; session_name={session_name}",
+                "notes": "; ".join(notes),
             }
         )
     return {"parent_id": parent_id, "children": children}
