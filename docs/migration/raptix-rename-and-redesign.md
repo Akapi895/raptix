@@ -114,8 +114,14 @@ Ngoài rename, các cải tiến cấu trúc — **đã cập nhật sau khi đ�
    > `compat/register_legacy_imports`. Sự "trùng tên khái niệm" tự biến mất khi 2.0.0 dọn `raptix/core/`.
    > ⇒ Để nguyên; không đổi tên.
 
-2. **Gộp 3 thư mục "skill*" thành 1 namespace** `raptix/skills/` — **KHÔNG làm standalone; gộp vào PR hạ tầng (PR‑D).**
-   - Ý định: `skills/*` (dữ liệu) → `skills/defs/`; `skillogy/` → `skills/graph/`; `skill_audit/` → `skills/audit/`
+2. **Gộp 3 thư mục "skill*" thành 1 namespace** `raptix/skills/` — **ĐÃ LÀM (trong PR‑D).**
+   - `skills/{standard,shared,plugins,benchmark}` (dữ liệu) → `skills/defs/`
+   - `skillogy/` → `skills/engine/` (đặt "engine" thay vì "graph" để tránh đụng `skills/.graph/`)
+   - `skill_audit/` → `skills/audit/`; thêm `skills/__init__.py`; `skills/.graph/skills.cypher` giữ chỗ.
+   - **Node key `/skills/<...>/SKILL.md` được BẢO TOÀN** nhờ trỏ corpus‑root vào `skills/defs`
+     (verified: 0 `/skills/defs/`, 272 `/skills/standard/`; `check-skill-graph` OK 2134 nodes/5741 edges).
+   - Đã cập nhật 37 import + Dockerfile/compose/entrypoint + wheel exclude; container image build
+     cần môi trường tích hợp để verify.
    > **Phát hiện khi triển khai:** `skillogy` **là một SERVICE triển khai**, không phải module nội bộ:
    > có `containers/skillogy.Dockerfile` (`CMD python -m …skillogy`, `COPY packages/…/skillogy`),
    > service riêng trong `docker-compose.yml` (image `…-skillogy`), và bị tham chiếu trong **5 workflow**
