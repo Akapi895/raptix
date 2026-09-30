@@ -1,4 +1,4 @@
-"""``python -m raptix.skillogy.builder`` — assemble the full
+"""``python -m raptix.skills.engine.builder`` — assemble the full
 graph from seeds + SKILL.md + MITRE STIX and emit ``skills.cypher``.
 
 Default paths point at the in-tree corpus. The STIX bundle is required
@@ -17,11 +17,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from raptix.skillogy.builder.emit import emit_cypher
-from raptix.skillogy.builder.mitre_stix import emit_mitre_records
-from raptix.skillogy.builder.model import Edge, Node
-from raptix.skillogy.builder.seeds_to_graph import emit_all_seed_records
-from raptix.skillogy.builder.skills import emit_skill_records
+from raptix.skills.engine.builder.emit import emit_cypher
+from raptix.skills.engine.builder.mitre_stix import emit_mitre_records
+from raptix.skills.engine.builder.model import Edge, Node
+from raptix.skills.engine.builder.seeds_to_graph import emit_all_seed_records
+from raptix.skills.engine.builder.skills import emit_skill_records
 
 
 class ExitCode(enum.IntEnum):
@@ -78,13 +78,13 @@ def build_graph(
 
 def _build_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="python -m raptix.skillogy.builder",
+        prog="python -m raptix.skills.engine.builder",
         description="Compile SKILL.md + seeds + MITRE STIX into skills.cypher.",
     )
     parser.add_argument(
         "--skills-root",
         type=Path,
-        default=Path("packages/raptix/raptix/skills"),
+        default=Path("packages/raptix/raptix/skills/defs"),
         help="Corpus root to scan.",
     )
     parser.add_argument(
@@ -172,7 +172,7 @@ def main(argv: list[str] | None = None) -> ExitCode:
             return ExitCode.OK
         print(
             f"DIFF: {args.out} differs from build output. "
-            f"Run `python -m raptix.skillogy.builder` to regenerate.",
+            f"Run `python -m raptix.skills.engine.builder` to regenerate.",
             file=sys.stderr,
         )
         return ExitCode.DIFF_FOUND

@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from raptix.skillogy.builder.seeds import load_asset_types
-from raptix.skillogy.builder.seeds_to_graph import emit_asset_type_records
+from raptix.skills.engine.builder.seeds import load_asset_types
+from raptix.skills.engine.builder.seeds_to_graph import emit_asset_type_records
 
 REQUESTED_ASSET_TYPE_COVERAGE: dict[str, str] = {
     "CIDR": "cidr",

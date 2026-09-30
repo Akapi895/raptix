@@ -31,7 +31,7 @@ Layout
   ``DECEPTICON_USE_SKILLOGY=1``.
 """
 
-from raptix.skillogy.proto import (
+from raptix.skills.engine.proto import (
     SkillEnvelope,
     SkillListRequest,
     SkillListResponse,

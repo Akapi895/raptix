@@ -24,7 +24,7 @@ from langchain_core.runnables import Runnable
 import raptix
 from raptix.graph_registry import BUILTIN_GRAPHS, STANDARD_GRAPHS
 from raptix.middleware.skillogy import _PHASE_FOR_ROLE
-from raptix.skillogy.builder.seeds import load_asset_types
+from raptix.skills.engine.builder.seeds import load_asset_types
 from raptix_core.contracts.slots import SLOTS_PER_ROLE
 from raptix_core.types.llm import AGENT_TIERS
 
@@ -105,7 +105,12 @@ def test_known_specialists_fully_wired(role):
 
 
 _PHASES_YAML = (
-    Path(raptix.__file__).resolve().parent / "skillogy" / "builder" / "seeds" / "phases.yaml"
+    Path(raptix.__file__).resolve().parent
+    / "skills"
+    / "engine"
+    / "builder"
+    / "seeds"
+    / "phases.yaml"
 )
 
 
@@ -128,7 +133,9 @@ def test_every_standard_graph_has_a_skillogy_phase():
     assert not missing, f"standard agents missing a _PHASE_FOR_ROLE mapping: {missing}"
 
 
-_MOC_YAML = Path(raptix.__file__).resolve().parent / "skillogy" / "builder" / "seeds" / "moc.yaml"
+_MOC_YAML = (
+    Path(raptix.__file__).resolve().parent / "skills" / "engine" / "builder" / "seeds" / "moc.yaml"
+)
 
 
 def test_moc_parent_phases_are_seeded():

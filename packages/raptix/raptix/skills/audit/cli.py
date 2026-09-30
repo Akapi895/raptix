@@ -16,7 +16,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-from raptix.skill_audit.rules import RuleId, Violation, validate_skill_file
+from raptix.skills.audit.rules import RuleId, Violation, validate_skill_file
 
 
 class ExitCode(enum.IntEnum):
@@ -85,7 +85,7 @@ def _format_report(report: CorpusReport) -> str:
 
 def _build_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="python -m raptix.skill_audit",
+        prog="python -m raptix.skills.audit",
         description="Validate SKILL.md frontmatter against the canonical schema.",
     )
     parser.add_argument(

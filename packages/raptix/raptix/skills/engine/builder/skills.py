@@ -1,7 +1,7 @@
 """SKILL.md → :Skill nodes + explicit edges.
 
-Reuses ``raptix.skill_audit.frontmatter`` for parsing and
-``raptix.skill_audit.aliases`` for subdomain normalisation, so
+Reuses ``raptix.skills.audit.frontmatter`` for parsing and
+``raptix.skills.audit.aliases`` for subdomain normalisation, so
 canonical-name handling stays in one place. The Phase 0 validator has
 already guaranteed every file conforms to the schema; this module
 trusts that contract and does not re-validate fields.
@@ -35,14 +35,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from raptix.skill_audit.aliases import resolve_subdomain
-from raptix.skill_audit.frontmatter import (
+from raptix.skills.audit.aliases import resolve_subdomain
+from raptix.skills.audit.frontmatter import (
     FrontmatterParseError,
     parse_frontmatter,
 )
-from raptix.skill_audit.mitre import MitreMatrix, classify_mitre_id, coerce_mitre_list
-from raptix.skillogy.builder.model import Edge, Node
-from raptix.skillogy.builder.seeds import load_mocs
+from raptix.skills.audit.mitre import MitreMatrix, classify_mitre_id, coerce_mitre_list
+from raptix.skills.engine.builder.model import Edge, Node
+from raptix.skills.engine.builder.seeds import load_mocs
 
 _SKILL_ROOT_RE = re.compile(r"(?:^|/)skills/.*$")
 

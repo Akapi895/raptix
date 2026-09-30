@@ -19,4 +19,4 @@ ignore: |
   build/
   uv.lock
   package-lock.json
-  packages/raptix/raptix/skills/standard/blue_cell/rules/
+  packages/raptix/raptix/skills/defs/standard/blue_cell/rules/

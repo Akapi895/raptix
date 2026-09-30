@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.skill_audit.canonical import (
+from raptix.skills.audit.canonical import (
     SUBDOMAIN_LIST_PATH,
     load_canonical_subdomains,
 )

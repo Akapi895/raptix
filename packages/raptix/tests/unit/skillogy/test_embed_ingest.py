@@ -12,7 +12,7 @@ from typing import Any
 
 import pytest
 
-from raptix.skillogy import embed_ingest, embeddings
+from raptix.skills.engine import embed_ingest, embeddings
 
 
 class _FakeBackend:

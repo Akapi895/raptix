@@ -171,7 +171,7 @@ def _backend_factory():
     so unit tests can swap in either implementation behind the same
     duck-typed contract.
     """
-    from raptix.skillogy.client.rest import RestSkillogyClient  # noqa: PLC0415
+    from raptix.skills.engine.client.rest import RestSkillogyClient  # noqa: PLC0415
 
     return RestSkillogyClient(
         base_url=_resolve_skillogy_url(),

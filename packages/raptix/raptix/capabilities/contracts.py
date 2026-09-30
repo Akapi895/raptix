@@ -14,7 +14,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
-from raptix.skill_audit.frontmatter import FrontmatterParseError, parse_frontmatter
+from raptix.skills.audit.frontmatter import FrontmatterParseError, parse_frontmatter
 
 
 class CapabilityLane(StrEnum):

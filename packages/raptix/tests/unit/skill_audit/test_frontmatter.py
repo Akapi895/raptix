@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.skill_audit.frontmatter import (
+from raptix.skills.audit.frontmatter import (
     FrontmatterParseError,
     parse_frontmatter,
 )

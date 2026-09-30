@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.skill_audit.path_kind import is_offensive_path
+from raptix.skills.audit.path_kind import is_offensive_path
 
 
 @pytest.mark.parametrize(

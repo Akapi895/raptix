@@ -30,7 +30,7 @@ import os
 import time
 from typing import Any
 
-from raptix.skillogy.server.neo4j_backend import (
+from raptix.skills.engine.server.neo4j_backend import (
     CypherWriteRejected,
     Neo4jBackend,
 )

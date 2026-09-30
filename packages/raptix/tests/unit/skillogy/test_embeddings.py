@@ -13,7 +13,7 @@ from typing import Any
 import httpx
 import pytest
 
-from raptix.skillogy import embeddings
+from raptix.skills.engine import embeddings
 
 
 @pytest.fixture(autouse=True)

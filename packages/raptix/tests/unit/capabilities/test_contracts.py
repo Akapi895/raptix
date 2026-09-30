@@ -7,7 +7,7 @@ from raptix.capabilities.contracts import (
     discover_contracts,
     validate_contract_metadata,
 )
-from raptix.skill_audit.rules import RuleId, validate_skill_file
+from raptix.skills.audit.rules import RuleId, validate_skill_file
 
 
 def _contract() -> dict[str, object]:

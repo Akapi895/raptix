@@ -7,8 +7,8 @@ graph objects.
 
 from __future__ import annotations
 
-from raptix.skillogy.builder.model import Edge, Node
-from raptix.skillogy.builder.seeds import (
+from raptix.skills.engine.builder.model import Edge, Node
+from raptix.skills.engine.builder.seeds import (
     load_asset_types,
     load_mocs,
     load_phases,
