@@ -83,5 +83,6 @@ Use [`template.md`](template.md) as the starting point.
 | [0019](0019-parameterize-surface-exploit-cells.md) | Parameterize surface exploitation by coverage cell | Proposed |
 | [0020](0020-coverage-matrix-objectives.md) | Derive Initial Foothold coverage from the KG into OPPLAN children | Proposed |
 | [0021](0021-b0-session-isolation-gate.md) | Gate surface-exploit fan-out on session isolation | Proposed |
+| [0022](0022-sequential-surface-exploit-dispatch.md) | Dispatch surface-exploit cells sequentially | Proposed |
 
 Keep this index in sync when you land a new ADR.

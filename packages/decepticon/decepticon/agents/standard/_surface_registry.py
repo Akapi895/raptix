@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
-from typing import Any, Callable, Mapping
+from typing import Any, Callable, Mapping, Sequence
 
 Surface = Mapping[str, Any]
 Applicability = Callable[[Surface], bool]
@@ -251,7 +251,7 @@ def build_coverage_matrix(surfaces: list[Surface]) -> list[dict[str, Any]]:
 
 
 def build_objective_expand_payload(
-    parent_id: str, cells: list[Mapping[str, Any]]
+    parent_id: str, cells: Sequence[Mapping[str, Any]]
 ) -> dict[str, Any]:
     """Render coverage cells as deterministic ``objective_expand`` children."""
     children: list[dict[str, Any]] = []
