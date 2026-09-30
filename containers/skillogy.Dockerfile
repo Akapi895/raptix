@@ -16,18 +16,18 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Server code. The decepticon namespace package is materialized at the
-# top level so ``python -m decepticon.skillogy`` works without the rest
-# of the decepticon framework being present.
-COPY packages/decepticon/decepticon/skillogy ./decepticon/skillogy
-COPY packages/decepticon/decepticon/skill_audit ./decepticon/skill_audit
+# Server code. The raptix namespace package is materialized at the
+# top level so ``python -m raptix.skills.engine`` works without the rest
+# of the raptix framework being present.
+COPY packages/raptix/raptix/skills/engine ./raptix/skills/engine
+COPY packages/raptix/raptix/skills/audit ./raptix/skills/audit
 
 # CI-built graph dump. The boot script seeds it into Neo4j only when the
 # graph is empty; the builder emits MERGE-only Cypher so the first-boot
 # seed (and any out-of-band incremental re-apply) is idempotent.
-COPY packages/decepticon/decepticon/skills/.graph/skills.cypher /app/skills.cypher
+COPY packages/raptix/raptix/skills/.graph/skills.cypher /app/skills.cypher
 
-RUN touch ./decepticon/__init__.py
+RUN touch ./raptix/__init__.py ./raptix/skills/__init__.py
 
 RUN pip install --no-cache-dir \
     "fastapi>=0.115.0" \
@@ -58,4 +58,4 @@ EXPOSE 9100
 HEALTHCHECK --interval=10s --timeout=3s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:9100/v1/health')" || exit 1
 
-CMD ["python", "-m", "decepticon.skillogy"]
+CMD ["python", "-m", "raptix.skills.engine"]

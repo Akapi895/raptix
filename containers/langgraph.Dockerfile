@@ -18,7 +18,7 @@ COPY --from=ghcr.io/astral-sh/uv:0.8.15 /uv /usr/local/bin/uv
 # Copy workspace files (uv.lock included so the install is reproducible).
 # Phase 0 of the core/framework/sdk split (per docs/superpowers/specs/
 # 2026-05-23-core-framework-sdk-split-design.md) relocates the source
-# tree from decepticon/ at the repo root to packages/decepticon/decepticon/.
+# tree from decepticon/ at the repo root to packages/raptix/raptix/.
 # COPY pulls the whole packages/ tree so the workspace resolver finds
 # all three members (decepticon-core, decepticon, decepticon-sdk).
 COPY pyproject.toml langgraph.json README.md uv.lock ./
@@ -31,9 +31,9 @@ COPY packages/ packages/
 ARG VERSION=0.0.0
 RUN sed -i 's/^version = "[^"]*"/version = "'"$VERSION"'"/' \
         pyproject.toml \
-        packages/decepticon-core/pyproject.toml \
-        packages/decepticon/pyproject.toml \
-        packages/decepticon-sdk/pyproject.toml
+        packages/raptix-core/pyproject.toml \
+        packages/raptix/pyproject.toml \
+        packages/raptix-sdk/pyproject.toml
 
 # Install the workspace via uv sync. --frozen pins to uv.lock; --no-dev
 # drops dev tooling (pytest, ruff, basedpyright); --extra neo4j adds the
