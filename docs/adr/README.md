@@ -84,5 +84,6 @@ Use [`template.md`](template.md) as the starting point.
 | [0020](0020-coverage-matrix-objectives.md) | Derive Initial Foothold coverage from the KG into OPPLAN children | Proposed |
 | [0021](0021-b0-session-isolation-gate.md) | Gate surface-exploit fan-out on session isolation | Proposed |
 | [0022](0022-sequential-surface-exploit-dispatch.md) | Dispatch surface-exploit cells sequentially | Proposed |
+| [0023](0023-bounded-iterative-surface-reexpansion.md) | Bound iterative surface-exploit re-expansion | Proposed |
 
 Keep this index in sync when you land a new ADR.

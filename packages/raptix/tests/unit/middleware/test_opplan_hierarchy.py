@@ -7,6 +7,8 @@ from typing import Any
 
 import pytest
 
+from raptix.agents.standard._surface_reexpand import plan_reexpansion
+from raptix.agents.standard._surface_registry import build_objective_expand_payload
 from raptix.tools.opplan import build_opplan_tools
 from raptix_core.types.engagement import (
     OPPLAN,
@@ -327,6 +329,98 @@ class TestObjectiveExpand:
         assert child["owner"] == "surface_exploit"
         assert child["notes"] == "cell_id=sqli::endpoint; session_name=se-test"
         assert child["mitre"] == ["T1190"]
+
+    def test_reexpansion_keeps_confirmed_cell_terminal_and_uses_open_root(
+        self, bag: _ToolBag, initial_state: dict
+    ) -> None:
+        state = _add(
+            bag,
+            initial_state,
+            title="Surface exploit — Initial Foothold (web/API)",
+            phase=ObjectivePhase.INITIAL_ACCESS,
+            description="surface root",
+            acceptance_criteria=["all surface cells terminal"],
+            priority=1,
+        )
+        state, _ = _expand(
+            bag,
+            state,
+            parent_id="OBJ-001",
+            children=[
+                {
+                    "title": "Surface exploit: sqli @ endpoint::origin",
+                    "description": "origin cell",
+                    "acceptance_criteria": ["evidence"],
+                    "owner": "surface_exploit",
+                    "notes": "cell_id=sqli::origin; session_name=se-origin",
+                }
+            ],
+        )
+        confirmed_id = state["objectives"][1]["id"]
+        state = _state_from(
+            _call_tool(
+                bag.update,
+                {"objective_id": confirmed_id, "status": "in-progress"},
+                state,
+            ),
+            state,
+        )
+        state = _state_from(
+            _call_tool(
+                bag.update,
+                {
+                    "objective_id": confirmed_id,
+                    "status": "completed",
+                    "notes": "cell_id=sqli::origin; session_name=se-origin; outcome=confirmed",
+                },
+                state,
+            ),
+            state,
+        )
+        confirmed = next(obj for obj in state["objectives"] if obj["id"] == confirmed_id)
+        assert confirmed["status"] == "completed"
+
+        derived = plan_reexpansion(
+            state["objectives"],
+            [
+                {
+                    "cell_id": "xss::chained",
+                    "vuln_class": "xss",
+                    "surface_key": "endpoint::chained",
+                    "skill_path": "/skills/standard/surface_exploit/xss/SKILL.md",
+                    "session_name": "se-chained",
+                    "via_cell": "sqli::origin",
+                    "gen": 1,
+                }
+            ],
+        )
+        state, _ = _expand(
+            bag,
+            state,
+            parent_id="OBJ-001",
+            children=build_objective_expand_payload("OBJ-001", derived)["children"],
+        )
+
+        chained = next(obj for obj in state["objectives"] if obj["id"] == "OBJ-003")
+        root = next(obj for obj in state["objectives"] if obj["id"] == "OBJ-001")
+        assert chained["parent_id"] == "OBJ-001"
+        assert "via_cell=sqli::origin" in chained["notes"]
+        assert root["status"] == "pending"
+
+        state = _state_from(
+            _call_tool(
+                bag.update,
+                {"objective_id": "OBJ-001", "status": "in-progress"},
+                state,
+            ),
+            state,
+        )
+        command = _call_tool(
+            bag.update,
+            {"objective_id": "OBJ-001", "status": "completed"},
+            state,
+        )
+        assert "children still open" in _last_message(command)
 
     def test_expand_completed_parent_rejected(self, bag: _ToolBag, initial_state: dict) -> None:
         s = _add(
