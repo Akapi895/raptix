@@ -1,4 +1,4 @@
-"""``decepticon-sdk plugin new`` — typer-based scaffold CLI.
+"""``raptix-sdk plugin new`` — typer-based scaffold CLI.
 
 Generates a buildable plugin package for one of the six supported
 plugin kinds. The output directory contains ``pyproject.toml``,
@@ -7,7 +7,7 @@ plugin kinds. The output directory contains ``pyproject.toml``,
 
 Sample run::
 
-    decepticon-sdk plugin new --kind=middleware --name=my-plugin --path=./my-plugin
+    raptix-sdk plugin new --kind=middleware --name=my-plugin --path=./my-plugin
     cd my-plugin
     uv build
     pip install dist/*.whl
@@ -22,7 +22,7 @@ import typer
 from raptix_sdk.scaffold.templates import TEMPLATES, pyproject_for
 
 app = typer.Typer(
-    name="decepticon-sdk",
+    name="raptix-sdk",
     help="Raptix plugin author SDK — scaffold + utilities.",
     no_args_is_help=True,
 )
@@ -46,7 +46,7 @@ def plugin_new(
     name: str = typer.Option(
         ...,
         "--name",
-        help="Plugin name (PyPI-style, e.g. 'my-decepticon-plugin').",
+        help="Plugin name (PyPI-style, e.g. 'my-raptix-plugin').",
     ),
     path: Path = typer.Option(
         ...,

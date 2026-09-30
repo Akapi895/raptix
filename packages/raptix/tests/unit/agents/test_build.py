@@ -207,7 +207,7 @@ def test_build_middleware_accepts_explicit_slots_for_plugin_role():
     with patch.object(build_module, "entry_points", return_value=[]):
         with patch.object(plugin_loader, "entry_points", return_value=[]):
             result = build_module.build_middleware(
-                role="decepticon-pro",  # not in SLOTS_PER_ROLE
+                role="raptix-pro",  # not in SLOTS_PER_ROLE
                 slots=frozenset({MiddlewareSlot.PROMPT_CACHING}),
                 backend=MagicMock(),
                 llm=MagicMock(),
@@ -439,12 +439,12 @@ def test_llm_mapping_get_assignment_default_role_fallback():
         }
     )
     # Unknown role + default_role → returns decepticon's assignment.
-    assignment = mapping.get_assignment("decepticon-pro", default_role="decepticon")
+    assignment = mapping.get_assignment("raptix-pro", default_role="decepticon")
     assert assignment.primary == "openai/gpt-5"
 
     # Unknown role + no default_role → KeyError preserved (no silent empty stack).
     with pytest.raises(KeyError, match="No model assignment for role"):
-        mapping.get_assignment("decepticon-pro")
+        mapping.get_assignment("raptix-pro")
 
 
 # ── Skillogy runtime swap (roadmap 1e) ───────────────────────────────

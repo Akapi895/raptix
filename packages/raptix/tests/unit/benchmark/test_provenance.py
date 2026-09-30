@@ -207,13 +207,13 @@ def test_capture_container_images_prefers_registry_digest_and_keeps_local_image_
             return subprocess.CompletedProcess(
                 argv,
                 0,
-                stdout="ghcr.io/purpleailab/decepticon-langgraph:stable\n",
+                stdout="ghcr.io/purpleailab/raptix-langgraph:stable\n",
                 stderr="",
             )
         image = command[-1]
-        if image == "ghcr.io/purpleailab/decepticon-langgraph:stable":
+        if image == "ghcr.io/purpleailab/raptix-langgraph:stable":
             stdout = (
-                '["ghcr.io/purpleailab/decepticon-langgraph@sha256:'
+                '["ghcr.io/purpleailab/raptix-langgraph@sha256:'
                 + "a" * 64
                 + '"]|sha256:'
                 + "b" * 64
@@ -227,8 +227,8 @@ def test_capture_container_images_prefers_registry_digest_and_keeps_local_image_
     images = capture_container_images(["local/challenge:latest"])
 
     assert images == {
-        "ghcr.io/purpleailab/decepticon-langgraph:stable": (
-            "ghcr.io/purpleailab/decepticon-langgraph@sha256:" + "a" * 64
+        "ghcr.io/purpleailab/raptix-langgraph:stable": (
+            "ghcr.io/purpleailab/raptix-langgraph@sha256:" + "a" * 64
         ),
         "local/challenge:latest": "sha256:" + "c" * 64,
     }

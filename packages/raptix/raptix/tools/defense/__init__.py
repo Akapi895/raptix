@@ -28,7 +28,7 @@ All push tools share a contract:
   endpoints; the agent gets a structured error pointing at the missing
   ConOps key.
 - Every pushed rule carries a Raptix-scoped tag prefix
-  (``decepticon-eng-<slug>``) so blue-team operators can identify and
+  (``raptix-eng-<slug>``) so blue-team operators can identify and
   disable the rule after the engagement ends.
 - Tools are idempotent: re-pushing the same rule replaces the prior copy
   by rule_id rather than duplicating.

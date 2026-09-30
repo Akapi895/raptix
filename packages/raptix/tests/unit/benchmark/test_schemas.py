@@ -109,7 +109,7 @@ class TestBenchmarkReport:
                     "skill-corpus": "b" * 64,
                 },
                 "container_images": {
-                    "langgraph": "ghcr.io/purpleailab/decepticon-langgraph@sha256:" + "c" * 64,
+                    "langgraph": "ghcr.io/purpleailab/raptix-langgraph@sha256:" + "c" * 64,
                 },
                 "config": {"provider": "xbow", "timeout": 1800},
                 "python_version": "3.13.7",

@@ -207,7 +207,7 @@ class HTTPSandbox(BaseSandbox):
         rather than reopening a socket per request.
         """
         if self._client is None:
-            headers = {"User-Agent": "decepticon-http-sandbox/1"}
+            headers = {"User-Agent": "raptix-http-sandbox/1"}
             if self._token:
                 headers["Authorization"] = f"Bearer {self._token}"
             self._client = httpx.Client(

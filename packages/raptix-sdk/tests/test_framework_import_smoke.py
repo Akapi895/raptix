@@ -7,8 +7,8 @@ Closes the most-valuable subset of spec §14 acceptance #3 — full
 daemon for many integration tests, but the smoke here proves the
 mechanical import rewrite produced a working framework surface.
 
-Lives under decepticon-sdk/tests so it shares the existing pytest
-testpaths (the decepticon-sdk testing fakes already pull the
+Lives under raptix-sdk/tests so it shares the existing pytest
+testpaths (the raptix-sdk testing fakes already pull the
 framework in via the ``fixtures`` extra path).
 """
 

@@ -143,7 +143,7 @@ export function useRunObserver({ threadId }: UseRunObserverOptions): UseRunObser
                 if (tc.name === "task") continue; // Sub-agent delegation — handled by custom events
                 // Key by position too, so parallel calls to the same tool in one
                 // message are not collapsed into a single event.
-                const key = `decepticon-${tc.name}-${i}-${data.messages.length}`;
+                const key = `raptix-${tc.name}-${i}-${data.messages.length}`;
                 if (!seenToolCalls.has(key)) {
                   seenToolCalls.add(key);
                   newEvents.push({
@@ -156,7 +156,7 @@ export function useRunObserver({ threadId }: UseRunObserverOptions): UseRunObser
               }
             } else if (lastMsg?.type === "tool" && lastMsg.name) {
               if (lastMsg.name !== "task") {
-                const key = `decepticon-${lastMsg.name}-result-${data.messages.length}`;
+                const key = `raptix-${lastMsg.name}-result-${data.messages.length}`;
                 if (!seenToolCalls.has(key)) {
                   seenToolCalls.add(key);
                   newEvents.push({

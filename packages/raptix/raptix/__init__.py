@@ -19,7 +19,7 @@ __package_name__ = "decepticon"
 # import paths via the compat shim. All idempotent / opt-out via env.
 #
 # The sandbox container ships only a subset of decepticon (sandbox_kernel
-# + sandbox_server + bare __init__.py) without decepticon-core installed,
+# + sandbox_server + bare __init__.py) without raptix-core installed,
 # so it must opt out of the full framework boot. The sandbox.Dockerfile
 # sets RAPTIX_SKIP_BOOT=1 in its ENV so this import doesn't fail.
 if not _os.environ.get("RAPTIX_SKIP_BOOT"):

@@ -14,7 +14,7 @@ from raptix.cli.zip import main as zip_main
 
 def _print_help() -> int:
     print(
-        "decepticon-cli — headless / CI entry\n\n"
+        "raptix-cli — headless / CI entry\n\n"
         "Subcommands:\n"
         "  scan               Run a one-shot security scan and emit SARIF\n"
         "  auth               Show provider/auth configuration (API keys + subscriptions)\n\n"

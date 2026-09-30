@@ -1,4 +1,4 @@
-"""decepticon-sdk surface tests.
+"""raptix-sdk surface tests.
 
 Verifies the single-import contract from spec §6.3: a complete plugin
 can be written importing only from ``raptix_sdk``. Tests that

@@ -59,7 +59,7 @@ from raptix.telemetry.otel import (  # noqa: E402
 )
 
 _SHARED_EXPORTER = InMemorySpanExporter()
-_SHARED_PROVIDER = TracerProvider(resource=Resource.create({"service.name": "decepticon-test"}))
+_SHARED_PROVIDER = TracerProvider(resource=Resource.create({"service.name": "raptix-test"}))
 _SHARED_PROVIDER.add_span_processor(SimpleSpanProcessor(_SHARED_EXPORTER))
 trace.set_tracer_provider(_SHARED_PROVIDER)
 

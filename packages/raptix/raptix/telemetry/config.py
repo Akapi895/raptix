@@ -3,7 +3,7 @@
 The PRODUCT default is opt-out: the launcher's onboard wizard asks for consent
 (default yes) and the shipped ``.env`` template defaults ``RAPTIX_TELEMETRY``
 to ``research``, so consenting users collect by default while ``DO_NOT_TRACK`` and
-``decepticon-cli telemetry off`` always force it off. This module is the
+``raptix-cli telemetry off`` always force it off. This module is the
 fail-SAFE floor: when ``RAPTIX_TELEMETRY`` is unset (e.g. standalone library
 use, never onboarded), it resolves to ``off`` — the value, not the absence,
 turns telemetry on. Resolution is pure and side-effect-free *except*

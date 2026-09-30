@@ -91,7 +91,7 @@ def test_shared_secret_accepts_exact_token() -> None:
     assert verifier is not None and auth is not None
     access = asyncio.run(verifier.verify_token("hunter2"))
     assert access is not None
-    assert access.client_id == "decepticon-mcp:shared-secret"
+    assert access.client_id == "raptix-mcp:shared-secret"
 
 
 def test_shared_secret_rejects_wrong_and_empty_token() -> None:
@@ -123,7 +123,7 @@ def rsa_keys() -> tuple[str, str]:
 
 
 def _jwt_cfg(pub: str, **kw: object) -> ServerConfig:
-    return _cfg(issuer="https://issuer/", audience="decepticon-mcp", public_key=pub, **kw)
+    return _cfg(issuer="https://issuer/", audience="raptix-mcp", public_key=pub, **kw)
 
 
 def test_jwt_accepts_valid_token_and_reads_scopes(rsa_keys: tuple[str, str]) -> None:
@@ -134,7 +134,7 @@ def test_jwt_accepts_valid_token_and_reads_scopes(rsa_keys: tuple[str, str]) -> 
     assert verifier is not None and auth is not None
     assert list(auth.required_scopes or []) == ["engage"]
     token = jwt.encode(
-        {"iss": "https://issuer/", "aud": "decepticon-mcp", "sub": "agent", "scope": "engage read"},
+        {"iss": "https://issuer/", "aud": "raptix-mcp", "sub": "agent", "scope": "engage read"},
         priv,
         algorithm="RS256",
     )
@@ -159,7 +159,7 @@ def test_jwt_rejects_wrong_issuer(rsa_keys: tuple[str, str]) -> None:
     verifier, _ = build_auth(_jwt_cfg(pub), host="0.0.0.0", port=8765)
     assert verifier is not None
     token = jwt.encode(
-        {"iss": "https://evil/", "aud": "decepticon-mcp", "sub": "a"}, priv, algorithm="RS256"
+        {"iss": "https://evil/", "aud": "raptix-mcp", "sub": "a"}, priv, algorithm="RS256"
     )
     assert asyncio.run(verifier.verify_token(token)) is None
 

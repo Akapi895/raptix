@@ -17,7 +17,7 @@ from raptix.middleware.kg_internal.store import KGStore, KGStoreConfigError
 
 _DEFAULT_TEST_URI = "bolt://localhost:7687"
 _DEFAULT_TEST_USER = "neo4j"
-_DEFAULT_TEST_PASSWORD = "decepticon-graph"
+_DEFAULT_TEST_PASSWORD = "raptix-graph"
 
 
 def _maybe_seed_defaults() -> None:

@@ -32,7 +32,7 @@ Transport = Callable[[str, bytes], None]
 # A named User-Agent. The stdlib default (``Python-urllib/x.y``) is blocked with
 # 403 by Cloudflare's bot protection in front of the workers.dev gateway, which
 # would silently drop every batch — so we identify as ourselves.
-_USER_AGENT = "decepticon-telemetry/1.0"
+_USER_AGENT = "raptix-telemetry/1.0"
 
 
 def _http_post(url: str, body: bytes) -> None:

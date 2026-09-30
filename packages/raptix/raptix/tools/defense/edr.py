@@ -59,7 +59,7 @@ def push_defender_xdr_detection(
     except ConOpsLookupError as exc:
         return {"error": str(exc)}
 
-    tagged = f"decepticon-eng-{engagement_slug()}-{rule_name}"
+    tagged = f"raptix-eng-{engagement_slug()}-{rule_name}"
     meta = _extract_yara_metadata(yara_rule)
 
     sha256 = meta.get("sha256") or meta.get("hash")
@@ -82,7 +82,7 @@ def push_defender_xdr_detection(
             "queryText": kql_query,
         },
         "tags": [
-            f"decepticon-eng-{engagement_slug()}",
+            f"raptix-eng-{engagement_slug()}",
             *(meta.get("tags", "").split(",") if meta.get("tags") else []),
             *([technique_id] if technique_id else []),
         ],
@@ -183,7 +183,7 @@ def push_crowdstrike_ioa(
                     + (f"\nMITRE ATT&CK: {technique_id}" if technique_id else "")
                 ),
                 "tags": [
-                    f"decepticon-eng-{engagement_slug()}",
+                    f"raptix-eng-{engagement_slug()}",
                     *([technique_id] if technique_id else []),
                 ],
                 "platforms": ["windows", "mac", "linux"],

@@ -60,13 +60,13 @@ def test_load_config_auth_unset_by_default(monkeypatch: pytest.MonkeyPatch) -> N
 def test_load_config_reads_jwt_auth_env(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv(ENV_AUTH, "jwt")
     monkeypatch.setenv(ENV_ISSUER, "https://issuer/")
-    monkeypatch.setenv(ENV_AUDIENCE, "decepticon-mcp")
+    monkeypatch.setenv(ENV_AUDIENCE, "raptix-mcp")
     monkeypatch.setenv(ENV_JWKS_URI, "https://issuer/jwks")
     monkeypatch.setenv(ENV_REQUIRED_SCOPES, "engage, read  write")
     cfg = load_config()
     assert cfg.auth_mode == "jwt"
     assert cfg.issuer == "https://issuer/"
-    assert cfg.audience == "decepticon-mcp"
+    assert cfg.audience == "raptix-mcp"
     assert cfg.jwks_uri == "https://issuer/jwks"
     assert cfg.required_scopes == ("engage", "read", "write")
 

@@ -155,7 +155,7 @@ def push_analytic_rule(
     except ConOpsLookupError as exc:
         return {"error": str(exc)}
 
-    tagged_id = f"decepticon-eng-{engagement_slug()}-{rule_id}"
+    tagged_id = f"raptix-eng-{engagement_slug()}-{rule_id}"
     api_version = "2024-09-01"
     url = (
         f"https://management.azure.com/subscriptions/{subscription}"

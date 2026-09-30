@@ -216,7 +216,7 @@ async def call_with_timeout(coro: Awaitable[Any], timeout: float) -> Any:
 # NOTE: all six subscription methods are listed here so a credential wired
 # without an explicit RAPTIX_AUTH_PRIORITY is actually routed. Before,
 # google/copilot/grok/perplexity OAuth were absent — a configured
-# subscription was silently never used (surfaced by `decepticon-cli auth`).
+# subscription was silently never used (surfaced by `raptix-cli auth`).
 _DEFAULT_AUTH_PRIORITY: tuple[AuthMethod, ...] = (
     AuthMethod.ANTHROPIC_OAUTH,
     AuthMethod.ANTHROPIC_API,
@@ -1653,7 +1653,7 @@ class LLMFactory:
 
         ``default_role`` lets plugin orchestrators inherit an OSS role's
         assignment when their custom role is not in ``AGENT_TIERS`` —
-        e.g. ``LLMFactory().get_model("decepticon-pro", default_role="decepticon")``.
+        e.g. ``LLMFactory().get_model("raptix-pro", default_role="decepticon")``.
 
         When the caller leaves ``default_role`` unset, the factory consults
         ``raptix_core.registry.RoleRegistry`` for the role's registered

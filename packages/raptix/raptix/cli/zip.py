@@ -1,4 +1,4 @@
-"""``decepticon-cli zip`` - package and restore engagement workspaces.
+"""``raptix-cli zip`` - package and restore engagement workspaces.
 
 An engagement's durable state lives under ``<workspace>/engagements/<id>/``
 (``events.jsonl``, persisted knowledge graphs, planning documents, the RoE
@@ -37,7 +37,7 @@ def _default_workspace() -> Path | None:
 
 def _build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
-        prog="decepticon-cli zip",
+        prog="raptix-cli zip",
         description="Package and restore Raptix engagement workspaces.",
     )
     sub = p.add_subparsers(dest="command", required=True)

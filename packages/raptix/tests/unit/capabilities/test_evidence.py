@@ -7,27 +7,27 @@ from raptix.capabilities.evidence import validate_evidence, validate_evidence_fi
 
 def test_evidence_requires_positive_and_baseline_signals() -> None:
     result = validate_evidence(
-        "HTTP 200\nsecret=decepticon-proof",
+        "HTTP 200\nsecret=raptix-proof",
         "HTTP 200\nwelcome back",
-        success_patterns=[r"secret=decepticon-proof"],
+        success_patterns=[r"secret=raptix-proof"],
         negative_patterns=[r"welcome back"],
     )
 
     assert result.validated is True
-    assert result.success_matches == (r"secret=decepticon-proof",)
+    assert result.success_matches == (r"secret=raptix-proof",)
     assert result.negative_matches == (r"welcome back",)
 
 
 def test_evidence_rejects_signal_that_also_appears_in_negative_control() -> None:
     result = validate_evidence(
-        "secret=decepticon-proof",
-        "baseline secret=decepticon-proof",
-        success_patterns=[r"secret=decepticon-proof"],
+        "secret=raptix-proof",
+        "baseline secret=raptix-proof",
+        success_patterns=[r"secret=raptix-proof"],
         negative_patterns=[r"baseline"],
     )
 
     assert result.validated is False
-    assert result.noise_matches == (r"secret=decepticon-proof",)
+    assert result.noise_matches == (r"secret=raptix-proof",)
     assert "negative control also matched" in result.reason
 
 

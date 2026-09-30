@@ -1,4 +1,4 @@
-"""``decepticon-cli telemetry`` — inspect and control usage telemetry.
+"""``raptix-cli telemetry`` — inspect and control usage telemetry.
 
 Subcommands:
 
@@ -46,7 +46,7 @@ NEVER sent, at any tier: real target IPs/domains/hosts, credentials, client/org
 names (masked in research), and your IP (dropped at the gateway). You can share
 the agent's reasoning, which is yours — never a target's data.
 
-Run `decepticon-cli telemetry preview` to see the exact payload before sending.
+Run `raptix-cli telemetry preview` to see the exact payload before sending.
 DO_NOT_TRACK=1 or `telemetry off` disables everything.
 """
 

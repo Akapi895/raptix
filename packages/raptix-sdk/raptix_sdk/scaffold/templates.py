@@ -1,4 +1,4 @@
-"""Inline templates for the ``decepticon-sdk plugin new`` scaffolder.
+"""Inline templates for the ``raptix-sdk plugin new`` scaffolder.
 
 Each plugin ``kind`` maps to a ``ScaffoldTemplate`` that knows the
 entry-point group, the stub module body, and the README copy. Inline
@@ -32,7 +32,7 @@ class HelloTool:
     """Minimal ToolProtocol-compliant tool."""
 
     name = "{plugin_name}"
-    description = "Hello-world tool scaffolded by decepticon-sdk."
+    description = "Hello-world tool scaffolded by raptix-sdk."
 
     def invoke(self, input: object, *, config: object | None = None) -> object:
         del config
@@ -157,7 +157,7 @@ def get_contribution() -> PromptContribution:
 
 _README_TEMPLATE = """# {plugin_name}
 
-A Raptix plugin ({kind}) scaffolded by ``decepticon-sdk plugin new``.
+A Raptix plugin ({kind}) scaffolded by ``raptix-sdk plugin new``.
 
 ## Build + install
 
@@ -172,7 +172,7 @@ via the ``{entry_point_group}`` entry-point group.
 ## Test
 
 ```bash
-pip install decepticon-sdk[testing]
+pip install raptix-sdk[testing]
 pytest
 ```
 
@@ -226,13 +226,13 @@ def pyproject_for(*, plugin_name: str, module_name: str, group: str) -> str:
     return f"""[project]
 name = "{plugin_name}"
 version = "0.0.1"
-description = "Raptix plugin scaffolded by decepticon-sdk."
+description = "Raptix plugin scaffolded by raptix-sdk."
 readme = "README.md"
 license = {{ text = "Apache-2.0" }}
 requires-python = ">=3.13"
 
 dependencies = [
-    "decepticon-sdk",
+    "raptix-sdk",
 ]
 
 [project.entry-points."{group}"]

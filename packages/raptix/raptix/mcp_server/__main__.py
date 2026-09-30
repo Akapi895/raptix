@@ -1,4 +1,4 @@
-"""``decepticon-mcp`` / ``python -m raptix.mcp_server`` entrypoint.
+"""``raptix-mcp`` / ``python -m raptix.mcp_server`` entrypoint.
 
 The MCP SDK is an optional dependency, so the import of the server module is
 deferred and guarded: a missing ``mcp`` package yields a one-line install hint
@@ -14,14 +14,14 @@ from dataclasses import replace
 from raptix.mcp_server.config import ServerConfig, load_config
 
 _INSTALL_HINT = (
-    "decepticon-mcp requires the optional 'mcp' dependency. "
+    "raptix-mcp requires the optional 'mcp' dependency. "
     "Install it with:  pip install 'decepticon[mcp]'"
 )
 
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="decepticon-mcp",
+        prog="raptix-mcp",
         description=(
             "Expose Raptix engagement control over MCP (for OpenClaw, Hermes, or any MCP client)."
         ),
@@ -121,7 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         server = build_server(config, host=args.host, port=args.port)
     except ValueError as exc:
-        print(f"decepticon-mcp: {exc}", file=sys.stderr)
+        print(f"raptix-mcp: {exc}", file=sys.stderr)
         return 2
     server.run(transport=args.transport)
     return 0

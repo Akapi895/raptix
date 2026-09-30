@@ -184,7 +184,7 @@ class PluginRegistry:
         """Framework boot hook — stash a ``RoleResolution`` for ``role``.
 
         Called by ``raptix._boot.run()`` after registering OSS
-        roles. ``decepticon-core`` itself can't compose the resolution
+        roles. ``raptix-core`` itself can't compose the resolution
         (no access to ``DEFAULT_SLOT_FACTORIES`` or
         ``skills_sources_for``); the framework pushes the snapshot in
         through this hook so introspection consumers read it back

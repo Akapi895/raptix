@@ -49,9 +49,9 @@ function printURL(context: CommandContext): void {
 function composeArgs(): string[] {
   const project = process.env["RAPTIX_COMPOSE_PROJECT"] ?? "decepticon";
   const composeFile =
-    process.env["RAPTIX_COMPOSE_FILE"] ?? "/decepticon-home/docker-compose.yml";
+    process.env["RAPTIX_COMPOSE_FILE"] ?? "/raptix-home/docker-compose.yml";
   const envFile =
-    process.env["RAPTIX_COMPOSE_ENV_FILE"] ?? "/decepticon-home/.env";
+    process.env["RAPTIX_COMPOSE_ENV_FILE"] ?? "/raptix-home/.env";
   return ["compose", "-p", project, "-f", composeFile, "--env-file", envFile];
 }
 

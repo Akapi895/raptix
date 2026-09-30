@@ -1,4 +1,4 @@
-"""Stability snapshot — every public ``decepticon-core`` name imports.
+"""Stability snapshot — every public ``raptix-core`` name imports.
 
 Locks in the public surface so accidental removal / rename fails CI.
 Spec §6.1 enumerates the SemVer-stable surface plugin authors and

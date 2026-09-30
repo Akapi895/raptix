@@ -144,7 +144,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             content = downloaded[0].content
         if not content or len(content) > _MAX_BYTES:
             return
-        with tempfile.TemporaryDirectory(prefix="decepticon-kg-") as directory:
+        with tempfile.TemporaryDirectory(prefix="raptix-kg-") as directory:
             path = Path(directory) / "scan"
             path.write_bytes(content)
             outcome = ingest(

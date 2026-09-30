@@ -57,7 +57,7 @@ class SharedSecretVerifier(TokenVerifier):
             return None
         return AccessToken(
             token=token,
-            client_id="decepticon-mcp:shared-secret",
+            client_id="raptix-mcp:shared-secret",
             scopes=[],
             resource=self._resource,
         )

@@ -1,6 +1,6 @@
 """Cross-package import discipline (spec §11.4).
 
-``decepticon-core`` is the contract layer. By design it must NEVER
+``raptix-core`` is the contract layer. By design it must NEVER
 import ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
 ``fastapi``. Plugin authors pin core without dragging the framework
 runtime in.
@@ -58,7 +58,7 @@ def test_core_has_no_runtime_deps() -> None:
     langchain / langgraph / deepagents / httpx / fastapi.
 
     Defends the contract layer's pure-pydantic-plus-stdlib promise so
-    plugin authors that depend on ``decepticon-core`` only never
+    plugin authors that depend on ``raptix-core`` only never
     accidentally inherit the framework's heavyweight runtime.
     """
     result = subprocess.run(
@@ -68,7 +68,7 @@ def test_core_has_no_runtime_deps() -> None:
         timeout=30,
     )
     assert result.returncode == 0, (
-        f"decepticon-core leaked runtime imports for {result.stdout.strip()!r}; "
+        f"raptix-core leaked runtime imports for {result.stdout.strip()!r}; "
         "the contract layer must stay langchain/langgraph/deepagents-free "
         f"(spec §11.4). stderr:\n{result.stderr}"
     )
