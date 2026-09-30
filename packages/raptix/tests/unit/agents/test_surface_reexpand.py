@@ -140,11 +140,12 @@ def test_reexpansion_converges_after_one_new_generation() -> None:
 def test_prompt_requires_confirmed_only_bounded_reexpansion() -> None:
     prompt = _PROMPT.read_text(encoding="utf-8").lower()
 
-    assert "only after confirmed" in prompt
+    assert "handle each confirmed cell sequentially" in prompt
     assert "kg_surface_inventory(base_generation=n)" in prompt
     assert "code-owned generation stamping" in prompt
-    assert 'one task("surface_exploit")' in prompt
-    assert "gated on the adr-0021 live runbook" in prompt
+    assert "per-cell re-expansion stays sequential" in prompt
+    assert "do not parallelize opplan accounting" in prompt
+    assert "authorized by adr-0021" in prompt
 
 
 def test_surface_exploit_prompt_requires_bounded_in_scope_provenance() -> None:

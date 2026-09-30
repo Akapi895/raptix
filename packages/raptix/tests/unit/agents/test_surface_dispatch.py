@@ -4,7 +4,9 @@ from pathlib import Path
 from typing import Any
 
 from raptix.agents.standard._surface_dispatch import (
+    DEFAULT_MAX_IN_FLIGHT,
     SURFACE_EXPLOIT_OUTCOME_STATUS,
+    next_surface_exploit_batch,
     next_surface_exploit_dispatch,
 )
 from raptix.agents.standard._surface_registry import build_objective_expand_payload
@@ -80,9 +82,69 @@ def test_surface_exploit_outcomes_follow_opplan_transitions() -> None:
     }
 
 
-def test_orchestrator_prompt_limits_surface_exploit_to_one_sequential_task() -> None:
+def _batch_objective(
+    objective_id: str,
+    priority: int,
+    vuln_class: str,
+    session_name: str,
+    *,
+    status: str = "pending",
+) -> dict[str, object]:
+    surface = f"endpoint::GET::https://app.test/{vuln_class}"
+    return {
+        "id": objective_id,
+        "owner": "surface_exploit",
+        "status": status,
+        "priority": priority,
+        "title": f"Surface exploit: {vuln_class} @ {surface}",
+        "description": f"load /skills/standard/surface_exploit/{vuln_class}/SKILL.md first.",
+        "notes": f"session_name={session_name}",
+    }
+
+
+def test_next_surface_exploit_batch_is_priority_ordered_and_bounded() -> None:
+    objectives = [
+        _batch_objective("OBJ-4", 4, "ssrf", "se-ssrf"),
+        _batch_objective("OBJ-2", 2, "xss", "se-xss"),
+        _batch_objective("OBJ-1", 1, "sqli", "se-sqli"),
+        _batch_objective("OBJ-3", 3, "idor", "se-idor"),
+    ]
+
+    batch = next_surface_exploit_batch(objectives)
+
+    assert DEFAULT_MAX_IN_FLIGHT == 3
+    assert [payload["objective_id"] for payload in batch] == ["OBJ-1", "OBJ-2", "OBJ-3"]
+    assert len({payload["session_name"] for payload in batch}) == len(batch)
+
+
+def test_next_surface_exploit_batch_skips_terminal_cells_and_stops_when_none_pending() -> None:
+    objectives = [
+        _batch_objective("OBJ-1", 1, "sqli", "se-sqli", status="completed"),
+        _batch_objective("OBJ-2", 2, "xss", "se-xss", status="blocked"),
+        _batch_objective("OBJ-3", 3, "idor", "se-idor", status="cancelled"),
+        _batch_objective("OBJ-4", 4, "ssrf", "se-ssrf"),
+    ]
+
+    assert [payload["objective_id"] for payload in next_surface_exploit_batch(objectives)] == ["OBJ-4"]
+    objectives[-1]["status"] = "completed"
+    assert next_surface_exploit_batch(objectives) == []
+
+
+def test_next_surface_exploit_batch_of_one_matches_single_dispatch() -> None:
+    objectives = _cell_objectives()
+
+    assert next_surface_exploit_batch(objectives, max_in_flight=1) == [
+        next_surface_exploit_dispatch(objectives)
+    ]
+
+
+def test_orchestrator_prompt_allows_bounded_parallel_surface_exploit_tasks() -> None:
     prompt = _PROMPT.read_text(encoding="utf-8")
 
-    assert 'exactly ONE `task("surface_exploit", ...)`' in prompt
-    assert "Parallel fan-out is gated on the ADR-0021 live runbook" in prompt
-    assert "`open_proof_gap` remains `in-progress`" in prompt
+    prompt_lower = prompt.lower()
+    assert "max_in_flight" in prompt
+    assert "up to 3 " in prompt
+    assert "distinct session" in prompt_lower
+    assert "authorized by adr-0021" in prompt_lower
+    assert "sequential" in prompt_lower
+    assert "per-cell re-expansion" in prompt_lower
