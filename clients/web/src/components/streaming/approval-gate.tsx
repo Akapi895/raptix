@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { ShieldAlert, Check, X, Loader2, Pencil } from "lucide-react";
 
 // Matches the `approval_request` wire format written by
-// decepticon/middleware/hitl.py (ApprovalRequest.to_jsonl).
+// raptix/middleware/hitl.py (ApprovalRequest.to_jsonl).
 interface ApprovalRequest {
   request_id: string;
   engagement_name: string;

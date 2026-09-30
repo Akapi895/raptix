@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as fs from "fs/promises";
 import * as path from "path";
 
-// Wire format mirrors decepticon/middleware/hitl.py: requests.jsonl holds
+// Wire format mirrors raptix/middleware/hitl.py: requests.jsonl holds
 // `approval_request` records (ApprovalRequest.to_jsonl), decisions.jsonl holds
 // `approval_decision` records consumed by FileBackedApprovalTransport.
 interface MatchedRule {
@@ -31,7 +31,7 @@ interface ApprovalRequest {
 const ACTIONS = new Set(["allow", "deny", "redirect"]);
 
 function workspaceFor(name: string) {
-  const WORKSPACE = process.env.WORKSPACE_PATH ?? path.join(process.env.HOME ?? "", ".decepticon", "workspace");
+  const WORKSPACE = process.env.WORKSPACE_PATH ?? path.join(process.env.HOME ?? "", ".raptix", "workspace");
   const dir = path.join(WORKSPACE, name, "approvals");
   return {
     dir,
