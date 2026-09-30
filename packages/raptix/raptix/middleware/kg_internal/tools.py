@@ -25,6 +25,7 @@ from typing import Annotated, Any
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 
+from raptix.agents.standard._surface_reexpand import plan_reexpansion
 from raptix.agents.standard._surface_registry import (
     build_coverage_matrix,
     build_objective_expand_payload,
@@ -189,12 +190,15 @@ def build_kg_tools(
         @tool
         def kg_surface_inventory(
             state: Annotated[dict, InjectedState],
+            base_generation: int | None = None,
             tool_call_id: Annotated[str, InjectedToolCallId] = "",
         ) -> str:
-            """Read the bounded Endpoint inventory and derive coverage cells.
+            """Read the Endpoint inventory and derive bounded coverage cells.
 
             This is read-only. The returned ``objective_children`` are inputs
-            for the orchestrator's sequential ``objective_expand`` call.
+            for the orchestrator's sequential ``objective_expand`` call. On
+            re-expansion, ``base_generation`` stamps children with the next
+            code-owned generation before the bounds are applied.
             """
             engagement = _resolve_engagement(state)
             if not engagement:
@@ -216,7 +220,12 @@ def build_kg_tools(
                     engagement=engagement,
                 )
                 surfaces = surfaces_from_kg_inventory(rows)
-                cells = build_coverage_matrix(surfaces)
+                derived_cells = build_coverage_matrix(surfaces)
+                cells = plan_reexpansion(
+                    state.get("objectives", []),
+                    derived_cells,
+                    base_generation=base_generation,
+                )
                 payload = build_objective_expand_payload("", cells)
                 return json.dumps(
                     {

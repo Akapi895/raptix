@@ -44,6 +44,7 @@ def plan_reexpansion(
     existing_objectives: Sequence[Mapping[str, Any]],
     derived_cells: Sequence[Mapping[str, Any]],
     *,
+    base_generation: int | None = None,
     max_generations: int = DEFAULT_MAX_GENERATIONS,
     max_total_cells: int = DEFAULT_MAX_TOTAL_CELLS,
 ) -> list[dict[str, Any]]:
@@ -57,13 +58,21 @@ def plan_reexpansion(
         return []
 
     existing_ids = {_cell_id(objective) for objective in existing_objectives}
-    candidates = [
-        dict(cell)
-        for cell in derived_cells
-        if _cell_id(cell)
-        and _cell_id(cell) not in existing_ids
-        and max(0, _int_value(cell.get("gen"), 0)) <= max_generations
-    ]
+    candidates: list[dict[str, Any]] = []
+    for derived_cell in derived_cells:
+        cell = dict(derived_cell)
+        cell_id = _cell_id(cell)
+        if not cell_id or cell_id in existing_ids:
+            continue
+        generation = (
+            max(0, base_generation) + 1
+            if base_generation is not None
+            else max(0, _int_value(cell.get("gen"), 0))
+        )
+        if generation > max_generations:
+            continue
+        cell["gen"] = generation
+        candidates.append(cell)
     candidates.sort(key=_candidate_order)
 
     selected: list[dict[str, Any]] = []
@@ -74,7 +83,6 @@ def plan_reexpansion(
         if cell_id in seen or remaining <= 0:
             break
         cell["cell_id"] = cell_id
-        cell["gen"] = max(0, _int_value(cell.get("gen"), 0))
         selected.append(cell)
         seen.add(cell_id)
         remaining -= 1
