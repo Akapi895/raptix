@@ -12,7 +12,8 @@ import type { RealNewProjectFormError } from '../features/projects/real-project.
  * (default route) is the only page with a connected real source: the public
  * project DTO. Owning work packages are named so the unavailable state is
  * auditable, not vague. Operator Console (W10) renders real threads/runs and
- * is mounted directly; its pending HITL/controls stay W11.
+ * is mounted directly; Findings & Evidence (W12) renders parsed workspace
+ * findings and the artifact browser.
  */
 export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
   'vector-campaigns':
@@ -25,8 +26,6 @@ export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
     'Assets & inventory need the public asset projection (work package W13), which is not connected yet.',
   credentials:
     'Credentials Vault needs the vault storage service (work package W18), which is not connected yet.',
-  findings:
-    'Findings & evidence need the findings/files APIs (work package W12), which are not connected yet.',
   logs:
     'The operations log needs the run-history APIs (work packages W09/W14), which are not connected yet.',
   reports:
