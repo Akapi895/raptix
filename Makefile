@@ -22,6 +22,10 @@ COMPOSE_DEV   := docker compose -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE_WATCH := docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.watch.yml
 PROFILES_ALL  := --profile cli --profile c2-sliver
 WEB_DIR       := clients/web
+# New-stack cutover (W16): web-raptix UI + API. Deliberately no legacy web
+# service in that lane — rollback restores it via `docker start raptix-web`.
+COMPOSE_WEB_RAPTIX := docker compose -f docker-compose.web-raptix.yml
+WEB_RAPTIX_DB      := raptix_web_raptix
 
 # Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
 # and stand up the stack without touching the user's real ~/.raptix. The
@@ -59,6 +63,8 @@ export CODEX_AUTH_VOLUME ?= $(shell test -f $(HOME)/.codex/auth.json && echo $(H
         quality quality-strict quality-cli test test-local lint lint-fix \
         ci-lint ci-test ci-test-coverage ci-test-coverage-report \
         web-build web-hotswap web-lint web-migrate \
+        webraptix-build webraptix-db-ensure webraptix-up webraptix-down \
+        webraptix-health webraptix-quality \
         status logs health clean \
         node-install web-db-ensure \
         benchmark recreate-litellm
@@ -95,6 +101,14 @@ help:
 	@echo "  make web-hotswap  Build + inject into running container (~15s)"
 	@echo "  make web-lint     ESLint"
 	@echo "  make web-migrate [NAME=]   Prisma migrate dev"
+	@echo ""
+	@echo "New web-raptix stack (W16 cutover lane):"
+	@echo "  make webraptix-quality  New UI + server lint/typecheck/test/build"
+	@echo "  make webraptix-build    Build the two new-stack images"
+	@echo "  make webraptix-db-ensure  Create the dedicated DB if missing"
+	@echo "  make webraptix-up       Start UI + API (migrate deploy on boot)"
+	@echo "  make webraptix-health   Same-origin checks through the proxy"
+	@echo "  make webraptix-down     Stop the new stack"
 	@echo ""
 	@echo "Ops:"
 	@echo "  make status       docker compose ps"
@@ -328,6 +342,55 @@ web-lint: node-install
 
 web-migrate: node-install
 	cd $(WEB_DIR) && npx prisma migrate dev --name $(or $(NAME),init)
+
+# ── New web-raptix stack (W16 cutover lane) ──────────────────────
+# Independent of the legacy Next service: same-origin nginx proxy in front of
+# the new API, dedicated database, reused base-network services and workspace.
+
+webraptix-quality: node-install
+	npm run build --workspace=@raptix/streaming
+	npm run build --workspace=@raptix/web-contracts
+	npm run typecheck --workspace=@raptix/web-raptix-server
+	npm run test --workspace=@raptix/web-raptix-server
+	npm run typecheck --workspace=@raptix/web-raptix
+	npm run lint --workspace=@raptix/web-raptix
+	npm run build --workspace=@raptix/web-raptix
+	npm run test --workspace=@raptix/web-raptix
+
+webraptix-build:
+	$(COMPOSE_WEB_RAPTIX) build
+
+webraptix-db-ensure:
+	@echo "[webraptix-db-ensure] Waiting for PostgreSQL..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres pg_isready -U raptix -q 2>/dev/null && break; \
+		sleep 1; \
+	done
+	@docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres psql -U raptix -tAc \
+		"SELECT 1 FROM pg_database WHERE datname='$(WEB_RAPTIX_DB)'" | grep -q 1 \
+		|| docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres psql -U raptix -c "CREATE DATABASE $(WEB_RAPTIX_DB)" >/dev/null
+	@echo "[webraptix-db-ensure] Database $(WEB_RAPTIX_DB) ready (migrations run by the API container on boot)."
+
+webraptix-up: webraptix-db-ensure
+	$(COMPOSE_WEB_RAPTIX) up -d --wait --wait-timeout 300
+
+webraptix-down:
+	$(COMPOSE_WEB_RAPTIX) down
+
+## Same-origin acceptance through the proxy: API JSON (never SPA HTML),
+## SPA fallback for /projects/*, immutable hashed assets.
+webraptix-health:
+	@curl -sf http://localhost:$${WEB_RAPTIX_PORT:-3000}/api/health >/dev/null \
+		&& echo "api:   OK (through proxy)" || (echo "api:   FAIL" && exit 1)
+	@curl -sf http://localhost:$${WEB_RAPTIX_PORT:-3000}/api/capabilities | head -c 1 | grep -q '{' \
+		&& echo "capabilities: JSON OK (no SPA fallback)" || (echo "capabilities: FAIL" && exit 1)
+	@curl -sf http://localhost:$${WEB_RAPTIX_PORT:-3000}/projects/cutover-check/charter | grep -q '<div id="root">' \
+		&& echo "spa:   OK (/projects/* fallback)" || (echo "spa:   FAIL" && exit 1)
+	@curl -sI "http://localhost:$${WEB_RAPTIX_PORT:-3000}/assets/immutable-check.js" | grep -qiE 'HTTP/[0-9.]+ 404|immutable' \
+		&& echo "assets: route OK" || (echo "assets: FAIL" && exit 1)
+	@docker ps --format '{{.Names}}' | grep -qx 'raptix-web' \
+		&& echo "legacy web: STILL RUNNING (rollback window open)" \
+		|| echo "legacy web: STOPPED (cutover complete)"
 
 # ── Status / Logs / Health / Clean ───────────────────────────────
 

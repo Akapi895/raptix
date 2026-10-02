@@ -441,9 +441,26 @@ runtime. Gates: server 194, contracts 42, frontend 80 + browser lanes 8/8 +
 21/21 + core E2E 1/1, verifier `--w15` 11 groups; w07–w14 pass. See
 w15-settings.md, w15-live.json.
 
+## W16 — accepted 2026-10-02
+
+New-stack deployment cutover. New assets: web-raptix API image (own Prisma
+artifacts, migrate-deploy-at-boot, workspace-nested node_modules copied for
+ajv@8), static UI image behind nginx with the §14.3 same-origin proxy
+(SPA fallback, immutable assets, `/api` upstream with SSE buffering off and
+no HTML fallback), and a two-service compose file on the existing base
+network with a dedicated `raptix_web_raptix` database. Cutover performed:
+images built, migrations deployed, legacy `raptix-web` container stopped, new
+UI serving on the same host port 3000 (CLI `/web` and launcher health keep
+working unchanged), same-origin acceptance through the proxy plus a live
+create→read→delete round trip. Data preserved (legacy DB, workspace volume,
+Neo4j, LangGraph untouched); rollback documented (down new stack +
+`docker start raptix-web`). Makefile gains the `webraptix-*` lane; CI gains
+the `web-raptix` quality job and docker-build entries. See w16-cutover.md.
+
 ## Subsequent phases — pending (not started)
 
-W16 deployment/cutover; W17–W19 additional providers; W20 legacy retirement.
+W17–W19 additional providers; W20 legacy retirement (final removal gate:
+clean install/build/run/E2E without `clients/web`).
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB
