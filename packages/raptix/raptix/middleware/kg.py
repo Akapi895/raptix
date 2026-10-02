@@ -12,6 +12,12 @@ Hooks:
                           fetch the current revision from the store,
                           rebuild the summary block when the revision
                           advances or this is the first turn.
+  * ``before_model``    — Step 2 (ADR-0029): when ``kg_revision`` is
+                          marked dirty by ``after_model``, re-fetch the
+                          real revision and rebuild the summary before
+                          the next model call. Closes the freshness
+                          gap where the tool→model loop did not return
+                          to ``before_agent``.
   * ``wrap_model_call`` — inject the cached summary block into the
                           system message as a cache-friendly two-block
                           insertion (static prompt-cache breakpoint +
@@ -23,7 +29,7 @@ Hooks:
                           error before the adapter even runs.
   * ``after_model``     — when a KG write tool ran in the last AI step,
                           mark ``kg_revision`` dirty so the next
-                          ``before_agent`` re-fetches it and rebuilds
+                          ``before_model`` re-fetches it and rebuilds
                           the summary.
 """
 
@@ -144,6 +150,61 @@ class KGMiddleware(AgentMiddleware):
                 log.warning("KGMiddleware summary build failed: %s", exc)
                 updates["kg_summary"] = ""
         return updates or None
+
+    # ── before_model ───────────────────────────────────────────────────
+
+    @override
+    def before_model(self, state: Any, runtime: Any) -> dict[str, Any] | None:
+        return self._maybe_refresh_kg_summary(state)
+
+    @override
+    async def abefore_model(self, state: Any, runtime: Any) -> dict[str, Any] | None:
+        return self._maybe_refresh_kg_summary(state)
+
+    def _maybe_refresh_kg_summary(self, state: Any) -> dict[str, Any] | None:
+        """Step 2 (ADR-0029): refresh the KG summary before each model
+        call when ``kg_revision`` is marked dirty by ``after_model``.
+
+        The pre-Step-2 implementation only refreshed in ``before_agent``,
+        which runs once at agent entry. The tool→model loop returns to
+        ``before_model`` / model, not ``before_agent``, so a KG write
+        in one tool turn was invisible to the next model turn in the
+        same invocation. This hook closes that gap.
+
+        Returns ``None`` when no refresh is needed (no engagement, no
+        dirty marker, or revision unchanged).
+        """
+        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
+        engagement = str(get("kg_engagement") or "").strip()
+        if not engagement:
+            return None
+
+        prior_revision = get("kg_revision")
+        # Only refresh when the prior revision is the dirty marker or
+        # when it differs from the current store revision. The dirty
+        # marker is the signal from ``after_model`` that a KG write
+        # tool ran in the last AI step.
+        if prior_revision != _REVISION_DIRTY_MARKER:
+            # Fast path: no dirty marker, no refresh needed.
+            return None
+
+        try:
+            revision = self._store.revision(engagement=engagement)
+        except Exception as exc:
+            log.warning(
+                "KGMiddleware before_model revision fetch failed (engagement=%s): %s",
+                engagement,
+                exc,
+            )
+            return None
+
+        updates: dict[str, Any] = {"kg_revision": revision}
+        try:
+            updates["kg_summary"] = build_summary(self._store, engagement=engagement)
+        except Exception as exc:
+            log.warning("KGMiddleware before_model summary build failed: %s", exc)
+            updates["kg_summary"] = ""
+        return updates
 
     # ── wrap_model_call ───────────────────────────────────────────────
 

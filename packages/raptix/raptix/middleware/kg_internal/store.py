@@ -153,6 +153,11 @@ class KGStore:
                 ) from exc
         self._driver = driver
         self._database = config.database
+        # Step 2 (ADR-0029): monotonic per-instance write counter so
+        # same-second writes produce distinguishable revisions. Combined
+        # with the Unix timestamp in ``update_tag`` via
+        # ``_next_update_tag()`` below.
+        self._write_seq = 0
 
     @classmethod
     def from_env(cls) -> KGStore:
@@ -163,6 +168,24 @@ class KGStore:
             self._driver.close()
         except Exception as exc:
             log.debug("KGStore driver close raised (swallowed): %s", exc)
+
+    def _next_update_tag(self) -> int:
+        """Return a monotonically increasing update tag.
+
+        Step 2 (ADR-0029): combines the Unix timestamp (seconds) with a
+        per-instance sequence counter so that two writes within the same
+        second produce distinguishable tags. The tag is encoded as
+        ``timestamp * 1_000_000 + seq`` so it remains a single integer
+        and sorts chronologically.
+
+        The sequence counter wraps at 1_000_000 — at one write per
+        microsecond that takes ~12 days of continuous writing to wrap,
+        which is well outside any realistic engagement window.
+        """
+        ts = int(time.time())
+        seq = self._write_seq
+        self._write_seq = (self._write_seq + 1) % 1_000_000
+        return ts * 1_000_000 + seq
 
     # ── Engagement scope safety ────────────────────────────────────────
 
@@ -226,16 +249,32 @@ class KGStore:
     # ── AttackGraphProtocol implementation ─────────────────────────────
 
     def revision(self, *, engagement: str) -> str:
-        """Opaque token. Changes when any node's ``lastupdated`` advances
-        for this engagement."""
+        """Opaque token. Changes when any node's or edge's ``lastupdated``
+        advances for this engagement.
+
+        Step 2 (ADR-0029): the revision now includes edge ``lastupdated``
+        in addition to node ``lastupdated``. The pre-Step-2 implementation
+        only looked at nodes, so edge-only mutations did not bump the
+        revision and the middleware's cache stayed stale.
+        """
         self._check_engagement(engagement)
         cypher = (
             "MATCH (n) WHERE n.engagement = $engagement "
-            "RETURN coalesce(max(n.lastupdated), 0) AS rev"
+            "OPTIONAL MATCH ()-[r]->() WHERE r.engagement = $engagement "
+            "RETURN coalesce(max(n.lastupdated), 0) AS node_rev, "
+            "       coalesce(max(r.lastupdated), 0) AS edge_rev"
         )
         rows = self.execute_read(cypher, {"engagement": engagement}, engagement=engagement)
-        rev_val = rows[0]["rev"] if rows else 0
-        return f"rev-{engagement}-{int(rev_val)}"
+        if rows:
+            node_rev = int(rows[0].get("node_rev") or 0)
+            edge_rev = int(rows[0].get("edge_rev") or 0)
+        else:
+            node_rev = 0
+            edge_rev = 0
+        # Combine node and edge revisions into a single opaque token.
+        # Using max() so either advancing bumps the token.
+        combined = max(node_rev, edge_rev)
+        return f"rev-{engagement}-{combined}"
 
     def snapshot(self, *, engagement: str):
         """Build an EngagementSnapshot for ``cart.diff_snapshots`` consumption.
@@ -341,7 +380,9 @@ class KGStore:
                 "revision": self.revision(engagement=engagement),
             }
 
-        update_tag = int(time.time())
+        # Step 2 (ADR-0029): use a monotonic per-instance update tag so
+        # same-second writes produce distinguishable revisions.
+        update_tag = self._next_update_tag()
         node_rows: list[dict[str, Any]] = []
         edge_rows: list[dict[str, Any]] = []
 
