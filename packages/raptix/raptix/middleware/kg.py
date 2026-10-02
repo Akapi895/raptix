@@ -38,6 +38,7 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from typing_extensions import override
 
+from raptix.middleware.kg_internal.operational_state import build_operational_state
 from raptix.middleware.kg_internal.state import KGState
 from raptix.middleware.kg_internal.store import KGStore
 from raptix.middleware.kg_internal.summary import build_summary
@@ -97,9 +98,11 @@ class KGMiddleware(AgentMiddleware):
         *,
         store: KGStore | None = None,
         enabled_tools: Iterable[str] | None = None,
+        operational_shadow: bool = False,
     ) -> None:
         super().__init__()
         self._store = store if store is not None else KGStore.from_env()
+        self._operational_shadow = operational_shadow
         self.tools = build_kg_tools(self._store, enabled=enabled_tools)
         self._kg_tool_names = {getattr(t, "name", "") for t in self.tools}
 
@@ -116,6 +119,16 @@ class KGMiddleware(AgentMiddleware):
 
     @override
     async def abefore_agent(self, state: Any, runtime: Any) -> dict[str, Any] | None:
+        return self._hydrate_kg_state(state)
+
+    @override
+    def before_model(self, state: Any, runtime: Any) -> dict[str, Any] | None:
+        # Child agents and auto-ingest may write the graph without a local
+        # kg_record call; comparing revisions on every decision catches them.
+        return self._hydrate_kg_state(state)
+
+    @override
+    async def abefore_model(self, state: Any, runtime: Any) -> dict[str, Any] | None:
         return self._hydrate_kg_state(state)
 
     def _hydrate_kg_state(self, state: Any) -> dict[str, Any] | None:
@@ -143,6 +156,14 @@ class KGMiddleware(AgentMiddleware):
             except Exception as exc:
                 log.warning("KGMiddleware summary build failed: %s", exc)
                 updates["kg_summary"] = ""
+            if self._operational_shadow:
+                try:
+                    updates["kg_operational_state"] = build_operational_state(
+                        self._store, engagement=engagement
+                    )
+                except Exception as exc:
+                    log.warning("KGMiddleware operational projection failed: %s", exc)
+                    updates["kg_operational_state"] = ""
         return updates or None
 
     # ── wrap_model_call ───────────────────────────────────────────────
@@ -164,6 +185,7 @@ class KGMiddleware(AgentMiddleware):
         state = request.state or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         summary = str(get("kg_summary") or "")
+        operational = str(get("kg_operational_state") or "") if self._operational_shadow else ""
 
         # No engagement / no summary yet — pass the request through.
         if not get("kg_engagement"):
@@ -177,6 +199,8 @@ class KGMiddleware(AgentMiddleware):
         injected_blocks: list[dict[str, Any]] = [static_block]
         if summary:
             injected_blocks.append({"type": "text", "text": "\n\n" + summary})
+        if operational:
+            injected_blocks.append({"type": "text", "text": "\n\n" + operational})
 
         if request.system_message is not None:
             new_content = [

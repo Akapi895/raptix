@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from datetime import datetime, timezone
 from typing import Annotated, Any
 
@@ -21,11 +22,17 @@ from raptix_core.types.engagement import (
     ObjectiveStatus,
     OpsecLevel,
 )
+from raptix_core.types.foothold import AccessOperation, AccessVerifier, assess_access
 
 log = logging.getLogger(__name__)
 
 OPPLAN_FILE_SCHEMA_VERSION = "1"
 OPPLAN_VIRTUAL_PATH = "/workspace/plan/opplan.json"
+_NP_PHASES = {
+    ObjectivePhase.POST_EXPLOIT.value,
+    ObjectivePhase.C2.value,
+    ObjectivePhase.EXFILTRATION.value,
+}
 
 # All OPPLAN tools — used by ``OPPLANMiddleware.after_model`` to enforce
 # strictly sequential calls (one OPPLAN tool per LLM step). Parallel calls
@@ -346,7 +353,9 @@ def _format_opplan_for_agent(
 # ── Tool Definitions ──────────────────────────────────────────────────
 
 
-def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
+def build_opplan_tools(
+    backend: BackendProtocol | None = None, *, access_verifier: AccessVerifier | None = None
+) -> list:
     """Create OPPLAN tools with InjectedState for direct state access.
 
     Tool bodies execute CRUD logic directly, returning Command for state
@@ -611,6 +620,8 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
         description=(
             "Update a single objective. MUST call get_objective first. "
             "Can change: status, notes, owner, add_blocked_by. "
+            "Optional operation_kind/access_ref/target_asset describe a shadow-only "
+            "access check; they never authorize or block an operation. "
             "Valid transitions: pending→in-progress, in-progress→completed/blocked, "
             "blocked→in-progress (retry) or completed (abandon). "
             "Include evidence when marking completed, failure reason when marking blocked. "
@@ -626,6 +637,10 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
         notes: str | None = None,
         owner: str | None = None,
         add_blocked_by: list[str] | None = None,
+        operation_kind: str | None = None,
+        access_ref: str | None = None,
+        target_asset: str | None = None,
+        required_privilege: str | None = None,
         tool_call_id: Annotated[str, InjectedToolCallId] = "",
     ) -> Command[Any]:
         """Update one objective with state transition validation."""
@@ -648,6 +663,30 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
             )
 
         updated_fields: list[str] = []
+        shadow_note = ""
+        if (
+            os.environ.get("RAPTIX_FOOTHOLD_MODE", "off").strip().lower() == "shadow"
+            and status == "in-progress"
+            and target.get("phase") in _NP_PHASES
+        ):
+            if operation_kind is None:
+                shadow_note = (
+                    " Foothold shadow: operation not classified; no authorization decision."
+                )
+            else:
+                try:
+                    operation = AccessOperation(operation_kind)
+                except ValueError:
+                    shadow_note = " Foothold shadow: unknown operation; no authorization decision."
+                else:
+                    try:
+                        decision = assess_access(
+                            operation, access_ref, target_asset, required_privilege, access_verifier
+                        )
+                    except Exception as exc:
+                        log.warning("Foothold shadow verifier failed: %s", exc)
+                        decision = "unverified: verifier unavailable"
+                    shadow_note = f" Foothold shadow: {decision}."
 
         # ── Status change with transition + dependency validation ─────
         if status is not None:
@@ -818,7 +857,7 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
                     ToolMessage(
                         content=(
                             f"Updated {objective_id}: {', '.join(updated_fields)}. "
-                            f"Progress: {completed_count}/{total} completed."
+                            f"Progress: {completed_count}/{total} completed.{shadow_note}"
                         ),
                         tool_call_id=tool_call_id,
                     )

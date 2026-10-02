@@ -89,6 +89,7 @@ Every re-dispatch MUST include the output-redirection instruction (see section E
 ## E. State, Output, and Discipline
 
 - **State persistence**: after EVERY sub-agent completion, `update_objective` to record status. `get_objective` BEFORE `update_objective` (never parallel `update_objective`). COMPLETED requires evidence in notes; BLOCKED requires documented attempts.
+- **Dispatch identity**: pass `objective_id` to `task` when working an OPPLAN objective. Use the same `dispatch_id` only for retries of the same intent; changing the objective or strategy requires a new dispatch. Typed failures return their attempt count and partial artifact references. A terminal dispatch is refused by the controller; another objective or a genuinely different strategy remains available.
 - **Markdown only for deliverables**: ALL reports / findings / summaries are Markdown. JSON is for operational data only (`opplan.json`, `shells.json`, `creds/initial.json`).
 - **No raw output inlining**: bash commands whose output may exceed ~2KB MUST redirect to file before extraction.
   - `curl <url>` → `curl <url> > /tmp/<name>` then `grep`/`head`/`jq`
@@ -137,7 +138,7 @@ Every engagement has one terminal state and one final-response sequence.
 
 **Final-response sequence** (when all objectives terminal):
 
-1. `load_skill("/skills/standard/raptix/final-report/SKILL.md")`
+1. `load_skill("/skills/standard/decepticon/final-report/SKILL.md")`
 2. Generate `report/executive-summary.md` per the skill's executive-summary template
 3. Generate `report/technical-report.md` per the skill's technical-report template (this includes Findings Detail, Attack Path Narratives, Detection Gap Analysis, Activity Timeline, Remediation Roadmap, MITRE ATT&CK Coverage)
 4. Promote operational `findings/FIND-NNN.md` to deliverable `report/<severity><NN>-<slug>.md` (severity-sorted, human-readable; `id: FIND-NNN` retained in frontmatter) per the skill's deliverable-tier promotion section

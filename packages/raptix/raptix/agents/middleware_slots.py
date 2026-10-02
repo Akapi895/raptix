@@ -32,7 +32,6 @@ from typing import Any
 # packages are listed as runtime deps; only ``benchmark_skill_sources``
 # is raptix-internal.
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
-from deepagents.middleware.subagents import SubAgentMiddleware
 from deepagents.middleware.summarization import create_summarization_middleware
 from langchain.agents.middleware import AgentMiddleware, ModelFallbackMiddleware
 from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
@@ -61,7 +60,6 @@ from raptix.middleware.opscontrol_notifications import (
 from raptix.middleware.prompt_injection_shield import PromptInjectionShieldMiddleware
 from raptix.middleware.proxy_key_override import ProxyKeyOverrideMiddleware
 from raptix.middleware.roe import build_default_sink
-from raptix.middleware.subagent_transcript_state import SubagentTranscriptState
 
 # Slot enum + per-role applicability mapping + safety-critical set
 # all live in the contract layer now (raptix_core.contracts.slots).
@@ -105,7 +103,10 @@ def skills_sources_for(role: str) -> list[str]:
     have to repeat ``[f"/skills/standard/{_ROLE}/", "/skills/shared/"]``
     each.
     """
-    base = [f"/skills/standard/{role}/", "/skills/shared/", *benchmark_skill_sources()]
+    directory = {"postexploit": "post-exploit", "cloud_hunter": "cloud"}.get(role, role)
+    standard = [] if role == "blue_cell" else [f"/skills/standard/{directory}/"]
+    routers = ["/skills/standard/exploit/"] if role == "decepticon" else []
+    base = [*standard, "/skills/shared/", *benchmark_skill_sources(), *routers]
     return [*base, *load_plugin_skill_sources(role)]
 
 
@@ -189,7 +190,9 @@ def _make_filesystem(*, backend: Any, **_: Any):
 
 
 def _make_subagent(*, backend: Any, subagents: list | None = None, **_: Any):
-    m = SubAgentMiddleware(backend=backend, subagents=subagents or [])
+    from raptix.middleware.dispatch import DispatchMiddleware
+
+    m = DispatchMiddleware(backend=backend, subagents=subagents or [])
     # Register the durable sub-agent transcript channel on the ORCHESTRATOR
     # state. ``AgentMiddleware.state_schema`` is the per-instance schema that
     # ``create_agent`` auto-merges into the compiled graph state at build time.
@@ -199,7 +202,7 @@ def _make_subagent(*, backend: Any, subagents: list | None = None, **_: Any):
     # adding ``subagent_transcripts`` with its accumulating reducer. Without
     # this, the key StreamingRunnable returns would be forwarded by task() but
     # have no declared channel to land in, and the checkpoint would drop it.
-    m.state_schema = SubagentTranscriptState
+    m.state_schema = DispatchMiddleware.state_schema
     return m
 
 
@@ -220,6 +223,8 @@ def _make_kg(*, role: str, **_: Any):
     dev box and CI runner that doesn't have Neo4j env vars set, even
     for pytest invocations that never touch the KG path.
     """
+    import os
+
     from raptix.middleware.kg_internal.store import (
         KGStoreConfigError,
         KGStoreUnavailableError,
@@ -227,7 +232,14 @@ def _make_kg(*, role: str, **_: Any):
 
     try:
         enabled_tools = {"kg_surface_inventory"} if role == "decepticon" else None
-        return KGMiddleware(enabled_tools=enabled_tools)
+        experimental = os.environ.get("RAPTIX_KG_OPERATIONAL_SHADOW", "0").lower() in {
+            "1",
+            "true",
+            "yes",
+        }
+        return KGMiddleware(
+            enabled_tools=enabled_tools, operational_shadow=role == "decepticon" and experimental
+        )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         # ImportError covers the case where the optional ``neo4j``
         # driver isn't installed in the env that imports analyst.py
