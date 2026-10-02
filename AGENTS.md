@@ -15,8 +15,9 @@ and no AI co-author trailers. The Incalmo section below applies only to that ini
 - `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
 - Node workspaces are rooted in `package.json` (`clients/*`, `clients/shared/*`). Build
-  `@raptix/streaming` before CLI typecheck/build or Web build; both consume its `dist/`.
-  For Web edits also follow `clients/web/AGENTS.md` (Next's installed docs matter).
+  `@raptix/streaming` before CLI typecheck/build or web-raptix build; both consume its
+  `dist/`. For web-raptix edits follow `clients/web-raptix/AGENTS.md`; the legacy
+  `clients/web` Next app is reference-only (retired from active lanes in W20).
 
 ## Run from repo root
 

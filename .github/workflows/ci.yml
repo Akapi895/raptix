@@ -47,7 +47,6 @@ jobs:
     outputs:
       python: ${{ steps.app.outputs.python }}
       cli: ${{ steps.app.outputs.cli }}
-      web: ${{ steps.app.outputs.web }}
       desktop: ${{ steps.app.outputs.desktop }}
       launcher: ${{ steps.app.outputs.launcher }}
       compose: ${{ steps.app.outputs.compose }}
@@ -73,12 +72,6 @@ jobs:
               - '.github/workflows/ci.yml'
             cli:
               - 'clients/cli/**'
-              - 'clients/shared/**'
-              - 'package.json'
-              - 'package-lock.json'
-              - '.github/workflows/ci.yml'
-            web:
-              - 'clients/web/**'
               - 'clients/shared/**'
               - 'package.json'
               - 'package-lock.json'
@@ -133,14 +126,6 @@ jobs:
               - '.github/workflows/ci.yml'
             cli:
               - 'containers/cli.Dockerfile'
-              - 'clients/cli/**'
-              - 'clients/shared/**'
-              - 'package.json'
-              - 'package-lock.json'
-              - '.github/workflows/ci.yml'
-            web:
-              - 'containers/web.Dockerfile'
-              - 'clients/web/**'
               - 'clients/cli/**'
               - 'clients/shared/**'
               - 'package.json'
@@ -489,45 +474,9 @@ jobs:
         if: needs.changes.outputs.desktop == 'true'
         run: npm run desktop:test
 
-  web:
-    name: Web (lint + build)
-    needs: changes
-    # See the ``cli`` job for the rationale on job-level ``if`` removal +
-    # per-step ``if`` gating: the ruleset requires this status, so it must
-    # always succeed/fail rather than be skipped.
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - if: needs.changes.outputs.web != 'true'
-        run: 'echo "No Web-relevant changes — emitting success."'
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        if: needs.changes.outputs.web == 'true'
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        if: needs.changes.outputs.web == 'true'
-        with:
-          node-version: 24
-          cache: npm
-          cache-dependency-path: package-lock.json
-      - if: needs.changes.outputs.web == 'true'
-        run: npm ci
-      - name: Build shared streaming workspace
-        if: needs.changes.outputs.web == 'true'
-        run: npm run build --workspace=@raptix/streaming
-      - name: Generate Prisma client
-        if: needs.changes.outputs.web == 'true'
-        run: cd clients/web && npx prisma generate
-      - name: Lint
-        if: needs.changes.outputs.web == 'true'
-        run: cd clients/web && npx eslint src/ --max-warnings 0
-      - name: Build
-        if: needs.changes.outputs.web == 'true'
-        run: cd clients/web && npm run build
-        env:
-          NEXT_PUBLIC_RAPTIX_EDITION: oss
-
-  # New-stack (W16 cutover) lane: web-raptix UI + API quality gates. Kept as a
-  # separate job from the legacy `web` job during the rollback window; the
-  # legacy job retires with W20 (guide §14.5).
+  # New-stack (W16 cutover) lane: web-raptix UI + API quality gates. The
+  # legacy `web` (Next.js) job was retired with W20 (guide §14.5): the
+  # clients/web folder is reference-only and no CI/Makefile lane runs it.
   web-raptix:
     name: Web raptix (lint + test + build)
     needs: changes

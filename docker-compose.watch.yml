@@ -41,19 +41,8 @@ services:
         - action: rebuild
           path: ./containers/langgraph.Dockerfile
 
-  web:
-    develop:
-      watch:
-        - action: sync
-          path: ./clients/web/src
-          target: /app/clients/web/src
-        - action: sync
-          path: ./clients/web/public
-          target: /app/clients/web/public
-        - action: rebuild
-          path: ./clients/web/package.json
-        - action: rebuild
-          path: ./containers/web.Dockerfile
+  # web service: retired with W20 — the web-raptix stack has its own
+  # Vite dev server (make webraptix-dev) outside compose watch.
 
   cli:
     develop:

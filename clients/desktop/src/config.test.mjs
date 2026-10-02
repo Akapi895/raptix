@@ -6,8 +6,6 @@ import {
   canOpenExternal,
   canNavigateInApp,
   canNavigateInShell,
-  composeUpArgs,
-  composeProcessEnv,
   CLOUD_APP_URL,
   DASHBOARD_READY_ATTEMPTS,
   DASHBOARD_READY_DELAY_MS,
@@ -31,7 +29,6 @@ test("resolveDesktopConfig defaults to the installed Raptix home and WEB_PORT in
   assert.equal(cfg.raptixHome, path.join("/home/alice", ".raptix"));
   assert.equal(cfg.composeFile, path.join("/home/alice", ".raptix", "docker-compose.yml"));
   assert.equal(cfg.envFile, path.join("/home/alice", ".raptix", ".env"));
-  assert.equal(cfg.webContainer, "raptix-web");
   assert.equal(cfg.project, "raptix");
   assert.equal(cfg.isCloud, false);
   assert.equal(cfg.mode, "local");
@@ -108,56 +105,9 @@ test("readInstalledVersion pins Compose to the installed CLI version", () => {
   assert.equal(cfg.versionFile, path.join("/opt/raptix", ".version"));
   assert.equal(readInstalledVersion(cfg, () => "v1.1.23\n"), "1.1.23");
   assert.equal(readInstalledVersion(cfg, () => ""), "");
-  assert.equal(
-    resolveDesktopConfig({ RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" }).webContainer,
-    "raptix-lab-web",
-  );
 });
 
-test("composeUpArgs starts only the dynamic web profile", () => {
-  const cfg = resolveDesktopConfig(
-    { RAPTIX_HOME: "/opt/raptix", RAPTIX_STACK_NAME: "lab", RAPTIX_DESKTOP_MODE: "local" },
-    { homedir: () => "/unused", platform: "linux" },
-  );
-
-  assert.deepEqual(composeUpArgs(cfg), [
-    "compose",
-    "-p",
-    "raptix-lab",
-    "-f",
-    path.join("/opt/raptix", "docker-compose.yml"),
-    "--env-file",
-    path.join("/opt/raptix", ".env"),
-    "--profile",
-    "web",
-    "up",
-    "-d",
-    "--no-build",
-    "web",
-  ]);
-});
-
-test("composeProcessEnv clears implicit profile activation", () => {
-  assert.deepEqual(composeProcessEnv({ COMPOSE_PROFILES: "c2-sliver" }, "1.1.40"), {
-    COMPOSE_PROFILES: "",
-    RAPTIX_COMPOSE_PROJECT: "",
-    RAPTIX_STACK_NAME: "",
-    RAPTIX_VERSION: "1.1.40",
-  });
-});
-
-test("composeProcessEnv preserves explicit stack ownership", () => {
-  assert.deepEqual(
-    composeProcessEnv({ RAPTIX_COMPOSE_PROJECT: "vendor-dev", RAPTIX_STACK_NAME: "lab" }),
-    {
-      COMPOSE_PROFILES: "",
-      RAPTIX_COMPOSE_PROJECT: "vendor-dev",
-      RAPTIX_STACK_NAME: "lab",
-    },
-  );
-});
-
-test("missingConfigFiles catches incomplete desktop setup before Compose runs", () => {
+test("missingConfigFiles catches incomplete desktop setup before bootstrap", () => {
   const cfg = resolveDesktopConfig(
     { RAPTIX_HOME: "/tmp/raptix-desktop-smoke", RAPTIX_DESKTOP_MODE: "local" },
     { homedir: () => "/unused", platform: "linux" },
