@@ -7,6 +7,7 @@ import { ProjectPolicyError } from '../../security/project-policy.js';
 import { parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
+import { projectThreadHistory } from './history-projection.js';
 
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
 const terminal = (status: string): boolean => ['success', 'error', 'timeout'].includes(status);
@@ -108,14 +109,17 @@ export class RunService {
     let truncated = history.length > 50;
     for (const value of history.slice(-50)) {
       if (typeof value !== 'object' || value === null) continue;
-      const { type, role, content } = value as Record<string, unknown>;
+      const { type, role, content, id } = value as Record<string, unknown>;
       const tag = role ?? type;
       if (typeof tag !== 'string' || !['user', 'human', 'assistant', 'ai'].includes(tag)) continue;
       if (typeof content !== 'string') { truncated = true; continue; }
       if (content.length > 8000) truncated = true;
-      messages.push({ role: ['user', 'human'].includes(String(tag)) ? 'user' : 'assistant', content: content.slice(0, 8000) });
+      const messageId = typeof id === 'string' && id.length > 0 && id.length <= 256 ? id : null;
+      messages.push({ role: ['user', 'human'].includes(String(tag)) ? 'user' : 'assistant', content: content.slice(0, 8000), messageId });
     }
-    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime' };
+    const scope = { engagementId: engagement, threadId: thread, runId: '' };
+    const transcripts = projectThreadHistory(scope, values);
+    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated };
   }
   public async reconcile(user: string, engagement: string, requestId: string): Promise<RequestRecoveryView> {
     const { ownership, context, runtime, reads } = this.options;

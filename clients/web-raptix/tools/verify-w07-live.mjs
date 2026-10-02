@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict'
+﻿import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { existsSync, writeFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
@@ -17,9 +17,10 @@ assert.ok(!existsSync(directory))
 const database = 'postgresql://w02_test_20261001:w02_local_test_only@127.0.0.1:5433/raptix_web_w02_fresh_20261001'
 const runtime = 'http://127.0.0.1:2400'
 const api = 'http://127.0.0.1:5284/api'
-const phase = process.argv.includes('--w08') ? 'w08' : 'w07'
+const phase = process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
-let streamCursor, streamed = [], wireShapes = []
+let streamCursor, streamed = [], wireShapes = [], replay = []
 const checks = []
 async function start() {
   child = spawn(process.execPath, ['dist/main.js'], { cwd: path.join(repo, 'clients/web-raptix/server'), env: { ...process.env, DATABASE_URL: database, WORKSPACE_PATH: root, LANGGRAPH_API_URL: runtime, RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', HOST: '127.0.0.1', PORT: '5284' }, stdio: 'pipe' })
@@ -63,7 +64,7 @@ try {
   const recovered = (await http('GET', `${base}/requests/${intent.requestId}`, undefined, 200)).payload
   assert.ok(isRequestRecoveryView(recovered)); assert.equal(recovered.state, 'accepted'); assert.ok(recovered.runId)
   runId = recovered.runId
-  if (phase === 'w08') {
+  if (streaming) {
     const controller = new AbortController()
     const response = await fetch(`${api}${base}/threads/${threadId}/runs/${runId}/events`, { signal: controller.signal })
     assert.equal(response.status, 200); assert.ok(response.headers.get('content-type').startsWith('text/event-stream'))
@@ -91,7 +92,7 @@ try {
   assert.equal(native.multitask_strategy, 'reject'); assert.equal(native.metadata.ui_request_id, intent.requestId)
   const nativeRuns = await upstream('GET', `/threads/${threadId}/runs?limit=100`)
   assert.equal(nativeRuns.filter(run => run.metadata?.ui_request_id === intent.requestId).length, 1)
-  if (phase === 'w08') {
+  if (streaming) {
     const path = `${base}/threads/${threadId}/runs/${runId}/events`
     const resumed = await fetch(`${api}${path}`, { headers: { 'Last-Event-ID': streamCursor } })
     assert.equal(resumed.status, 200)
@@ -100,7 +101,7 @@ try {
     for (const frame of frames) if (frame.event === 'run-event') { const event = JSON.parse(frame.data); assert.ok(isPublicStreamEvent(event)); streamed.push(event); assert.equal(event.upstreamCursor, frame.id) }
     assert.ok(frames.some(frame => frame.event === 'control' && JSON.parse(frame.data).recoveryRequired))
     const all = await fetch(`${api}${path}`, { headers: { 'Last-Event-ID': '-1' } })
-    const replay = new SseDecoder().push(await all.text()).filter(frame => frame.event === 'run-event').map(frame => JSON.parse(frame.data))
+    replay = new SseDecoder().push(await all.text()).filter(frame => frame.event === 'run-event').map(frame => JSON.parse(frame.data))
     assert.ok(replay.length > 0 && replay.every(isPublicStreamEvent), 'Late attach must recover public buffered events')
     const { emptyStreamState, reduceStreamEvent } = await import('../src/features/agent-runs/stream-reducer.ts')
     let state = emptyStreamState(project.id, threadId)
@@ -126,6 +127,22 @@ try {
   writeFileSync(new URL('../docs/integration/w07-hydrated-context.json', import.meta.url), JSON.stringify({ runStatus: native.status, threadMetadata: Object.fromEntries(proofKeys.map(k => [k, remoteThread.metadata?.[k] ?? null])), values: Object.fromEntries(contextKeys.map(k => [k, hydrated.values?.[k] ?? null])), checkpointMetadata: hydrated.metadata, checkpointPresent: hydrated.checkpoint != null }, null, 2) + '\n')
   const snapshot = (await http('GET', `${base}/threads/${threadId}`, undefined, 200)).payload
   assert.ok(isScopedThreadView(snapshot)); assert.ok(snapshot.messages.some(message => message.role === 'user' && message.content === intent.message))
+  if (phase === 'w09') {
+    assert.ok(snapshot.messages.every(message => message.messageId === undefined || typeof message.messageId === 'string' || message.messageId === null), 'Message ids must be provable identity or explicit null')
+    assert.ok(Array.isArray(snapshot.transcripts) && snapshot.transcripts.every(t => t.runId === null && t.source === 'checkpoint'), 'Transcript history field stays thread-level and checkpoint-sourced even when the deployed runtime exposes no entries yet')
+    assert.equal(typeof snapshot.transcriptsTruncated, 'boolean')
+    await http('GET', `/engagements/${randomUUID()}/threads/${threadId}`, undefined, 404)
+    const { emptyStreamState, reduceStreamEvent } = await import('../src/features/agent-runs/stream-reducer.ts')
+    const { mergeThreadHistory } = await import('../src/features/agent-runs/history-merge.ts')
+    let state = emptyStreamState(project.id, threadId)
+    for (const event of [...streamed, ...replay]) state = reduceStreamEvent(state, event)
+    state = mergeThreadHistory(state, snapshot)
+    const merged = JSON.stringify([state.messages, state.tools, state.invocations])
+    state = mergeThreadHistory(state, snapshot)
+    assert.equal(JSON.stringify([state.messages, state.tools, state.invocations]), merged, 'History merge must be idempotent across reconnects')
+    assert.ok(Object.values(state.messages).some(message => message.role === 'assistant' && message.content.length > 0), 'Live replay content survives history merge')
+    checks.push('actual planning run snapshot exposes owned thread-level history fields with stable ids, merge is idempotent with live replay, and foreign scope stays denied')
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -137,7 +154,7 @@ try {
   assert.deepEqual(capabilities.capabilities.runs, { supported: true, available: true })
   await http('POST', `${base}/threads/${threadId}/resume`, { requestId: 'deferred-resume', value: 'unsafe' }, 404)
   checks.push('real API process restart preserves request/run deduplication; capability is live and resume remains gated')
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(phase === 'w08' ? { streamCursor, publicEvents: streamed.length, wireShapes } : {}), provenance: 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged', ownedRuntimeFixtureRemoved: true }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), provenance: 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {

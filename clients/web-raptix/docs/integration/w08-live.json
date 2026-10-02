@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqiyv5s0000oofi3ml2co3w",
-  "threadId": "76faeaf5-c627-4c81-b08e-8ae8972dcd18",
-  "runId": "01a0fb18-30b7-7ae2-9dfc-6a252140c77c",
+  "projectId": "cmuqm0yj50000owfijen68ec9",
+  "threadId": "4f9631c7-d596-49f5-b33f-fcd80699649a",
+  "runId": "01a0fb66-8ee9-78a0-9b98-953931442ba6",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -12,12 +12,12 @@
     "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
     "real API process restart preserves request/run deduplication; capability is live and resume remains gated"
   ],
-  "streamCursor": "1790919062596-0",
+  "streamCursor": "1790924198457-0",
   "publicEvents": 4,
   "wireShapes": [
     {
       "event": "metadata",
-      "id": "1790919062596-0",
+      "id": "1790924198457-0",
       "array": false,
       "keys": [
         "run_id",
@@ -26,7 +26,7 @@
     },
     {
       "event": "values",
-      "id": "1790919062601-0",
+      "id": "1790924198467-0",
       "array": false,
       "keys": [
         "messages",
@@ -48,7 +48,7 @@
     },
     {
       "event": "updates",
-      "id": "1790919062603-0",
+      "id": "1790924198470-0",
       "array": false,
       "keys": [
         "EngagementContextMiddleware.before_agent"
@@ -56,7 +56,7 @@
     },
     {
       "event": "updates",
-      "id": "1790919062611-0",
+      "id": "1790924198486-0",
       "array": false,
       "keys": [
         "RoEGuardrailMiddleware.before_agent"
@@ -64,7 +64,7 @@
     },
     {
       "event": "updates",
-      "id": "1790919062613-0",
+      "id": "1790924198487-0",
       "array": false,
       "keys": [
         "PatchToolCallsMiddleware.before_agent"
@@ -72,7 +72,7 @@
     },
     {
       "event": "updates",
-      "id": "1790919068241-0",
+      "id": "1790924203205-0",
       "array": false,
       "keys": [
         "model"
@@ -80,7 +80,7 @@
     },
     {
       "event": "values",
-      "id": "1790919068242-0",
+      "id": "1790924203205-0",
       "array": false,
       "keys": [
         "messages",
@@ -101,6 +101,6 @@
       ]
     }
   ],
-  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged",
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread",
   "ownedRuntimeFixtureRemoved": true
 }
