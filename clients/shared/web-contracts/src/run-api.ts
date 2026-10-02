@@ -2,6 +2,7 @@ import type { ThreadBindingView } from './ownership.js'
 import { isThreadBindingView } from './ownership.js'
 import { isPublicStreamPayload, type CustomPayload } from './stream-events.js'
 import { isIsoUtcTimestamp, isNonEmptyString, isRecord } from './guards.js'
+import type { EngagementStatus, EngagementTargetType } from './engagements.js'
 export interface ScopedRunView {
   engagementId: string; threadId: string; runId: string; requestId: string
   rawStatus: string; createdAt: string; updatedAt: string; source: 'runtime'
@@ -195,4 +196,23 @@ export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
 }
 export function isTimelineView(v: unknown): v is TimelineView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && v.source === 'mixed'
+}
+/**
+ * W15 engagement settings: only the fields the new server actually persists
+ * today. `name` is the immutable workspace slug; `targetChange` states the
+ * lifecycle/lock policy up front instead of failing opaquely on save.
+ */
+export interface EngagementSettingsView {
+  engagementId: string; displayName: string; name: string
+  targetType: EngagementTargetType; targetValue: string
+  authorizationConfirmed: boolean; lifecycleStatus: EngagementStatus
+  targetChange: { allowed: boolean; reason: string | null }
+  source: 'db'
+}
+export function isEngagementSettingsView(v: unknown): v is EngagementSettingsView {
+  if (!isRecord(v) || !isNonEmptyString(v.engagementId) || typeof v.displayName !== 'string' || !isNonEmptyString(v.name)) return false
+  if (!isNonEmptyString(v.targetType) || !isNonEmptyString(v.targetValue) || typeof v.authorizationConfirmed !== 'boolean') return false
+  if (!isNonEmptyString(v.lifecycleStatus) || v.source !== 'db') return false
+  if (!isRecord(v.targetChange) || typeof v.targetChange.allowed !== 'boolean') return false
+  return v.targetChange.reason === null || isNonEmptyString(v.targetChange.reason)
 }

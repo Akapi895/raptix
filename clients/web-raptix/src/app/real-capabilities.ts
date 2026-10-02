@@ -16,7 +16,9 @@ import type { RealNewProjectFormError } from '../features/projects/real-project.
  * findings and the artifact browser; Infrastructure & Assets (W13) render the
  * scoped public graph projection and derived asset inventory; Operations Log
  * and Reports (W14) render the merged server timeline and the validated
- * engagement exports.
+ * engagement exports; Settings (W15) edits the persisted engagement fields
+ * through the validated PATCH with save/reload acknowledgement and owns the
+ * explicit danger delete.
  */
 export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
   'vector-campaigns':
@@ -27,8 +29,6 @@ export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
     'Credentials Vault needs the vault storage service (work package W18), which is not connected yet.',
   members:
     'Members need the identity/RBAC service (work package W19). No member directory exists in this build.',
-  'project-settings':
-    'Metadata editing arrives with the settings work package (W15). The project fields below are read-only.',
 }
 
 /** Defensive reason for a screen without a map entry (the router only mounts the 13 pages). */
