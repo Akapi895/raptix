@@ -1,11 +1,11 @@
 ﻿import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
-import { existsSync, writeFileSync, rmSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, rmSync } from 'node:fs'
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView } from '@raptix/web-contracts'
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView } from '@raptix/web-contracts'
 import { isPublicStreamEvent } from '@raptix/web-contracts'
 import { decodeSse, SseDecoder } from '@raptix/streaming'
 
@@ -18,7 +18,12 @@ assert.ok(!existsSync(directory))
 const database = 'postgresql://w02_test_20261001:w02_local_test_only@127.0.0.1:5433/raptix_web_w02_fresh_20261001'
 const runtime = 'http://127.0.0.1:2400'
 const api = 'http://127.0.0.1:5284/api'
-const phase = process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+// Neo4j graph-store credential comes from the repo .env (never the public
+// default); the W13 graph projection is only wired when it is present.
+const envFile = path.join(repo, '.env')
+const neo4jPassword = existsSync(envFile) ? (readFileSync(envFile, 'utf8').match(/^NEO4J_PASSWORD=(.+)$/m)?.[1] ?? '').trim() : ''
+const graphConfig = neo4jPassword && neo4jPassword !== 'raptix-graph' ? { NEO4J_HTTP_URI: 'http://127.0.0.1:7475', NEO4J_USER: 'neo4j', NEO4J_PASSWORD: neo4jPassword } : null
+const phase = process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
 const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
 let streamCursor, streamed = [], wireShapes = [], replay = []
@@ -26,7 +31,7 @@ let resumeRoundTrip = false
 let cancelRunId = null
 const checks = []
 async function start() {
-  child = spawn(process.execPath, ['dist/main.js'], { cwd: path.join(repo, 'clients/web-raptix/server'), env: { ...process.env, DATABASE_URL: database, WORKSPACE_PATH: root, LANGGRAPH_API_URL: runtime, RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', HOST: '127.0.0.1', PORT: '5284' }, stdio: 'pipe' })
+  child = spawn(process.execPath, ['dist/main.js'], { cwd: path.join(repo, 'clients/web-raptix/server'), env: { ...process.env, DATABASE_URL: database, WORKSPACE_PATH: root, LANGGRAPH_API_URL: runtime, RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', HOST: '127.0.0.1', PORT: '5284', ...(graphConfig ?? {}) }, stdio: 'pipe' })
   let log = ''; child.stdout.on('data', c => { log += c }); child.stderr.on('data', c => { log += c })
   for (let i = 0; i < 300; i++) {
     assert.equal(child.exitCode, null, log)
@@ -46,6 +51,11 @@ async function upstream(method, endpoint, body, expected = 200) {
   const response = await fetch(`${runtime}${endpoint}`, { method, ...(body === undefined ? {} : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), signal: AbortSignal.timeout(15000) })
   assert.equal(response.status, expected, `${method} ${endpoint}`)
   return response.status === 204 ? null : response.json()
+}
+async function graphStore(method, statement, parameters) {
+  const response = await fetch('http://127.0.0.1:7475/db/neo4j/tx/commit', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Basic ${Buffer.from(`neo4j:${neo4jPassword}`).toString('base64')}` }, body: JSON.stringify({ statements: [{ statement, parameters }] }), signal: AbortSignal.timeout(10000) })
+  const body = await response.json().catch(() => null)
+  return { status: response.status, rows: body?.results?.[0]?.data?.[0]?.row ?? [] }
 }
 try {
   await start()
@@ -234,6 +244,39 @@ try {
     await http('GET', `/engagements/${randomUUID()}/artifacts`, undefined, 404)
     checks.push('artifact traversal and foreign engagements are rejected without leaking workspace paths')
   }
+  if (phase === 'w13') {
+    // Real Neo4j round trip: seed engagement-scoped nodes, read them through
+    // the public projection, prove redaction and cross-engagement isolation.
+    assert.ok(graphConfig, 'W13 verifier lane requires NEO4J_PASSWORD from the repo .env')
+    const seeded = await graphStore('POST', 'UNWIND $nodes AS node CREATE (n:Host:VerifierGate) SET n = node', { nodes: [
+      { engagement: project.workspaceSlug, hostname: 'dc01.verifiergate', ip: '10.98.0.5', os: 'Windows Server 2022', password: 'verifier-secret-DO-NOT-LEAK' },
+      { engagement: project.workspaceSlug, hostname: 'dc01.verifiergate', ip: '10.98.0.5', port: 445 },
+      { engagement: 'w13-foreign-engagement', hostname: 'foreign.verifiergate', ip: '10.98.9.9' },
+    ] })
+    assert.equal(seeded.status, 200)
+    try {
+      const graph = (await http('GET', `${base}/graph`, undefined, 200)).payload
+      assert.ok(isGraphView(graph) && graph.source === 'graph' && graph.engagementId === project.id)
+      assert.equal(graph.nodes.length, 2, JSON.stringify(graph))
+      const host = graph.nodes.find(node => node.labels.includes('Host') && node.properties.hostname === 'dc01.verifiergate')
+      assert.ok(host, 'Seeded scoped host must surface through the public projection')
+      assert.equal(host.properties.os, 'Windows Server 2022')
+      assert.ok(!JSON.stringify(graph).includes('verifier-secret-DO-NOT-LEAK'), 'Credential-like properties must never leave the server')
+      assert.ok(!JSON.stringify(graph).includes('foreign.verifiergate'), 'Foreign-engagement nodes must stay invisible')
+      assert.equal(graph.edges.length, 0)
+      const assets = (await http('GET', `${base}/assets`, undefined, 200)).payload
+      assert.ok(isAssetsView(assets) && assets.source === 'graph')
+      assert.equal(assets.assets.length, 1, 'Same hostname+ip nodes dedupe into one asset summary')
+      assert.equal(assets.assets[0].ports.length, 1, 'Merged ports survive the dedupe')
+      checks.push('engagement-scoped graph projection reads the real Neo4j store with server-side redaction and cross-engagement isolation')
+      checks.push('asset summaries dedupe by hostname+ip domain key with counters derived from the same projection')
+      await http('GET', `/engagements/${randomUUID()}/graph`, undefined, 404)
+      await http('GET', `/engagements/${randomUUID()}/assets`, undefined, 404)
+      checks.push('foreign graph and asset scope stays denied on the real store')
+    } finally {
+      await graphStore('POST', 'MATCH (n:VerifierGate) WHERE n.engagement STARTS WITH "w07-live-" DETACH DELETE n', {})
+    }
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, phase === 'w11' ? cancelRunId : runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -290,7 +333,11 @@ try {
     assert.deepEqual(capabilities.capabilities.findings, { supported: true, available: true })
     assert.deepEqual(capabilities.capabilities.artifacts, { supported: true, available: true })
   }
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
+  if (phase === 'w13') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.graphs, { supported: true, available: true })
+  }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {

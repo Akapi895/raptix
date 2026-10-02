@@ -32,6 +32,8 @@ import { RealProviders } from './providers'
 import RealPlanning from '../features/planning/RealPlanning'
 import RealConsole from '../features/agent-runs/RealConsole'
 import RealFindings from '../features/findings-evidence/RealFindings'
+import RealInfrastructure from '../features/infrastructure/RealInfrastructure'
+import RealAssets from '../features/infrastructure/RealAssets'
 
 const MONO = "'JetBrains Mono', monospace"
 const CARD_HEAD: CSSProperties = { padding: '14px 16px', borderBottom: `1px solid ${C.border}` }
@@ -156,7 +158,7 @@ function RealProjectWorkspace({ projectId, screen, projects, listLoading, onRelo
       navigate={navigate} narrow={narrow} menuOpen={menuOpen}
       onMenu={() => setMenuOpen(true)} onCloseMenu={() => setMenuOpen(false)}
     >
-      {screen === 'charter' ? <RealCharterLanding project={project} /> : screen === 'scope-boundaries' ? <div style={{ background: C.page, minHeight: '100%', padding: 24 }}><RealPlanning key={project.id} project={project} scope /></div> : screen === 'operator-console' ? <RealConsole key={project.id} project={project} /> : screen === 'findings' ? <div style={{ height: '100vh' }}><RealFindings key={project.id} project={project} /></div> : <RealUnavailableScreen screen={screen} project={project} />}
+      {screen === 'charter' ? <RealCharterLanding project={project} /> : screen === 'scope-boundaries' ? <div style={{ background: C.page, minHeight: '100%', padding: 24 }}><RealPlanning key={project.id} project={project} scope /></div> : screen === 'operator-console' ? <RealConsole key={project.id} project={project} /> : screen === 'findings' ? <div style={{ height: '100vh' }}><RealFindings key={project.id} project={project} /></div> : screen === 'infrastructure' ? <RealInfrastructure key={project.id} project={project} /> : screen === 'assets' ? <RealAssets key={project.id} project={project} /> : <RealUnavailableScreen screen={screen} project={project} />}
     </RealShell>
   )
 }

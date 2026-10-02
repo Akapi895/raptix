@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isFindingView, isFindingsView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -62,4 +62,21 @@ it('validates parsed workspace findings and safe artifact projections additively
   const content = { engagementId: 'eng', path: 'recon/nmap.txt', content: 'open ports', mediaType: 'text', sizeBytes: 10, truncated: false, source: 'workspace' };
   expect(isArtifactContentView(content)).toBe(true);
   expect(isArtifactContentView({ ...content, mediaType: 'binary' })).toBe(false);
+});
+it('validates engagement-scoped public graph and asset projections additively', () => {
+  const node = { id: '4:abc:1', labels: ['Host'], properties: { hostname: 'dc01.corp', ip: '10.0.1.5', password: '[REDACTED]' } };
+  expect(isGraphNodeView(node)).toBe(true);
+  expect(isGraphNodeView({ ...node, properties: { ...node.properties, nested: { deep: true } } })).toBe(false);
+  expect(isGraphNodeView({ ...node, properties: { ...node.properties, services: ['smb', 445] } })).toBe(false);
+  const edge = { id: '5:abc:2', source: node.id, target: '4:abc:3', type: 'OPEN_PORT', properties: { port: 443 } };
+  expect(isGraphEdgeView(edge)).toBe(true);
+  expect(isGraphEdgeView({ ...edge, source: '' })).toBe(false);
+  expect(isGraphView({ engagementId: 'eng', nodes: [node], edges: [edge], truncated: false, source: 'graph' })).toBe(true);
+  expect(isGraphView({ engagementId: 'eng', nodes: [node], edges: [edge], truncated: false, source: 'raw' })).toBe(false);
+  const asset = { id: '4:abc:1', type: 'Host', label: 'dc01.corp', hostname: 'dc01.corp', ip: '10.0.1.5', os: 'Windows Server 2022', ports: ['445'], services: ['smb'], relatedFindingIds: ['FIND-2026-001'], source: 'graph' };
+  expect(isAssetSummaryView(asset)).toBe(true);
+  expect(isAssetSummaryView({ ...asset, type: 'vehicle' })).toBe(false);
+  expect(isAssetSummaryView({ ...asset, url: 5 })).toBe(false);
+  expect(isAssetsView({ engagementId: 'eng', assets: [asset], truncated: false, source: 'graph' })).toBe(true);
+  expect(isAssetsView({ engagementId: 'eng', assets: [asset], truncated: false, source: 'derived' })).toBe(false);
 });

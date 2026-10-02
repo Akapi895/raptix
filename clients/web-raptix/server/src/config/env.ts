@@ -24,6 +24,13 @@ export interface ServerEnv {
    * directory is only ever validated/created at this passed location.
    */
   readonly workspacePath?: string;
+  /**
+   * Neo4j HTTP endpoint for the W13 scoped graph projection (NEO4J_HTTP_URI,
+   * e.g. http://127.0.0.1:7475). Present only when NEO4J_PASSWORD is set and
+   * is not the documented public default: like the legacy API, a missing or
+   * well-known password refuses to serve graph data at all.
+   */
+  readonly graph?: { readonly httpUri: string; readonly user: string; readonly password: string };
 }
 
 export const SERVER_ENV_DEFAULTS: Readonly<
@@ -148,6 +155,35 @@ function readWorkspacePath(
   return raw;
 }
 
+/**
+ * Optional Neo4j HTTP config for the scoped graph projection. The password is
+ * a secret: never logged, never echoed. The documented public default is
+ * rejected outright so a misconfigured deployment fails to serve graph data
+ * rather than serving it with a well-known credential.
+ */
+function readGraphConfig(
+  source: NodeJS.ProcessEnv,
+  issues: string[],
+): ServerEnv['graph'] {
+  const password = source.NEO4J_PASSWORD;
+  if (password === undefined) return undefined;
+  if (password.trim().length === 0) {
+    issues.push('NEO4J_PASSWORD must be a non-empty secret or unset');
+    return undefined;
+  }
+  if (password === 'raptix-graph') {
+    issues.push('NEO4J_PASSWORD is set to the documented public default; refusing to serve graph data');
+    return undefined;
+  }
+  const httpPort = source.NEO4J_HTTP_PORT ?? '7475';
+  if (!/^\d{1,5}$/.test(httpPort) || Number(httpPort) < 1 || Number(httpPort) > 65535) {
+    issues.push('NEO4J_HTTP_PORT must be an integer between 1 and 65535');
+    return undefined;
+  }
+  const httpUri = source.NEO4J_HTTP_URI ?? `http://127.0.0.1:${httpPort}`;
+  return { httpUri, user: source.NEO4J_USER ?? 'neo4j', password };
+}
+
 export function loadServerEnv(
   source: NodeJS.ProcessEnv = process.env,
 ): ServerEnv {
@@ -158,6 +194,7 @@ export function loadServerEnv(
   const logLevel = readLogLevel(source, issues);
   const databaseUrl = readDatabaseUrl(source, issues);
   const workspacePath = readWorkspacePath(source, issues);
+  const graph = readGraphConfig(source, issues);
   if (issues.length > 0) {
     throw new EnvValidationError(issues);
   }
@@ -168,7 +205,8 @@ export function loadServerEnv(
     logLevel,
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
     ...(workspacePath === undefined ? {} : { workspacePath }),
-  };
+    ...(graph === undefined ? {} : { graph }),
+  } satisfies ServerEnv;
 }
 
 export function readServerEnv(): ServerEnv {

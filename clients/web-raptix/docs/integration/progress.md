@@ -389,10 +389,28 @@ lanes 8/8 + 8/8 + 1/1 (new findings live gate), verifier `--w12` 9 groups
 including a real findings/artifact workspace round trip; all phases w07–w12
 pass. See w12-findings.md, w12-live.json.
 
+## W13 — accepted 2026-10-02
+
+Infrastructure & Assets on the real graph. Server: engagement-scoped Neo4j
+projection over the HTTP transaction endpoint with the public projection
+applied before the response — property allowlist, credential-like keys dropped
+entirely, credential-looking values redacted, bounded nodes/edges/properties
+(`truncated` means bound truncation only); assets derive from the same read
+with hostname+ip dedupe; graph-store failure answers 503 while a scoped empty
+graph stays 200-empty; `capabilities.graphs` implemented; optional
+NEO4J_PASSWORD env refuses the documented public default outright. Frontend:
+Infrastructure (node table, relations summary, redacted node detail) and
+Assets (source-screen counters/tabs/search/inspect) render only public data —
+no Tag/Update Scope/Export docks, no fabricated compromise claims. Gates:
+server 183 tests, contracts 40, frontend 77 + browser lanes 8/8 + 10/10 + 1/1
+(new W13 live gate against real Neo4j), verifier `--w13` 9 groups proving
+redaction, isolation and dedupe on the real store; all phases w07–w13 pass.
+See w13-graph.md, w13-live.json.
+
 ## Subsequent phases — pending (not started)
 
-W13–W16 graphs/logs/reports/settings/deployment; W17–W19 additional providers;
-W20 legacy retirement.
+W14–W16 logs/reports/settings/deployment; W17–W19 additional providers; W20
+legacy retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB

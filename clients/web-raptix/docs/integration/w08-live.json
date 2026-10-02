@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqohp4p000098fint6ygx06",
-  "threadId": "7f364b88-9fd9-4f26-8337-470afc6c8e6f",
-  "runId": "01a0fba5-bdef-7fd0-892d-b4d1d25708a3",
+  "projectId": "cmuqpivkm000040fivvb0ug5v",
+  "threadId": "57a17b60-26b5-41e5-bfe4-2490edfe9808",
+  "runId": "01a0fbc0-36fc-7bb2-92f4-6987061a2b39",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -12,12 +12,12 @@
     "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
   ],
-  "streamCursor": "1790928339227-0",
+  "streamCursor": "1790930074295-0",
   "publicEvents": 4,
   "wireShapes": [
     {
       "event": "metadata",
-      "id": "1790928339227-0",
+      "id": "1790930074295-0",
       "array": false,
       "keys": [
         "run_id",
@@ -26,7 +26,7 @@
     },
     {
       "event": "values",
-      "id": "1790928339232-0",
+      "id": "1790930074299-0",
       "array": false,
       "keys": [
         "messages",
@@ -48,7 +48,7 @@
     },
     {
       "event": "updates",
-      "id": "1790928339233-0",
+      "id": "1790930074301-0",
       "array": false,
       "keys": [
         "EngagementContextMiddleware.before_agent"
@@ -56,7 +56,7 @@
     },
     {
       "event": "updates",
-      "id": "1790928339238-0",
+      "id": "1790930074306-0",
       "array": false,
       "keys": [
         "RoEGuardrailMiddleware.before_agent"
@@ -64,7 +64,7 @@
     },
     {
       "event": "updates",
-      "id": "1790928339239-0",
+      "id": "1790930074307-0",
       "array": false,
       "keys": [
         "PatchToolCallsMiddleware.before_agent"
@@ -72,7 +72,7 @@
     },
     {
       "event": "updates",
-      "id": "1790928341521-0",
+      "id": "1790930075588-0",
       "array": false,
       "keys": [
         "model"
@@ -80,7 +80,7 @@
     },
     {
       "event": "values",
-      "id": "1790928341522-0",
+      "id": "1790930075590-0",
       "array": false,
       "keys": [
         "messages",

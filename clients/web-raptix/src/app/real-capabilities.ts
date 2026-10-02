@@ -13,17 +13,14 @@ import type { RealNewProjectFormError } from '../features/projects/real-project.
  * project DTO. Owning work packages are named so the unavailable state is
  * auditable, not vague. Operator Console (W10) renders real threads/runs and
  * is mounted directly; Findings & Evidence (W12) renders parsed workspace
- * findings and the artifact browser.
+ * findings and the artifact browser; Infrastructure & Assets (W13) render the
+ * scoped public graph projection and derived asset inventory.
  */
 export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
   'vector-campaigns':
     'Vector campaigns need the campaign provider APIs (work package W17), which are not connected yet.',
   'c2-sessions':
     'C2 sessions need the session provider APIs (work package W17), which are not connected yet.',
-  infrastructure:
-    'Infrastructure data needs the scoped inventory projection (work package W13), which is not connected yet.',
-  assets:
-    'Assets & inventory need the public asset projection (work package W13), which is not connected yet.',
   credentials:
     'Credentials Vault needs the vault storage service (work package W18), which is not connected yet.',
   logs:

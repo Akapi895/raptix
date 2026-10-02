@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqohub900007ofihrxao7x9",
-  "threadId": "88360872-6632-4c4f-946d-a168005bf845",
-  "runId": "01a0fba5-d6b2-7161-ac11-a36559d0df51",
+  "projectId": "cmuqpj01u0000lgfiqob2r40s",
+  "threadId": "ed83d9eb-9c01-4f52-b541-9495889bf081",
+  "runId": "01a0fbc0-4cbe-7913-bef2-b9fcdd927f2f",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -13,7 +13,7 @@
     "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
   ],
-  "streamCursor": "1790928345733-0",
+  "streamCursor": "1790930079798-0",
   "publicEvents": 4,
   "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread",
   "ownedRuntimeFixtureRemoved": true
