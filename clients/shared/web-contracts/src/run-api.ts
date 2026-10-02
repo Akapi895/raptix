@@ -169,3 +169,30 @@ export function isAssetSummaryView(v: unknown): v is AssetSummaryView {
 export function isAssetsView(v: unknown): v is AssetsView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.assets) && v.assets.every(isAssetSummaryView) && typeof v.truncated === 'boolean' && v.source === 'graph'
 }
+/** One merged, explicitly-labeled operations-log entry (W14). `at` is ISO 8601. */
+export interface TimelineEntryView {
+  id: string; at: string
+  source: 'runtime' | 'checkpoint' | 'workspace'
+  kind: string; label: string
+  agent?: string; tool?: string; runId?: string; status?: string
+}
+/**
+ * Merged operations timeline: runtime run states, checkpoint transcripts and
+ * workspace artifact-mtime entries keep distinct `source` labels; artifact
+ * mtimes are presence markers, never exact tool execution times.
+ */
+export interface TimelineView {
+  engagementId: string; entries: TimelineEntryView[]
+  truncated: boolean; source: 'mixed'
+}
+export function isTimelineEntryView(v: unknown): v is TimelineEntryView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.at) || Number.isNaN(Date.parse(v.at)) || !isNonEmptyString(v.kind) || typeof v.label !== 'string') return false
+  if (v.source !== 'runtime' && v.source !== 'checkpoint' && v.source !== 'workspace') return false
+  for (const key of ['agent', 'tool', 'runId', 'status'] as const) {
+    if (v[key] !== undefined && !isNonEmptyString(v[key])) return false
+  }
+  return true
+}
+export function isTimelineView(v: unknown): v is TimelineView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.entries) && v.entries.every(isTimelineEntryView) && typeof v.truncated === 'boolean' && v.source === 'mixed'
+}

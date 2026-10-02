@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqpijpo00003kfinkg3ri7v",
-  "threadId": "a3850ef3-8d28-4122-a944-b59289d1a78c",
-  "runId": "01a0fbbf-f870-7bd0-a79e-e8d298270b03",
+  "projectId": "cmuqq8dda0000qgfi9n3ajs3s",
+  "threadId": "c9b1fc88-05bc-44d3-b8d2-9cb41463263a",
+  "runId": "01a0fbd2-5c86-7961-8996-4fef7a89ddfc",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -15,7 +15,7 @@
     "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
   ],
-  "streamCursor": "1790930058099-0",
+  "streamCursor": "1790931263256-0",
   "publicEvents": 4,
   "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged",
   "ownedRuntimeFixtureRemoved": true
