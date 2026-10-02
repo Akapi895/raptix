@@ -137,4 +137,5 @@ benchmark/results/XBEN-*-24/run-loop*.log
 docs/superpowers/
 
 clients/web-raptix/test-results-planning/
+clients/web-raptix/test-results-console/
 clients/web-raptix/.figma/

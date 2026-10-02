@@ -314,9 +314,43 @@ Evidence: w09-history.md, w09-live.json, w09-faults.json,
 w09-oldcopy-faults.json. No new migration; Console rendering is W10, HITL is
 W11.
 
+## W10 — accepted 2026-10-02
+
+Delivered: source Operator Console bound to real data within the same visual
+layout. New owner-scoped thread selector feed (`GET /engagements/:id/threads`,
+newest-first, bounded, stale-context filtered, foreign scope denied), real-mode
+Console session store (thread create via reservation ACK, W09 snapshot/transcript
+hydrate, W08 GET-only SSE observe with reconnect, root-message submission with
+ACK recovery), pure console view model (timeline items + inspector, provenance
+kept on every item) and `RealConsole` mounting under the operator-console route
+with truthful transport/run-state chips. Questions/interrupts render read-only
+with an explicit W11 note; HITL approve/reject, pause/cancel/resume and OPSEC/
+synthetic phase data are never faked.
+
+HEAD gate:
+
+- Frontend typecheck/lint/build and 70 tests pass (+3 console-view, +1 capabilities
+  test now asserting Console is connected); lint 0 errors/38 retained warnings.
+- Server typecheck/lint/build and 155 tests pass (+1 listThreads ownership test);
+  shared contracts 37 (+1 selector-list validator), streaming 19, CLI typecheck pass.
+- Mock production-browser 8/8; W04 real planning browser 1/1 still pass.
+- Live HTTP gate `--w10` on API5284/PostgreSQL/LangGraph2400 passes 7 groups
+  (selector feed newest-first/owner-scoped/denial + full W07-W09 run/stream/history
+  regression). See w10-live.json.
+- Live browser gate (real Vite 5278 + compiled API 5285 + fresh test DB + runtime
+  2400) passes: New planning chat binds a real native thread, command-bar submit
+  acknowledges and streams OPERATOR/AGENT cards to RUN SUCCESS, reload recovers
+  the timeline from checkpoint history with HISTORY provenance and NO ACTIVE RUN,
+  zero demo data throughout. Deployed runtime confirms a successful `soundwave`
+  run with browser-generated `ui_request_id`; owned thread/workspace fixture
+  removed afterwards. See w10-console.md.
+
+Evidence: w10-console.md, w10-live.json and the console browser screenshot in
+test output. No new migration; question resume and HITL are W11.
+
 ## Subsequent phases — pending (not started)
 
-W10–W11 console/HITL; W12–W16
+W11 console HITL; W12–W16
 outcomes/settings/deployment; W17–W19 additional providers; W20 legacy retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the

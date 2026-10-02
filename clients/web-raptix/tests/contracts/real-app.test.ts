@@ -9,10 +9,10 @@ import {
 import { ApiNetworkError, ApiStatusError } from '../../src/shared/api/errors'
 
 describe('real workspace capabilities (W03 composition)', () => {
-  it('gives unconnected pages a truthful reason while Charter and Scope use real planning', () => {
+  it('gives unconnected pages a truthful reason while Charter/Scope/Console are mounted real', () => {
     for (const item of ACTIVE_NAV_ITEMS) {
-      if (item.id === 'charter' || item.id === 'scope-boundaries') {
-        expect(REAL_UNAVAILABLE_REASONS[item.id]).toBeUndefined()
+      if (item.id === 'charter' || item.id === 'scope-boundaries' || item.id === 'operator-console') {
+        expect(REAL_UNAVAILABLE_REASONS[item.id], `${item.id} is connected and must not be listed unavailable`).toBeUndefined()
         continue
       }
       expect(REAL_UNAVAILABLE_REASONS[item.id], `missing reason for ${item.id}`).toBeTruthy()

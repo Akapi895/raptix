@@ -24,6 +24,10 @@ export interface ScopedThreadView {
   messagesTruncated: boolean; historyScope: 'root_messages_only'; source: 'runtime'
   transcripts?: ThreadHistoryEvent[]; transcriptsTruncated?: boolean
 }
+/** Owner-scoped bound-thread list for the Console selector (W10). */
+export interface ScopedThreadListView {
+  engagementId: string; threads: ThreadBindingView[]; source: 'runtime'
+}
 export function isScopedRunView(v: unknown): v is ScopedRunView {
   return isRecord(v) && ['engagementId', 'threadId', 'runId', 'requestId', 'rawStatus'].every(k => isNonEmptyString(v[k])) && isIsoUtcTimestamp(v.createdAt) && isIsoUtcTimestamp(v.updatedAt) && v.source === 'runtime'
 }
@@ -33,4 +37,7 @@ export function isScopedThreadView(v: unknown): v is ScopedThreadView {
   if (v.transcripts === undefined && v.transcriptsTruncated === undefined) return true
   if (!Array.isArray(v.transcripts) || typeof v.transcriptsTruncated !== 'boolean') return false
   return v.transcripts.every(t => isRecord(t) && (t.key === null || isNonEmptyString(t.key)) && t.runId === null && t.source === 'checkpoint' && typeof t.truncated === 'boolean' && isPublicStreamPayload(t.payload))
+}
+export function isScopedThreadListView(v: unknown): v is ScopedThreadListView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && v.source === 'runtime' && Array.isArray(v.threads) && v.threads.every(isThreadBindingView)
 }

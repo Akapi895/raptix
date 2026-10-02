@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isScopedRunView, isScopedThreadView } from '../src/run-api.js';
+import { isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -23,4 +23,11 @@ it('validates optional thread-level transcript history and message ids additivel
   expect(isScopedThreadView({ ...thread, transcripts: [{ ...thread.transcripts[0], payload: { type: 'unknown', agent: 'x' } }] })).toBe(false);
   expect(isScopedThreadView({ ...thread, transcripts: [{ ...thread.transcripts[0], truncated: false }, { ...thread.transcripts[0] }], transcriptsTruncated: undefined })).toBe(false);
   expect(isScopedThreadView({ ...thread, transcripts: undefined, transcriptsTruncated: undefined })).toBe(true);
+});
+it('validates the owner-scoped thread selector list', () => {
+  const list = { engagementId: 'eng', threads: [{ engagementId: 'eng', threadId: 'thread', assistantId: 'soundwave', kind: 'planning', createdAt: time, updatedAt: time }], source: 'runtime' };
+  expect(isScopedThreadListView(list)).toBe(true);
+  expect(isScopedThreadListView({ ...list, source: 'fixture' })).toBe(false);
+  expect(isScopedThreadListView({ ...list, threads: [{ ...list.threads[0], kind: 'unknown' }] })).toBe(false);
+  expect(isScopedThreadListView({ ...list, engagementId: '' })).toBe(false);
 });

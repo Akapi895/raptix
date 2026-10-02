@@ -87,6 +87,15 @@ export class RuntimeOwnershipService {
     });
   }
 
+  /** Owner-scoped bound-thread selector list (W10): newest activity first, bounded. */
+  public async listBindings(userId: string, engagementId: string, limit = 50): Promise<ThreadBindingView[]> {
+    return this.transaction(async tx => {
+      const project = await this.owned(tx, userId, engagementId);
+      const rows = await tx.engagementThread.findMany({ where: { engagementId }, orderBy: { updatedAt: 'desc' }, take: Math.min(Math.max(limit, 1), 100) });
+      return rows.filter(row => row.contextHash === contextHash(project, row.assistantId, row.kind)).map(bindingView);
+    });
+  }
+
   public async reserve(userId: string, engagementId: string, requestId: string, operation: RequestOperation, payload: unknown, threadId: string | null = null): Promise<Reservation> {
     identifier(requestId, true);
     if (!['create_thread', 'create_run', 'resume'].includes(operation) || (operation === 'create_thread') !== (threadId === null)) throw new ProjectPolicyError('bad_request', 'Invalid request operation/thread binding');

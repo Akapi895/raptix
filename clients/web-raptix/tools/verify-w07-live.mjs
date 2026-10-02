@@ -4,7 +4,7 @@ import { existsSync, writeFileSync, rmSync } from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadView } from '@raptix/web-contracts'
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '@raptix/web-contracts'
 import { isPublicStreamEvent } from '@raptix/web-contracts'
 import { decodeSse, SseDecoder } from '@raptix/streaming'
 
@@ -17,7 +17,7 @@ assert.ok(!existsSync(directory))
 const database = 'postgresql://w02_test_20261001:w02_local_test_only@127.0.0.1:5433/raptix_web_w02_fresh_20261001'
 const runtime = 'http://127.0.0.1:2400'
 const api = 'http://127.0.0.1:5284/api'
-const phase = process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+const phase = process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
 const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
 let streamCursor, streamed = [], wireShapes = [], replay = []
@@ -143,6 +143,18 @@ try {
     assert.ok(Object.values(state.messages).some(message => message.role === 'assistant' && message.content.length > 0), 'Live replay content survives history merge')
     checks.push('actual planning run snapshot exposes owned thread-level history fields with stable ids, merge is idempotent with live replay, and foreign scope stays denied')
   }
+  if (phase === 'w10') {
+    const list = (await http('GET', `${base}/threads`, undefined, 200)).payload
+    assert.ok(isScopedThreadListView(list)); assert.equal(list.engagementId, project.id); assert.equal(list.source, 'runtime')
+    const listed = list.threads.find(thread => thread.threadId === threadId)
+    assert.ok(listed, 'The acknowledged planning thread must appear in the owner-scoped selector feed')
+    assert.equal(listed.kind, 'planning'); assert.ok(listed.assistantId)
+    const stamps = list.threads.map(thread => thread.updatedAt)
+    assert.deepEqual(stamps, [...stamps].sort().reverse(), 'Selector feed must be newest-activity first')
+    assert.ok(list.threads.length <= 100, 'Selector feed stays bounded')
+    await http('GET', `/engagements/${randomUUID()}/threads`, undefined, 404)
+    checks.push('owner-scoped thread selector feed lists bound threads newest-first with runtime provenance and foreign engagements stay denied')
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -154,7 +166,7 @@ try {
   assert.deepEqual(capabilities.capabilities.runs, { supported: true, available: true })
   await http('POST', `${base}/threads/${threadId}/resume`, { requestId: 'deferred-resume', value: 'unsafe' }, 404)
   checks.push('real API process restart preserves request/run deduplication; capability is live and resume remains gated')
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), provenance: 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), provenance: phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {
