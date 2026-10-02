@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isApprovalRequestView, isApprovalsView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isFindingView, isFindingsView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -46,4 +46,20 @@ it('validates restored interrupt questions and workspace approvals additively', 
   expect(isApprovalRequestView({ ...approval, matchedRule: { ...approval.matchedRule, timeoutSeconds: '120' } })).toBe(false);
   expect(isApprovalsView({ engagementId: 'eng', approvals: [approval], source: 'workspace' })).toBe(true);
   expect(isApprovalsView({ engagementId: 'eng', approvals: [approval], source: 'runtime' })).toBe(false);
+});
+it('validates parsed workspace findings and safe artifact projections additively', () => {
+  const finding = { engagementId: 'eng', id: 'FIND-2026-001', title: 'Exposed .env', severity: 'critical', description: 'd', evidence: 'e', attackVector: 'network', affectedAssets: ['api.acme.com/.env'], cvssScore: 9.1, cwe: ['CWE-312'], quality: { defaultSeverity: false, placeholderDescription: false, placeholderEvidence: false, unreadable: false }, rawSource: '# FIND-2026-001', sizeBytes: 512, source: 'workspace' };
+  expect(isFindingView(finding)).toBe(true);
+  expect(isFindingView({ ...finding, severity: 'info' })).toBe(false);
+  expect(isFindingView({ ...finding, quality: { ...finding.quality, defaultSeverity: 'yes' } })).toBe(false);
+  expect(isFindingView({ ...finding, cvssScore: '9.1' })).toBe(false);
+  expect(isFindingView({ ...finding, mitre: ['T1003'] })).toBe(true);
+  expect(isFindingsView({ engagementId: 'eng', findings: [finding], truncated: false, source: 'workspace' })).toBe(true);
+  expect(isFindingsView({ engagementId: 'eng', findings: [finding], truncated: false, source: 'parsed' })).toBe(false);
+  const artifacts = { engagementId: 'eng', folders: [{ folder: 'recon', files: [{ name: 'nmap.txt', path: 'recon/nmap.txt', sizeBytes: 2048 }] }], source: 'workspace' };
+  expect(isArtifactsView(artifacts)).toBe(true);
+  expect(isArtifactsView({ ...artifacts, folders: [{ ...artifacts.folders[0], files: [{ ...artifacts.folders[0].files[0], sizeBytes: '2048' }] }] })).toBe(false);
+  const content = { engagementId: 'eng', path: 'recon/nmap.txt', content: 'open ports', mediaType: 'text', sizeBytes: 10, truncated: false, source: 'workspace' };
+  expect(isArtifactContentView(content)).toBe(true);
+  expect(isArtifactContentView({ ...content, mediaType: 'binary' })).toBe(false);
 });

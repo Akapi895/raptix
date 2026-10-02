@@ -15,6 +15,8 @@ import { RunService } from './services/runtime/run-service.js';
 import { StreamService } from './services/runtime/stream-service.js';
 import { RuntimeJoinClient } from './integrations/runtime/join-client.js';
 import { ApprovalsService } from './services/approvals-service.js';
+import { FindingsService } from './services/findings-service.js';
+import { ArtifactsService } from './services/artifacts-service.js';
 
 let closing = false;
 
@@ -78,6 +80,8 @@ async function main(): Promise<void> {
     ? new RuntimeContextService({ config: runtimeConfig, projects: projectsService, ownership, workspaceRoot: env.workspacePath, runtime }) : undefined;
   const runsService = ownership && runtimeContext && runtime ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime }) : undefined;
   const approvalsService = dbClient && projectsService && env.workspacePath ? new ApprovalsService(dbClient, env.workspacePath) : undefined;
+  const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
+  const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -87,6 +91,8 @@ async function main(): Promise<void> {
     runsService,
     streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl)) : undefined,
     approvalsService,
+    findingsService,
+    artifactsService,
   });
 
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {

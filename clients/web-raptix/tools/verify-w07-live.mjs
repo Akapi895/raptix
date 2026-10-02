@@ -1,11 +1,11 @@
 ﻿import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { existsSync, writeFileSync, rmSync } from 'node:fs'
-import { appendFile, mkdir, readFile } from 'node:fs/promises'
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '@raptix/web-contracts'
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView } from '@raptix/web-contracts'
 import { isPublicStreamEvent } from '@raptix/web-contracts'
 import { decodeSse, SseDecoder } from '@raptix/streaming'
 
@@ -18,7 +18,7 @@ assert.ok(!existsSync(directory))
 const database = 'postgresql://w02_test_20261001:w02_local_test_only@127.0.0.1:5433/raptix_web_w02_fresh_20261001'
 const runtime = 'http://127.0.0.1:2400'
 const api = 'http://127.0.0.1:5284/api'
-const phase = process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+const phase = process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
 const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
 let streamCursor, streamed = [], wireShapes = [], replay = []
@@ -195,6 +195,45 @@ try {
     await http('GET', `/engagements/${randomUUID()}/approvals`, undefined, 404)
     checks.push('file-backed HITL approvals list, atomic decision append, duplicate 409 and foreign-scope denial all run against the real workspace files')
   }
+  if (phase === 'w12') {
+    // Real workspace findings + artifact round trip against the owned engagement directory.
+    const findingsDir = path.join(root, project.workspaceSlug, 'findings')
+    const reconDir = path.join(root, project.workspaceSlug, 'recon')
+    await mkdir(findingsDir, { recursive: true })
+    await mkdir(reconDir, { recursive: true })
+    await writeFile(path.join(findingsDir, 'FIND-2026-W12.md'), ['# Exposed .env File (W12 Gate)', '', 'Severity: critical', 'CVSS score: 9.1', 'CVSS vector: AV:N/AC:L/PR:N/UI:N', '', '## Description', 'The verifier gate exposes a `.env` file via HTTP.', '', '## Evidence', '- GET /.env returned 200 with DB_PASSWORD', '', '## Attack Vector', 'Unauthenticated HTTP GET.', '', '## Affected Assets', '- api.acme.invalid/.env', '', '## CWE', 'CWE-312', '', '## Mitre ATT&CK', 'T1552.001', '', '## Remediation', 'Rotate credentials.'].join('\n'), 'utf8')
+    await writeFile(path.join(findingsDir, 'FIND-2026-BROKEN.md'), 'unstructured noise, no sections', 'utf8')
+    await writeFile(path.join(reconDir, 'probe.json'), '{"open": [80, 443]}', 'utf8')
+    const findings = (await http('GET', `${base}/findings`, undefined, 200)).payload
+    assert.ok(isFindingsView(findings) && findings.source === 'workspace' && findings.engagementId === project.id)
+    assert.equal(findings.findings.length, 2)
+    const parsed = findings.findings.find(finding => finding.id === 'FIND-2026-W12')
+    assert.ok(parsed, JSON.stringify(findings))
+    assert.equal(parsed.severity, 'critical')
+    assert.equal(parsed.cvssScore, 9.1)
+    assert.deepEqual(parsed.cwe, ['CWE-312'])
+    assert.deepEqual(parsed.mitre, ['T1552.001'])
+    assert.deepEqual(parsed.affectedAssets, ['api.acme.invalid/.env'])
+    assert.ok(parsed.rawSource.includes('# Exposed .env File (W12 Gate)'))
+    assert.deepEqual(parsed.quality, { defaultSeverity: false, placeholderDescription: false, placeholderEvidence: false, unreadable: false })
+    const broken = findings.findings.find(finding => finding.id === 'FIND-2026-BROKEN')
+    assert.ok(broken && broken.quality.defaultSeverity && broken.quality.placeholderDescription && broken.rawSource.includes('unstructured noise'), 'A malformed finding stays viewable through its raw source without fake analyst confirmation')
+    checks.push('parsed FIND-*.md projections carry parser-quality provenance and malformed findings stay viewable via bounded raw source')
+    const artifacts = (await http('GET', `${base}/artifacts`, undefined, 200)).payload
+    assert.ok(isArtifactsView(artifacts) && artifacts.source === 'workspace')
+    const folderNames = artifacts.folders.map(folder => folder.folder).sort()
+    assert.deepEqual(folderNames, ['findings', 'recon'])
+    assert.ok(artifacts.folders.find(folder => folder.folder === 'recon').files.some(file => file.path === 'recon/probe.json'))
+    const content = (await http('GET', `${base}/artifacts/content?path=${encodeURIComponent('recon/probe.json')}`, undefined, 200)).payload
+    assert.ok(isArtifactContentView(content) && content.mediaType === 'json' && content.truncated === false && JSON.parse(content.content).open[1] === 443)
+    checks.push('engagement-scoped artifact browser lists allowlisted folders and serves UTF-8 text/JSON content with a tightened path boundary')
+    await http('GET', `${base}/artifacts/content?path=${encodeURIComponent('recon/../../secrets.txt')}`, undefined, 400)
+    await http('GET', `${base}/artifacts/content?path=${encodeURIComponent('private/keys.txt')}`, undefined, 400)
+    await http('GET', `${base}/artifacts/content?path=${encodeURIComponent('recon/missing.txt')}`, undefined, 404)
+    await http('GET', `/engagements/${randomUUID()}/findings`, undefined, 404)
+    await http('GET', `/engagements/${randomUUID()}/artifacts`, undefined, 404)
+    checks.push('artifact traversal and foreign engagements are rejected without leaking workspace paths')
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, phase === 'w11' ? cancelRunId : runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -246,7 +285,12 @@ try {
     const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
     assert.deepEqual(capabilities.capabilities.approvals, { supported: true, available: true })
   }
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
+  if (phase === 'w12') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.findings, { supported: true, available: true })
+    assert.deepEqual(capabilities.capabilities.artifacts, { supported: true, available: true })
+  }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {

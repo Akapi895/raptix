@@ -57,6 +57,8 @@ export async function buildCapabilitiesResponse(
   runtimeContext?: RuntimeContextService,
   runsSupported = false,
   approvalsSupported = false,
+  findingsSupported = false,
+  artifactsSupported = false,
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -82,6 +84,11 @@ export async function buildCapabilitiesResponse(
   // Approvals are workspace-file-backed (W11): available when the owning
   // project service is ready; decision writes share the workspace root.
   const approvals: CapabilityState = !approvalsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
+  // Findings/artifacts are workspace-file-backed projections (W12) scoped by
+  // owned engagement id with a tightened path boundary.
+  const filesBacked: CapabilityState = !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
+  const findings: CapabilityState = findingsSupported ? filesBacked : missingCapability();
+  const artifacts: CapabilityState = artifactsSupported ? filesBacked : missingCapability();
   return {
     version: CAPABILITIES_VERSION,
     mode: 'local-single-user',
@@ -92,8 +99,8 @@ export async function buildCapabilitiesResponse(
       threads: operations,
       runs: operations,
       approvals,
-      artifacts: missingCapability(),
-      findings: missingCapability(),
+      artifacts,
+      findings,
       graphs: missingCapability(),
       reports: missingCapability(),
     },
@@ -106,6 +113,8 @@ export interface CapabilitiesRouteOptions {
   readonly runtimeContext?: RuntimeContextService;
   readonly runsSupported?: boolean;
   readonly approvalsSupported?: boolean;
+  readonly findingsSupported?: boolean;
+  readonly artifactsSupported?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -119,6 +128,8 @@ export function registerCapabilitiesRoutes(
       options.runtimeContext,
       options.runsSupported,
       options.approvalsSupported === true,
+      options.findingsSupported === true,
+      options.artifactsSupported === true,
     ),
   );
 }

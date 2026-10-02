@@ -370,10 +370,29 @@ false` (deployed model never interrupted — happy path proven in controlled ser
 lanes, W09 precedent). All verifier phases w07–w11 pass. See w11-controls.md,
 w11-live.json.
 
+## W12 — accepted 2026-10-02
+
+Findings & Evidence on real data. Server: findings projection parses
+`FIND-*.md` from the engagement workspace with legacy parser semantics and
+explicit parser-quality flags (parsed defaults are flagged, never presented as
+analyst-confirmed; malformed findings stay viewable via bounded raw source);
+artifact browser lists the allowlisted `recon|exploit|post-exploit|findings|
+report` folders non-recursively and serves UTF-8 text/JSON content with a
+tightened boundary the legacy API lacked (realpath/symlink containment, 256 KB
+cap, binary rejection, traversal rejected 400, engagement scoped by owned id).
+`capabilities.findings` and `capabilities.artifacts` are implemented. Frontend:
+source-screen visual language (severity summary bar, table, detail modal) bound
+to real data only — no status/report/assign workflow states, no Run-PoC timer,
+no fake exports; rows carry parser-quality provenance and the modal embeds the
+artifact preview. Gates: server 178 tests, contracts 39, frontend 74 + browser
+lanes 8/8 + 8/8 + 1/1 (new findings live gate), verifier `--w12` 9 groups
+including a real findings/artifact workspace round trip; all phases w07–w12
+pass. See w12-findings.md, w12-live.json.
+
 ## Subsequent phases — pending (not started)
 
-W12–W16 outcomes/settings/deployment; W17–W19 additional providers; W20 legacy
-retirement.
+W13–W16 graphs/logs/reports/settings/deployment; W17–W19 additional providers;
+W20 legacy retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB
