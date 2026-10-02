@@ -1,13 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { formatComposeFailure } from "./web.js";
+import web from "./web.js";
+import type { CommandContext } from "./types.js";
 
-describe("formatComposeFailure", () => {
-  it("keeps the tail of docker compose stderr so the real error is visible", () => {
-    const stderr = `${"pulling layer\n".repeat(80)}Error response from daemon: ports are not available: bind: address already in use`;
+function fakeContext(): { ctx: CommandContext; events: string[] } {
+  const events: string[] = [];
+  return {
+    ctx: { addSystemEvent: (msg: string) => events.push(msg) } as unknown as CommandContext,
+    events,
+  };
+}
 
-    const message = formatComposeFailure("start", 1, stderr);
+describe("/web command (post-W20 retirement)", () => {
+  it("/web url reports the web-raptix dashboard URL", async () => {
+    const { ctx, events } = fakeContext();
 
-    expect(message).toContain("Failed to start web (exit 1)");
-    expect(message).toContain("address already in use");
+    await web.execute("url", ctx);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toContain("http://localhost:3000");
+  });
+
+  it("bare /web also reports the URL", async () => {
+    const { ctx, events } = fakeContext();
+
+    await web.execute("", ctx);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toContain("Web dashboard URL: http://localhost:3000");
+  });
+
+  it("lifecycle args point at the new-stack host commands instead of compose", async () => {
+    const { ctx, events } = fakeContext();
+
+    await web.execute("up", ctx);
+
+    expect(events).toHaveLength(1);
+    expect(events[0]).toContain("docker-compose.web-raptix.yml");
+    expect(events[0]).toContain("W20");
   });
 });

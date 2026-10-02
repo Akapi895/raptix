@@ -2,7 +2,12 @@
 
 The web dashboard is an open-source (Apache 2.0) browser-based control plane for managing engagements. It runs alongside the terminal CLI — use whichever interface fits your workflow.
 
-**Stack**: Next.js 16 · React 19 · PostgreSQL (Prisma) · Neo4j · React Flow · Tailwind CSS v4
+**Stack (web-raptix, since W16)**: Vite + React 19 UI with a same-origin nginx proxy · independent API server (Fastify) · PostgreSQL (Prisma) · Neo4j · deployed via `docker-compose.web-raptix.yml` on port 3000.
+
+> **W20 note:** the legacy Next.js `web` compose service and its `make web-*` targets
+> were retired. The `clients/web` folder remains in the checkout as reference-only;
+> the archived `raptix-web` GHCR image is pull-only for emergency rollback. The
+> commands below describe the active web-raptix stack.
 
 ---
 
@@ -13,14 +18,20 @@ The web dashboard is an open-source (Apache 2.0) browser-based control plane for
 raptix                    # starts the core stack + drops into the terminal CLI
 ```
 
-The dashboard is **dynamic-spawn** (v1.1.8+): it does NOT come up on `raptix start`. Bring it up from inside the CLI with the `/web` slash command, then open <http://localhost:3000>:
+Bring the web-raptix stack up from the host (it shares the core `postgres`/`langgraph` services but runs its own UI + API containers):
 
-| CLI command | Effect |
+```bash
+make webraptix-up         # or: docker compose -f docker-compose.web-raptix.yml up -d --wait
+make webraptix-health     # same-origin acceptance checks through the proxy
+```
+
+Then open <http://localhost:3000>.
+
+| CLI command | Effect (post-W20) |
 |---|---|
-| `/web` (or `/web up`) | `docker compose --profile web up -d web` against the host daemon |
-| `/web down` (or `/web stop`) | stops the container; preserves it so the next `/web up` is fast |
-| `/web url` | prints `http://localhost:${WEB_PORT}` without touching docker |
+| `/web` (or `/web url`) | prints `http://localhost:${WEB_PORT}` |
 | `/dashboard` | alias for `/web` |
+| lifecycle args (`up`/`down`) | point at `make webraptix-up` / `docker compose -f docker-compose.web-raptix.yml` — no docker call from the CLI |
 
 **Desktop app (contributors):**
 ```bash
@@ -33,7 +44,7 @@ The desktop app is an Electron shell for the product UI:
 |---|---|---|
 | `auto` (default) | Local install present → local; otherwise cloud | `http://localhost:${WEB_PORT:-3000}` or `https://app.decepticon.red` |
 | `cloud` | `RAPTIX_DESKTOP_MODE=cloud` | Hosted app (website login, Google/GitHub OAuth in-window) |
-| `local` | `RAPTIX_DESKTOP_MODE=local` | Local dashboard; auto-starts the `web` Docker Compose profile from `~/.raptix` when offline |
+| `local` | `RAPTIX_DESKTOP_MODE=local` | Local dashboard; opens the web-raptix stack URL (`http://localhost:${WEB_PORT:-3000}`) |
 
 Sessions use a persistent Electron partition (`persist:raptix-desktop`). Optional one-shot cookie import: drop a Cookie-Editor JSON or Netscape export at `~/.raptix/desktop-cookies.txt` (Windows: `%USERPROFILE%\.raptix\desktop-cookies.txt`) or set `RAPTIX_DESKTOP_COOKIES`. Prefer interactive sign-in; never commit session tokens.
 
@@ -51,20 +62,20 @@ External links stay in the system browser; status UI matches the product brandin
 
 Headless operators (no CLI, e.g. CI) can drive the same lifecycle from the host shell:
 ```bash
-docker compose -p raptix --profile web up -d --no-build web
+docker compose -f docker-compose.web-raptix.yml up -d --wait
 ```
 
 **Contributors (full stack with hot-reload):**
 ```bash
 make dev
 ```
-Builds and starts every service with source-sync hot-reload. The web service still requires the `web` profile to be active — e.g. `COMPOSE_PROFILES=web make dev` — or bring it up after the fact with `/web up`. Open <http://localhost:3000>.
+Builds and starts every backend service with source-sync hot-reload. The web-raptix tier runs separately (`make webraptix-up`) or fully local (`make webraptix-dev`). Open <http://localhost:3000>.
 
-**Contributors (local Next.js dev server):**
+**Contributors (local dev server):**
 ```bash
-make web-dev
+make webraptix-dev
 ```
-Runs the Next.js dev server locally on the host while infra (postgres, neo4j, litellm, langgraph, sandbox) stays in Docker. Faster web iteration than `make dev`.
+Runs the web-raptix Vite dev server locally (`http://localhost:5173`, proxies `/api` to the API server on `:5280`) while infra (postgres, neo4j, litellm, langgraph, sandbox) stays in Docker. Faster web iteration than `make dev`.
 
 ---
 
@@ -119,23 +130,18 @@ Per-objective progress board:
 
 ## Database
 
-The dashboard uses PostgreSQL with Prisma ORM.
+The dashboard uses PostgreSQL (dedicated `raptix_web` database) with Prisma ORM.
 
-**Run migrations** (after `git pull` with schema changes):
+**Migrations** run automatically at API container boot (`prisma migrate deploy`). For local development apply them manually:
+
 ```bash
-make web-migrate
+cd clients/web-raptix/server && npx prisma migrate dev
 ```
 
-**Regenerate Prisma client** (after editing `prisma/schema.prisma`):
-```bash
-cd clients/web && npx prisma generate
-```
-Or run `make web-build` to regenerate the client and build the dashboard in one step.
-
-Schema is at `clients/web/prisma/schema.prisma`. Key model: `Engagement`.
+Schema is at `clients/web-raptix/server/prisma/schema.prisma`. Key models: `Engagement`, `Project`, `Run`, `Finding`, `Campaign`, `VaultSecret`.
 
 ---
 
 ## API Routes
 
-The dashboard exposes Next.js App Router API routes under `clients/web/src/app/api/`. These proxy requests to LangGraph and serve as the backend for the React frontend. They are not a public API — the surface area may change between versions.
+The dashboard exposes the Fastify API under `clients/web-raptix/server/src/http/routes/`, served same-origin through the nginx proxy (`/api/*` + `/projects/*` SPA fallback). These routes are not a public API — the surface area may change between versions.

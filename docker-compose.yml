@@ -411,6 +411,10 @@ services:
       # (measured: 95% of "installs" survived a single day). Persisting it here
       # also makes the agent and the host CLI agree on one id.
       - ${RAPTIX_HOME:-~/.raptix}/telemetry:/root/.raptix/telemetry
+      # Soundwave writes planning documents through the sandbox, while the
+      # handoff validator runs in this container and reads them locally.
+      # Mount the same per-engagement workspace at the same in-container path.
+      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
     # Wait for litellm to be healthy: langgraph has retry logic but the launcher
     # uses `compose up --wait` and needs healthy as the single readiness signal.
     depends_on:
@@ -442,58 +446,10 @@ services:
     logging: *default-logging
 
 
-  # Web Dashboard — Next.js UI
-  # Migrations run automatically at startup via web-entrypoint.sh (prisma migrate deploy).
-  web:
-    image: ghcr.io/akapi895/raptix-web:${RAPTIX_VERSION:-stable}
-    build:
-      context: .
-      dockerfile: containers/web.Dockerfile
-      args:
-        VERSION: ${VERSION:-0.0.0}
-    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web
-    ports:
-      - "127.0.0.1:${WEB_PORT:-3000}:3000"
-      - "127.0.0.1:${TERMINAL_PORT:-3003}:3003"
-    env_file: .env
-    environment:
-      - NEXT_PUBLIC_RAPTIX_EDITION=oss
-      - LANGGRAPH_API_URL=http://langgraph:2024
-      - NEXT_PUBLIC_LANGGRAPH_API_URL=http://localhost:${LANGGRAPH_PORT:-2024}
-      - NEXT_PUBLIC_TERMINAL_WS_URL=ws://localhost:${TERMINAL_PORT:-3003}
-      - DATABASE_URL=postgresql://raptix:${POSTGRES_PASSWORD:-raptix}@postgres:5432/raptix_web
-      - WORKSPACE_PATH=/workspace
-    volumes:
-      - ${RAPTIX_HOME:-~/.raptix}/workspace:/workspace
-    depends_on:
-      langgraph:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    # node http.get — Next.js standalone images include node but not curl/wget.
-    # `r.resume()` drains the body so the request finishes; without it the
-    # callback can resolve before close, leaving the process hanging until
-    # docker's healthcheck timeout fires. start_period covers prisma migrate
-    # + Next.js boot; retries is post-cushion grace.
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/', r => { r.resume(); process.exit(r.statusCode < 500 ? 0 : 1); }).on('error', () => process.exit(1))"]
-      interval: 5s
-      timeout: 5s
-      retries: 12
-      start_period: 90s
-    networks:
-      - raptix-net
-    restart: unless-stopped
-    logging: *default-logging
-    # v1.1.8: web dashboard is no longer brought up by default `raptix
-    # start`. The CLI exposes a `/web` slash command that runs
-    # `docker compose --profile web up -d web` against the operator's
-    # docker daemon (the CLI container has the host docker.sock mounted
-    # in OSS), so the web tier only spins up when the operator actually
-    # asks for it. Keeps idle cost low and removes the postgres-migration
-    # latency hit from cold starts.
-    profiles:
-      - web
+  # Web dashboard: the legacy Next.js `web` service was retired (W20).
+  # The active web tier is the web-raptix stack — Vite UI + independent
+  # API server — deployed via docker-compose.web-raptix.yml on port 3000.
+  # The archived image remains pullable from GHCR for emergency rollback.
 
   # Ink CLI — Interactive terminal UI
   # Runs via: docker compose run --rm cli
@@ -507,11 +463,11 @@ services:
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-cli
     stdin_open: true
     tty: true
-    # v1.1.8 `/web` slash command: the CLI shells out to `docker compose
-    # --profile web up -d web` against the host docker daemon. To do
-    # that it needs (a) the docker.sock so commands reach the host
-    # daemon and (b) the on-host compose project directory mounted at a
-    # known in-container path so `-f` and `--env-file` resolve.
+    # v1.1.8 `/web` slash command legacy: the CLI container keeps the
+    # docker.sock + on-host compose project mount so slash commands can
+    # reach the host daemon. Since W20, `/web` only reports the URL —
+    # the dashboard lifecycle moved to the web-raptix stack on the host
+    # (docker-compose.web-raptix.yml).
     #
     # OSS scope: user == host owner. Multi-tenant deployments never
     # expose the docker socket to a tenant CLI — those deployments

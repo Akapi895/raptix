@@ -1,19 +1,13 @@
 import { app, BrowserWindow, Menu, clipboard, ipcMain, session, shell } from "electron";
 import fs from "node:fs";
-import { execFile, spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import {
   canNavigateInShell,
   canOpenExternal,
-  composeProcessEnv,
-  composeUpArgs,
-  DASHBOARD_READY_ATTEMPTS,
-  DASHBOARD_READY_DELAY_MS,
   dashboardResponseReady,
   isTrustedIpcSender,
-  missingConfigFiles,
   parseCookieImport,
   readCookieImportFile,
   readInstalledVersion,
@@ -23,8 +17,6 @@ import {
 import {
   applicationMenuTemplate,
   browserWindowChrome,
-  dockerComposeSpawn,
-  dockerInspectSpawn,
   envAssignHint,
 } from "./platform.mjs";
 import { statusHtml } from "./ui.mjs";
@@ -38,7 +30,6 @@ const setup = setupGuide();
 const hasSingleInstanceLock = app.requestSingleInstanceLock();
 const appSession = () => session.fromPartition(config.partition);
 let mainWindow;
-let starting = false;
 let cookiesImported = false;
 
 app.setName("Raptix");
@@ -71,33 +62,6 @@ async function dashboardReady() {
   } finally {
     clearTimeout(timer);
   }
-}
-
-async function runningWebImageCurrent() {
-  if (!installedVersion) return true;
-  const { command, args, options } = dockerInspectSpawn(config.webContainer, {
-    env: composeEnv(),
-  });
-  return new Promise((resolve) => {
-    execFile(command, args, options, (err, stdout) => {
-      if (err) {
-        resolve(true);
-        return;
-      }
-      resolve(String(stdout).trim().endsWith(`:${installedVersion}`));
-    });
-  });
-}
-
-async function waitForDashboardReady(
-  attempts = DASHBOARD_READY_ATTEMPTS,
-  delayMs = DASHBOARD_READY_DELAY_MS,
-) {
-  for (let i = 0; i < attempts; i += 1) {
-    if (await dashboardReady()) return true;
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-  }
-  return false;
 }
 
 async function loadStatus(message, detail) {
@@ -168,69 +132,26 @@ async function bootstrapDashboard() {
   }
 
   if (await dashboardReady()) {
-    if (await runningWebImageCurrent()) {
-      await loadDashboard();
-      return;
-    }
-    await loadStatus(`dashboard is running on an older image; updating to v${installedVersion}…`);
-    startWebProfile();
+    await loadDashboard();
     return;
   }
-  await loadStatus("dashboard offline; auto-starting web profile…");
-  startWebProfile();
-}
-
-function composeEnv() {
-  return composeProcessEnv(process.env, installedVersion);
-}
-
-function startWebProfile() {
-  if (starting) return;
-  const missing = missingConfigFiles(config);
-  if (missing.length > 0) {
-    const detail = [
-      "Missing required Raptix config file(s):",
-      ...missing.map(([label, file]) => `- ${label}: ${file}`),
+  // W20 retirement: the desktop no longer auto-spawns the web tier — the
+  // legacy `web` compose service was removed and the web-raptix stack is
+  // managed on the host. Point operators at the new lifecycle commands.
+  await loadStatus(
+    "dashboard offline; start the web-raptix stack from the host",
+    [
+      "The desktop shell no longer spawns the dashboard (W20 cutover).",
+      "Start the web-raptix stack on the host, then retry:",
+      "",
+      "  make webraptix-up",
+      "  # or: docker compose -f docker-compose.web-raptix.yml up -d --wait",
+      "",
+      `Then reopen ${config.dashboardUrl}.`,
       "",
       "Use the buttons below to open the cloud app, copy the installer, or run onboarding.",
-      "Onboarding handles API keys, telemetry consent, auto-update settings, Docker checks, and model/provider setup.",
-    ].join("\n");
-    loadStatus("desktop setup incomplete; bootstrap blocked", detail);
-    return;
-  }
-
-  starting = true;
-  const composeArgs = composeUpArgs(config);
-  const { command, args, options } = dockerComposeSpawn(composeArgs, { env: composeEnv() });
-  const child = spawn(command, args, options);
-  let output = `$ ${command} ${args.join(" ")}\n`;
-  const append = (chunk) => {
-    output = (output + chunk.toString()).slice(-8000);
-  };
-  child.stdout.on("data", append);
-  child.stderr.on("data", append);
-  child.on("error", async (err) => {
-    starting = false;
-    const hint = process.platform === "win32"
-      ? "Is Docker Desktop running and `docker` on PATH?"
-      : process.platform === "darwin"
-        ? "Is Docker Desktop running? Try: open -a Docker"
-        : "Is the Docker daemon running? Try: sudo systemctl start docker";
-    await loadStatus("docker compose launch failed", `${err.message}\n${hint}`);
-  });
-  child.on("close", async (code) => {
-    starting = false;
-    if (code === 0) {
-      await loadStatus("web profile started; waiting for dashboard readiness…", output);
-      if (await waitForDashboardReady()) {
-        await loadDashboard();
-        return;
-      }
-      await loadStatus("web profile started, but dashboard did not become ready", output);
-      return;
-    }
-    await loadStatus(`docker compose exited ${code}`, output);
-  });
+    ].join("\n"),
+  );
 }
 
 function openWebUrl(url) {

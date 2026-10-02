@@ -89,7 +89,6 @@ export function resolveDesktopConfig(env = process.env, host = os, readFile = fs
     envFile,
     versionFile,
     project,
-    webContainer: stackName ? `raptix-${stackName}-web` : "raptix-web",
   };
 
   let dashboardUrl = explicitUrl;
@@ -123,15 +122,6 @@ export function resolveDesktopConfig(env = process.env, host = os, readFile = fs
   };
 }
 
-export function composeProcessEnv(env = process.env, installedVersion = "") {
-  const childEnv = { ...env, COMPOSE_PROFILES: "" };
-  for (const key of ["RAPTIX_STACK_NAME", "RAPTIX_COMPOSE_PROJECT"]) {
-    if (!(key in env)) childEnv[key] = "";
-  }
-  if (installedVersion) childEnv.RAPTIX_VERSION = installedVersion;
-  return childEnv;
-}
-
 export function missingConfigFiles(config, exists = fs.existsSync) {
   return [
     ["Docker Compose file", config.composeFile],
@@ -163,24 +153,6 @@ export function setupGuide(platform = os.platform()) {
     cloudAppUrl: CLOUD_APP_URL,
     marketingUrl: "https://decepticon.red",
   };
-}
-
-export function composeUpArgs(config) {
-  return [
-    "compose",
-    "-p",
-    config.project,
-    "-f",
-    config.composeFile,
-    "--env-file",
-    config.envFile,
-    "--profile",
-    "web",
-    "up",
-    "-d",
-    "--no-build",
-    "web",
-  ];
 }
 
 export function canNavigateInApp(targetUrl, dashboardUrl) {
