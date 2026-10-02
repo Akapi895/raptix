@@ -1,0 +1,37 @@
+{
+  "provenance": "runtime-catalog-read-only",
+  "baseUrl": "http://127.0.0.1:2400",
+  "capturedAt": "2026-10-01T14:28:13.247Z",
+  "apiVersion": "0.10.0",
+  "langgraphPythonVersion": "1.2.4",
+  "flags": {
+    "assistants": true,
+    "crons": true,
+    "langsmith": false,
+    "langsmith_tracing_replicas": true
+  },
+  "registeredGraphs": [
+    "ad_operator",
+    "analyst",
+    "autohunt",
+    "blue_cell",
+    "cloud_hunter",
+    "contract_auditor",
+    "decepticon",
+    "exploit",
+    "forensicator",
+    "ics_operator",
+    "iot_operator",
+    "mobile_operator",
+    "osint_operator",
+    "phisher",
+    "postexploit",
+    "recon",
+    "reverser",
+    "soundwave",
+    "supply_chain_operator",
+    "surface_exploit",
+    "wireless_operator"
+  ],
+  "note": "Only info and assistant discovery were called. No threads, runs or tools were created/executed."
+}

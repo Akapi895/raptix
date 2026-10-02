@@ -1,0 +1,95 @@
+{
+  "provenance": "owned live W06 context-only thread/checkpoint fixture",
+  "thread": {
+    "thread_id": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+    "created_at": "2026-10-02T03:51:56.343543+00:00",
+    "updated_at": "2026-10-02T03:51:56.479247+00:00",
+    "state_updated_at": "2026-10-02T03:51:56.479247+00:00",
+    "metadata": {
+      "engagement_id": "cmuqff7gb0000icfimwgpbyfx",
+      "workspace_slug": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "ui_assistant_id": "soundwave",
+      "graph_id": "soundwave",
+      "ui_flow": "planning",
+      "runtime_context_hash": "1d9d05d61a739c3cb1b82e9619f693756e7bee6dd412fbddcb7e7c3ff051878f",
+      "w06_fixture_token": "3f92027c-eaf6-4043-8bfd-5aa4f055b359"
+    },
+    "status": "interrupted",
+    "config": {},
+    "values": {
+      "messages": [],
+      "engagement_name": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "workspace_path": "/workspace/w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "kg_engagement": "",
+      "language": "",
+      "target_type": "web_url",
+      "target_value": "https://authorized.invalid",
+      "authorization_confirmed": true,
+      "target_url": "",
+      "target_extra_ports": {},
+      "vulnerability_tags": [],
+      "flag_format": "",
+      "mission_brief": "",
+      "files": {},
+      "proxy_api_key": ""
+    },
+    "interrupts": {},
+    "error": null
+  },
+  "state": {
+    "values": {
+      "messages": [],
+      "engagement_name": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "workspace_path": "/workspace/w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+      "kg_engagement": "",
+      "language": "",
+      "target_type": "web_url",
+      "target_value": "https://authorized.invalid",
+      "authorization_confirmed": true,
+      "target_url": "",
+      "target_extra_ports": {},
+      "vulnerability_tags": [],
+      "flag_format": "",
+      "mission_brief": "",
+      "files": {},
+      "proxy_api_key": ""
+    },
+    "next": [
+      "EngagementContextMiddleware.before_agent"
+    ],
+    "tasks": [
+      {
+        "id": "dcc1c4fa-407a-bb68-e351-3054f8724081",
+        "name": "EngagementContextMiddleware.before_agent",
+        "path": [
+          "__pregel_pull",
+          "EngagementContextMiddleware.before_agent"
+        ],
+        "error": null,
+        "interrupts": [],
+        "checkpoint": null,
+        "state": null,
+        "result": null
+      }
+    ],
+    "metadata": {
+      "graph_id": "soundwave",
+      "ls_integration": "langchain_create_agent",
+      "lc_agent_name": "soundwave",
+      "thread_id": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+      "source": "update",
+      "step": 0,
+      "parents": {}
+    },
+    "created_at": "2026-10-02T03:51:56.456289+00:00",
+    "checkpoint": {
+      "checkpoint_id": "1f1be149-ccdf-66f8-8000-d7a87bd22ad9",
+      "thread_id": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+      "checkpoint_ns": ""
+    },
+    "parent_checkpoint": null,
+    "interrupts": [],
+    "checkpoint_id": "1f1be149-ccdf-66f8-8000-d7a87bd22ad9",
+    "parent_checkpoint_id": null
+  }
+}
