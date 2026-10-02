@@ -25,3 +25,5 @@ export { extractText, stripResultTags } from "./utils.js";
 // Session derivation
 export type { SubAgentSession } from "./sessions.js";
 export { deriveSubAgentSessions } from "./sessions.js";
+export { SseDecoder, SseFrameError, decodeSse } from './sse.js';
+export type { SseFrame } from './sse.js';

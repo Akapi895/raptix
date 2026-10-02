@@ -1,0 +1,29 @@
+{
+  "keys": [
+    "messages",
+    "engagement_name",
+    "workspace_path",
+    "kg_engagement",
+    "language",
+    "target_type",
+    "target_value",
+    "authorization_confirmed",
+    "target_url",
+    "target_extra_ports",
+    "vulnerability_tags",
+    "flag_format",
+    "mission_brief",
+    "files",
+    "proxy_api_key"
+  ],
+  "core": {
+    "engagement_name": "w07-live-dc44ce6a-a960-4ce7-894f-478e83a8b9c9",
+    "workspace_path": "/workspace/w07-live-dc44ce6a-a960-4ce7-894f-478e83a8b9c9",
+    "target_type": "web_url",
+    "target_value": "https://authorized.invalid",
+    "authorization_confirmed": true
+  },
+  "messageCount": 0,
+  "checkpointPresent": true,
+  "graphId": "soundwave"
+}

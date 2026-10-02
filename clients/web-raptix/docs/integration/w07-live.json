@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "projectId": "cmuqffin6000018fiupr7roj2",
+  "threadId": "fd836715-b1d7-4b59-8b7d-7d1ada9c4147",
+  "runId": "01a0fabd-86c2-7392-b47a-ba205dc71ab5",
+  "finalStatus": "success",
+  "checks": [
+    "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
+    "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
+    "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
+    "real API process restart preserves request/run deduplication; capability is live and resume remains gated"
+  ],
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged",
+  "ownedRuntimeFixtureRemoved": true
+}

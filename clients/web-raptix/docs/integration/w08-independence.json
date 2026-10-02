@@ -1,0 +1,39 @@
+{
+  "target": "C:\\Users\\tuanp\\AppData\\Local\\Temp\\opencode\\raptix-w08-independent-1790919466035",
+  "legacyOmitted": true,
+  "ok": true,
+  "results": [
+    {
+      "command": "npm ci --no-audit --no-fund --prefer-offline",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build --workspace=@raptix/streaming",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build --workspace=@raptix/web-contracts",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run prisma:generate --workspace=@raptix/web-raptix-server",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run typecheck --workspace=@raptix/web-raptix-server",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run test --workspace=@raptix/web-raptix-server",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build --workspace=@raptix/web-raptix-server",
+      "exitCode": 0
+    },
+    {
+      "command": "npm run build --workspace=@raptix/web-raptix",
+      "exitCode": 0
+    }
+  ]
+}

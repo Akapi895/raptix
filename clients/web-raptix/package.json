@@ -19,6 +19,7 @@
     "test:e2e:real": "playwright test --config playwright.real.config.ts"
   },
   "dependencies": {
+    "@raptix/streaming": "*",
     "@raptix/web-contracts": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

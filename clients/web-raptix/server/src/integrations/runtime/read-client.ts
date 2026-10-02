@@ -3,19 +3,23 @@ import { ProjectApiError } from '../../services/projects-service.js';
 export class RuntimeUnavailableError extends ProjectApiError {
   public constructor() { super(503, 'Runtime discovery or context verification is unavailable'); }
 }
+export class RuntimeRejectedError extends ProjectApiError {
+  public constructor(statusCode: number) { super(statusCode, 'Runtime rejected the requested operation'); }
+}
 export interface RuntimeReadPort {
   catalog(): Promise<readonly string[]>;
-  thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown> }>;
+  thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }>;
   state(id: string): Promise<{ values: Record<string, unknown>; graphId: string | null }>;
 }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export class RuntimeReadClient implements RuntimeReadPort {
-  public constructor(private readonly apiUrl: string, private readonly timeoutMs = 5000) {}
-  private async read(endpoint: string, body?: unknown): Promise<unknown> {
+  public constructor(private readonly apiUrl: string, private readonly timeoutMs = 5000, private readonly mutationTimeoutMs = 15000) {}
+  protected async read(endpoint: string, body?: unknown, mutation = false): Promise<unknown> {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    const timer = setTimeout(() => controller.abort(), mutation ? this.mutationTimeoutMs : this.timeoutMs);
     try {
       const response = await fetch(`${this.apiUrl}${endpoint}`, { method: body === undefined ? 'GET' : 'POST', ...(body === undefined ? {} : { body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }), signal: controller.signal, redirect: 'error' });
+      if (mutation && [400, 404, 409, 422].includes(response.status)) throw new RuntimeRejectedError(response.status === 422 ? 400 : response.status);
       if (!response.ok || !response.body) throw new RuntimeUnavailableError();
       const reader = response.body.getReader();
       const chunks: Uint8Array[] = []; let size = 0;
@@ -29,7 +33,7 @@ export class RuntimeReadClient implements RuntimeReadPort {
         }
       } finally { await reader.cancel(); }
       return JSON.parse(Buffer.concat(chunks).toString('utf8'));
-    } catch { throw new RuntimeUnavailableError(); }
+    } catch (error) { if (error instanceof RuntimeRejectedError) throw error; throw new RuntimeUnavailableError(); }
     finally { clearTimeout(timer); }
   }
   public async catalog(): Promise<readonly string[]> {
@@ -44,10 +48,10 @@ export class RuntimeReadClient implements RuntimeReadPort {
     }
     throw new RuntimeUnavailableError();
   }
-  public async thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown> }> {
+  public async thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }> {
     const value = await this.read(`/threads/${encodeURIComponent(id)}`);
     if (!record(value) || value.thread_id !== id || !record(value.metadata)) throw new RuntimeUnavailableError();
-    return { thread_id: id, metadata: value.metadata };
+    return { thread_id: id, metadata: value.metadata, ...(typeof value.status === 'string' && value.status.length <= 64 ? { status: value.status } : {}) };
   }
   public async state(id: string): Promise<{ values: Record<string, unknown>; graphId: string | null }> {
     const value = await this.read(`/threads/${encodeURIComponent(id)}/state`);

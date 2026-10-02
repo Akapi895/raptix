@@ -99,9 +99,70 @@ export class RuntimeOwnershipService {
         if (existing.payloadHash !== payloadHash || existing.operation !== operation || existing.threadId !== threadId && operation !== 'create_thread') throw conflict();
         return { reserved: false, request: recoveryView(existing) };
       }
+      if (bound && await tx.webRequestLedger.count({ where: { engagementId, activeThreadId: { not: null }, thread: { kind: bound.kind === 'planning' ? 'execution' : 'planning' } } })) throw conflict();
       const row = await tx.webRequestLedger.create({ data: { engagementId, requestId, operation, payloadHash, threadId, activeThreadId: threadId, reservationToken: randomUUID() } });
       return { reserved: true, token: row.reservationToken, request: recoveryView(row) };
     });
+  }
+
+  public async replay(userId: string, engagementId: string, requestId: string, operation: RequestOperation, payload: unknown, threadId: string | null = null): Promise<RequestRecoveryView | null> {
+    identifier(requestId, true);
+    return this.transaction(async tx => {
+      const project = await this.owned(tx, userId, engagementId);
+      const bound = threadId === null ? null : await this.binding(tx, project, threadId);
+      const row = await tx.webRequestLedger.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
+      if (!row) return null;
+      const hash = requestFingerprint({ operation, threadId, payload, contextHash: bound?.contextHash ?? contextHash(project, '', 'planning') });
+      if (row.operation !== operation || row.payloadHash !== hash) throw conflict();
+      return recoveryView(row);
+    });
+  }
+
+  public async recordDispatch(userId: string, engagementId: string, requestId: string, token: string, proof: { assistantId: string; kind: ThreadKind; runtimeConfigHash: string }, candidateThreadId: string | null = null): Promise<void> {
+    await this.transaction(async tx => {
+      await this.owned(tx, userId, engagementId);
+      const changed = await tx.webRequestLedger.updateMany({ where: { engagementId, requestId, reservationToken: token, state: 'creating', dispatchConfigHash: null }, data: { candidateThreadId, dispatchAssistantId: proof.assistantId, dispatchKind: proof.kind, dispatchConfigHash: proof.runtimeConfigHash } });
+      if (!changed.count) throw conflict();
+    });
+  }
+
+  public async inspect(userId: string, engagementId: string, requestId: string): Promise<WebRequestLedger> {
+    identifier(requestId, true);
+    return this.transaction(async tx => {
+      await this.owned(tx, userId, engagementId);
+      const row = await tx.webRequestLedger.findUnique({ where: { engagementId_requestId: { engagementId, requestId } } });
+      if (!row) throw new ProjectNotFoundError();
+      return row;
+    });
+  }
+
+  public async runOwner(userId: string, engagementId: string, threadId: string, runId: string): Promise<WebRequestLedger> {
+    identifier(runId);
+    return this.transaction(async tx => {
+      await this.binding(tx, await this.owned(tx, userId, engagementId), threadId);
+      const row = await tx.webRequestLedger.findFirst({ where: { engagementId, threadId, runId, state: 'accepted' } });
+      if (!row) throw new ProjectNotFoundError();
+      return row;
+    });
+  }
+
+  public async runs(userId: string, engagementId: string, threadId: string, offset: number, limit: number): Promise<WebRequestLedger[]> {
+    return this.transaction(async tx => {
+      await this.binding(tx, await this.owned(tx, userId, engagementId), threadId);
+      return tx.webRequestLedger.findMany({ where: { engagementId, threadId, state: 'accepted', runId: { not: null } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], skip: offset, take: limit });
+    });
+  }
+
+  public async active(userId: string, engagementId: string, threadId: string): Promise<WebRequestLedger | null> {
+    return this.transaction(async tx => {
+      await this.binding(tx, await this.owned(tx, userId, engagementId), threadId);
+      return tx.webRequestLedger.findFirst({ where: { engagementId, activeThreadId: threadId } });
+    });
+  }
+
+  public async staleDispatches(cutoff = new Date(Date.now() - 120_000)): Promise<{ userId: string; engagementId: string; requestId: string }[]> {
+    const rows = await this.db.webRequestLedger.findMany({ where: { state: 'uncertain', dispatchConfigHash: { not: null }, updatedAt: { lt: cutoff } }, include: { engagement: { select: { userId: true } } }, orderBy: { updatedAt: 'asc' }, take: 10 });
+    return rows.map(row => ({ userId: row.engagement.userId, engagementId: row.engagementId, requestId: row.requestId }));
   }
 
   public async recover(userId: string, engagementId: string, requestId: string): Promise<RequestRecoveryView> {
