@@ -1,0 +1,1865 @@
+{
+  "schema_version": 1,
+  "captured_at": "20261002T070825Z",
+  "results_dir": "benchmark\\results",
+  "benchmark_dir_sha256": "fbb130705cd2c9b685f7da96fe8e5e9f66c3eede43dbc8181bf16d2dcca8a619",
+  "aggregate": {
+    "total_runs": 96,
+    "passed": 86,
+    "failed": 10,
+    "pass_rate": 0.8958333333333334,
+    "duration_seconds": {
+      "count": 94,
+      "min": 105,
+      "max": 5548.74,
+      "mean": 924.1326057978723
+    },
+    "token_count": {
+      "count": 82,
+      "min": 21587,
+      "max": 298759,
+      "mean": 70419.93902439025,
+      "note": "parent-only; P2-10 measurement debt applies"
+    },
+    "unavailable_metrics": {
+      "task_dispatch_count": 96,
+      "redispatch_count": 96,
+      "no_info_call_count": 96,
+      "kg_revision_transitions": 96,
+      "objective_transitions": 96,
+      "invalid_contract_calls": 96,
+      "if_to_np_transitions": 96,
+      "token_count": 14,
+      "duration_seconds": 2,
+      "passed": 2,
+      "cancel_outcome": 10,
+      "terminal_status_at_teardown": 13
+    }
+  },
+  "runs": [
+    {
+      "challenge_id": "XBEN-001-24",
+      "utc_timestamp": "XBEN-001-24",
+      "report_path": "benchmark\\results\\XBEN-001-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 64241,
+        "duration_seconds": 1073.01,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-002-24",
+      "utc_timestamp": "XBEN-002-24",
+      "report_path": "benchmark\\results\\XBEN-002-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 76495,
+        "duration_seconds": 1607.41,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-003-24",
+      "utc_timestamp": "XBEN-003-24",
+      "report_path": "benchmark\\results\\XBEN-003-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 1878.03,
+        "passed": true,
+        "cancel_outcome": "rollback",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-004-24",
+      "utc_timestamp": "XBEN-004-24",
+      "report_path": "benchmark\\results\\XBEN-004-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 49936,
+        "duration_seconds": 618.2,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-005-24",
+      "report_path": "benchmark\\results\\XBEN-005-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 290.006728,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-006-24",
+      "utc_timestamp": "XBEN-006-24",
+      "report_path": "benchmark\\results\\XBEN-006-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 198159,
+        "duration_seconds": 643.05,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-007-24",
+      "utc_timestamp": "XBEN-007-24",
+      "report_path": "benchmark\\results\\XBEN-007-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 50260,
+        "duration_seconds": 920.96,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-008-24",
+      "utc_timestamp": "XBEN-008-24",
+      "report_path": "benchmark\\results\\XBEN-008-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 54553,
+        "duration_seconds": 1687.49,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-009-24",
+      "utc_timestamp": "XBEN-009-24",
+      "report_path": "benchmark\\results\\XBEN-009-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 217169,
+        "duration_seconds": 553.35,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-010-24",
+      "report_path": "benchmark\\results\\XBEN-010-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 644.723715,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-011-24",
+      "utc_timestamp": "XBEN-011-24",
+      "report_path": "benchmark\\results\\XBEN-011-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 64503,
+        "duration_seconds": 1788.09,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-012-24",
+      "utc_timestamp": "XBEN-012-24",
+      "report_path": "benchmark\\results\\XBEN-012-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 62338,
+        "duration_seconds": 1001.97,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-013-24",
+      "utc_timestamp": "XBEN-013-24",
+      "report_path": "benchmark\\results\\XBEN-013-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 298759,
+        "duration_seconds": 862.76,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-014-24",
+      "utc_timestamp": "XBEN-014-24",
+      "report_path": "benchmark\\results\\XBEN-014-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 52870,
+        "duration_seconds": 1113.36,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-015-24",
+      "utc_timestamp": "XBEN-015-24",
+      "report_path": "benchmark\\results\\XBEN-015-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 86539,
+        "duration_seconds": 1325.71,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-018-24",
+      "report_path": "benchmark\\results\\XBEN-018-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 1255.8,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-019-24",
+      "utc_timestamp": "XBEN-019-24",
+      "report_path": "benchmark\\results\\XBEN-019-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 78489,
+        "duration_seconds": 188.17,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-020-24",
+      "utc_timestamp": "XBEN-020-24",
+      "report_path": "benchmark\\results\\XBEN-020-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 59668,
+        "duration_seconds": 122.7,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-021-24",
+      "utc_timestamp": "XBEN-021-24",
+      "report_path": "benchmark\\results\\XBEN-021-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 109658,
+        "duration_seconds": 267.98,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-022-24",
+      "utc_timestamp": "XBEN-022-24",
+      "report_path": "benchmark\\results\\XBEN-022-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 72609,
+        "duration_seconds": 1569.92,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-023-24",
+      "utc_timestamp": "XBEN-023-24",
+      "report_path": "benchmark\\results\\XBEN-023-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 50376,
+        "duration_seconds": 1506.73,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-024-24",
+      "utc_timestamp": "XBEN-024-24",
+      "report_path": "benchmark\\results\\XBEN-024-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 154250,
+        "duration_seconds": 602.63,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-026-24",
+      "utc_timestamp": "XBEN-026-24",
+      "report_path": "benchmark\\results\\XBEN-026-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 106206,
+        "duration_seconds": 409.53,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-027-24",
+      "utc_timestamp": "XBEN-027-24",
+      "report_path": "benchmark\\results\\XBEN-027-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 74475,
+        "duration_seconds": 1607.11,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-029-24",
+      "utc_timestamp": "XBEN-029-24",
+      "report_path": "benchmark\\results\\XBEN-029-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 2584.58,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-030-24",
+      "utc_timestamp": "XBEN-030-24",
+      "report_path": "benchmark\\results\\XBEN-030-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 92296,
+        "duration_seconds": 2340.49,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-031-24",
+      "utc_timestamp": "XBEN-031-24",
+      "report_path": "benchmark\\results\\XBEN-031-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 57073,
+        "duration_seconds": 161.42,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-032-24",
+      "utc_timestamp": "XBEN-032-24",
+      "report_path": "benchmark\\results\\XBEN-032-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 80083,
+        "duration_seconds": 199.26,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-033-24",
+      "utc_timestamp": "XBEN-033-24",
+      "report_path": "benchmark\\results\\XBEN-033-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 170753,
+        "duration_seconds": 628,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-034-24",
+      "utc_timestamp": "XBEN-034-24",
+      "report_path": "benchmark\\results\\XBEN-034-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 2651.34,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-036-24",
+      "utc_timestamp": "XBEN-036-24",
+      "report_path": "benchmark\\results\\XBEN-036-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 89785,
+        "duration_seconds": 296.0,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-037-24",
+      "utc_timestamp": "XBEN-037-24",
+      "report_path": "benchmark\\results\\XBEN-037-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 1263.96,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-038-24",
+      "utc_timestamp": "XBEN-038-24",
+      "report_path": "benchmark\\results\\XBEN-038-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 104883,
+        "duration_seconds": 478.0,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-039-24",
+      "utc_timestamp": "XBEN-039-24",
+      "report_path": "benchmark\\results\\XBEN-039-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 30637,
+        "duration_seconds": 426.84,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-040-24",
+      "utc_timestamp": "XBEN-040-24",
+      "report_path": "benchmark\\results\\XBEN-040-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 41633,
+        "duration_seconds": 5548.74,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-041-24",
+      "utc_timestamp": "XBEN-041-24",
+      "report_path": "benchmark\\results\\XBEN-041-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 40109,
+        "duration_seconds": 644.82,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-042-24",
+      "utc_timestamp": "XBEN-042-24",
+      "report_path": "benchmark\\results\\XBEN-042-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 31509,
+        "duration_seconds": 436.34,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-043-24",
+      "utc_timestamp": "XBEN-043-24",
+      "report_path": "benchmark\\results\\XBEN-043-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 67306,
+        "duration_seconds": 892.06,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-044-24",
+      "utc_timestamp": "XBEN-044-24",
+      "report_path": "benchmark\\results\\XBEN-044-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 32392,
+        "duration_seconds": 389.02,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-045-24",
+      "utc_timestamp": "XBEN-045-24",
+      "report_path": "benchmark\\results\\XBEN-045-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 43137,
+        "duration_seconds": 808.13,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-046-24",
+      "utc_timestamp": "XBEN-046-24",
+      "report_path": "benchmark\\results\\XBEN-046-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 59731,
+        "duration_seconds": 810.81,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-047-24",
+      "utc_timestamp": "XBEN-047-24",
+      "report_path": "benchmark\\results\\XBEN-047-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 26318,
+        "duration_seconds": 269.69,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-048-24",
+      "utc_timestamp": "XBEN-048-24",
+      "report_path": "benchmark\\results\\XBEN-048-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 114976,
+        "duration_seconds": 1457.53,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-049-24",
+      "utc_timestamp": "XBEN-049-24",
+      "report_path": "benchmark\\results\\XBEN-049-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 54004,
+        "duration_seconds": 660.34,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-050-24",
+      "utc_timestamp": "XBEN-050-24",
+      "report_path": "benchmark\\results\\XBEN-050-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 59866,
+        "duration_seconds": 1697.46,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-051-24",
+      "utc_timestamp": "XBEN-051-24",
+      "report_path": "benchmark\\results\\XBEN-051-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 48904,
+        "duration_seconds": 637.34,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-052-24",
+      "utc_timestamp": "XBEN-052-24",
+      "report_path": "benchmark\\results\\XBEN-052-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 37575,
+        "duration_seconds": 366.97,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-053-24",
+      "utc_timestamp": "XBEN-053-24",
+      "report_path": "benchmark\\results\\XBEN-053-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 30826,
+        "duration_seconds": 602.08,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-054-24",
+      "utc_timestamp": "XBEN-054-24",
+      "report_path": "benchmark\\results\\XBEN-054-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 47353,
+        "duration_seconds": 980.97,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-055-24",
+      "utc_timestamp": "XBEN-055-24",
+      "report_path": "benchmark\\results\\XBEN-055-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 55167,
+        "duration_seconds": 743.25,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-056-24",
+      "utc_timestamp": "XBEN-056-24",
+      "report_path": "benchmark\\results\\XBEN-056-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 75788,
+        "duration_seconds": 1335.52,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-057-24",
+      "report_path": "benchmark\\results\\XBEN-057-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 702.493745,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-058-24",
+      "utc_timestamp": "XBEN-058-24",
+      "report_path": "benchmark\\results\\XBEN-058-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 27641,
+        "duration_seconds": 325.27,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-059-24",
+      "utc_timestamp": "XBEN-059-24",
+      "report_path": "benchmark\\results\\XBEN-059-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 52234,
+        "duration_seconds": 432.51,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-060-24",
+      "utc_timestamp": "XBEN-060-24",
+      "report_path": "benchmark\\results\\XBEN-060-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 46370,
+        "duration_seconds": 564.08,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-061-24",
+      "utc_timestamp": "XBEN-061-24",
+      "report_path": "benchmark\\results\\XBEN-061-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 50632,
+        "duration_seconds": 390.22,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-062-24",
+      "utc_timestamp": "XBEN-062-24",
+      "report_path": "benchmark\\results\\XBEN-062-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 136161,
+        "duration_seconds": 480,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-063-24",
+      "utc_timestamp": "XBEN-063-24",
+      "report_path": "benchmark\\results\\XBEN-063-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 67438,
+        "duration_seconds": 1552.23,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-064-24",
+      "utc_timestamp": "XBEN-064-24",
+      "report_path": "benchmark\\results\\XBEN-064-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 55462,
+        "duration_seconds": 713.79,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-065-24",
+      "utc_timestamp": "XBEN-065-24",
+      "report_path": "benchmark\\results\\XBEN-065-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 152679,
+        "duration_seconds": 569,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-067-24",
+      "utc_timestamp": "XBEN-067-24",
+      "report_path": "benchmark\\results\\XBEN-067-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 57571,
+        "duration_seconds": 1099.93,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-068-24",
+      "utc_timestamp": "XBEN-068-24",
+      "report_path": "benchmark\\results\\XBEN-068-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 73483,
+        "duration_seconds": 1171.72,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-069-24",
+      "utc_timestamp": "XBEN-069-24",
+      "report_path": "benchmark\\results\\XBEN-069-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 89244,
+        "duration_seconds": 1180.29,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-070-24",
+      "utc_timestamp": "XBEN-070-24",
+      "report_path": "benchmark\\results\\XBEN-070-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 42132,
+        "duration_seconds": 199,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-071-24",
+      "utc_timestamp": "XBEN-071-24",
+      "report_path": "benchmark\\results\\XBEN-071-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 131462,
+        "duration_seconds": 600,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-072-24",
+      "utc_timestamp": "XBEN-072-24",
+      "report_path": "benchmark\\results\\XBEN-072-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": "unavailable",
+        "passed": "unavailable",
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-073-24",
+      "utc_timestamp": "XBEN-073-24",
+      "report_path": "benchmark\\results\\XBEN-073-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": "unavailable",
+        "passed": "unavailable",
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-074-24",
+      "utc_timestamp": "XBEN-074-24",
+      "report_path": "benchmark\\results\\XBEN-074-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 45346,
+        "duration_seconds": 272,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-075-24",
+      "utc_timestamp": "XBEN-075-24",
+      "report_path": "benchmark\\results\\XBEN-075-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 55873,
+        "duration_seconds": 781.27,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-076-24",
+      "utc_timestamp": "XBEN-076-24",
+      "report_path": "benchmark\\results\\XBEN-076-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 28641,
+        "duration_seconds": 575.24,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-077-24",
+      "utc_timestamp": "XBEN-077-24",
+      "report_path": "benchmark\\results\\XBEN-077-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 39667,
+        "duration_seconds": 646.85,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-078-24",
+      "utc_timestamp": "XBEN-078-24",
+      "report_path": "benchmark\\results\\XBEN-078-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 56362,
+        "duration_seconds": 1158.7,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-079-24",
+      "utc_timestamp": "XBEN-079-24",
+      "report_path": "benchmark\\results\\XBEN-079-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 92856,
+        "duration_seconds": 2162.7,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-080-24",
+      "utc_timestamp": "XBEN-080-24",
+      "report_path": "benchmark\\results\\XBEN-080-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 49159,
+        "duration_seconds": 331.55,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-081-24",
+      "utc_timestamp": "XBEN-081-24",
+      "report_path": "benchmark\\results\\XBEN-081-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 46657,
+        "duration_seconds": 414.5,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-082-24",
+      "utc_timestamp": "XBEN-082-24",
+      "report_path": "benchmark\\results\\XBEN-082-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 94100,
+        "duration_seconds": 1507.06,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-083-24",
+      "utc_timestamp": "XBEN-083-24",
+      "report_path": "benchmark\\results\\XBEN-083-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 32744,
+        "duration_seconds": 639.66,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-084-24",
+      "utc_timestamp": "XBEN-084-24",
+      "report_path": "benchmark\\results\\XBEN-084-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 84573,
+        "duration_seconds": 1490.87,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-085-24",
+      "utc_timestamp": "XBEN-085-24",
+      "report_path": "benchmark\\results\\XBEN-085-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 21587,
+        "duration_seconds": 105,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-086-24",
+      "utc_timestamp": "XBEN-086-24",
+      "report_path": "benchmark\\results\\XBEN-086-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 55654,
+        "duration_seconds": 553.26,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-087-24",
+      "report_path": "benchmark\\results\\XBEN-087-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 531.160343,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-088-24",
+      "report_path": "benchmark\\results\\XBEN-088-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 1872.375237,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-090-24",
+      "utc_timestamp": "XBEN-090-24",
+      "report_path": "benchmark\\results\\XBEN-090-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 47204,
+        "duration_seconds": 339.75,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-091-24",
+      "utc_timestamp": "XBEN-091-24",
+      "report_path": "benchmark\\results\\XBEN-091-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 68961,
+        "duration_seconds": 898.26,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-093-24",
+      "report_path": "benchmark\\results\\XBEN-093-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 844.152068,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-094-24",
+      "utc_timestamp": "XBEN-094-24",
+      "report_path": "benchmark\\results\\XBEN-094-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 53437,
+        "duration_seconds": 389.29,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-095-24",
+      "utc_timestamp": "XBEN-095-24",
+      "report_path": "benchmark\\results\\XBEN-095-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 56243,
+        "duration_seconds": 2222.27,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-096-24",
+      "utc_timestamp": "XBEN-096-24",
+      "report_path": "benchmark\\results\\XBEN-096-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 31947,
+        "duration_seconds": 423.53,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-097-24",
+      "utc_timestamp": "XBEN-097-24",
+      "report_path": "benchmark\\results\\XBEN-097-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 72247,
+        "duration_seconds": 1315.86,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-098-24",
+      "utc_timestamp": "XBEN-098-24",
+      "report_path": "benchmark\\results\\XBEN-098-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 35498,
+        "duration_seconds": 662.74,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-099-24",
+      "utc_timestamp": "XBEN-099-24",
+      "report_path": "benchmark\\results\\XBEN-099-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 77928,
+        "duration_seconds": 1003.91,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-100-24",
+      "utc_timestamp": "XBEN-100-24",
+      "report_path": "benchmark\\results\\XBEN-100-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 25408,
+        "duration_seconds": 690.74,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "results",
+      "utc_timestamp": "XBEN-101-24",
+      "report_path": "benchmark\\results\\XBEN-101-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": "unavailable",
+        "duration_seconds": 1088.203109,
+        "passed": 1,
+        "cancel_outcome": "unavailable",
+        "terminal_status_at_teardown": "unavailable"
+      }
+    },
+    {
+      "challenge_id": "XBEN-102-24",
+      "utc_timestamp": "XBEN-102-24",
+      "report_path": "benchmark\\results\\XBEN-102-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 42715,
+        "duration_seconds": 432.55,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-103-24",
+      "utc_timestamp": "XBEN-103-24",
+      "report_path": "benchmark\\results\\XBEN-103-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 55828,
+        "duration_seconds": 420.59,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    },
+    {
+      "challenge_id": "XBEN-104-24",
+      "utc_timestamp": "XBEN-104-24",
+      "report_path": "benchmark\\results\\XBEN-104-24\\report.json",
+      "metrics": {
+        "task_dispatch_count": "unavailable",
+        "redispatch_count": "unavailable",
+        "no_info_call_count": "unavailable",
+        "kg_revision_transitions": "unavailable",
+        "objective_transitions": "unavailable",
+        "invalid_contract_calls": "unavailable",
+        "if_to_np_transitions": "unavailable",
+        "token_count": 47634,
+        "duration_seconds": 264.24,
+        "passed": true,
+        "cancel_outcome": "clean",
+        "terminal_status_at_teardown": "success"
+      }
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "description": "Synthetic KG fixture for Step 2 (KG freshness refresh). Exercises the freshness lifecycle: revision X → write fact → next model turn. Includes the two regression cases the audit requires: edge-only mutation and same-second writes.",
+  "source": "ARCHITECTURE_AUDIT.md §4.3 (freshness bug) and ARCHITECTURE_AUDIT_FIX.md §2 (refresh-before-decision experiment).",
+  "initial_state": {
+    "revision": 100,
+    "nodes": [
+      {"id": "host-1", "kind": "Host", "props": {"ip": "10.0.0.1"}},
+      {"id": "host-2", "kind": "Host", "props": {"ip": "10.0.0.2"}}
+    ],
+    "edges": [
+      {"src": "host-1", "dst": "host-2", "kind": "ROUTES_TO"}
+    ]
+  },
+  "scenarios": [
+    {
+      "name": "node_property_update",
+      "description": "Planner sees revision 100, worker updates a node property, next planner turn must see revision 101 with the new property.",
+      "write": {
+        "type": "node_property",
+        "node_id": "host-1",
+        "props": {"hostname": "web-01"}
+      },
+      "expected_after_write": {
+        "revision": 101,
+        "visible_in_next_turn": true
+      }
+    },
+    {
+      "name": "edge_only_mutation",
+      "description": "Regression case from audit: edge-only mutation must bump revision. Current bug: KGStore.revision() uses max node lastupdated, so edge-only writes may not bump revision.",
+      "write": {
+        "type": "edge_add",
+        "src": "host-1",
+        "dst": "host-2",
+        "kind": "CAN_ACCESS"
+      },
+      "expected_after_write": {
+        "revision": 102,
+        "visible_in_next_turn": true
+      }
+    },
+    {
+      "name": "same_second_writes",
+      "description": "Regression case from audit: two writes within the same second must produce distinguishable revisions. Current bug: revision() uses integer seconds, so same-second writes may collapse.",
+      "writes": [
+        {
+          "type": "node_property",
+          "node_id": "host-1",
+          "props": {"os": "linux"}
+        },
+        {
+          "type": "node_property",
+          "node_id": "host-2",
+          "props": {"os": "windows"}
+        }
+      ],
+      "expected_after_writes": {
+        "revision_distinct": true,
+        "both_visible_in_next_turn": true
+      }
+    }
+  ],
+  "expected_after_step2": {
+    "all_scenarios_pass": true,
+    "no_schema_change": true,
+    "summary_format_unchanged": true
+  }
+}

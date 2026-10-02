@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "description": "Recorded failed task() dispatch fixture for Step 1 (typed failure/terminal outcome). Models the audit's A1 evidence: a dispatch that ended in recursion error or [TERMINAL] and was subsequently redispatched. Step 1 must prevent the redispatch while preserving partial artifacts.",
+  "source": "Synthesized from ARCHITECTURE_AUDIT.md §1 (A1: 6 recursion errors, 4 [TERMINAL], 204 repeated ls calls) and ARCHITECTURE_AUDIT_FIX.md §1 (terminal_for_this_dispatch semantics).",
+  "dispatch": {
+    "dispatch_id": "fixture-failed-task-001",
+    "objective_id": "OBJ-001",
+    "subagent_type": "exploit",
+    "description": "Exploit CVE-2024-XXXX on target /api/v1/users/{id}",
+    "started_at": "2026-10-02T12:00:00Z",
+    "model_turns": [
+      {
+        "turn": 1,
+        "tool_call": {"name": "bash", "args": "ls /workspace/t2-A1/recon"},
+        "result": "find: /workspace/t2-A1/recon: No such file or directory",
+        "tokens": 125000
+      },
+      {
+        "turn": 2,
+        "tool_call": {"name": "bash", "args": "ls /workspace/t2-A1/recon"},
+        "result": "find: /workspace/t2-A1/recon: No such file or directory",
+        "tokens": 125000
+      },
+      {
+        "turn": 3,
+        "tool_call": {"name": "bash", "args": "ls /workspace/t2-A1/recon"},
+        "result": "find: /workspace/t2-A1/recon: No such file or directory",
+        "tokens": 125000
+      }
+    ],
+    "outcome": {
+      "status": "failed",
+      "failure_kind": "execution",
+      "terminal_for_this_dispatch": true,
+      "error": "RecursionError: maximum recursion depth exceeded",
+      "partial_state_refs": [
+        "/workspace/t2-A1/recon/.scratch/note.md"
+      ]
+    },
+    "post_dispatch": {
+      "redispatched": true,
+      "redispatch_count": 3,
+      "same_objective_retried": true
+    }
+  },
+  "expected_after_step1": {
+    "redispatch_count": 0,
+    "same_objective_retried": false,
+    "partial_state_refs_preserved": true,
+    "other_objectives_unaffected": true
+  }
+}
