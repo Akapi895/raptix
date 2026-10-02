@@ -17,6 +17,9 @@ import { registerFindingsRoutes } from './http/routes/findings.routes.js';
 import { registerGraphRoutes } from './http/routes/graph.routes.js';
 import { registerTimelineRoutes } from './http/routes/timeline.routes.js';
 import { registerSettingsRoutes } from './http/routes/settings.routes.js';
+import { registerCampaignRoutes } from './http/routes/campaign.routes.js';
+import { registerVaultRoutes } from './http/routes/vault.routes.js';
+import { registerMembersRoutes } from './http/routes/members.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
@@ -26,6 +29,10 @@ import type { GraphService } from './services/graph-service.js';
 import type { TimelineService } from './services/timeline-service.js';
 import type { ExportService } from './services/export-service.js';
 import type { SettingsService } from './services/settings-service.js';
+import type { CampaignService } from './services/campaign-service.js';
+import type { C2Service } from './services/c2-service.js';
+import type { VaultService } from './services/vault-service.js';
+import type { MembersService } from './services/members-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -47,6 +54,12 @@ export interface AppOptions {
   readonly timelineService?: TimelineService;
   readonly exportService?: ExportService;
   readonly settingsService?: SettingsService;
+  readonly campaignsService?: CampaignService;
+  readonly c2Service?: C2Service;
+  readonly vaultService?: VaultService;
+  readonly membersService?: MembersService;
+  /** Whether VAULT_ENCRYPTION_KEY decoded to a usable 32-byte key. */
+  readonly vaultKeyConfigured?: boolean;
   /** Local single-user identity; defaults to getLocalIdentity(). */
   readonly identity?: LocalIdentity;
   /**
@@ -74,6 +87,11 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     graphsSupported: options.graphService !== undefined,
     timelineSupported: options.timelineService !== undefined,
     reportsSupported: options.exportService !== undefined,
+    campaignsSupported: options.campaignsService !== undefined,
+    c2Supported: options.c2Service !== undefined,
+    vaultSupported: options.vaultService !== undefined,
+    vaultKeyConfigured: options.vaultService !== undefined && options.vaultKeyConfigured === true,
+    membersSupported: options.membersService !== undefined,
   });
 
   if (options.projectsService !== undefined) {
@@ -93,6 +111,9 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.graphService) registerGraphRoutes(app, options.graphService, options.identity ?? getLocalIdentity());
   if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, options.identity ?? getLocalIdentity());
   if (options.settingsService) registerSettingsRoutes(app, options.settingsService, options.identity ?? getLocalIdentity());
+  if (options.campaignsService && options.c2Service) registerCampaignRoutes(app, options.campaignsService, options.c2Service, options.identity ?? getLocalIdentity());
+  if (options.vaultService) registerVaultRoutes(app, options.vaultService, options.identity ?? getLocalIdentity());
+  if (options.membersService) registerMembersRoutes(app, options.membersService, options.identity ?? getLocalIdentity());
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

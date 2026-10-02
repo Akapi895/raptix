@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqqtezm0000s4fidp8qrifb",
-  "threadId": "61d59475-d604-44b0-9dbe-8923690dc2e5",
-  "runId": "01a0fbe1-55fc-7d42-af02-2782fbb6afd4",
+  "projectId": "cmuqsyywq0000y4fit6ksbzeq",
+  "threadId": "3b00aa83-a910-4241-be0a-735b68f15f42",
+  "runId": "01a0fc18-8f6c-7703-ac6b-5c3a3b5c2cb8",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -17,7 +17,7 @@
     "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11",
     "danger delete removes the DB record with threads and ledger after holds settled; workspace artifacts are retained"
   ],
-  "streamCursor": "1790932244569-0",
+  "streamCursor": "1790935863697-0",
   "publicEvents": 4,
   "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W15 persisted settings view, validated save/reload, target-change lock policy and the danger delete against the real database; context-only isolated target, runtime guard path unchanged",
   "ownedRuntimeFixtureRemoved": true

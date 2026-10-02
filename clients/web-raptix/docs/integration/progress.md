@@ -457,10 +457,53 @@ Neo4j, LangGraph untouched); rollback documented (down new stack +
 `docker start raptix-web`). Makefile gains the `webraptix-*` lane; CI gains
 the `web-raptix` quality job and docker-build entries. See w16-cutover.md.
 
+## W17 — accepted 2026-10-02
+
+Campaign persistence & scoped C2. Server: persistence-backed campaign drafts
+(`Campaign`/`CampaignJob` migrations, scoped CRUD with duplicate 409 and
+field-attributed validation) where generate/deploy record durable jobs with
+status `unavailable` and never mutate the draft — no code path can fabricate
+Generated/Delivered; scoped C2 session/commands routes enforce engagement
+ownership then answer 503 `provider_unavailable` (no session registry exists;
+agent threads, CLI PTY and C2 sessions stay distinct). Capabilities:
+`campaigns` DB-backed, `c2` provider-unavailable. Frontend: real Vector
+Campaigns (drafts + truthful job history) and C2 unavailable page; the two
+reasons are removed. Gates: server 202, contracts 43, frontend 80 + browser
+lanes 8/8 + 24/24, verifier `--w17` 11 groups; w07–w15 pass. See
+w17-campaigns.md, w17-live.json.
+
+## W18 — accepted 2026-10-02
+
+Encrypted vault & reveal lifecycle. Server: AES-256-GCM vault under the
+validated `VAULT_ENCRYPTION_KEY` (32-byte base64; missing key → 503 +
+`configuration_missing` capability, invalid key fails loudly); metadata is
+redacted by construction (no ciphertext leaves the service, plaintext scanned
+absent from list responses), reveal is a dedicated audited endpoint returning
+plaintext exactly once per call, create/reveal/revoke are audited in an
+engagement-scoped log that survives deletion, wrong-key decryption fails
+closed. Frontend: real Credentials Vault with explicit audited reveal and
+revocation; the `credentials` reason is removed. Gates: server 208,
+contracts 44, frontend 80 + browser lanes 8/8 + 27/27, verifier `--w18` 12
+groups with a dedicated test key; w07–w15 pass. See w18-vault.md,
+w18-live.json.
+
+## W19 — accepted 2026-10-02
+
+Members identity design. Server: the truthful local single-user members view
+(`mode`, single operator row, `inviteSupported: false` invariant enforced in
+the contract validator) with invite/removal answering 503 plus the explicit
+authentication-strategy reason — no member row is ever created, no fake
+Owner/Viewer hierarchy, no imported demo people. Capabilities: `members`
+available (the view is real); invite/RBAC stay stated-absent. Frontend: real
+Members page with the stated-absent card; the last unavailable reason is
+removed — every workspace page is mounted real. Gates: server 211, contracts
+45, frontend 80 + browser lanes 8/8 + 29/29, verifier `--w19` 10 groups;
+all phases w07–w19 pass. See w19-members.md, w19-live.json.
+
 ## Subsequent phases — pending (not started)
 
-W17–W19 additional providers; W20 legacy retirement (final removal gate:
-clean install/build/run/E2E without `clients/web`).
+W20 legacy retirement (final removal gate: clean install/build/run/E2E
+without `clients/web`).
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB

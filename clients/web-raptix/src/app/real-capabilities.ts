@@ -18,18 +18,14 @@ import type { RealNewProjectFormError } from '../features/projects/real-project.
  * and Reports (W14) render the merged server timeline and the validated
  * engagement exports; Settings (W15) edits the persisted engagement fields
  * through the validated PATCH with save/reload acknowledgement and owns the
- * explicit danger delete.
+ * explicit danger delete; Vector Campaigns and C2 (W17) render the persisted
+ * drafts with truthful provider jobs and the scoped session-unavailable state;
+ * Credentials Vault (W18) renders redacted server metadata with the explicit
+ * audited reveal and revocation actions; Members (W19) renders the truthful
+ * local single-user topology with the stated-absent invite/RBAC reason —
+ * every workspace page now has a real, verified source.
  */
-export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
-  'vector-campaigns':
-    'Vector campaigns need the campaign provider APIs (work package W17), which are not connected yet.',
-  'c2-sessions':
-    'C2 sessions need the session provider APIs (work package W17), which are not connected yet.',
-  credentials:
-    'Credentials Vault needs the vault storage service (work package W18), which is not connected yet.',
-  members:
-    'Members need the identity/RBAC service (work package W19). No member directory exists in this build.',
-}
+export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {}
 
 /** Defensive reason for a screen without a map entry (the router only mounts the 13 pages). */
 export const REAL_FALLBACK_REASON =

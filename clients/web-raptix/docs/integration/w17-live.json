@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "projectId": "cmuqswp5y000054fifpstoyri",
+  "threadId": "73df9e17-3d6b-4ee6-8381-e6480f0aad98",
+  "runId": "01a0fc16-efde-7713-ab71-6cc50a94f50c",
+  "finalStatus": "success",
+  "checks": [
+    "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
+    "early SSE attach/abort preserves native cursor without cancelling the acknowledged run",
+    "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
+    "actual SSE cursor reconnect/late replay, pure reducer dedup and scope/cursor denial create no additional execution",
+    "campaign draft persisted and the generate attempt recorded a truthful unavailable provider job",
+    "invalid drafts rejected with field attribution and the supported vector list",
+    "draft and job history survive reload; the campaign stays draft with no fabricated Generated/Delivered state",
+    "C2 sessions route enforces engagement scoping and then states the unavailable provider instead of fabricating sessions",
+    "foreign engagements stay denied for the campaign and c2 endpoints",
+    "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
+    "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
+  ],
+  "streamCursor": "1790935757421-0",
+  "publicEvents": 4,
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W17 persisted campaign drafts, truthful unavailable provider jobs and the scoped C2 session state against the real database; context-only isolated target, runtime guard path unchanged",
+  "ownedRuntimeFixtureRemoved": true
+}

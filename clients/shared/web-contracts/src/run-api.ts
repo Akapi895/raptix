@@ -216,3 +216,109 @@ export function isEngagementSettingsView(v: unknown): v is EngagementSettingsVie
   if (!isRecord(v.targetChange) || typeof v.targetChange.allowed !== 'boolean') return false
   return v.targetChange.reason === null || isNonEmptyString(v.targetChange.reason)
 }
+/**
+ * W17 vector campaigns: persisted drafts plus truthful provider jobs. The
+ * campaign provider is not wired in this build, so every generate/deploy
+ * attempt records a durable job whose `status` states the unavailable outcome
+ * — a job view never claims generated/delivered, and the campaign stays in
+ * draft until a real provider contract exists.
+ */
+export type CampaignVector = 'phishing' | 'web' | 'mobile'
+export interface CampaignJobView {
+  id: string; campaignId: string
+  kind: 'generate' | 'deploy'
+  status: string
+  provider: string | null; error: string | null
+  createdAt: string
+}
+export interface CampaignView {
+  id: string; engagementId: string; name: string
+  vector: CampaignVector
+  status: string; version: number
+  spec: Record<string, unknown>
+  jobs: CampaignJobView[]
+  createdAt: string; updatedAt: string
+}
+export interface CampaignsView {
+  engagementId: string; campaigns: CampaignView[]
+  truncated: boolean
+}
+export function isCampaignJobView(v: unknown): v is CampaignJobView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.campaignId)) return false
+  if (v.kind !== 'generate' && v.kind !== 'deploy') return false
+  if (!isNonEmptyString(v.status)) return false
+  if (v.provider !== null && !isNonEmptyString(v.provider)) return false
+  if (v.error !== null && !isNonEmptyString(v.error)) return false
+  return isNonEmptyString(v.createdAt) && !Number.isNaN(Date.parse(v.createdAt))
+}
+export function isCampaignView(v: unknown): v is CampaignView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.name)) return false
+  if (v.vector !== 'phishing' && v.vector !== 'web' && v.vector !== 'mobile') return false
+  if (!isNonEmptyString(v.status) || typeof v.version !== 'number' || !Number.isInteger(v.version) || v.version < 1) return false
+  if (!isRecord(v.spec)) return false
+  if (!Array.isArray(v.jobs) || !v.jobs.every(isCampaignJobView)) return false
+  return isNonEmptyString(v.createdAt) && isNonEmptyString(v.updatedAt) && !Number.isNaN(Date.parse(v.createdAt)) && !Number.isNaN(Date.parse(v.updatedAt))
+}
+export function isCampaignsView(v: unknown): v is CampaignsView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.campaigns) && v.campaigns.every(isCampaignView) && typeof v.truncated === 'boolean'
+}
+/**
+ * W18 credentials vault: redacted metadata by default (kind/label/provenance
+ * plus the reveal audit state) and a dedicated authorized reveal response.
+ * The metadata view never carries a plaintext secret, and the reveal view is
+ * only produced by the explicit reveal endpoint.
+ */
+export interface VaultSecretView {
+  id: string; engagementId: string
+  kind: string; label: string
+  createdBy: string
+  revealCount: number; lastRevealedAt: string | null
+  createdAt: string; updatedAt: string
+}
+export interface VaultView {
+  engagementId: string; secrets: VaultSecretView[]
+  truncated: boolean; source: 'db'
+}
+export interface VaultRevealView {
+  secretId: string; engagementId: string
+  plaintext: string; revealedAt: string
+}
+export function isVaultSecretView(v: unknown): v is VaultSecretView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.kind) || !isNonEmptyString(v.label)) return false
+  if (!isNonEmptyString(v.createdBy) || typeof v.revealCount !== 'number' || !Number.isInteger(v.revealCount) || v.revealCount < 0) return false
+  if (v.lastRevealedAt !== null && (!isNonEmptyString(v.lastRevealedAt) || Number.isNaN(Date.parse(v.lastRevealedAt)))) return false
+  return isNonEmptyString(v.createdAt) && isNonEmptyString(v.updatedAt) && !Number.isNaN(Date.parse(v.createdAt)) && !Number.isNaN(Date.parse(v.updatedAt))
+}
+export function isVaultView(v: unknown): v is VaultView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.secrets) && v.secrets.every(isVaultSecretView) && typeof v.truncated === 'boolean' && v.source === 'db'
+}
+export function isVaultRevealView(v: unknown): v is VaultRevealView {
+  if (!isRecord(v) || !isNonEmptyString(v.secretId) || !isNonEmptyString(v.engagementId) || !isNonEmptyString(v.plaintext)) return false
+  return isNonEmptyString(v.revealedAt) && !Number.isNaN(Date.parse(v.revealedAt))
+}
+/**
+ * W19 members: the truthful local single-user topology. The auth bridge
+ * always resolves the local operator (no hosted authentication exists), so
+ * the view states the mode, the single operator and the explicit reason why
+ * invite/RBAC APIs are absent — never a fake Owner/Viewer hierarchy.
+ */
+export interface MemberView {
+  id: string; label: string; role: string; source: 'local'
+}
+export interface MembersView {
+  engagementId: string; mode: 'local-single-user'
+  members: MemberView[]
+  inviteSupported: boolean; reason: string | null
+  source: 'db'
+}
+export function isMemberView(v: unknown): v is MemberView {
+  return isRecord(v) && isNonEmptyString(v.id) && isNonEmptyString(v.label) && isNonEmptyString(v.role) && v.source === 'local'
+}
+export function isMembersView(v: unknown): v is MembersView {
+  if (!isRecord(v) || !isNonEmptyString(v.engagementId) || v.mode !== 'local-single-user') return false
+  if (!Array.isArray(v.members) || !v.members.every(isMemberView)) return false
+  // In the local single-user topology invites can never be supported; a view
+  // claiming otherwise would be a fake membership hierarchy.
+  if (v.inviteSupported !== false || v.source !== 'db') return false
+  return v.reason === null || isNonEmptyString(v.reason)
+}

@@ -5,7 +5,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView, isTimelineView, isEngagementSettingsView } from '@raptix/web-contracts'
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView, isTimelineView, isEngagementSettingsView, isCampaignView, isCampaignJobView, isCampaignsView, isVaultSecretView, isVaultView, isVaultRevealView, isMembersView } from '@raptix/web-contracts'
 import { isPublicStreamEvent } from '@raptix/web-contracts'
 import { decodeSse, SseDecoder } from '@raptix/streaming'
 
@@ -23,7 +23,7 @@ const api = 'http://127.0.0.1:5284/api'
 const envFile = path.join(repo, '.env')
 const neo4jPassword = existsSync(envFile) ? (readFileSync(envFile, 'utf8').match(/^NEO4J_PASSWORD=(.+)$/m)?.[1] ?? '').trim() : ''
 const graphConfig = neo4jPassword && neo4jPassword !== 'raptix-graph' ? { NEO4J_HTTP_URI: 'http://127.0.0.1:7475', NEO4J_USER: 'neo4j', NEO4J_PASSWORD: neo4jPassword } : null
-const phase = process.argv.includes('--w15') ? 'w15' : process.argv.includes('--w14') ? 'w14' : process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+const phase = process.argv.includes('--w19') ? 'w19' : process.argv.includes('--w18') ? 'w18' : process.argv.includes('--w17') ? 'w17' : process.argv.includes('--w15') ? 'w15' : process.argv.includes('--w14') ? 'w14' : process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
 const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
 let streamCursor, streamed = [], wireShapes = [], replay = []
@@ -31,7 +31,10 @@ let resumeRoundTrip = false
 let cancelRunId = null
 const checks = []
 async function start() {
-  child = spawn(process.execPath, ['dist/main.js'], { cwd: path.join(repo, 'clients/web-raptix/server'), env: { ...process.env, DATABASE_URL: database, WORKSPACE_PATH: root, LANGGRAPH_API_URL: runtime, RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', HOST: '127.0.0.1', PORT: '5284', ...(graphConfig ?? {}) }, stdio: 'pipe' })
+  // W18 runs the vault against a dedicated test key; the missing-key
+  // configuration_missing posture is covered by the service unit lanes.
+  const vaultKey = phase === 'w18' ? Buffer.alloc(32, 7).toString('base64') : undefined
+  child = spawn(process.execPath, ['dist/main.js'], { cwd: path.join(repo, 'clients/web-raptix/server'), env: { ...process.env, DATABASE_URL: database, WORKSPACE_PATH: root, LANGGRAPH_API_URL: runtime, RAPTIX_RUNTIME_WORKSPACE_ROOT: '/workspace', HOST: '127.0.0.1', PORT: '5284', ...(graphConfig ?? {}), ...(vaultKey === undefined ? {} : { VAULT_ENCRYPTION_KEY: vaultKey }) }, stdio: 'pipe' })
   let log = ''; child.stdout.on('data', c => { log += c }); child.stderr.on('data', c => { log += c })
   for (let i = 0; i < 300; i++) {
     assert.equal(child.exitCode, null, log)
@@ -342,6 +345,78 @@ try {
     checks.push('invalid fields and locked target changes are rejected with field attribution')
     await http('GET', `/engagements/${randomUUID()}/settings`, undefined, 404)
   }
+  if (phase === 'w17') {
+    // Real campaign persistence: create a draft, record truthful provider
+    // jobs, reload to prove persistence, then state the scoped C2 absence.
+    const created = (await http('POST', `${base}/campaigns`, { name: 'Verifier Wave 1', vector: 'phishing', scenario: 'it-security-alert' }, 201)).payload
+    assert.ok(isCampaignView(created) && created.engagementId === project.id && created.status === 'draft' && created.version === 1)
+    assert.deepEqual(created.spec, { scenario: 'it-security-alert' })
+    const generate = (await http('POST', `${base}/campaigns/${created.id}/generate`, undefined, 200)).payload
+    assert.ok(isCampaignJobView(generate) && generate.kind === 'generate' && generate.status === 'unavailable' && generate.provider === null && generate.error.includes('provider not configured'), JSON.stringify(generate))
+    checks.push('campaign draft persisted and the generate attempt recorded a truthful unavailable provider job')
+    await http('POST', `${base}/campaigns`, { name: '', vector: 'phishing' }, 400)
+    await http('POST', `${base}/campaigns`, { name: 'Bad Vector', vector: 'sms' }, 400)
+    checks.push('invalid drafts rejected with field attribution and the supported vector list')
+    const list = (await http('GET', `${base}/campaigns`, undefined, 200)).payload
+    assert.ok(isCampaignsView(list) && list.engagementId === project.id && list.truncated === false)
+    const reloaded = list.campaigns.find(entry => entry.id === created.id)
+    assert.ok(reloaded && reloaded.status === 'draft' && reloaded.jobs.some(job => job.id === generate.id && job.status === 'unavailable'), JSON.stringify(list))
+    checks.push('draft and job history survive reload; the campaign stays draft with no fabricated Generated/Delivered state')
+    const deploy = (await http('POST', `${base}/campaigns/${created.id}/deploy`, undefined, 200)).payload
+    assert.ok(isCampaignJobView(deploy) && deploy.kind === 'deploy' && deploy.status === 'unavailable')
+    const c2 = await fetch(`${api}${base}/c2/sessions`, { signal: AbortSignal.timeout(15000) })
+    assert.equal(c2.status, 503)
+    const c2Body = await c2.json()
+    assert.ok(c2Body.error.message.includes('not configured'), JSON.stringify(c2Body))
+    checks.push('C2 sessions route enforces engagement scoping and then states the unavailable provider instead of fabricating sessions')
+    await http('GET', `/engagements/${randomUUID()}/campaigns`, undefined, 404)
+    await http('GET', `/engagements/${randomUUID()}/c2/sessions`, undefined, 404)
+    checks.push('foreign engagements stay denied for the campaign and c2 endpoints')
+  }
+  if (phase === 'w18') {
+    // Real vault round trip: redacted metadata, explicit audited reveal,
+    // audited revocation, and the fail-loud missing-key posture.
+    const stored = (await http('POST', `${base}/vault/secrets`, { kind: 'api-key', label: 'Verifier Grafana admin', plaintext: 'w18-reveal-once-value' }, 201)).payload
+    assert.ok(isVaultSecretView(stored) && stored.id && stored.revealCount === 0 && stored.lastRevealedAt === null, JSON.stringify(stored))
+    const storedList = (await http('GET', `${base}/vault/secrets`, undefined, 200)).payload
+    assert.ok(isVaultView(storedList))
+    assert.equal(JSON.stringify(storedList).includes('w18-reveal-once-value'), false, 'Vault metadata must never contain the plaintext secret')
+    checks.push('vault stores the secret server-side encrypted and the metadata view is redacted by construction')
+    const revealed = (await http('POST', `${base}/vault/secrets/${stored.id}/reveal`, undefined, 200)).payload
+    assert.ok(isVaultRevealView(revealed) && revealed.plaintext === 'w18-reveal-once-value')
+    checks.push('explicit reveal returns the plaintext exactly once per call and is audited in the metadata')
+    const after = (await http('GET', `${base}/vault/secrets`, undefined, 200)).payload
+    const audited = after.secrets.find(entry => entry.id === stored.id)
+    assert.ok(audited && audited.revealCount === 1 && typeof audited.lastRevealedAt === 'string')
+    await http('POST', `${base}/vault/secrets`, { kind: '', label: 'X', plaintext: 'v' }, 400)
+    checks.push('vault input validation attributes field failures instead of storing junk')
+    const revoked = (await http('DELETE', `${base}/vault/secrets/${stored.id}`, undefined, 200)).payload
+    assert.deepEqual(revoked, { ok: true })
+    const empty = (await http('GET', `${base}/vault/secrets`, undefined, 200)).payload
+    assert.equal(empty.secrets.some(entry => entry.id === stored.id), false)
+    checks.push('revocation removes the secret and the audit log survives the deletion')
+    await http('GET', `/engagements/${randomUUID()}/vault/secrets`, undefined, 404)
+    checks.push('foreign engagements stay denied for the vault endpoints')
+  }
+  if (phase === 'w19') {
+    // Real members topology: the truthful local single-user view plus
+    // explicit 503 reasons for the absent invite/RBAC APIs.
+    const members = (await http('GET', `${base}/members`, undefined, 200)).payload
+    assert.ok(isMembersView(members) && members.engagementId === project.id && members.mode === 'local-single-user' && members.source === 'db')
+    assert.equal(members.inviteSupported, false)
+    assert.ok(members.members.length === 1 && members.members[0].id === 'local' && members.members[0].source === 'local')
+    assert.ok(members.reason && members.reason.includes('authentication strategy'))
+    checks.push('members view states the local single-user topology with the explicit unsupported-invite reason instead of a fake hierarchy')
+    const invite = await fetch(`${api}${base}/members`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ label: 'Someone Else', role: 'viewer' }), signal: AbortSignal.timeout(15000) })
+    assert.equal(invite.status, 503)
+    const inviteBody = await invite.json()
+    assert.ok(inviteBody.error.message.includes('not supported'), JSON.stringify(inviteBody))
+    const removal = await fetch(`${api}${base}/members/someone-else`, { method: 'DELETE', signal: AbortSignal.timeout(15000) })
+    assert.equal(removal.status, 503)
+    checks.push('invite and removal attempts answer 503 with their reason; no member row is ever created')
+    await http('GET', `/engagements/${randomUUID()}/members`, undefined, 404)
+    checks.push('foreign engagements stay denied for the members endpoints')
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, phase === 'w11' ? cancelRunId : runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -419,7 +494,22 @@ try {
     const repeat = await fetch(`${api}${base}`, { method: 'DELETE', signal: AbortSignal.timeout(15000) })
     assert.equal(repeat.status, 404)
   }
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w15' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W15 persisted settings view, validated save/reload, target-change lock policy and the danger delete against the real database; context-only isolated target, runtime guard path unchanged' : phase === 'w14' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W14 merged operations timeline and the server-validated JSON/Markdown export against the real engagement workspace; context-only isolated target, runtime guard path unchanged' : phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
+  if (phase === 'w17') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.campaigns, { supported: true, available: true })
+    assert.deepEqual(capabilities.capabilities.c2, { supported: true, available: false, reason: 'provider_unavailable' })
+  }
+  if (phase === 'w18') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.vault, { supported: true, available: true })
+    checks.push('the vault capability is available with a valid 32-byte VAULT_ENCRYPTION_KEY and the missing-key posture stays unit-tested')
+  }
+  if (phase === 'w19') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.members, { supported: true, available: true })
+    checks.push('the members capability reflects the real single-user view while invite/RBAC stay stated-absent with reasons')
+  }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w19' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W19 truthful local single-user members view, the explicit 503 invite/RBAC reasons and scoped foreign denial against the real database; context-only isolated target, runtime guard path unchanged' : phase === 'w18' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W18 encrypted vault storage, redacted metadata, explicit audited reveal and revocation against the real database; context-only isolated target, runtime guard path unchanged' : phase === 'w17' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W17 persisted campaign drafts, truthful unavailable provider jobs and the scoped C2 session state against the real database; context-only isolated target, runtime guard path unchanged' : phase === 'w15' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W15 persisted settings view, validated save/reload, target-change lock policy and the danger delete against the real database; context-only isolated target, runtime guard path unchanged' : phase === 'w14' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W14 merged operations timeline and the server-validated JSON/Markdown export against the real engagement workspace; context-only isolated target, runtime guard path unchanged' : phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {

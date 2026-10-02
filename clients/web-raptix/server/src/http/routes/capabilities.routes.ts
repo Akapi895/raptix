@@ -16,7 +16,7 @@ export type CapabilityState =
   | {
       readonly supported: true;
       readonly available: false;
-      readonly reason: 'database_unavailable' | 'runtime_unavailable';
+      readonly reason: 'database_unavailable' | 'runtime_unavailable' | 'provider_unavailable' | 'configuration_missing';
     }
   | { readonly supported: true; readonly available: true };
 
@@ -35,6 +35,10 @@ export interface CapabilitiesResponse {
     readonly graphs: CapabilityState;
     readonly timeline: CapabilityState;
     readonly reports: CapabilityState;
+    readonly campaigns: CapabilityState;
+    readonly c2: CapabilityState;
+    readonly vault: CapabilityState;
+    readonly members: CapabilityState;
   };
 }
 
@@ -63,6 +67,11 @@ export async function buildCapabilitiesResponse(
   graphsSupported = false,
   timelineSupported = false,
   reportsSupported = false,
+  campaignsSupported = false,
+  c2Supported = false,
+  vaultSupported = false,
+  vaultKeyConfigured = false,
+  membersSupported = false,
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -102,6 +111,21 @@ export async function buildCapabilitiesResponse(
   const operationsBacked: CapabilityState = !runsSupported ? missingCapability() : !operations.available ? { supported: true, available: false, reason: 'runtime_unavailable' } : { supported: true, available: true };
   const timeline: CapabilityState = !timelineSupported ? missingCapability() : !operationsBacked.available ? { supported: true, available: false, reason: operationsBacked.reason === 'database_unavailable' ? 'database_unavailable' : 'runtime_unavailable' } : { supported: true, available: true };
   const reports: CapabilityState = !reportsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
+  // Campaigns are DB-backed drafts plus truthful provider jobs (W17): the
+  // draft persistence is available with the projects stack, while every
+  // generate/deploy job honestly reports the absent provider per request.
+  const campaigns: CapabilityState = !campaignsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
+  // C2 sessions (W17): the scoped routes exist and enforce engagement
+  // ownership, but no session provider registry is wired — the capability
+  // states that honestly instead of pretending availability.
+  const c2: CapabilityState = !c2Supported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: false, reason: 'provider_unavailable' };
+  // Vault (W18): the encrypted storage service is wired with the database,
+  // but it stays unavailable until VAULT_ENCRYPTION_KEY decodes to a usable
+  // AES-256 key — it never degrades to plaintext storage.
+  const vault: CapabilityState = !vaultSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : !vaultKeyConfigured ? { supported: true, available: false, reason: 'configuration_missing' } : { supported: true, available: true };
+  // Members (W19): the truthful local single-user members view is real;
+  // invite/RBAC APIs stay absent with explicit reasons, never faked.
+  const members: CapabilityState = !membersSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
   return {
     version: CAPABILITIES_VERSION,
     mode: 'local-single-user',
@@ -117,6 +141,10 @@ export async function buildCapabilitiesResponse(
       graphs,
       timeline,
       reports,
+      campaigns,
+      c2,
+      vault,
+      members,
     },
   };
 }
@@ -132,6 +160,11 @@ export interface CapabilitiesRouteOptions {
   readonly graphsSupported?: boolean;
   readonly timelineSupported?: boolean;
   readonly reportsSupported?: boolean;
+  readonly campaignsSupported?: boolean;
+  readonly c2Supported?: boolean;
+  readonly vaultSupported?: boolean;
+  readonly vaultKeyConfigured?: boolean;
+  readonly membersSupported?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -150,6 +183,11 @@ export function registerCapabilitiesRoutes(
       options.graphsSupported === true,
       options.timelineSupported === true,
       options.reportsSupported === true,
+      options.campaignsSupported === true,
+      options.c2Supported === true,
+      options.vaultSupported === true,
+      options.vaultKeyConfigured === true,
+      options.membersSupported === true,
     ),
   );
 }

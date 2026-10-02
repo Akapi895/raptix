@@ -21,6 +21,10 @@ import { GraphService } from './services/graph-service.js';
 import { TimelineService } from './services/timeline-service.js';
 import { ExportService } from './services/export-service.js';
 import { SettingsService } from './services/settings-service.js';
+import { CampaignService } from './services/campaign-service.js';
+import { C2Service } from './services/c2-service.js';
+import { VaultService } from './services/vault-service.js';
+import { MembersService } from './services/members-service.js';
 
 let closing = false;
 
@@ -90,6 +94,10 @@ async function main(): Promise<void> {
   const timelineService = runsService && artifactsService && dbClient && env.workspacePath ? new TimelineService(dbClient, runsService, artifactsService, env.workspacePath) : undefined;
   const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
   const settingsService = dbClient ? new SettingsService(dbClient, getLocalIdentity()) : undefined;
+  const campaignsService = dbClient ? new CampaignService(dbClient) : undefined;
+  const c2Service = dbClient ? new C2Service(dbClient) : undefined;
+  const vaultService = dbClient ? new VaultService(dbClient, env.vaultKey ?? null) : undefined;
+  const membersService = dbClient ? new MembersService(dbClient) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -105,6 +113,11 @@ async function main(): Promise<void> {
   timelineService,
   exportService,
   settingsService,
+  campaignsService,
+  c2Service,
+  vaultService,
+  membersService,
+  vaultKeyConfigured: env.vaultKey !== undefined,
   });
 
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {

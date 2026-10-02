@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "projectId": "cmuqsx3be000020fi31vd04lo",
+  "threadId": "2ef6f219-504f-4b73-85e2-4e68625a9828",
+  "runId": "01a0fc17-380d-70d3-abc0-54e546b37f42",
+  "finalStatus": "success",
+  "checks": [
+    "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
+    "early SSE attach/abort preserves native cursor without cancelling the acknowledged run",
+    "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
+    "actual SSE cursor reconnect/late replay, pure reducer dedup and scope/cursor denial create no additional execution",
+    "members view states the local single-user topology with the explicit unsupported-invite reason instead of a fake hierarchy",
+    "invite and removal attempts answer 503 with their reason; no member row is ever created",
+    "foreign engagements stay denied for the members endpoints",
+    "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
+    "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11",
+    "the members capability reflects the real single-user view while invite/RBAC stay stated-absent with reasons"
+  ],
+  "streamCursor": "1790935775861-0",
+  "publicEvents": 4,
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W19 truthful local single-user members view, the explicit 503 invite/RBAC reasons and scoped foreign denial against the real database; context-only isolated target, runtime guard path unchanged",
+  "ownedRuntimeFixtureRemoved": true
+}
