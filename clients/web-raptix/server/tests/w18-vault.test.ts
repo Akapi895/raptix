@@ -57,7 +57,7 @@ function buildDb() {
       },
       aggregate: async ({ where }: { where: { secretId: string; action: string } }) => {
         const matching = audits.filter(row => row.secretId === where.secretId && row.action === where.action);
-        return { _count: { _all: matching.length }, _max: { createdAt: matching.length ? matching[matching.length - 1].createdAt : null } };
+        return { _count: { _all: matching.length }, _max: { createdAt: matching.length ? matching[matching.length - 1]!.createdAt : null } };
       },
     },
   } as never;

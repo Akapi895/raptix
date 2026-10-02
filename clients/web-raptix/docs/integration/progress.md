@@ -500,10 +500,25 @@ removed — every workspace page is mounted real. Gates: server 211, contracts
 45, frontend 80 + browser lanes 8/8 + 29/29, verifier `--w19` 10 groups;
 all phases w07–w19 pass. See w19-members.md, w19-live.json.
 
+## W20 — accepted 2026-10-02
+
+Legacy retirement gate (reference-only decommission, operator-approved). The
+`clients/web` folder, legacy Dockerfiles and hotswap/bootstrap scripts stay in the
+checkout as reference-only, but every active lane drops the legacy dependency:
+compose `web` service removed (watch sync too), Makefile `web-*` targets retired
+(`quality` now runs `webraptix-quality`, new `webraptix-dev` dev server), CI `web`
+paths-filter + job removed, release `docker-web`/`docker-web-merge` pipelines
+removed (`publish-release` no longer gates on or promotes `raptix-web`), CLI `/web`
+reduced to URL reporting with the W20 notice, desktop local mode no longer
+auto-spawns the web tier and names the host commands. Gates: clean `npm ci` +
+contracts 45/45, server 211/211, frontend 80/80 + build clean, browser lanes 8/8 +
+29/29, CLI 33/33, desktop 27/27; compose base/dev configs and both workflow YAMLs
+validate; `raptix-web` container Exited while the web-raptix stack stays healthy.
+See w20-retirement.md.
+
 ## Subsequent phases — pending (not started)
 
-W20 legacy retirement (final removal gate: clean install/build/run/E2E
-without `clients/web`).
+None — the W20 retirement gate is the final phase of the integration guide.
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB
