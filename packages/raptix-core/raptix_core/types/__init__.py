@@ -20,6 +20,9 @@ Five submodules:
     dispatches (ADR-0028, Step 1 of the control-plane fix sequence).
     Replaces the text-only ``[TERMINAL]`` marker with a structured
     schema the orchestrator can inspect without string-matching.
+  * ``foothold`` — verified-foothold contract (ADR-0031, Step 4).
+    ``AccessEvidence`` + ``is_usable_access()``: the fail-closed
+    predicate the OPPLAN gate consumes at the IF→NP boundary.
 
 These modules import only ``pydantic`` + stdlib + ``typing_extensions`` —
 no ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
@@ -28,6 +31,6 @@ no ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
 
 from __future__ import annotations
 
-from raptix_core.types import dispatch_outcome, engagement, kg, llm, roe
+from raptix_core.types import dispatch_outcome, engagement, foothold, kg, llm, roe
 
-__all__ = ["dispatch_outcome", "engagement", "llm", "kg", "roe"]
+__all__ = ["dispatch_outcome", "engagement", "foothold", "llm", "kg", "roe"]

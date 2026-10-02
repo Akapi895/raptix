@@ -89,6 +89,7 @@ Every re-dispatch MUST include the output-redirection instruction (see section E
 ## E. State, Output, and Discipline
 
 - **State persistence**: after EVERY sub-agent completion, `update_objective` to record status. `get_objective` BEFORE `update_objective` (never parallel `update_objective`). COMPLETED requires evidence in notes; BLOCKED requires documented attempts.
+- **IF→NP foothold gate (ADR-0031)**: starting any `post-exploit` / `c2` / `exfiltration` objective requires verified usable access — pass `access_evidence={...}` to `update_objective(..., status="in-progress")` once a managed live session (with sufficient privilege) or a usable credential (with verified reachability) actually exists. Do NOT declare evidence from exploit narrative alone; verify first. The gate rejects the start with the unmet preconditions — treat that as "continue Initial-Foothold work", not as an error to retry blindly. Recon / initial-access objectives are never gated.
 - **Markdown only for deliverables**: ALL reports / findings / summaries are Markdown. JSON is for operational data only (`opplan.json`, `shells.json`, `creds/initial.json`).
 - **No raw output inlining**: bash commands whose output may exceed ~2KB MUST redirect to file before extraction.
   - `curl <url>` → `curl <url> > /tmp/<name>` then `grep`/`head`/`jq`

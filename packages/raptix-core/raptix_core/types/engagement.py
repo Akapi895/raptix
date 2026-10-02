@@ -23,6 +23,8 @@ from enum import StrEnum
 
 from pydantic import BaseModel, Field
 
+from raptix_core.types.foothold import AccessEvidence
+
 # ── Enums ─────────────────────────────────────────────────────────────
 
 
@@ -477,6 +479,17 @@ class Objective(BaseModel):
             "sub-task of the parent — the parent cannot move to COMPLETED "
             "until every child is COMPLETED or CANCELLED. Inspired by "
             "PentestGPT's Pentesting Task Tree (PTT)."
+        ),
+    )
+    access_evidence: AccessEvidence | None = Field(
+        default=None,
+        description=(
+            "Typed foothold evidence (ADR-0031). Consumed by the "
+            "verified-foothold gate when a propagation-phase objective "
+            "starts: states A-D of the audit's fixture set evaluate to "
+            "False and keep the objective blocked at the IF→NP boundary; "
+            "only usable access (state E) permits the transition. "
+            "Initial-Foothold objectives are never gated."
         ),
     )
 

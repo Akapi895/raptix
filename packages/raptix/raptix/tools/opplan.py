@@ -12,6 +12,7 @@ from langchain_core.messages import ToolMessage
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 from langgraph.types import Command
+from pydantic import ValidationError
 
 from raptix_core.types.engagement import (
     OPPLAN,
@@ -21,11 +22,24 @@ from raptix_core.types.engagement import (
     ObjectiveStatus,
     OpsecLevel,
 )
+from raptix_core.types.foothold import AccessEvidence, unmet_access_preconditions
 
 log = logging.getLogger(__name__)
 
 OPPLAN_FILE_SCHEMA_VERSION = "1"
 OPPLAN_VIRTUAL_PATH = "/workspace/plan/opplan.json"
+
+# Phases whose work is network propagation (post-exploit / c2 /
+# exfiltration). Starting one of these is the IF→NP boundary the
+# verified-foothold gate guards (ADR-0031). Recon / initial-access
+# phases are Initial-Foothold work and are NEVER gated.
+_PROPAGATION_PHASES: frozenset[str] = frozenset(
+    {
+        ObjectivePhase.POST_EXPLOIT.value,
+        ObjectivePhase.C2.value,
+        ObjectivePhase.EXFILTRATION.value,
+    }
+)
 
 # All OPPLAN tools — used by ``OPPLANMiddleware.after_model`` to enforce
 # strictly sequential calls (one OPPLAN tool per LLM step). Parallel calls
@@ -610,10 +624,15 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
     @tool(
         description=(
             "Update a single objective. MUST call get_objective first. "
-            "Can change: status, notes, owner, add_blocked_by. "
+            "Can change: status, notes, owner, add_blocked_by, access_evidence. "
             "Valid transitions: pending→in-progress, in-progress→completed/blocked, "
             "blocked→in-progress (retry) or completed (abandon). "
             "Include evidence when marking completed, failure reason when marking blocked. "
+            "Starting a propagation-phase objective (post-exploit/c2/exfiltration) "
+            "requires verified foothold evidence via access_evidence={...} — "
+            "usable access (live managed session with sufficient privilege, or "
+            "usable credential with verified reachability). Initial-Foothold "
+            "objectives are not gated. "
             "Auto-persists the OPPLAN through the engagement filesystem backend "
             "to /workspace/plan/opplan.json on success. "
             "Call OPPLAN tools sequentially — never in parallel with other OPPLAN tools."
@@ -626,6 +645,7 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
         notes: str | None = None,
         owner: str | None = None,
         add_blocked_by: list[str] | None = None,
+        access_evidence: dict | None = None,
         tool_call_id: Annotated[str, InjectedToolCallId] = "",
     ) -> Command[Any]:
         """Update one objective with state transition validation."""
@@ -648,6 +668,51 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
             )
 
         updated_fields: list[str] = []
+
+        # ── Access-evidence validation (ADR-0031) ────────────────────
+        # Validate independently of status so the orchestrator can
+        # record evidence on any update (e.g. alongside completing the
+        # Initial-Foothold objective); the gate below consumes it when
+        # a propagation objective starts.
+        validated_evidence: AccessEvidence | None = None
+        if access_evidence is not None:
+            if not isinstance(access_evidence, dict):
+                return Command(
+                    update={
+                        "messages": [
+                            ToolMessage(
+                                content=(
+                                    f"Invalid access_evidence for {objective_id}: "
+                                    "expected an object with foothold fields "
+                                    "(execution_capability, session_managed, session_live, "
+                                    "privilege, required_privilege, credential_captured, "
+                                    "credential_usable, reachability_verified)."
+                                ),
+                                tool_call_id=tool_call_id,
+                                status="error",
+                            )
+                        ],
+                    }
+                )
+            try:
+                validated_evidence = AccessEvidence.model_validate(access_evidence)
+            except ValidationError as exc:
+                first = exc.errors()[0]
+                return Command(
+                    update={
+                        "messages": [
+                            ToolMessage(
+                                content=(
+                                    f"Invalid access_evidence for {objective_id}: "
+                                    f"{first.get('msg', 'validation error')} "
+                                    f"at {first.get('loc', ())}"
+                                ),
+                                tool_call_id=tool_call_id,
+                                status="error",
+                            )
+                        ],
+                    }
+                )
 
         # ── Status change with transition + dependency validation ─────
         if status is not None:
@@ -711,6 +776,47 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
                         }
                     )
 
+                # ── Verified-foothold gate (ADR-0031, Step 4) ─────────
+                # The IF→NP boundary ONLY. Starting propagation work
+                # (post-exploit / c2 / exfiltration) requires typed
+                # evidence of usable access. Initial-Foothold phases
+                # (recon / initial-access) are never gated here, and
+                # nothing in this gate constrains intra-IF exploration.
+                if target.get("phase") in _PROPAGATION_PHASES:
+                    effective = validated_evidence
+                    if effective is None and isinstance(target.get("access_evidence"), dict):
+                        try:
+                            effective = AccessEvidence.model_validate(target["access_evidence"])
+                        except ValidationError:
+                            effective = None
+                    unmet = unmet_access_preconditions(effective)
+                    if unmet:
+                        return Command(
+                            update={
+                                "messages": [
+                                    ToolMessage(
+                                        content=(
+                                            f"Cannot start {objective_id} "
+                                            f"(phase={target.get('phase', '')}): "
+                                            "verified usable access is required at the "
+                                            "Initial-Foothold → Network-Propagation "
+                                            "boundary. Unmet: "
+                                            f"{'; '.join(unmet)}. Verify access, then "
+                                            "re-call update_objective with "
+                                            "access_evidence={execution_capability, "
+                                            "session_managed, session_live, privilege, "
+                                            "required_privilege, credential_captured, "
+                                            "credential_usable, reachability_verified}. "
+                                            "Initial-Foothold work is NOT blocked — "
+                                            "continue IF exploration."
+                                        ),
+                                        tool_call_id=tool_call_id,
+                                        status="error",
+                                    )
+                                ],
+                            }
+                        )
+
             # Parents cannot complete until every child is done.
             if status == "completed":
                 children = [o for o in objectives if o.get("parent_id") == objective_id]
@@ -765,6 +871,15 @@ def build_opplan_tools(backend: BackendProtocol | None = None) -> list:
         if owner is not None:
             target["owner"] = owner
             updated_fields.append("owner")
+
+        # ── Access evidence (ADR-0031) ───────────────────────────────
+        # Persisted as a declared Objective field so it round-trips
+        # through _build_opplan_payload → OPPLAN(**data) reloads, and
+        # the gate's "already recorded" path keeps working across
+        # blocked → in-progress retries.
+        if validated_evidence is not None:
+            target["access_evidence"] = validated_evidence.model_dump(mode="json")
+            updated_fields.append("access_evidence")
 
         # ── Add blocked_by dependencies ──────────────────────────────
         if add_blocked_by:
