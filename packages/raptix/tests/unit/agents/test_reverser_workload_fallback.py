@@ -14,7 +14,7 @@ _VIRTUALIZED_SKILL = (
 
 
 def test_orchestrator_dispatches_reverser_for_no_workload_triage() -> None:
-    prompt = (_PROMPTS / "decepticon.md").read_text()
+    prompt = (_PROMPTS / "decepticon.md").read_text(encoding="utf-8")
 
     assert "Basic triage / Radare2 work still goes to `reverser`" in prompt
     assert "only for Ghidra MCP / headless decompilation" in prompt
@@ -22,7 +22,7 @@ def test_orchestrator_dispatches_reverser_for_no_workload_triage() -> None:
 
 
 def test_reverser_prompt_has_radare2_fallback_path() -> None:
-    prompt = (_PROMPTS / "reverser.md").read_text()
+    prompt = (_PROMPTS / "reverser.md").read_text(encoding="utf-8")
 
     assert "RADARE2" in prompt
     assert "bin_r2_script" in prompt
@@ -30,21 +30,21 @@ def test_reverser_prompt_has_radare2_fallback_path() -> None:
 
 
 def test_reverser_spec_advertises_basic_triage_without_workload() -> None:
-    agent_src = _REVERSER_AGENT.read_text()
+    agent_src = _REVERSER_AGENT.read_text(encoding="utf-8")
 
     assert "Radare2-assisted basic triage without the reversing workload" in agent_src
 
 
 def test_reverser_skill_catalog_names_radare2_fallback() -> None:
-    skill = _REVERSER_SKILL.read_text()
+    skill = _REVERSER_SKILL.read_text(encoding="utf-8")
 
     assert "Radare2" in skill
     assert "bin_r2_script" in skill
 
 
 def test_reverser_routes_vmprotect_vmp2_themida_workflow() -> None:
-    prompt = (_PROMPTS / "reverser.md").read_text()
-    catalog = _REVERSER_SKILL.read_text()
+    prompt = (_PROMPTS / "reverser.md").read_text(encoding="utf-8")
+    catalog = _REVERSER_SKILL.read_text(encoding="utf-8")
 
     assert "VMProtect / VMP2 / Themida" in prompt
     assert "/skills/standard/reverser/virtualized-protectors/SKILL.md" in catalog
@@ -52,7 +52,7 @@ def test_reverser_routes_vmprotect_vmp2_themida_workflow() -> None:
 
 
 def test_virtualized_protectors_skill_captures_backengineering_workflow() -> None:
-    skill = _VIRTUALIZED_SKILL.read_text()
+    skill = _VIRTUALIZED_SKILL.read_text(encoding="utf-8")
 
     assert "Back Engineering Labs" in skill
     assert "VMProtect 2" in skill

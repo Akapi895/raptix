@@ -104,9 +104,40 @@ def skills_sources_for(role: str) -> list[str]:
     The fallback exists purely so the OSS 10 standard factories don't
     have to repeat ``[f"/skills/standard/{_ROLE}/", "/skills/shared/"]``
     each.
+
+    Step 3 (ADR-0030): contract-consistency fixes:
+
+    1. Roles whose name diverges from the on-disk skill directory map
+       through ``skill_dir_for_role`` (``postexploit`` → ``post-exploit``,
+       ``cloud_hunter`` → ``cloud``) instead of emitting a dead ACL path.
+    2. The ``decepticon`` orchestrator gets the ``exploit`` skill tree
+       appended so it can load the exploit router skills its prompt
+       instructs it to load (e.g.
+       ``/skills/standard/exploit/web/SKILL.md``).
+    3. Roles with no dedicated standard skill tree (``blue_cell``) no
+       longer emit a ``/skills/standard/<role>/`` path that resolves to
+       nothing — they get the shared tree only.
     """
-    base = [f"/skills/standard/{role}/", "/skills/shared/", *benchmark_skill_sources()]
-    return [*base, *load_plugin_skill_sources(role)]
+    # Role → skill-directory name mapping. When the role name and the
+    # skill directory name diverge, the mapping wins. Add new entries
+    # here rather than renaming the role or the directory.
+    skill_dir_for_role = {
+        "cloud_hunter": "cloud",
+        "postexploit": "post-exploit",
+    }
+    # Roles with no dedicated ``standard/<dir>/`` skill tree on disk.
+    # Their ACL is the shared tree (plus benchmark / plugin sources).
+    roles_without_standard_tree = frozenset({"blue_cell"})
+    skill_dir = skill_dir_for_role.get(role, role)
+    standard = [] if role in roles_without_standard_tree else [f"/skills/standard/{skill_dir}/"]
+    base = [*standard, "/skills/shared/", *benchmark_skill_sources()]
+    # Cross-role skill sources: the orchestrator needs to load exploit
+    # router skills per its prompt instructions. Append (not replace)
+    # so the orchestrator's own tree stays primary.
+    cross_role_sources: list[str] = []
+    if role == "decepticon":
+        cross_role_sources.append("/skills/standard/exploit/")
+    return [*base, *cross_role_sources, *load_plugin_skill_sources(role)]
 
 
 # ─────────────────────────────────────────────────────────────────────

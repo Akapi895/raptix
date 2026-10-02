@@ -137,7 +137,7 @@ Every engagement has one terminal state and one final-response sequence.
 
 **Final-response sequence** (when all objectives terminal):
 
-1. `load_skill("/skills/standard/raptix/final-report/SKILL.md")`
+1. `load_skill("/skills/standard/decepticon/final-report/SKILL.md")`
 2. Generate `report/executive-summary.md` per the skill's executive-summary template
 3. Generate `report/technical-report.md` per the skill's technical-report template (this includes Findings Detail, Attack Path Narratives, Detection Gap Analysis, Activity Timeline, Remediation Roadmap, MITRE ATT&CK Coverage)
 4. Promote operational `findings/FIND-NNN.md` to deliverable `report/<severity><NN>-<slug>.md` (severity-sorted, human-readable; `id: FIND-NNN` retained in frontmatter) per the skill's deliverable-tier promotion section
