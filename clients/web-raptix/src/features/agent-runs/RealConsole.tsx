@@ -1,17 +1,17 @@
 /**
- * W10 real Operator Console: the source Console's visual language (timeline,
- * agent inspector, command bar) bound to the new API only. Every card renders
+ * W10/W11 real Operator Console: the source Console's visual language (timeline,
+ * inspector, command bar) bound to the new API only. Every card renders
  * validated public run data — messages, tools, invocations, structured
- * questions — with thread-level history provenance labeled. Synthetic demo
- * phases, OPSEC scores, HITL approve/reject and pause/cancel are not faked:
- * questions are read-only until W11 wires resume, controls arrive with W11
- * capability verification.
+ * questions — with thread-level history provenance labeled. W11 adds truthful
+ * graph-interrupt answering (server-validated scoped resume), file-backed HITL
+ * decisions and an interrupt control; synthetic demo phases, OPSEC scores and
+ * fabricated approvals are never rendered.
  */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, ReactNode } from 'react'
 import type { ProjectViewModel } from '@raptix/web-contracts'
-import { useConsoleSession } from './use-console-session'
-import { consoleInspector, consoleTimeline, isTerminalRunStatus } from './console-view'
+import { useConsoleSession, type ConsoleSession } from './use-console-session'
+import { consoleInspector, consoleTimeline, isTerminalRunStatus, type ConsoleItem } from './console-view'
 
 const MONO = "'JetBrains Mono', monospace"
 const C = { ink: '#0F172A', body: '#334155', muted: '#94A3B8', border: '#E2E8F0', page: '#F8FAFC', red: '#DC2626' }
@@ -37,7 +37,55 @@ function TransportChip({ transport, recoveryRequired, hasRun }: { transport: 'co
   return <Tag bg="#FEF3C7" color="#D97706">RECONNECTING</Tag>
 }
 
-function Card({ item }: { item: ReturnType<typeof consoleTimeline>[number] }) {
+/** W11 answer form: labels are sent verbatim; the producer strips the "(Recommended)" suffix. */
+function QuestionAnswerForm({ item, session }: { item: ConsoleItem; session: ConsoleSession }) {
+  const [selected, setSelected] = useState<readonly string[]>([])
+  const [other, setOther] = useState('')
+  const questionId = item.questionId ?? ''
+  const options = item.options ?? []
+  const toggle = (label: string): void => {
+    if (item.multiSelect) setSelected(previous => previous.includes(label) ? previous.filter(value => value !== label) : [...previous, label])
+    else setSelected([label])
+  }
+  const single = !item.multiSelect
+  const usingOther = other.trim().length > 0
+  const value = item.multiSelect
+    ? [...selected, ...(usingOther ? [other.trim()] : [])]
+    : usingOther ? other.trim() : selected[0]
+  const valid = item.multiSelect ? value.length > 0 : (usingOther || selected.length === 1)
+  const disabled = session.answering || session.submitting || !valid
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {options.map(option => {
+          const active = selected.includes(option.label)
+          return (
+            <button key={option.label} onClick={() => toggle(option.label)} disabled={session.answering}
+              style={{ textAlign: 'left', background: active ? '#FEF3C7' : '#FFFFFF', border: `1.5px solid ${active ? '#F59E0B' : C.border}`, borderRadius: 6, padding: '8px 10px', cursor: session.answering ? 'default' : 'pointer' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{active ? '● ' : '○ '}{option.label}</div>
+              <div style={{ fontSize: 11, color: C.body }}>{option.description}</div>
+            </button>
+          )
+        })}
+        {item.allowOther && (
+          <input value={other} onChange={event => { setOther(event.target.value); if (single && event.target.value.trim()) setSelected([]) }} disabled={session.answering}
+            placeholder="Other — type a custom answer…"
+            style={{ fontSize: 12, color: C.ink, background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 6, padding: '7px 10px', outline: 'none' }} />
+        )}
+      </div>
+      <button disabled={disabled} onClick={() => { void session.answerQuestion(questionId, value) }}
+        style={{ alignSelf: 'flex-start', background: disabled ? '#E2E8F0' : C.red, color: disabled ? '#94A3B8' : '#FFFFFF', border: 'none', borderRadius: 6, padding: '7px 14px', fontSize: 12, fontWeight: 600, cursor: disabled ? 'default' : 'pointer' }}>
+        {session.answering ? 'Resuming run…' : 'Send answer & resume run'}
+      </button>
+      <p style={{ margin: 0, fontSize: 11, color: C.muted }}>The answer is validated server-side against the pending graph interrupt; a successful resume returns a new run identity.</p>
+      {session.answerError && <p role="alert" style={{ margin: 0, fontSize: 12, color: C.red }}>{session.answerError}</p>}
+    </div>
+  )
+}
+
+const questionId = (item: { kind: string; questionId?: string | null }): string | null => item.kind === 'question' && typeof item.questionId === 'string' && item.questionId.length > 0 ? item.questionId : null
+
+function Card({ item, session }: { item: ConsoleItem; session: ConsoleSession }) {
   const provenance = item.source === 'checkpoint' || item.runId === null
     ? <Tag bg="#F1F5F9" color="#64748B">{item.source === 'checkpoint' ? 'HISTORY' : 'UNATTRIBUTED'}</Tag>
     : null
@@ -102,27 +150,34 @@ function Card({ item }: { item: ReturnType<typeof consoleTimeline>[number] }) {
     )
   }
   if (item.kind === 'question') {
+    const answerable = questionId(item) !== null && !session.answered.includes(questionId(item)!) && session.pendingQuestion?.questionId === questionId(item)
+    const resolved = questionId(item) !== null && session.answered.includes(questionId(item)!)
     return (
       <div style={{ position: 'relative', paddingLeft: 20 }}>
         <ConnectorDot color="#F59E0B" />
-        <div style={{ background: '#FFFBEB', border: `1px solid #F59E0B`, borderLeft: '4px solid #F59E0B', borderRadius: '0 8px 8px 0', padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ background: '#FFFBEB', border: `1px solid ${resolved ? '#FCD34D' : '#F59E0B'}`, borderLeft: '4px solid #F59E0B', borderRadius: '0 8px 8px 0', padding: '14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <Tag bg="#FDE68A" color="#92400E">PLANNING QUESTION</Tag>
+            <Tag bg="#FDE68A" color="#92400E">{resolved ? 'PLANNING QUESTION — ANSWERED' : 'PLANNING QUESTION'}</Tag>
             {item.header && <span style={{ fontSize: 12, fontWeight: 700, color: '#92400E' }}>{item.header}</span>}
+            {item.multiSelect && <Tag bg="#FFFFFF" color="#92400E">MULTI-SELECT</Tag>}
             {provenance}
           </div>
           <p style={{ margin: 0, fontSize: 13, color: C.ink, lineHeight: 1.55 }}>{item.question}</p>
-          {item.options?.length ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {item.options.map(option => (
-                <div key={option.label} style={{ background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 6, padding: '8px 10px' }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{option.label}</div>
-                  <div style={{ fontSize: 11, color: C.body }}>{option.description}</div>
+          {answerable ? <QuestionAnswerForm item={item} session={session} /> : (
+            <>
+              {item.options?.length ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {item.options.map(option => (
+                    <div key={option.label} style={{ background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 6, padding: '8px 10px' }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: C.ink }}>{option.label}</div>
+                      <div style={{ fontSize: 11, color: C.body }}>{option.description}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          ) : null}
-          <p style={{ margin: 0, fontSize: 11, color: C.muted }}>Answers resume the run through the scoped API (work package W11). No local answer is accepted yet.</p>
+              ) : null}
+              <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{resolved ? 'Answer submitted; the resumed run continues below.' : 'Answering requires the server-observed pending graph interrupt for this thread. It was not restorable from the runtime snapshot.'}</p>
+            </>
+          )}
         </div>
       </div>
     )
@@ -188,6 +243,13 @@ export default function RealConsole({ project }: { project: ProjectViewModel }) 
           <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>Execution Timeline</span>
           <TransportChip transport={session.transport} recoveryRequired={session.recoveryRequired} hasRun={session.run !== null} />
           {session.run && <Tag bg="#F1F5F9" color="#475569">RUN {session.run.rawStatus.toUpperCase()}</Tag>}
+          {session.run && !isTerminalRunStatus(session.run.rawStatus) && (
+            <button disabled={session.cancelling} onClick={() => { void session.cancelRun() }}
+              title="Server interrupt: pauses at a checkpoint and keeps the thread resumable; external side effects are not undone."
+              style={{ fontSize: 11, fontWeight: 600, color: session.cancelling ? '#94A3B8' : C.red, background: '#FFFFFF', border: `1px solid ${C.red}`, borderRadius: 6, padding: '4px 10px', cursor: session.cancelling ? 'default' : 'pointer' }}>
+              {session.cancelling ? 'Interrupting…' : 'Interrupt run'}
+            </button>
+          )}
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
             <select
               aria-label="Bound thread"
@@ -214,7 +276,7 @@ export default function RealConsole({ project }: { project: ProjectViewModel }) 
           <div style={{ position: 'relative' }}>
             <div style={{ position: 'absolute', left: 14, top: 0, bottom: 0, width: 1, background: C.border }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {items.map(item => <Card key={item.id} item={item} />)}
+              {items.map(item => <Card key={item.id} item={item} session={session} />)}
               {session.activeThreadId && items.length === 0 && (
                 <p style={{ margin: 0, fontSize: 13, color: C.muted }}>No run events recorded for this thread yet. Send a root message below; history appears after the first acknowledged run.</p>
               )}
@@ -271,6 +333,7 @@ export default function RealConsole({ project }: { project: ProjectViewModel }) 
               </div>
             </div>
           ))}
+          {session.cancelError && <p role="alert" style={{ margin: 0, fontSize: 12, color: C.red }}>{session.cancelError}</p>}
           {inspector && inspector.tools.length > 0 && (
             <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 12px' }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Tool activity</div>
@@ -286,8 +349,44 @@ export default function RealConsole({ project }: { project: ProjectViewModel }) 
               </div>
             </div>
           )}
+          <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, padding: '10px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: C.muted, textTransform: 'uppercase', letterSpacing: '0.06em' }}>HITL approvals</span>
+              <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+                {session.approvals.loading && <span style={{ fontSize: 10, color: C.muted }}>loading…</span>}
+                <button onClick={session.refreshApprovals} aria-label="Refresh approvals" style={{ fontSize: 11, color: '#475569', background: '#FFFFFF', border: `1px solid ${C.border}`, borderRadius: 4, padding: '2px 7px', cursor: 'pointer' }}>↻</button>
+              </span>
+            </div>
+            {session.approvals.list.length === 0 && <p style={{ margin: 0, fontSize: 11, color: C.muted }}>{session.approvals.error ?? 'No pending file-backed approval requests for this engagement.'}</p>}
+            {session.approvals.list.map(approval => {
+              const inFlight = session.approvals.decidingId === approval.requestId
+              return (
+                <div key={approval.requestId} style={{ border: `1px solid ${C.border}`, borderRadius: 6, padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: C.ink, fontFamily: MONO }}>{approval.toolName}</span>
+                    <Tag bg="#F1F5F9" color="#475569">{approval.agentName}</Tag>
+                    {approval.matchedRule.techniqueTag && <Tag bg="#FEE2E2" color={C.red}>{approval.matchedRule.techniqueTag}</Tag>}
+                  </div>
+                  <p style={{ margin: 0, fontSize: 11, color: C.body, lineHeight: 1.45 }}>{approval.reason}</p>
+                  <pre style={{ margin: 0, fontSize: 10, fontFamily: MONO, color: '#475569', background: C.page, border: `1px solid ${C.border}`, borderRadius: 4, padding: '4px 6px', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 80, overflowY: 'auto' }}>{JSON.stringify(approval.toolArgsRedacted, null, 1)}</pre>
+                  <div style={{ fontSize: 10, fontFamily: MONO, color: C.muted }}>requested {new Date(approval.createdAtSeconds * 1000).toLocaleString()} • timeout {Math.round(approval.matchedRule.timeoutSeconds)}s → {approval.matchedRule.defaultOnTimeout}</div>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button disabled={inFlight || session.approvals.decidingId !== null} onClick={() => { void session.decideApproval(approval.requestId, 'allow') }}
+                      style={{ background: inFlight ? '#FCA5A5' : C.red, color: '#FFFFFF', border: 'none', borderRadius: 4, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: inFlight ? 'default' : 'pointer' }}>
+                      {inFlight ? 'Deciding…' : 'Approve'}
+                    </button>
+                    <button disabled={session.approvals.decidingId !== null} onClick={() => { void session.decideApproval(approval.requestId, 'deny') }}
+                      style={{ background: '#FFFFFF', color: '#475569', border: `1px solid ${C.border}`, borderRadius: 4, padding: '4px 10px', fontSize: 11, fontWeight: 600, cursor: session.approvals.decidingId !== null ? 'default' : 'pointer' }}>
+                      Reject
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+            {session.approvals.decideError && <p role="alert" style={{ margin: '4px 0 0', fontSize: 11, color: C.red }}>{session.approvals.decideError}</p>}
+          </div>
           <p style={{ margin: 0, fontSize: 11, color: C.muted, lineHeight: 1.5 }}>
-            Inspector shows only observed runtime instances. Approvals, resume and pause/cancel controls arrive with work package W11 after capability verification.
+            Inspector shows only observed runtime instances. Approvals are engagement-scoped file-backed requests; a decision is only recorded after server acknowledgement.
           </p>
         </div>
       </div>

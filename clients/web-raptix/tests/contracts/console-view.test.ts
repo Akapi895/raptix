@@ -16,14 +16,14 @@ it('maps the merged stream state into ordered real timeline items with provenanc
   state = reduceStreamEvent(state, event('e2', { type: 'tool_call', toolCallId: 'c1', name: 'nmap', argsPreview: '{"target":"x"}', delegation: false, truncated: false }));
   const transcripts: ThreadHistoryEvent[] = [
     { key: 's1::subagent_end@t', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_end', agent: 'recon', sessionId: 's1', elapsedSeconds: 2.5, status: 'success', truncated: false } },
-    { key: 's2::ask_user_question#q1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'ask_user_question', agent: 'soundwave', questionId: 'q1', question: 'Proceed?', header: 'Confirm', options: [{ label: 'Yes', description: 'go' }], truncated: false } },
+    { key: 's2::ask_user_question#q1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'ask_user_question', agent: 'soundwave', questionId: 'q1', question: 'Proceed?', header: 'Confirm', options: [{ label: 'Yes', description: 'go' }], multiSelect: true, allowOther: true, truncated: false } },
   ];
   state = mergeThreadHistory(state, { binding, rawStatus: 'success', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', transcripts, transcriptsTruncated: false });
   const items = consoleTimeline(state);
   expect(items.map(item => item.kind)).toEqual(['operator', 'tool', 'invocation', 'question']);
   expect(items[0]).toMatchObject({ kind: 'operator', runId: 'run', source: 'runtime' });
   expect(items[2]).toMatchObject({ kind: 'invocation', agent: 'recon', runId: null, source: 'checkpoint', elapsedSeconds: 2.5 });
-  expect(items[3]).toMatchObject({ kind: 'question', question: 'Proceed?', runId: null, source: 'checkpoint', options: [{ label: 'Yes' }] });
+  expect(items[3]).toMatchObject({ kind: 'question', question: 'Proceed?', runId: null, source: 'checkpoint', options: [{ label: 'Yes' }], multiSelect: true, allowOther: true });
 });
 
 it('summarizes inspector sessions/tools/questions without inventing identity', () => {

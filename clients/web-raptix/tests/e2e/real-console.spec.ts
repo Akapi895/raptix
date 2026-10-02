@@ -23,7 +23,7 @@ const project = {
 const binding = { engagementId: PROJECT_ID, threadId: THREAD_ID, assistantId: 'soundwave', kind: 'planning', createdAt: TIME, updatedAt: TIME }
 
 const snapshot = {
-  binding, rawStatus: 'success',
+  binding, rawStatus: 'interrupted',
   messages: [
     { role: 'user', content: 'Acknowledge this planning check.', messageId: 'm1' },
     { role: 'assistant', content: 'Acknowledged.', messageId: 'm2' },
@@ -31,9 +31,10 @@ const snapshot = {
   messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime',
   transcripts: [
     { key: 's1::subagent_end@2026-10-02T01:00:00+00:00', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'subagent_end', agent: 'recon', sessionId: 's1', elapsedSeconds: 2.5, status: 'success', truncated: false } },
-    { key: 's2::ask_user_question#q1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'ask_user_question', agent: 'soundwave', questionId: 'q1', question: 'Proceed with the authorized scan?', header: 'Confirm', options: [{ label: 'Yes', description: 'Continue planning' }, { label: 'No', description: 'Stop here' }], truncated: false } },
+    { key: 's2::ask_user_question#q1', runId: null, source: 'checkpoint', truncated: false, payload: { type: 'ask_user_question', agent: 'soundwave', questionId: 'q1', question: 'Proceed with the authorized scan?', header: 'Confirm', options: [{ label: 'Yes', description: 'Continue planning' }, { label: 'No', description: 'Stop here' }], multiSelect: false, allowOther: true, truncated: false } },
   ],
   transcriptsTruncated: false,
+  pendingQuestion: { questionId: 'q1', question: 'Proceed with the authorized scan?', header: 'Confirm', options: [{ label: 'Yes', description: 'Continue planning' }, { label: 'No', description: 'Stop here' }], multiSelect: false, allowOther: true, source: 'runtime' },
 }
 
 async function interceptConsole(page: Page): Promise<void> {
@@ -43,9 +44,10 @@ async function interceptConsole(page: Page): Promise<void> {
   await page.route(`**/api/engagements/${PROJECT_ID}/threads/${THREAD_ID}*`, route => json(route, snapshot))
   await page.route(`**/api/engagements/${PROJECT_ID}/threads/${THREAD_ID}/runs*`, route => json(route, { runs: [], offset: 0, nextOffset: null }))
   await page.route(`**/api/engagements/${PROJECT_ID}/threads/${THREAD_ID}/runs/**`, route => json(route, { error: 'not found in this fixture' }, 404))
+  await page.route(`**/api/engagements/${PROJECT_ID}/approvals`, route => json(route, { engagementId: PROJECT_ID, approvals: [], source: 'workspace' }))
 }
 
-test('real console renders owned history, thread-level provenance and read-only questions without demo data', async ({ page }) => {
+test('real console renders owned history, thread-level provenance and a restorable answer form without demo data', async ({ page }) => {
   await interceptConsole(page)
   await page.goto(`/projects/${PROJECT_ID}/console`)
   await expect(page.getByText('Execution Timeline')).toBeVisible()
@@ -56,9 +58,14 @@ test('real console renders owned history, thread-level provenance and read-only 
   await expect(page.getByText('HISTORY', { exact: true }).first()).toBeVisible()
   await expect(page.getByText('PLANNING QUESTION')).toBeVisible()
   await expect(page.getByText('Proceed with the authorized scan?')).toBeVisible()
-  await expect(page.getByText('Answers resume the run through the scoped API (work package W11). No local answer is accepted yet.')).toBeVisible()
+  await expect(page.getByText('HITL approvals')).toBeVisible()
+  await expect(page.getByText('No pending file-backed approval requests for this engagement.')).toBeVisible()
+  const sendAnswer = page.getByRole('button', { name: 'Send answer & resume run' })
+  await expect(sendAnswer).toBeDisabled()
+  await page.getByRole('button', { name: /Yes Continue planning|Yes/ }).first().click()
+  await expect(sendAnswer).toBeEnabled()
+  await page.getByPlaceholder('Other — type a custom answer…').fill('Custom operator answer')
   await expect(page.getByRole('button', { name: 'Approve' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Reject' })).toHaveCount(0)
   await expect(page.getByText('ReconBot-01')).toHaveCount(0)
   await expect(page.getByText('OPSEC')).toHaveCount(0)
   await expect(page.getByText('SESSIONS 1')).toBeVisible()

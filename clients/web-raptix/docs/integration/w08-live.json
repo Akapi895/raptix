@@ -1,8 +1,8 @@
 {
   "ok": true,
-  "projectId": "cmuqm0yj50000owfijen68ec9",
-  "threadId": "4f9631c7-d596-49f5-b33f-fcd80699649a",
-  "runId": "01a0fb66-8ee9-78a0-9b98-953931442ba6",
+  "projectId": "cmuqnm7u20000owfisbowv7qa",
+  "threadId": "7beefea1-b314-48b5-b0b3-4881a9d94959",
+  "runId": "01a0fb8f-5568-73c1-8a1d-cdbbd3439677",
   "finalStatus": "success",
   "checks": [
     "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
@@ -10,14 +10,14 @@
     "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
     "actual SSE cursor reconnect/late replay, pure reducer dedup and scope/cursor denial create no additional execution",
     "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
-    "real API process restart preserves request/run deduplication; capability is live and resume remains gated"
+    "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11"
   ],
-  "streamCursor": "1790924198457-0",
+  "streamCursor": "1790926870660-0",
   "publicEvents": 4,
   "wireShapes": [
     {
       "event": "metadata",
-      "id": "1790924198457-0",
+      "id": "1790926870660-0",
       "array": false,
       "keys": [
         "run_id",
@@ -26,7 +26,7 @@
     },
     {
       "event": "values",
-      "id": "1790924198467-0",
+      "id": "1790926870662-0",
       "array": false,
       "keys": [
         "messages",
@@ -48,7 +48,7 @@
     },
     {
       "event": "updates",
-      "id": "1790924198470-0",
+      "id": "1790926870663-0",
       "array": false,
       "keys": [
         "EngagementContextMiddleware.before_agent"
@@ -56,7 +56,7 @@
     },
     {
       "event": "updates",
-      "id": "1790924198486-0",
+      "id": "1790926870668-0",
       "array": false,
       "keys": [
         "RoEGuardrailMiddleware.before_agent"
@@ -64,7 +64,7 @@
     },
     {
       "event": "updates",
-      "id": "1790924198487-0",
+      "id": "1790926870669-0",
       "array": false,
       "keys": [
         "PatchToolCallsMiddleware.before_agent"
@@ -72,7 +72,7 @@
     },
     {
       "event": "updates",
-      "id": "1790924203205-0",
+      "id": "1790926873636-0",
       "array": false,
       "keys": [
         "model"
@@ -80,7 +80,7 @@
     },
     {
       "event": "values",
-      "id": "1790924203205-0",
+      "id": "1790926873638-0",
       "array": false,
       "keys": [
         "messages",

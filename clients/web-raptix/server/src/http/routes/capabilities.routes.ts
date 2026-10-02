@@ -56,6 +56,7 @@ export async function buildCapabilitiesResponse(
   databaseHealth?: DatabaseHealth,
   runtimeContext?: RuntimeContextService,
   runsSupported = false,
+  approvalsSupported = false,
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -78,6 +79,9 @@ export async function buildCapabilitiesResponse(
     catch { agents = { supported: true, available: false, reason: 'runtime_unavailable' }; }
   }
   const operations: CapabilityState = !runsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : !agents.available ? { supported: true, available: false, reason: 'runtime_unavailable' } : { supported: true, available: true };
+  // Approvals are workspace-file-backed (W11): available when the owning
+  // project service is ready; decision writes share the workspace root.
+  const approvals: CapabilityState = !approvalsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
   return {
     version: CAPABILITIES_VERSION,
     mode: 'local-single-user',
@@ -87,7 +91,7 @@ export async function buildCapabilitiesResponse(
       planning: projects,
       threads: operations,
       runs: operations,
-      approvals: missingCapability(),
+      approvals,
       artifacts: missingCapability(),
       findings: missingCapability(),
       graphs: missingCapability(),
@@ -101,6 +105,7 @@ export interface CapabilitiesRouteOptions {
   readonly databaseHealth?: DatabaseHealth;
   readonly runtimeContext?: RuntimeContextService;
   readonly runsSupported?: boolean;
+  readonly approvalsSupported?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -113,6 +118,7 @@ export function registerCapabilitiesRoutes(
       options.databaseHealth,
       options.runtimeContext,
       options.runsSupported,
+      options.approvalsSupported === true,
     ),
   );
 }
