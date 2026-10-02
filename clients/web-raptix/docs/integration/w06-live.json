@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "provenance": "real PostgreSQL/new API/runtime catalog/thread/checkpoint plus installed middleware hydration; no runs/models/tools submitted",
+  "projectId": "cmuqff7gb0000icfimwgpbyfx",
+  "runtimeThreadId": "01a0fabd-78b3-7b23-8899-65b9de146d83",
+  "workspaceSlug": "w06-context-c5aebf0f-9ae0-46b0-8693-563ae5f0c2c4",
+  "runtimeGraphs": [
+    "decepticon",
+    "soundwave"
+  ],
+  "checks": [
+    "actual CLI configurable parity, installed runtime middleware hydration and API/runtime workspace-file identity",
+    "real acknowledged owned runtime thread, hydrated checkpoint and persisted full binding proof validate end-to-end",
+    "compiled new-API context/catalog/capability/readiness routes, no private-config leakage and rejected browser/owner/assistant overrides",
+    "actual remote metadata/state mismatch and missing persisted proof fail closed; existing context is not forcibly overwritten",
+    "unreachable runtime returns unavailable without source-catalog fallback"
+  ],
+  "ownedThreadRemovedAfterGate": true
+}

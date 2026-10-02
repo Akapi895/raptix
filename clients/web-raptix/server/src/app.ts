@@ -10,6 +10,10 @@ import { registerProjectRoutes } from './http/routes/projects.routes.js';
 import type { ProjectsService } from './services/projects-service.js';
 import type { RuntimeOwnershipService } from './services/runtime-ownership.js';
 import type { RuntimeContextService } from './services/runtime/runtime-context.js';
+import type { RunService } from './services/runtime/run-service.js';
+import { registerRunRoutes } from './http/routes/runs.routes.js';
+import type { StreamService } from './services/runtime/stream-service.js';
+import { registerEventRoutes } from './http/routes/events.routes.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -22,6 +26,8 @@ export interface AppOptions {
   readonly projectsService?: ProjectsService;
   readonly runtimeOwnership?: RuntimeOwnershipService;
   readonly runtimeContext?: RuntimeContextService;
+  readonly runsService?: RunService;
+  readonly streamService?: StreamService;
   /** Local single-user identity; defaults to getLocalIdentity(). */
   readonly identity?: LocalIdentity;
   /**
@@ -42,6 +48,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     projectsSupported: options.projectsService !== undefined,
     databaseHealth: options.databaseHealth,
     runtimeContext: options.runtimeContext,
+    runsSupported: options.runsService !== undefined,
   });
 
   if (options.projectsService !== undefined) {
@@ -54,12 +61,16 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     });
   }
 
+  if (options.runsService) registerRunRoutes(app, options.runsService, options.identity ?? getLocalIdentity());
+  if (options.streamService) registerEventRoutes(app, options.streamService, options.identity ?? getLocalIdentity());
+
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;
-    const sweep = (): void => { void ownership.sweepStaleCreating().catch(err => app.log.error({ err }, 'request ledger stale sweep failed')); };
+    const sweep = (): void => { void ownership.sweepStaleCreating().then(() => options.runsService?.reconcileStale()).catch(err => app.log.error({ err }, 'request ledger stale sweep failed')); };
     app.addHook('onReady', async () => {
       try { await ownership.sweepStaleCreating(); }
       catch (err) { app.log.error({ err }, 'request ledger startup sweep failed'); }
+      void options.runsService?.reconcileStale().catch(err => app.log.error({ err }, 'startup runtime reconciliation failed'));
     });
     const timer = setInterval(sweep, 30_000);
     timer.unref();

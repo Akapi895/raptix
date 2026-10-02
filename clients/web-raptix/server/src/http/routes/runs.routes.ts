@@ -1,0 +1,39 @@
+import type { FastifyInstance } from 'fastify';
+import type { LocalIdentity } from '../../auth/identity-provider.js';
+import type { RunService } from '../../services/runtime/run-service.js';
+import { ProjectPolicyError } from '../../security/project-policy.js';
+import { runProjectsHandler } from './projects.routes.js';
+
+export function registerRunRoutes(app: FastifyInstance, service: RunService, identity: LocalIdentity): void {
+  const prefix = '/api/engagements/:id';
+  app.post(`${prefix}/threads`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id } = request.params as { id: string };
+    const ack = await service.createThread(identity.id, id, request.body);
+    reply.status(ack.state === 'accepted' ? 201 : 202); return ack;
+  }));
+  app.post(`${prefix}/threads/:thread/runs`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread } = request.params as { id: string; thread: string };
+    const ack = await service.submit(identity.id, id, thread, request.body);
+    reply.status(202); return ack;
+  }));
+  app.get(`${prefix}/threads/:thread`, (request, reply) => runProjectsHandler(request, reply, () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, thread } = request.params as { id: string; thread: string };
+    return service.snapshot(identity.id, id, thread);
+  }));
+  app.get(`${prefix}/threads/:thread/runs`, (request, reply) => runProjectsHandler(request, reply, () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, thread } = request.params as { id: string; thread: string };
+    return service.listRuns(identity.id, id, thread, request.query);
+  }));
+  app.get(`${prefix}/threads/:thread/runs/:run`, (request, reply) => runProjectsHandler(request, reply, () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, thread, run } = request.params as { id: string; thread: string; run: string };
+    return service.getRun(identity.id, id, thread, run);
+  }));
+  app.post(`${prefix}/requests/:requestId/reconcile`, (request, reply) => runProjectsHandler(request, reply, () => {
+    if (request.body !== undefined && (typeof request.body !== 'object' || request.body === null || Array.isArray(request.body) || Object.keys(request.body).length)) throw new ProjectPolicyError('bad_request', 'Reconciliation does not accept runtime overrides');
+    const { id, requestId } = request.params as { id: string; requestId: string };
+    return service.reconcile(identity.id, id, requestId);
+  }));
+}

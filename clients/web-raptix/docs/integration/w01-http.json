@@ -1,0 +1,121 @@
+{
+  "ok": true,
+  "results": [
+    {
+      "path": "/api/health",
+      "expected": 200,
+      "status": 200,
+      "body": {
+        "status": "ok",
+        "service": "web-raptix-server",
+        "checks": {
+          "bootstrap": {
+            "status": "ok"
+          },
+          "integrations": {
+            "status": "not_connected"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/health/ready",
+      "expected": 503,
+      "status": 503,
+      "body": {
+        "status": "unavailable",
+        "service": "web-raptix-server",
+        "checks": {
+          "bootstrap": {
+            "status": "ok"
+          },
+          "integrations": {
+            "status": "not_connected",
+            "reason": "service_missing"
+          },
+          "database": {
+            "status": "not_configured",
+            "reason": "service_missing"
+          },
+          "runtime": {
+            "status": "not_connected",
+            "reason": "service_missing"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/capabilities",
+      "expected": 200,
+      "status": 200,
+      "body": {
+        "version": 1,
+        "mode": "local-single-user",
+        "capabilities": {
+          "agents": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "projects": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "planning": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "threads": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "runs": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "approvals": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "artifacts": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "findings": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "graphs": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "reports": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          }
+        }
+      }
+    },
+    {
+      "path": "/api/engagements",
+      "expected": 404,
+      "status": 404,
+      "body": {
+        "statusCode": 404,
+        "error": {
+          "code": "not_found",
+          "message": "Route GET /api/engagements not found"
+        }
+      }
+    }
+  ]
+}

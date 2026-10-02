@@ -93,6 +93,10 @@ model WebRequestLedger {
   operation WebRequestOperation
   payloadHash String
   reservationToken String
+  candidateThreadId String? @unique
+  dispatchAssistantId String?
+  dispatchKind ThreadKind?
+  dispatchConfigHash String?
   threadId String?
   runId String?
   // Held through acceptance/uncertainty until runtime completion is verified.

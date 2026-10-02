@@ -9,8 +9,11 @@ import { EngagementsRepository } from './repositories/engagements-repository.js'
 import { ProjectsService } from './services/projects-service.js';
 import { RuntimeOwnershipService } from './services/runtime-ownership.js';
 import { loadRuntimeConfig } from './config/runtime.js';
-import { RuntimeReadClient } from './integrations/runtime/read-client.js';
+import { RuntimeExecutionClient } from './integrations/runtime/execution-client.js';
 import { RuntimeContextService } from './services/runtime/runtime-context.js';
+import { RunService } from './services/runtime/run-service.js';
+import { StreamService } from './services/runtime/stream-service.js';
+import { RuntimeJoinClient } from './integrations/runtime/join-client.js';
 
 let closing = false;
 
@@ -69,14 +72,18 @@ async function main(): Promise<void> {
   }
 
   const ownership = dbClient ? new RuntimeOwnershipService(dbClient) : undefined;
-  const runtimeContext = runtimeConfig && projectsService && ownership && env.workspacePath
-    ? new RuntimeContextService({ config: runtimeConfig, projects: projectsService, ownership, workspaceRoot: env.workspacePath, runtime: new RuntimeReadClient(runtimeConfig.apiUrl) }) : undefined;
+  const runtime = runtimeConfig ? new RuntimeExecutionClient(runtimeConfig.apiUrl) : undefined;
+  const runtimeContext = runtimeConfig && runtime && projectsService && ownership && env.workspacePath
+    ? new RuntimeContextService({ config: runtimeConfig, projects: projectsService, ownership, workspaceRoot: env.workspacePath, runtime }) : undefined;
+  const runsService = ownership && runtimeContext && runtime ? new RunService({ ownership, context: runtimeContext, runtime, reads: runtime }) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
     databaseHealth,
     runtimeOwnership: ownership,
     runtimeContext,
+    runsService,
+    streamService: runsService && runtimeConfig ? new StreamService(runsService, new RuntimeJoinClient(runtimeConfig.apiUrl)) : undefined,
   });
 
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {

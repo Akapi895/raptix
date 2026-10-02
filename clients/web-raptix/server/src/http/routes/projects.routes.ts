@@ -45,7 +45,7 @@ async function sendProjectsError(
   return reply.status(500).send(apiErrorBody(500, 'Internal server error'));
 }
 
-async function runProjectsHandler(
+export async function runProjectsHandler(
   request: FastifyRequest,
   reply: FastifyReply,
   action: () => Promise<unknown>,

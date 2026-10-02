@@ -201,14 +201,86 @@ The live gate created only an owned context/checkpoint fixture, then deleted tha
 remote thread and its unique workspace; no graph runs, models or tools were invoked.
 Actual assessment execution and runtime run reconciliation are W07+ gates.
 
-## W07 — authorized after W06 gate (not started)
+## W07 — accepted by HEAD
 
-Next scope: scoped thread/run submit/state/recovery APIs using the trusted context
-and persistent intent ledger; one acknowledged run per accepted intent.
+Delivered: scoped thread creation/background run submission, owned root snapshots,
+paginated owned run/status reads, explicit and periodic lost-ACK reconciliation,
+durable dispatch proof/candidate thread identity and live thread/run capabilities.
+Same-intent replay never dispatches again; different intent under an existing ID
+conflicts. Runtime uses explicit multitask_strategy=reject/if_not_exists=reject.
+
+HEAD gate:
+
+- Actual new API5284 + PostgreSQL + LangGraph2400 passed4 groups:6 simultaneous thread
+  intents/one native thread,6 simultaneous run intents/one native run, actual planning
+  model status success, scoped snapshot/list/state, changed-intent/foreign-run denial,
+  and accepted identity/dedup preserved after API process restart. Fixture cleaned.
+- Real PostgreSQL + controlled HTTP fault-provider gates pass9 groups on fresh and
+  oldcopy lanes: duplicate/preflight race, active-run and interrupted holds, lost run
+  and thread ACK repair with no resubmit, known rejection, redaction, owner checks,
+  bounded pagination, readiness and transaction-guarded planning/execution handoff.
+- HEAD reproduced a late duplicate receiving spurious409; preflight now rechecks
+  the winning intent. Deterministic barrier regression failed then passed.
+- Actual runtime exposed a fresh boolean-channel defaultfalse masking configured
+  authorizationtrue. Fresh-only trusted thread supersteps bootstrap fixed the live
+  and controlled regression, without overwriting existing state or changing guard
+  code. See docs/decisions/0004-fresh-thread-context-bootstrap.md.
+- Dispatch-recovery migration applied only to dedicated fresh/oldcopy test DBs.
+  Existing engagement fingerprints/migration checksums preserved; W05 PostgreSQL
+  ownership/concurrency/restart regression passed both lanes under W07 handoff policy.
+- Server typecheck/lint/build/140 tests and shared contracts34 tests pass. Clean
+  install/generated-client/server140 tests/server+frontend builds without clients/web
+  pass (w07-independence.json). First-party streaming dependency declared explicitly.
+- Frontend typecheck/build/54 tests,lint0 errors/38 inherited warnings, mock-browser8/8,
+  W04 real planning-browser1/1 and W06 live context/checkpoint5 groups pass.
+
+Evidence: w07-runs.md, w07-live.json, w07-{faults,oldcopy-faults}.json,
+w07-migration-{fresh,oldcopy}.json, w07-independence.json and hydration captures.
+Live run was a context-only planning acknowledgement against an isolated fixture;
+no assessment or offensive-target execution is claimed. No staging/commit performed.
+
+## W08 — accepted by HEAD
+
+Delivered: owner-scoped GET run events bridge, native join/replay client, bounded
+incremental SSE/UTF8 decoder, typed public projection, pure bounded stream reducer
+and browser observe/refetch/reconnect orchestration. Every attach resolves W07 run
+ownership again; join is GET/cancel_on_disconnect=0 and never submits/cancels a run.
+
+HEAD gate:
+
+- Actual API5284/PostgreSQL/LangGraph2400 stream gate passes6 groups: early attach/
+  abort, genuine native cursor reconnect, late resumable replay, reducer dedup,
+  scope/cursor denial, one native execution and identity retained after API restart.
+  Actual planning run ends success; owned runtime/workspace fixture cleaned.
+- Fresh/oldcopy PostgreSQL + controlled HTTP gates pass10 groups each, including
+  stream peer abort/reconnect, redaction,85.125 seconds/source flags, no extra create,
+  no runtime cancel and no active-slot release caused by disconnect.
+- Native captured join frames are metadata/values/updates with Redis-style IDs.
+  Tuple/incremental message shapes and custom/parallel/interrupt/transcript cases are
+  separately verified with representative producer/SDK fixtures, not claimed as
+  live subagent/tool execution from the acknowledgement-only planning run.
+- Cursor commits only on the final projected event of an upstream frame; control
+  EOF/heartbeats never assign fake IDs. Checkpoint content stays runId=null with
+  separate streamRunId for cursor ownership. Full live output wins over truncated
+  checkpoint replay; private state/system/reasoning fields and sensitive args omitted.
+- Streaming19 tests/typecheck/build, contracts35 tests/build, server147 tests plus
+  typecheck/lint/build, frontend60 tests/typecheck/build pass. CLI typecheck passes.
+  Frontend lint0 errors/38 inherited warnings; mock-browser8/8 and W04 real-browser
+  1/1 pass. Clean install/generated-client/server147 tests/server+frontend builds
+  without clients/web pass (w08-independence.json).
+
+Evidence: w08-streaming.md, w08-live.json, w08-faults.json,
+w08-oldcopy-faults.json and w08-independence.json. No new DB migration/collector.
+Real Console rendering is W10; full checkpoint/history recovery remains W09 scope.
+
+## W09 — authorized after W08 gate (not started)
+
+Next scope: owned checkpoint/history/transcript recovery and stable attribution;
+unattributed history must remain thread-level rather than assigned to active run.
 
 ## Subsequent phases — pending (not started)
 
-W08–W11 stream/history/console/HITL; W12–W16
+W10–W11 console/HITL; W12–W16
 outcomes/settings/deployment; W17–W19 additional providers; W20 legacy retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the
