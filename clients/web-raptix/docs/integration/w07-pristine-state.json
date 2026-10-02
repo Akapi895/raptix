@@ -17,8 +17,8 @@
     "proxy_api_key"
   ],
   "core": {
-    "engagement_name": "w07-live-34536923-b2f9-4703-9751-dd61977bf657",
-    "workspace_path": "/workspace/w07-live-34536923-b2f9-4703-9751-dd61977bf657",
+    "engagement_name": "w07-live-4409cc86-892c-4a7a-9f41-2f5a1b16250e",
+    "workspace_path": "/workspace/w07-live-4409cc86-892c-4a7a-9f41-2f5a1b16250e",
     "target_type": "web_url",
     "target_value": "https://authorized.invalid",
     "authorization_confirmed": true

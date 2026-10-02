@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { RequestRecoveryView, ScopedRunView, ScopedThreadView } from '@raptix/web-contracts';
+import type { RequestRecoveryView, ScopedRunView, ScopedThreadView, ThreadBindingView } from '@raptix/web-contracts';
 import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtime/execution-client.js';
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
 import { RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
@@ -97,6 +97,10 @@ export class RunService {
     const page = parseRunPage(raw);
     const rows = await this.options.ownership.runs(user, engagement, thread, page.offset, page.limit + 1);
     return { runs: await Promise.all(rows.slice(0, page.limit).map(row => this.getRun(user, engagement, thread, row.runId!))), offset: page.offset, nextOffset: rows.length > page.limit ? page.offset + page.limit : null };
+  }
+  public async listThreads(user: string, engagement: string): Promise<{ engagementId: string; threads: ThreadBindingView[]; source: 'runtime' }> {
+    const threads = await this.options.ownership.listBindings(user, engagement);
+    return { engagementId: engagement, threads, source: 'runtime' };
   }
   public async snapshot(user: string, engagement: string, thread: string): Promise<ScopedThreadView> {
     const { ownership, context, reads } = this.options;

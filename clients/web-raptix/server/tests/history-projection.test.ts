@@ -50,6 +50,22 @@ describe('projectThreadHistory', () => {
   });
 });
 
+describe('RunService.listThreads selector feed', () => {
+  const binding = { engagementId: 'eng', threadId: 'thread', assistantId: 'soundwave', kind: 'planning' as const, createdAt: '2026-10-02T00:00:00.000Z', updatedAt: '2026-10-02T00:00:00.000Z' };
+  const service = new RunService({
+    ownership: { listBindings: async (user: string, engagement: string) => user === 'local' && engagement === 'eng' ? [binding] : [] } as unknown as ConstructorParameters<typeof RunService>[0]['ownership'],
+    context: {} as ConstructorParameters<typeof RunService>[0]['context'],
+    runtime: {} as ConstructorParameters<typeof RunService>[0]['runtime'],
+    reads: {} as ConstructorParameters<typeof RunService>[0]['reads'],
+  });
+  it('returns only owner-scoped bindings in the scoped thread list view', async () => {
+    const view = await service.listThreads('local', 'eng');
+    expect(view).toEqual({ engagementId: 'eng', threads: [binding], source: 'runtime' });
+    const foreign = await service.listThreads('intruder', 'eng');
+    expect(foreign.threads).toEqual([]);
+  });
+});
+
 describe('RunService.snapshot history attachment', () => {
   const binding = { engagementId: 'eng', threadId: 'thread', assistantId: 'soundwave', kind: 'planning' as const, createdAt: '2026-10-02T00:00:00.000Z', updatedAt: '2026-10-02T00:00:00.000Z' };
   const service = new RunService({

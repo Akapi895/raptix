@@ -11,11 +11,10 @@ import type { RealNewProjectFormError } from '../features/projects/real-project.
  * One truthful reason per non-charter workspace page. The charter landing
  * (default route) is the only page with a connected real source: the public
  * project DTO. Owning work packages are named so the unavailable state is
- * auditable, not vague.
+ * auditable, not vague. Operator Console (W10) renders real threads/runs and
+ * is mounted directly; its pending HITL/controls stay W11.
  */
 export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
-  'operator-console':
-    'The Operator Console binds to server threads, runs and HITL flows (work packages W07-W11). No runtime source is connected yet.',
   'vector-campaigns':
     'Vector campaigns need the campaign provider APIs (work package W17), which are not connected yet.',
   'c2-sessions':
