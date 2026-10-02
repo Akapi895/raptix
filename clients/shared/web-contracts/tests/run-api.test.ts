@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isEngagementSettingsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isCampaignJobView, isCampaignView, isCampaignsView, isEngagementSettingsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isMemberView, isMembersView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView, isVaultRevealView, isVaultSecretView, isVaultView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -100,4 +100,43 @@ it('validates engagement settings with the explicit target-change policy additiv
   expect(isEngagementSettingsView({ ...settings, targetChange: { allowed: false } })).toBe(false);
   expect(isEngagementSettingsView({ ...settings, displayName: 5 })).toBe(false);
   expect(isEngagementSettingsView({ ...settings, authorizationConfirmed: 'yes' })).toBe(false);
+});
+it('validates campaign drafts and truthful provider jobs additively', () => {
+  const job = { id: 'job-1', campaignId: 'camp-1', kind: 'generate', status: 'unavailable', provider: null, error: 'campaign provider not configured', createdAt: '2026-10-02T00:00:00.000Z' };
+  const campaign = { id: 'camp-1', engagementId: 'eng-1', name: 'Phishing Wave 1', vector: 'phishing', status: 'draft', version: 1, spec: { scenario: 'it-security-alert' }, jobs: [job], createdAt: '2026-10-02T00:00:00.000Z', updatedAt: '2026-10-02T00:00:00.000Z' };
+  expect(isCampaignJobView(job)).toBe(true);
+  expect(isCampaignView(campaign)).toBe(true);
+  expect(isCampaignsView({ engagementId: 'eng-1', campaigns: [campaign], truncated: false })).toBe(true);
+  expect(isCampaignJobView({ ...job, kind: 'send' })).toBe(false);
+  expect(isCampaignJobView({ ...job, status: '' })).toBe(false);
+  expect(isCampaignJobView({ ...job, provider: '' })).toBe(false);
+  expect(isCampaignJobView({ ...job, provider: 'sliver' })).toBe(true);
+  expect(isCampaignView({ ...campaign, vector: 'sms' })).toBe(false);
+  expect(isCampaignView({ ...campaign, version: 0 })).toBe(false);
+  expect(isCampaignView({ ...campaign, spec: [] })).toBe(false);
+  expect(isCampaignView({ ...campaign, jobs: [{ ...job, id: '' }] })).toBe(false);
+  expect(isCampaignsView({ engagementId: 'eng-1', campaigns: [], truncated: 'no' })).toBe(false);
+});
+it('validates redacted vault metadata and the dedicated reveal response additively', () => {
+  const secret = { id: 'sec-1', engagementId: 'eng-1', kind: 'api-key', label: 'Grafana admin', createdBy: 'local', revealCount: 1, lastRevealedAt: '2026-10-02T00:00:00.000Z', createdAt: '2026-10-02T00:00:00.000Z', updatedAt: '2026-10-02T00:00:00.000Z' };
+  expect(isVaultSecretView(secret)).toBe(true);
+  expect(isVaultView({ engagementId: 'eng-1', secrets: [secret], truncated: false, source: 'db' })).toBe(true);
+  expect(isVaultRevealView({ secretId: 'sec-1', engagementId: 'eng-1', plaintext: 'hunter2', revealedAt: '2026-10-02T00:00:00.000Z' })).toBe(true);
+  expect(isVaultSecretView({ ...secret, kind: '' })).toBe(false);
+  expect(isVaultSecretView({ ...secret, revealCount: -1 })).toBe(false);
+  expect(isVaultSecretView({ ...secret, lastRevealedAt: 'yesterday' })).toBe(false);
+  expect(isVaultView({ engagementId: 'eng-1', secrets: [], truncated: false, source: 'derived' })).toBe(false);
+  expect(isVaultRevealView({ secretId: 'sec-1', engagementId: 'eng-1', plaintext: '', revealedAt: '2026-10-02T00:00:00.000Z' })).toBe(false);
+});
+it('validates the truthful local single-user members view additively', () => {
+  const member = { id: 'local', label: 'Local Operator', role: 'operator', source: 'local' };
+  const members = { engagementId: 'eng-1', mode: 'local-single-user', members: [member], inviteSupported: false, reason: 'No authentication strategy yet', source: 'db' };
+  expect(isMemberView(member)).toBe(true);
+  expect(isMembersView(members)).toBe(true);
+  expect(isMemberView({ ...member, source: 'fixture' })).toBe(false);
+  expect(isMembersView({ ...members, mode: 'hosted' })).toBe(false);
+  expect(isMembersView({ ...members, inviteSupported: true })).toBe(false);
+  expect(isMembersView({ ...members, reason: null })).toBe(true);
+  expect(isMembersView({ ...members, members: [] })).toBe(true);
+  expect(isMembersView({ ...members, source: 'derived' })).toBe(false);
 });

@@ -44,6 +44,8 @@ model Engagement {
   runtimeContextLockedAt DateTime?
   threads EngagementThread[]
   requests WebRequestLedger[]
+  campaigns Campaign[]
+  vaultSecrets VaultSecret[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -110,4 +112,74 @@ model WebRequestLedger {
   @@unique([engagementId, requestId])
   @@unique([threadId, runId])
   @@index([state, updatedAt])
+}
+
+
+// -- W17 vector campaigns ---------------------------------------------
+// Persisted drafts plus truthful provider jobs. The campaign provider is not
+// wired in this build; generate/deploy attempts record durable jobs with an
+// explicit unavailable status instead of fabricating Generated/Delivered.
+
+model Campaign {
+  id           String @id @default(cuid())
+  engagementId String
+  name         String
+  vector       String
+  status       String @default("draft")
+  version      Int    @default(1)
+  spec         Json
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  jobs         CampaignJob[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([engagementId, name])
+  @@index([engagementId, status])
+}
+
+model CampaignJob {
+  id         String @id @default(cuid())
+  campaignId String
+  kind       String
+  status     String @default("unavailable")
+  provider   String?
+  error      String?
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([campaignId, createdAt])
+}
+
+
+// -- W18 credentials vault --------------------------------------------
+// Server-side encrypted secret storage (AES-256-GCM). The API returns only
+// redacted metadata; plaintext exists solely in the dedicated reveal
+// response, and every reveal is written to the engagement-scoped audit log
+// (which intentionally survives secret deletion).
+
+model VaultSecret {
+  id           String @id @default(cuid())
+  engagementId String
+  kind         String
+  label        String
+  ciphertext   String
+  iv           String
+  authTag      String
+  createdBy    String
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([engagementId, kind])
+}
+
+model VaultAudit {
+  id           String @id @default(cuid())
+  engagementId String
+  secretId     String
+  action       String
+  createdAt    DateTime @default(now())
+
+  @@index([engagementId, createdAt])
 }

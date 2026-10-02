@@ -31,6 +31,13 @@ export interface ServerEnv {
    * well-known password refuses to serve graph data at all.
    */
   readonly graph?: { readonly httpUri: string; readonly user: string; readonly password: string };
+  /**
+   * Base64-encoded 32-byte AES-256 vault key (VAULT_ENCRYPTION_KEY).
+   * Optional: without it the vault capability reports unavailable and every
+   * vault write/reveal answers 503. Invalid shapes are rejected at startup;
+   * the value is a secret and is never logged or echoed.
+   */
+  readonly vaultKey?: Buffer;
 }
 
 export const SERVER_ENV_DEFAULTS: Readonly<
@@ -184,6 +191,28 @@ function readGraphConfig(
   return { httpUri, user: source.NEO4J_USER ?? 'neo4j', password };
 }
 
+/**
+ * Optional base64 32-byte vault key. Invalid lengths fail loudly instead of
+ * silently weakening the vault; the raw value is treated as a secret.
+ */
+function readVaultKey(
+  source: NodeJS.ProcessEnv,
+  issues: string[],
+): Buffer | undefined {
+  const raw = source.VAULT_ENCRYPTION_KEY;
+  if (raw === undefined) return undefined;
+  if (raw.trim().length === 0) {
+    issues.push('VAULT_ENCRYPTION_KEY must be a non-empty base64 key or unset');
+    return undefined;
+  }
+  const decoded = Buffer.from(raw, 'base64');
+  if (decoded.length !== 32) {
+    issues.push('VAULT_ENCRYPTION_KEY must decode to exactly 32 bytes (base64-encoded AES-256 key)');
+    return undefined;
+  }
+  return decoded;
+}
+
 export function loadServerEnv(
   source: NodeJS.ProcessEnv = process.env,
 ): ServerEnv {
@@ -195,6 +224,7 @@ export function loadServerEnv(
   const databaseUrl = readDatabaseUrl(source, issues);
   const workspacePath = readWorkspacePath(source, issues);
   const graph = readGraphConfig(source, issues);
+  const vaultKey = readVaultKey(source, issues);
   if (issues.length > 0) {
     throw new EnvValidationError(issues);
   }
@@ -206,6 +236,7 @@ export function loadServerEnv(
     ...(databaseUrl === undefined ? {} : { databaseUrl }),
     ...(workspacePath === undefined ? {} : { workspacePath }),
     ...(graph === undefined ? {} : { graph }),
+    ...(vaultKey === undefined ? {} : { vaultKey }),
   } satisfies ServerEnv;
 }
 

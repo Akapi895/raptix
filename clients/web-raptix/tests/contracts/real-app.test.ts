@@ -9,9 +9,9 @@ import {
 import { ApiNetworkError, ApiStatusError } from '../../src/shared/api/errors'
 
 describe('real workspace capabilities (W03 composition)', () => {
-  it('gives unconnected pages a truthful reason while Charter/Scope/Console/Findings/Infrastructure/Assets/Logs/Reports/Settings are mounted real', () => {
+  it('gives no unavailable reasons while every workspace page is mounted real', () => {
     for (const item of ACTIVE_NAV_ITEMS) {
-      if (item.id === 'charter' || item.id === 'scope-boundaries' || item.id === 'operator-console' || item.id === 'findings' || item.id === 'infrastructure' || item.id === 'assets' || item.id === 'logs' || item.id === 'reports' || item.id === 'project-settings') {
+      if (item.id === 'charter' || item.id === 'scope-boundaries' || item.id === 'operator-console' || item.id === 'findings' || item.id === 'infrastructure' || item.id === 'assets' || item.id === 'logs' || item.id === 'reports' || item.id === 'project-settings' || item.id === 'vector-campaigns' || item.id === 'c2-sessions' || item.id === 'credentials' || item.id === 'members') {
         expect(REAL_UNAVAILABLE_REASONS[item.id], `${item.id} is connected and must not be listed unavailable`).toBeUndefined()
         continue
       }
