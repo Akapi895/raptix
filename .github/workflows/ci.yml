@@ -83,6 +83,16 @@ jobs:
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
+            web-raptix:
+              - 'clients/web-raptix/**'
+              - 'clients/shared/**'
+              - 'containers/web-raptix.Dockerfile'
+              - 'containers/web-raptix-server.Dockerfile'
+              - 'containers/web-raptix-proxy.conf'
+              - 'docker-compose.web-raptix.yml'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
             desktop:
               - 'clients/desktop/**'
               - 'package.json'
@@ -132,6 +142,21 @@ jobs:
               - 'containers/web.Dockerfile'
               - 'clients/web/**'
               - 'clients/cli/**'
+              - 'clients/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
+            web-raptix:
+              - 'containers/web-raptix.Dockerfile'
+              - 'containers/web-raptix-proxy.conf'
+              - 'clients/web-raptix/**'
+              - 'clients/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
+            web-raptix-server:
+              - 'containers/web-raptix-server.Dockerfile'
+              - 'clients/web-raptix/**'
               - 'clients/shared/**'
               - 'package.json'
               - 'package-lock.json'
@@ -499,6 +524,45 @@ jobs:
         run: cd clients/web && npm run build
         env:
           NEXT_PUBLIC_RAPTIX_EDITION: oss
+
+  # New-stack (W16 cutover) lane: web-raptix UI + API quality gates. Kept as a
+  # separate job from the legacy `web` job during the rollback window; the
+  # legacy job retires with W20 (guide §14.5).
+  web-raptix:
+    name: Web raptix (lint + test + build)
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - if: needs.changes.outputs.web-raptix != 'true'
+        run: 'echo "No web-raptix-relevant changes — emitting success."'
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        if: needs.changes.outputs.web-raptix == 'true'
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        if: needs.changes.outputs.web-raptix == 'true'
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - if: needs.changes.outputs.web-raptix == 'true'
+        run: npm ci
+      - name: Build shared workspaces
+        if: needs.changes.outputs.web-raptix == 'true'
+        run: |
+          npm run build --workspace=@raptix/streaming
+          npm run build --workspace=@raptix/web-contracts
+      - name: Server typecheck + tests
+        if: needs.changes.outputs.web-raptix == 'true'
+        run: |
+          npm run typecheck --workspace=@raptix/web-raptix-server
+          npm run test --workspace=@raptix/web-raptix-server
+      - name: UI typecheck + lint + build + tests
+        if: needs.changes.outputs.web-raptix == 'true'
+        run: |
+          npm run typecheck --workspace=@raptix/web-raptix
+          npm run lint --workspace=@raptix/web-raptix
+          npm run build --workspace=@raptix/web-raptix
+          npm run test --workspace=@raptix/web-raptix
 
   # Go launcher: vet + test. Mirrors what release.yml runs before GoReleaser
   # builds the binaries on tag push, so a broken `go test ./...` is caught
