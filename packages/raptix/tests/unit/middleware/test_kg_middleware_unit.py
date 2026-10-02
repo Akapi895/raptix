@@ -116,7 +116,11 @@ def test_before_agent_rebuilds_summary_after_revision_advance(
         "kg_summary": "old",
     }
     out = mw.before_agent(state, runtime=None)
-    assert out == {"kg_revision": "rev-acme-12", "kg_summary": "fresh-summary"}
+    assert out == {
+        "kg_revision": "rev-acme-12",
+        "kg_summary": "fresh-summary",
+        "kg_operational_state": "",
+    }
 
 
 def test_before_agent_swallows_store_failure(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -143,6 +147,42 @@ def test_before_agent_summary_failure_records_empty_string(
     # The revision still advances so we don't keep retrying the broken
     # summary path on every turn.
     assert out["kg_revision"] == "rev-acme-1"
+
+
+def test_before_agent_includes_operational_state(monkeypatch: pytest.MonkeyPatch) -> None:
+    store = _store_mock(revision="rev-acme-7")
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_summary",
+        lambda store, *, engagement: "summary",
+    )
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_operational_state",
+        lambda store, *, engagement: "## OPERATIONAL STATE (SHADOW)\n- jdoe @ WS01",
+    )
+    mw = KGMiddleware(store=store)
+    out = mw.before_agent({"engagement_name": "acme"}, runtime=None)
+    assert out is not None
+    assert out["kg_operational_state"] == "## OPERATIONAL STATE (SHADOW)\n- jdoe @ WS01"
+
+
+def test_before_agent_operational_state_failure_is_isolated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Projection failure must not take the narrative summary down."""
+    store = _store_mock(revision="rev-acme-1")
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_summary",
+        lambda store, *, engagement: "summary-still-fine",
+    )
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_operational_state",
+        lambda store, *, engagement: (_ for _ in ()).throw(RuntimeError("cypher typo")),
+    )
+    mw = KGMiddleware(store=store)
+    out = mw.before_agent({"engagement_name": "acme"}, runtime=None)
+    assert out is not None
+    assert out["kg_summary"] == "summary-still-fine"
+    assert out["kg_operational_state"] == ""
 
 
 # ── wrap_model_call / _inject_kg_context ────────────────────────────────
@@ -216,6 +256,46 @@ def test_wrap_model_call_omits_dynamic_block_when_summary_empty() -> None:
     assert KG_SYSTEM_PROMPT in static["text"]
     # No second block with empty text.
     assert all(b.get("text") for b in blocks if isinstance(b, dict))
+
+
+def test_wrap_model_call_injects_shadow_block_after_summary() -> None:
+    mw = _middleware()
+    sys_msg = SystemMessage(content="base prompt")
+    request = _fake_request(
+        state={
+            "kg_engagement": "acme",
+            "kg_summary": "## KG STATE (engagement=acme)",
+            "kg_operational_state": "## OPERATIONAL STATE (SHADOW)\n- jdoe @ WS01",
+        },
+        system_message=sys_msg,
+    )
+    out = mw.wrap_model_call(request, lambda req: req)
+    blocks = out.system_message.content
+    static = blocks[-3]
+    summary = blocks[-2]
+    shadow = blocks[-1]
+    assert KG_SYSTEM_PROMPT in static["text"]
+    assert "KG STATE (engagement=acme)" in summary["text"]
+    assert "OPERATIONAL STATE (SHADOW)" in shadow["text"]
+    assert "jdoe @ WS01" in shadow["text"]
+
+
+def test_wrap_model_call_omits_shadow_block_when_empty() -> None:
+    mw = _middleware()
+    sys_msg = SystemMessage(content="base prompt")
+    request = _fake_request(
+        state={
+            "kg_engagement": "acme",
+            "kg_summary": "## KG STATE (engagement=acme)",
+            "kg_operational_state": "",
+        },
+        system_message=sys_msg,
+    )
+    out = mw.wrap_model_call(request, lambda req: req)
+    blocks = out.system_message.content
+    # Shadow block dropped entirely — no empty text block.
+    assert all(b.get("text") for b in blocks if isinstance(b, dict))
+    assert all("OPERATIONAL STATE" not in b["text"] for b in blocks if isinstance(b, dict))
 
 
 # ── wrap_tool_call ──────────────────────────────────────────────────────

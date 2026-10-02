@@ -1,9 +1,9 @@
 """KGState — agent-state extension owned by ``KGMiddleware``.
 
-Three ``NotRequired`` fields stash KG-relevant context for the agent's
+Four ``NotRequired`` fields stash KG-relevant context for the agent's
 turn. The middleware's ``before_agent`` hook hydrates them; the
-``wrap_model_call`` hook reads ``kg_summary`` and injects it into the
-system message.
+``wrap_model_call`` hook reads ``kg_summary`` and
+``kg_operational_state`` and injects them into the system message.
 
 The state schema is auto-merged with the underlying ``AgentState`` at
 ``create_agent`` compile time (langchain middleware behavior) so the
@@ -27,13 +27,13 @@ class KGState(AgentState):
     agent built without the KG slot retains its original state surface.
 
     Each channel carries ``reduce_converging_value``. The KG slot runs in
-    several subagent roles (analyst / contract_auditor / ad_operator), so an
+    several     subagent roles (analyst / contract_auditor / ad_operator), so an
     orchestrator that dispatches two of them in parallel writes these channels
-    from concurrent branches. All three derive from the single shared
+    from concurrent branches. All four derive from the single shared
     ``KGStore`` (same engagement scope, same revision token, same rendered
     summary), so every branch carries the same value — last-write-wins is
     correct, and the reducer satisfies LangGraph's contract for parallel writes
-    (without it, fan-out trips INVALID_CONCURRENT_GRAPH_UPDATE; cf. #183).
+    orchestration fan-out trips INVALID_CONCURRENT_GRAPH_UPDATE; cf. #183).
     """
 
     kg_engagement: NotRequired[
@@ -61,6 +61,18 @@ class KGState(AgentState):
                 "Cached markdown summary block. Injected into the system "
                 "message in ``wrap_model_call`` so the LLM sees current "
                 "graph state without burning tokens on read tools."
+            ),
+            reduce_converging_value,
+        ]
+    ]
+    kg_operational_state: NotRequired[
+        Annotated[
+            str,
+            (
+                "Cached markdown operational-state projection (sessions, "
+                "credentials, reachability). Shadow-mode companion to "
+                "``kg_summary`` (ADR-0032) — rebuilt alongside it when the "
+                "revision advances; empty string means nothing to inject."
             ),
             reduce_converging_value,
         ]

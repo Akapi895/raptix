@@ -21,7 +21,8 @@ Hooks:
   * ``wrap_model_call`` — inject the cached summary block into the
                           system message as a cache-friendly two-block
                           insertion (static prompt-cache breakpoint +
-                          dynamic stats).
+                          dynamic stats), plus the optional shadow
+                          operational-state projection (ADR-0032).
   * ``wrap_tool_call``  — defense-in-depth refusal of ``kg_record`` /
                           ``kg_ingest`` when ``kg_engagement`` is unset.
                           The tools themselves enforce the same rule;
@@ -44,6 +45,7 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from typing_extensions import override
 
+from raptix.middleware.kg_internal.operational_state import build_operational_state
 from raptix.middleware.kg_internal.state import KGState
 from raptix.middleware.kg_internal.store import KGStore
 from raptix.middleware.kg_internal.summary import build_summary
@@ -125,7 +127,8 @@ class KGMiddleware(AgentMiddleware):
         return self._hydrate_kg_state(state)
 
     def _hydrate_kg_state(self, state: Any) -> dict[str, Any] | None:
-        """Set ``kg_engagement`` / ``kg_revision`` / ``kg_summary`` from store."""
+        """Set ``kg_engagement`` / ``kg_revision`` / ``kg_summary`` /
+        ``kg_operational_state`` from store."""
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         engagement = str(get("kg_engagement") or get("engagement_name") or "").strip()
         if not engagement:
@@ -149,6 +152,16 @@ class KGMiddleware(AgentMiddleware):
             except Exception as exc:
                 log.warning("KGMiddleware summary build failed: %s", exc)
                 updates["kg_summary"] = ""
+            # Step 5 (ADR-0032): shadow-mode projection, its own fail-safe —
+            # a projection failure must never take the summary down (and
+            # "" means the injection layer drops the block silently).
+            try:
+                updates["kg_operational_state"] = build_operational_state(
+                    self._store, engagement=engagement
+                )
+            except Exception as exc:
+                log.warning("KGMiddleware operational-state build failed: %s", exc)
+                updates["kg_operational_state"] = ""
         return updates or None
 
     # ── before_model ───────────────────────────────────────────────────
@@ -204,6 +217,14 @@ class KGMiddleware(AgentMiddleware):
         except Exception as exc:
             log.warning("KGMiddleware before_model summary build failed: %s", exc)
             updates["kg_summary"] = ""
+        # Same isolation contract as _hydrate_kg_state (ADR-0032).
+        try:
+            updates["kg_operational_state"] = build_operational_state(
+                self._store, engagement=engagement
+            )
+        except Exception as exc:
+            log.warning("KGMiddleware before_model operational-state build failed: %s", exc)
+            updates["kg_operational_state"] = ""
         return updates
 
     # ── wrap_model_call ───────────────────────────────────────────────
@@ -225,6 +246,7 @@ class KGMiddleware(AgentMiddleware):
         state = request.state or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         summary = str(get("kg_summary") or "")
+        operational = str(get("kg_operational_state") or "")
 
         # No engagement / no summary yet — pass the request through.
         if not get("kg_engagement"):
@@ -238,6 +260,8 @@ class KGMiddleware(AgentMiddleware):
         injected_blocks: list[dict[str, Any]] = [static_block]
         if summary:
             injected_blocks.append({"type": "text", "text": "\n\n" + summary})
+        if operational:
+            injected_blocks.append({"type": "text", "text": "\n\n" + operational})
 
         if request.system_message is not None:
             new_content = [
