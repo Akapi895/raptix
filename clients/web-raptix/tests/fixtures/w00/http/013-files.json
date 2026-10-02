@@ -1,0 +1,39 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "GET",
+  "path": "/api/workspace/w00-capture-assessment/files",
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "folders": [
+      {
+        "folder": "recon",
+        "files": [
+          {
+            "name": "sample.txt",
+            "folder": "recon",
+            "path": "recon/sample.txt",
+            "size": 194
+          }
+        ]
+      },
+      {
+        "folder": "findings",
+        "files": [
+          {
+            "name": "FIND-001.md",
+            "folder": "findings",
+            "path": "findings/FIND-001.md",
+            "size": 516
+          },
+          {
+            "name": "FIND-002.md",
+            "folder": "findings",
+            "path": "findings/FIND-002.md",
+            "size": 115
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "POST",
+  "path": "/api/engagements",
+  "status": 400,
+  "contentType": "application/json",
+  "body": {
+    "error": "Explicit authorization confirmation is required"
+  }
+}

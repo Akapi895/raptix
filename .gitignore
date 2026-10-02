@@ -135,3 +135,6 @@ benchmark/results/XBEN-*-24/run-loop*.log
 
 # Internal design docs (specs/plans) — local only, not part of OSS distribution
 docs/superpowers/
+
+clients/web-raptix/test-results-planning/
+clients/web-raptix/.figma/

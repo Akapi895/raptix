@@ -1,0 +1,34 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "GET",
+  "path": "/api/health",
+  "status": 200,
+  "contentType": "application/json",
+  "body": {
+    "status": "degraded",
+    "services": [
+      {
+        "name": "langgraph",
+        "status": "error",
+        "detail": "fetch failed"
+      },
+      {
+        "name": "litellm",
+        "status": "error",
+        "detail": "LITELLM_API_KEY not configured"
+      },
+      {
+        "name": "neo4j",
+        "status": "error",
+        "detail": "fetch failed"
+      },
+      {
+        "name": "postgres",
+        "status": "ok",
+        "detail": "connected",
+        "latencyMs": 2
+      }
+    ],
+    "modelCount": 0
+  }
+}

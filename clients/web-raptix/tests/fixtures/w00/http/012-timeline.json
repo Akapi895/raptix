@@ -1,0 +1,58 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "GET",
+  "path": "/api/engagements/cmupmdkw400013togf2geknfy/timeline",
+  "status": 200,
+  "contentType": "application/json",
+  "body": [
+    {
+      "timestamp": "2026-10-01T14:18:39.748Z",
+      "type": "plan_created",
+      "title": "Engagement created",
+      "detail": "w00-capture-assessment (web_url: http://authorized-test.invalid)"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.864Z",
+      "type": "finding_discovered",
+      "title": "FIND-002",
+      "detail": "FIND-002"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.864Z",
+      "type": "file_created",
+      "title": "recon/sample.txt",
+      "detail": "0.2 KB"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.863Z",
+      "type": "plan_created",
+      "title": "CONOPS created",
+      "detail": "conops.json"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.863Z",
+      "type": "plan_created",
+      "title": "DECONFLICTION created",
+      "detail": "deconfliction.json"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.863Z",
+      "type": "plan_created",
+      "title": "OPPLAN created",
+      "detail": "opplan.json"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.863Z",
+      "type": "finding_discovered",
+      "title": "Synthetic exposed service header",
+      "detail": "FIND-001",
+      "severity": "high"
+    },
+    {
+      "timestamp": "2026-10-01T14:18:36.862Z",
+      "type": "plan_created",
+      "title": "ROE created",
+      "detail": "roe.json"
+    }
+  ]
+}
