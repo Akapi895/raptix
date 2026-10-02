@@ -2,17 +2,23 @@
   "name": "raptix",
   "private": true,
   "workspaces": [
-    "clients/*",
+    "clients/cli",
+    "clients/desktop",
+    "clients/web-raptix",
+    "clients/web-raptix/server",
     "clients/shared/*"
   ],
   "scripts": {
-    "dev": "npm run dev --workspace=clients/web",
-    "build": "npm run build --workspace=clients/web",
-    "start": "npm run start --workspace=clients/web",
+    "dev": "npm run dev --workspace=@raptix/web-raptix",
+    "dev:api": "npm run dev --workspace=@raptix/web-raptix-server",
+    "build": "npm run build --workspace=@raptix/web-raptix",
+    "build:api": "npm run build --workspace=@raptix/web-raptix-server",
+    "start": "npm run start --workspace=@raptix/web-raptix-server",
+    "start:web": "npm run preview --workspace=@raptix/web-raptix",
     "desktop": "npm run start --workspace=@raptix/desktop",
     "desktop:test": "npm test --workspace=@raptix/desktop",
-    "prisma:generate": "npm run prisma:generate --workspace=clients/web",
-    "prisma:migrate": "npm run prisma:migrate --workspace=clients/web"
+    "prisma:generate": "npm run prisma:generate --workspace=@raptix/web-raptix-server",
+    "prisma:migrate": "npm run prisma:migrate --workspace=@raptix/web-raptix-server"
   },
   "dependencies": {
     "@prisma/client": "^7.7.0"

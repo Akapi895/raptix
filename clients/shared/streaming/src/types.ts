@@ -35,10 +35,20 @@ export interface SubagentCustomEvent {
   status?: string;
   cancelled?: boolean;
   error?: boolean;
+  // Raw emitter identity fields (subagent_streaming.py). `session_id` is the
+  // invocation-unique grouping key (camelCased to `sessionId` in StreamEvent
+  // and the normalized shape); `created_at` is an ISO-8601 UTC timestamp.
+  // Present on every StreamingRunnable event; the ask_user_question,
+  // engagement_ready and background_complete emitters do not set them yet.
+  session_id?: string;
+  created_at?: string;
   // ask_user_question fields. `id` is the LangChain tool_call_id and is used
   // by consumers to deduplicate the second emission that fires when LangGraph
-  // re-executes the tool body after Command(resume=...).
-  id?: string;
+  // re-executes the tool body after Command(resume=...). Nullable: tool_call
+  // events forward ToolCall.id verbatim and LangChain allows None
+  // (subagent_tool_call emits `"id": null` when the model omitted it), so
+  // `null` means "explicitly no id" and must not be treated as a usable key.
+  id?: string | null;
   question?: string;
   header?: string;
   options?: AskUserOption[];
