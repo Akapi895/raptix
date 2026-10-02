@@ -25,6 +25,12 @@ Why a RunnableBinding subclass:
   graph — silently dropping this wrapper before dispatch. RunnableBinding's
   built-in with_config() reconstructs `self.__class__(...)`, so subclassing
   preserves the wrapper across deepagents' registration step.
+
+Step 1 of the control-plane fix sequence (ADR-0028): failure outcomes
+are now typed (``DispatchFailureOutcome``) and dispatch-scoped, not
+role-scoped. The text ``[TERMINAL]`` marker is preserved for backward
+compatibility; new consumers should read the structured field on the
+returned AIMessage.
 """
 
 from __future__ import annotations
@@ -42,6 +48,11 @@ from typing import Any, Callable
 from langchain_core.messages import AIMessage
 from langchain_core.messages.tool import ToolCall
 from langchain_core.runnables import Runnable, RunnableBinding
+
+from raptix_core.types.dispatch_outcome import (
+    DispatchFailureOutcome,
+    FailureKind,
+)
 
 log = logging.getLogger("raptix.subagent_streaming")
 
@@ -202,7 +213,14 @@ class StreamingRunnable(RunnableBinding):
         super().__init__(**data)
         # Pydantic BaseModel: use object.__setattr__ to attach mutable
         # per-instance state outside the declared field schema.
+        # Step 1 (ADR-0028): failure tracking is now dispatch-scoped, not
+        # role-scoped. ``_dispatch_failures`` maps dispatch_id -> count;
+        # ``_consecutive_failures`` is kept for backward compatibility with
+        # the existing terminal-guard tests (test_subagent_streaming_guard).
         object.__setattr__(self, "_consecutive_failures", 0)
+        object.__setattr__(self, "_dispatch_failures", {})
+        object.__setattr__(self, "_current_dispatch_id", None)
+        object.__setattr__(self, "_current_objective_id", None)
 
     def with_config(self, config: Any = None, **kwargs: Any) -> "StreamingRunnable":
         rebound = super().with_config(config, **kwargs)
@@ -211,24 +229,111 @@ class StreamingRunnable(RunnableBinding):
             "_consecutive_failures",
             int(getattr(self, "_consecutive_failures", 0)),
         )
+        object.__setattr__(
+            rebound,
+            "_dispatch_failures",
+            dict(getattr(self, "_dispatch_failures", {})),
+        )
+        object.__setattr__(
+            rebound,
+            "_current_dispatch_id",
+            getattr(self, "_current_dispatch_id", None),
+        )
+        object.__setattr__(
+            rebound,
+            "_current_objective_id",
+            getattr(self, "_current_objective_id", None),
+        )
         return rebound
 
-    def _bump_failure_and_format(self, exc: BaseException) -> str:
-        """Increment the failure counter; return the message body for the
-        returned state. Switches to a distinct TERMINAL marker once the cap
-        is reached so the orchestrator can stop re-delegating."""
-        n = int(getattr(self, "_consecutive_failures", 0)) + 1
-        object.__setattr__(self, "_consecutive_failures", n)
-        if n >= MAX_SUBAGENT_CONSECUTIVE_FAILURES:
-            return (
+    def _classify_failure(self, exc: BaseException) -> FailureKind:
+        """Map a Python exception to a FailureKind.
+
+        Best-effort classification; defaults to EXECUTION when the
+        exception type does not match a known pattern. The orchestrator
+        should treat the classification as a hint, not a hard contract.
+        """
+        name = type(exc).__name__
+        if name in {"RecursionError", "TimeoutError", "asyncio.TimeoutError"}:
+            return FailureKind.EXECUTION
+        if name in {"KeyError", "ValueError", "TypeError", "AttributeError"}:
+            return FailureKind.STATE
+        if name in {"PermissionError", "ConnectionError", "OSError"}:
+            return FailureKind.TOOL
+        if name in {"BudgetExceeded"}:
+            return FailureKind.CONTROL
+        return FailureKind.EXECUTION
+
+    def _bump_failure_and_format(
+        self,
+        exc: BaseException,
+        dispatch_id: str | None = None,
+        objective_id: str | None = None,
+        partial_state_refs: list[str] | None = None,
+    ) -> tuple[str, DispatchFailureOutcome]:
+        """Increment the failure counter; return (text, typed_outcome).
+
+        Step 1 (ADR-0028): the counter is now dispatch-scoped. The
+        returned ``DispatchFailureOutcome`` carries
+        ``terminal_for_this_dispatch`` so the orchestrator can stop
+        retrying this specific dispatch without disabling the role.
+
+        The text body is preserved for backward compatibility with
+        existing consumers and the terminal-guard tests. When
+        ``dispatch_id`` is None (legacy callers / tests), the
+        role-scoped counter is used for the text so the existing
+        terminal-guard behavior is preserved.
+        """
+        # Legacy role-scoped counter (always incremented for backward
+        # compat with test_subagent_streaming_guard).
+        legacy_n = int(getattr(self, "_consecutive_failures", 0)) + 1
+        object.__setattr__(self, "_consecutive_failures", legacy_n)
+
+        # Dispatch-scoped counter (new in Step 1).
+        if dispatch_id is not None:
+            failures = dict(getattr(self, "_dispatch_failures", {}))
+            n = int(failures.get(dispatch_id, 0)) + 1
+            failures[dispatch_id] = n
+            object.__setattr__(self, "_dispatch_failures", failures)
+        else:
+            # Legacy path: use the role-scoped counter so the text
+            # matches the pre-Step-1 behavior.
+            n = legacy_n
+
+        terminal = n >= MAX_SUBAGENT_CONSECUTIVE_FAILURES
+        failure_kind = self._classify_failure(exc)
+        outcome = DispatchFailureOutcome(
+            failure_kind=failure_kind,
+            terminal_for_this_dispatch=terminal,
+            objective_id=objective_id,
+            dispatch_id=dispatch_id,
+            consecutive_failure_count=n,
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+            partial_state_refs=list(partial_state_refs or []),
+        )
+        if terminal:
+            text = (
                 f"{_TERMINAL_MARKER} subagent '{self._name}' failed {n} "
                 f"consecutive times; aborting this objective. "
                 f"Last error: {type(exc).__name__}: {exc}"
             )
-        return f"Subagent '{self._name}' failed: {type(exc).__name__}: {exc}"
+        else:
+            text = f"Subagent '{self._name}' failed: {type(exc).__name__}: {exc}"
+        return text, outcome
 
-    def _reset_failures(self) -> None:
+    def _reset_failures(self, dispatch_id: str | None = None) -> None:
+        """Reset failure counters.
+
+        When ``dispatch_id`` is given, only that dispatch's counter is
+        reset (dispatch-scoped). The legacy role-scoped counter is
+        always reset on success for backward compatibility.
+        """
         object.__setattr__(self, "_consecutive_failures", 0)
+        if dispatch_id is not None:
+            failures = dict(getattr(self, "_dispatch_failures", {}))
+            failures.pop(dispatch_id, None)
+            object.__setattr__(self, "_dispatch_failures", failures)
 
     # ── Back-compat aliases for OSS callers / tests ────────────────────
     # Internal code (and unit tests) refer to ``self._runnable`` / ``self._name``;
@@ -482,6 +587,21 @@ class StreamingRunnable(RunnableBinding):
         # ``task("recon", ...)`` dispatches by SESSION even though the
         # ``agent`` field is identical.
         session_id = uuid.uuid4().hex[:12]
+        # Step 1 (ADR-0028): dispatch-scoped tracking. When the caller
+        # provides an explicit dispatch_id (via input or config), use it
+        # so the counter is scoped to that specific dispatch. When not
+        # provided (legacy callers / existing tests), fall back to a
+        # stable per-wrapper-instance id so the counter accumulates
+        # across calls on the same wrapper — matching the pre-Step-1
+        # role-scoped behavior.
+        explicit_dispatch_id = self._extract_dispatch_id(input, config)
+        if explicit_dispatch_id is not None:
+            dispatch_id: str | None = explicit_dispatch_id
+        else:
+            dispatch_id = f"wrapper:{self._name}"
+        objective_id = self._extract_objective_id(input)
+        object.__setattr__(self, "_current_dispatch_id", dispatch_id)
+        object.__setattr__(self, "_current_objective_id", objective_id)
         # Durable transcript: mirrors every streamed event so it survives in
         # the parent checkpoint (deepagents forwards this state key upward).
         transcript: list[dict] = []
@@ -539,11 +659,21 @@ class StreamingRunnable(RunnableBinding):
             # thread state. On the next run, PatchToolCallsMiddleware finds the
             # dangling tool calls and injects "cancelled" messages, causing the
             # orchestrator to retry in an infinite loop.
-            error_msg = self._bump_failure_and_format(exc)
+            partial_refs = self._collect_partial_state_refs(transcript)
+            error_msg, outcome = self._bump_failure_and_format(
+                exc,
+                dispatch_id=dispatch_id,
+                objective_id=objective_id,
+                partial_state_refs=partial_refs,
+            )
+            error_ai = AIMessage(
+                content=error_msg,
+                additional_kwargs={"dispatch_failure_outcome": outcome.model_dump(mode="json")},
+            )
             if last_state is not None:
-                last_state.setdefault("messages", []).append(AIMessage(content=error_msg))
+                last_state.setdefault("messages", []).append(error_ai)
                 return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
-            return {"messages": [AIMessage(content=error_msg)], TRANSCRIPT_STATE_KEY: transcript}
+            return {"messages": [error_ai], TRANSCRIPT_STATE_KEY: transcript}
 
         self._emit_end(
             renderer,
@@ -553,7 +683,7 @@ class StreamingRunnable(RunnableBinding):
             session_id,
             transcript=transcript,
         )
-        self._reset_failures()
+        self._reset_failures(dispatch_id=dispatch_id)
 
         if last_state is None:
             # stream() yielded zero states. Re-invoking the sub-agent here
@@ -602,6 +732,16 @@ class StreamingRunnable(RunnableBinding):
         # Per-invocation id so consumers can distinguish two concurrent
         # ``task("recon", ...)`` dispatches by SESSION (see invoke() above).
         session_id = uuid.uuid4().hex[:12]
+        # Step 1 (ADR-0028): dispatch-scoped tracking. See invoke() for
+        # the explicit-vs-fallback dispatch_id logic.
+        explicit_dispatch_id = self._extract_dispatch_id(input, config)
+        if explicit_dispatch_id is not None:
+            dispatch_id: str | None = explicit_dispatch_id
+        else:
+            dispatch_id = f"wrapper:{self._name}"
+        objective_id = self._extract_objective_id(input)
+        object.__setattr__(self, "_current_dispatch_id", dispatch_id)
+        object.__setattr__(self, "_current_objective_id", objective_id)
         # Durable transcript: mirrors every streamed event so it survives in
         # the parent checkpoint (deepagents forwards this state key upward).
         transcript: list[dict] = []
@@ -666,11 +806,21 @@ class StreamingRunnable(RunnableBinding):
             # thread state. On the next run, PatchToolCallsMiddleware finds the
             # dangling tool calls and injects "cancelled" messages, causing the
             # orchestrator to retry in an infinite loop.
-            error_msg = self._bump_failure_and_format(exc)
+            partial_refs = self._collect_partial_state_refs(transcript)
+            error_msg, outcome = self._bump_failure_and_format(
+                exc,
+                dispatch_id=dispatch_id,
+                objective_id=objective_id,
+                partial_state_refs=partial_refs,
+            )
+            error_ai = AIMessage(
+                content=error_msg,
+                additional_kwargs={"dispatch_failure_outcome": outcome.model_dump(mode="json")},
+            )
             if last_state is not None:
-                last_state.setdefault("messages", []).append(AIMessage(content=error_msg))
+                last_state.setdefault("messages", []).append(error_ai)
                 return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
-            return {"messages": [AIMessage(content=error_msg)], TRANSCRIPT_STATE_KEY: transcript}
+            return {"messages": [error_ai], TRANSCRIPT_STATE_KEY: transcript}
 
         self._emit_end(
             renderer,
@@ -680,7 +830,7 @@ class StreamingRunnable(RunnableBinding):
             session_id,
             transcript=transcript,
         )
-        self._reset_failures()
+        self._reset_failures(dispatch_id=dispatch_id)
 
         if last_state is None:
             # See the sync invoke() branch above: re-invoking here would
@@ -702,3 +852,74 @@ class StreamingRunnable(RunnableBinding):
             }
 
         return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
+
+    @staticmethod
+    def _extract_objective_id(input: Any) -> str | None:
+        """Best-effort extraction of objective_id from the dispatch input.
+
+        Looks for ``objective_id`` in the input dict or in the
+        configurable metadata. Returns None when not found — the
+        orchestrator can still inspect the typed outcome without it.
+        """
+        if isinstance(input, dict):
+            oid = input.get("objective_id")
+            if isinstance(oid, str):
+                return oid
+            cfg = input.get("configurable")
+            if isinstance(cfg, dict):
+                oid = cfg.get("objective_id")
+                if isinstance(oid, str):
+                    return oid
+        return None
+
+    @staticmethod
+    def _extract_dispatch_id(input: Any, config: Any = None) -> str | None:
+        """Best-effort extraction of dispatch_id from input or config.
+
+        The orchestrator (or SubAgentMiddleware) can pass an explicit
+        dispatch_id to scope the failure counter to a specific
+        dispatch. When not provided, the caller falls back to a
+        stable per-wrapper-instance id (see invoke/ainvoke).
+        """
+        if isinstance(input, dict):
+            did = input.get("dispatch_id")
+            if isinstance(did, str):
+                return did
+            cfg = input.get("configurable")
+            if isinstance(cfg, dict):
+                did = cfg.get("dispatch_id")
+                if isinstance(did, str):
+                    return did
+        if isinstance(config, dict):
+            cfg = config.get("configurable")
+            if isinstance(cfg, dict):
+                did = cfg.get("dispatch_id")
+                if isinstance(did, str):
+                    return did
+        return None
+
+    @staticmethod
+    def _collect_partial_state_refs(transcript: list[dict] | None) -> list[str]:
+        """Collect artifact paths from the transcript.
+
+        Best-effort: scans the transcript for ``subagent_tool_result``
+        events whose tool wrote to a file path. Returns an empty list
+        when nothing is found. The orchestrator can use these refs to
+        avoid re-deriving state from scratch after a failure.
+        """
+        if not isinstance(transcript, list):
+            return []
+        refs: list[str] = []
+        for event in transcript:
+            if not isinstance(event, dict):
+                continue
+            if event.get("type") != "subagent_tool_result":
+                continue
+            args = event.get("args")
+            if not isinstance(args, dict):
+                continue
+            for key in ("path", "file_path", "output_path"):
+                val = args.get(key)
+                if isinstance(val, str) and val not in refs:
+                    refs.append(val)
+        return refs

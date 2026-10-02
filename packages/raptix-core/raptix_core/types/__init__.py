@@ -1,6 +1,6 @@
 """Pure-pydantic types for the Raptix contract layer.
 
-Four submodules:
+Five submodules:
 
   * ``engagement`` — red-team planning documents (RoE, ConOps, OPPLAN,
     Finding, Objective, OpsecLevel, C2Tier, MITREPhase, ...). Was
@@ -16,6 +16,10 @@ Four submodules:
     evaluation layer that decides allow/deny for a target or command;
     consumed by the framework's RoE-enforcement middleware. Distinct from
     ``engagement.RoE`` (the planning document).
+  * ``dispatch_outcome`` — typed failure outcome for sub-agent
+    dispatches (ADR-0028, Step 1 of the control-plane fix sequence).
+    Replaces the text-only ``[TERMINAL]`` marker with a structured
+    schema the orchestrator can inspect without string-matching.
 
 These modules import only ``pydantic`` + stdlib + ``typing_extensions`` —
 no ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
@@ -24,6 +28,6 @@ no ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
 
 from __future__ import annotations
 
-from raptix_core.types import engagement, kg, llm, roe
+from raptix_core.types import dispatch_outcome, engagement, kg, llm, roe
 
-__all__ = ["engagement", "llm", "kg", "roe"]
+__all__ = ["dispatch_outcome", "engagement", "llm", "kg", "roe"]
