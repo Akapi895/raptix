@@ -407,10 +407,26 @@ server 183 tests, contracts 40, frontend 77 + browser lanes 8/8 + 10/10 + 1/1
 redaction, isolation and dedupe on the real store; all phases w07–w13 pass.
 See w13-graph.md, w13-live.json.
 
+## W14 — accepted 2026-10-02
+
+Operations Log & Reports. Server: merged engagement-scoped timeline with
+explicit `runtime` / `checkpoint` / `workspace` source labels (one entry per
+owned run, thread-level transcripts never replayed as run events, artifact
+mtimes as presence markers only), bounded with a truthful `truncated`; export
+supports exactly JSON/Markdown with server-side format validation and correct
+attachment headers — the legacy silent Markdown fallback is gone. Frontend:
+Operations Log renders payload-derived filters, provenance modals, bounded and
+empty states truthfully (no "Live" theater); Reports preview uses actual
+engagement/findings DTOs and offers only the validated exports, claiming
+success only after the download arrived. Gates: server 190, contracts 41,
+frontend 80 + browser lanes 8/8 + 17/17 + W14 live 1/1, verifier `--w14` 9
+groups with a real planning run in the timeline; w07–w13 pass. See
+w14-logs-reports.md, w14-live.json.
+
 ## Subsequent phases — pending (not started)
 
-W14–W16 logs/reports/settings/deployment; W17–W19 additional providers; W20
-legacy retirement.
+W15–W16 settings/deployment; W17–W19 additional providers; W20 legacy
+retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB

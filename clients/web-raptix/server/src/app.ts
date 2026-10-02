@@ -15,12 +15,15 @@ import { registerRunRoutes } from './http/routes/runs.routes.js';
 import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import { registerFindingsRoutes } from './http/routes/findings.routes.js';
 import { registerGraphRoutes } from './http/routes/graph.routes.js';
+import { registerTimelineRoutes } from './http/routes/timeline.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
 import type { FindingsService } from './services/findings-service.js';
 import type { ArtifactsService } from './services/artifacts-service.js';
 import type { GraphService } from './services/graph-service.js';
+import type { TimelineService } from './services/timeline-service.js';
+import type { ExportService } from './services/export-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -39,6 +42,8 @@ export interface AppOptions {
   readonly findingsService?: FindingsService;
   readonly artifactsService?: ArtifactsService;
   readonly graphService?: GraphService;
+  readonly timelineService?: TimelineService;
+  readonly exportService?: ExportService;
   /** Local single-user identity; defaults to getLocalIdentity(). */
   readonly identity?: LocalIdentity;
   /**
@@ -64,6 +69,8 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     findingsSupported: options.findingsService !== undefined,
     artifactsSupported: options.artifactsService !== undefined,
     graphsSupported: options.graphService !== undefined,
+    timelineSupported: options.timelineService !== undefined,
+    reportsSupported: options.exportService !== undefined,
   });
 
   if (options.projectsService !== undefined) {
@@ -81,6 +88,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, options.identity ?? getLocalIdentity());
   if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, options.identity ?? getLocalIdentity());
   if (options.graphService) registerGraphRoutes(app, options.graphService, options.identity ?? getLocalIdentity());
+  if (options.timelineService && options.exportService) registerTimelineRoutes(app, options.timelineService, options.exportService, options.identity ?? getLocalIdentity());
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

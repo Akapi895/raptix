@@ -5,7 +5,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView } from '@raptix/web-contracts'
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView, isTimelineView } from '@raptix/web-contracts'
 import { isPublicStreamEvent } from '@raptix/web-contracts'
 import { decodeSse, SseDecoder } from '@raptix/streaming'
 
@@ -23,7 +23,7 @@ const api = 'http://127.0.0.1:5284/api'
 const envFile = path.join(repo, '.env')
 const neo4jPassword = existsSync(envFile) ? (readFileSync(envFile, 'utf8').match(/^NEO4J_PASSWORD=(.+)$/m)?.[1] ?? '').trim() : ''
 const graphConfig = neo4jPassword && neo4jPassword !== 'raptix-graph' ? { NEO4J_HTTP_URI: 'http://127.0.0.1:7475', NEO4J_USER: 'neo4j', NEO4J_PASSWORD: neo4jPassword } : null
-const phase = process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+const phase = process.argv.includes('--w14') ? 'w14' : process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
 const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
 let streamCursor, streamed = [], wireShapes = [], replay = []
@@ -277,6 +277,49 @@ try {
       await graphStore('POST', 'MATCH (n:VerifierGate) WHERE n.engagement STARTS WITH "w07-live-" DETACH DELETE n', {})
     }
   }
+  if (phase === 'w14') {
+    // Real operations timeline + validated export: workspace artifact markers
+    // merge with the actual planning run; exports return the real payload with
+    // correct attachment headers and unsupported formats are rejected.
+    const findingsDir = path.join(root, project.workspaceSlug, 'findings')
+    const reconDir = path.join(root, project.workspaceSlug, 'recon')
+    await mkdir(findingsDir, { recursive: true })
+    await mkdir(reconDir, { recursive: true })
+    await writeFile(path.join(findingsDir, 'FIND-2026-W14.md'), ['# Exposed .env File (W14 Gate)', '', 'Severity: high', '', '## Description', 'The W14 verifier gate exposes a `.env` file via HTTP.', '', '## Evidence', '- GET /.env returned 200'].join('\n'), 'utf8')
+    await writeFile(path.join(reconDir, 'probe.txt'), 'open 80,443', 'utf8')
+    const timeline = (await http('GET', `${base}/timeline`, undefined, 200)).payload
+    assert.ok(isTimelineView(timeline) && timeline.source === 'mixed' && timeline.engagementId === project.id, JSON.stringify(timeline))
+    const sources = new Set(timeline.entries.map(entry => entry.source))
+    assert.ok(sources.has('runtime'), `Timeline must carry a runtime label: ${JSON.stringify(timeline)}`)
+    const runEntry = timeline.entries.find(entry => entry.source === 'runtime' && entry.runId === runId)
+    assert.ok(runEntry && runEntry.status === final.rawStatus, 'The acknowledged planning run must surface as one merged runtime entry')
+    assert.ok(sources.has('workspace'), JSON.stringify(timeline))
+    const artifactEntry = timeline.entries.find(entry => entry.source === 'workspace' && entry.id === 'workspace:recon/probe.txt')
+    assert.ok(artifactEntry && artifactEntry.tool === 'recon' && artifactEntry.label === 'Artifact updated: recon/probe.txt', JSON.stringify(timeline))
+    assert.ok(Number.isFinite(Date.parse(artifactEntry.at)), 'Artifact mtime entries carry a parseable timestamp labeled as a presence marker')
+    checks.push('operations timeline merges the real planning run and labeled workspace artifact markers without transcript duplication')
+    const badExport = await http('GET', `${base}/export?format=pdf`, undefined, 400)
+    assert.ok(badExport.payload.error.message.includes('json, markdown'), 'Unsupported export formats must be rejected with the supported list')
+    const jsonRes = await fetch(`${api}${base}/export?format=json`, { signal: AbortSignal.timeout(15000) })
+    assert.equal(jsonRes.status, 200)
+    assert.equal(jsonRes.headers.get('content-disposition'), `attachment; filename="${slug}-export.json"`)
+    assert.ok(jsonRes.headers.get('content-type').includes('application/json'))
+    const exportPayload = await jsonRes.json()
+    assert.equal(exportPayload.engagement.id, project.id)
+    assert.ok(exportPayload.findings.some(finding => finding.id === 'FIND-2026-W14'), JSON.stringify(exportPayload))
+    assert.equal(exportPayload.formatValidated, true)
+    const mdRes = await fetch(`${api}${base}/export?format=markdown`, { signal: AbortSignal.timeout(15000) })
+    assert.equal(mdRes.status, 200)
+    assert.ok(mdRes.headers.get('content-type').includes('text/markdown'))
+    assert.equal(mdRes.headers.get('content-disposition'), `attachment; filename="${slug}-export.md"`)
+    const markdown = await mdRes.text()
+    assert.ok(markdown.includes(`# ${slug} — Engagement Export`))
+    assert.ok(markdown.includes('### FIND-2026-W14'))
+    checks.push('engagement export validates formats server-side and returns the actual plan/findings payload with correct attachment headers')
+    await http('GET', `/engagements/${randomUUID()}/timeline`, undefined, 404)
+    await http('GET', `/engagements/${randomUUID()}/export?format=json`, undefined, 404)
+    checks.push('foreign engagements stay denied for the timeline and export endpoints')
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, phase === 'w11' ? cancelRunId : runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -337,7 +380,12 @@ try {
     const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
     assert.deepEqual(capabilities.capabilities.graphs, { supported: true, available: true })
   }
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
+  if (phase === 'w14') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.timeline, { supported: true, available: true })
+    assert.deepEqual(capabilities.capabilities.reports, { supported: true, available: true })
+  }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w14' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W14 merged operations timeline and the server-validated JSON/Markdown export against the real engagement workspace; context-only isolated target, runtime guard path unchanged' : phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {

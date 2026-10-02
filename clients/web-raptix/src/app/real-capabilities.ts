@@ -12,9 +12,11 @@ import type { RealNewProjectFormError } from '../features/projects/real-project.
  * (default route) is the only page with a connected real source: the public
  * project DTO. Owning work packages are named so the unavailable state is
  * auditable, not vague. Operator Console (W10) renders real threads/runs and
- * is mounted directly; Findings & Evidence (W12) renders parsed workspace
+ * is mounted directly; Findings & Evidence (W12) render parsed workspace
  * findings and the artifact browser; Infrastructure & Assets (W13) render the
- * scoped public graph projection and derived asset inventory.
+ * scoped public graph projection and derived asset inventory; Operations Log
+ * and Reports (W14) render the merged server timeline and the validated
+ * engagement exports.
  */
 export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
   'vector-campaigns':
@@ -23,10 +25,6 @@ export const REAL_UNAVAILABLE_REASONS: Partial<Record<Screen, string>> = {
     'C2 sessions need the session provider APIs (work package W17), which are not connected yet.',
   credentials:
     'Credentials Vault needs the vault storage service (work package W18), which is not connected yet.',
-  logs:
-    'The operations log needs the run-history APIs (work packages W09/W14), which are not connected yet.',
-  reports:
-    'Report preview/export need the outcome APIs (work package W14), which are not connected yet.',
   members:
     'Members need the identity/RBAC service (work package W19). No member directory exists in this build.',
   'project-settings':

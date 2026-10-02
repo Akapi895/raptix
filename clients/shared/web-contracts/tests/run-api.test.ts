@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -79,4 +79,16 @@ it('validates engagement-scoped public graph and asset projections additively', 
   expect(isAssetSummaryView({ ...asset, url: 5 })).toBe(false);
   expect(isAssetsView({ engagementId: 'eng', assets: [asset], truncated: false, source: 'graph' })).toBe(true);
   expect(isAssetsView({ engagementId: 'eng', assets: [asset], truncated: false, source: 'derived' })).toBe(false);
+});
+it('validates merged operations-timeline entries with distinct source labels additively', () => {
+  const runEntry = { id: 'run:1', at: '2026-10-02T00:00:00.000Z', source: 'runtime', kind: 'run', label: 'Planning run accepted', runId: 'run-1', status: 'success' };
+  expect(isTimelineEntryView(runEntry)).toBe(true);
+  expect(isTimelineEntryView({ ...runEntry, source: 'synthetic' })).toBe(false);
+  expect(isTimelineEntryView({ ...runEntry, at: 'not-a-date' })).toBe(false);
+  expect(isTimelineEntryView({ ...runEntry, agent: 'soundwave' })).toBe(true);
+  expect(isTimelineEntryView({ ...runEntry, agent: 5 })).toBe(false);
+  const artifact = { id: 'ws:recon/nmap.txt', at: '2026-10-02T00:10:00.000Z', source: 'workspace', kind: 'artifact', label: 'Artifact updated' };
+  expect(isTimelineEntryView(artifact)).toBe(true);
+  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, source: 'mixed' })).toBe(true);
+  expect(isTimelineView({ engagementId: 'eng', entries: [runEntry], truncated: false, source: 'runtime' })).toBe(false);
 });

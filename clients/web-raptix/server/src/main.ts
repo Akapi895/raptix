@@ -18,6 +18,8 @@ import { ApprovalsService } from './services/approvals-service.js';
 import { FindingsService } from './services/findings-service.js';
 import { ArtifactsService } from './services/artifacts-service.js';
 import { GraphService } from './services/graph-service.js';
+import { TimelineService } from './services/timeline-service.js';
+import { ExportService } from './services/export-service.js';
 
 let closing = false;
 
@@ -84,6 +86,8 @@ async function main(): Promise<void> {
   const findingsService = dbClient && env.workspacePath ? new FindingsService(dbClient, env.workspacePath) : undefined;
   const artifactsService = dbClient && env.workspacePath ? new ArtifactsService(dbClient, env.workspacePath) : undefined;
   const graphService = dbClient && env.graph ? new GraphService(dbClient, env.graph) : undefined;
+  const timelineService = runsService && artifactsService && dbClient && env.workspacePath ? new TimelineService(dbClient, runsService, artifactsService, env.workspacePath) : undefined;
+  const exportService = dbClient && env.workspacePath ? new ExportService(dbClient, env.workspacePath) : undefined;
   const app = await buildApp({
     logger: { level: env.logLevel },
     projectsService,
@@ -96,6 +100,8 @@ async function main(): Promise<void> {
     findingsService,
     artifactsService,
     graphService,
+    timelineService,
+    exportService,
   });
 
   const shutdown = async (signal: NodeJS.Signals): Promise<void> => {

@@ -33,6 +33,7 @@ export interface CapabilitiesResponse {
     readonly artifacts: CapabilityState;
     readonly findings: CapabilityState;
     readonly graphs: CapabilityState;
+    readonly timeline: CapabilityState;
     readonly reports: CapabilityState;
   };
 }
@@ -60,6 +61,8 @@ export async function buildCapabilitiesResponse(
   findingsSupported = false,
   artifactsSupported = false,
   graphsSupported = false,
+  timelineSupported = false,
+  reportsSupported = false,
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -94,6 +97,11 @@ export async function buildCapabilitiesResponse(
   // non-default NEO4J_PASSWORD is present; availability is decided per request
   // (503 unavailable vs 200 empty), the capability only reflects wiring.
   const graphs: CapabilityState = !graphsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
+  // Timeline/logs and report export are W14: the timeline merges runtime,
+  // checkpoint and workspace sources; export validates formats server-side.
+  const operationsBacked: CapabilityState = !runsSupported ? missingCapability() : !operations.available ? { supported: true, available: false, reason: 'runtime_unavailable' } : { supported: true, available: true };
+  const timeline: CapabilityState = !timelineSupported ? missingCapability() : !operationsBacked.available ? { supported: true, available: false, reason: operationsBacked.reason === 'database_unavailable' ? 'database_unavailable' : 'runtime_unavailable' } : { supported: true, available: true };
+  const reports: CapabilityState = !reportsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
   return {
     version: CAPABILITIES_VERSION,
     mode: 'local-single-user',
@@ -107,7 +115,8 @@ export async function buildCapabilitiesResponse(
       artifacts,
       findings,
       graphs,
-      reports: missingCapability(),
+      timeline,
+      reports,
     },
   };
 }
@@ -121,6 +130,8 @@ export interface CapabilitiesRouteOptions {
   readonly findingsSupported?: boolean;
   readonly artifactsSupported?: boolean;
   readonly graphsSupported?: boolean;
+  readonly timelineSupported?: boolean;
+  readonly reportsSupported?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -137,6 +148,8 @@ export function registerCapabilitiesRoutes(
       options.findingsSupported === true,
       options.artifactsSupported === true,
       options.graphsSupported === true,
+      options.timelineSupported === true,
+      options.reportsSupported === true,
     ),
   );
 }
