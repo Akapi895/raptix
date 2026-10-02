@@ -423,10 +423,27 @@ frontend 80 + browser lanes 8/8 + 17/17 + W14 live 1/1, verifier `--w14` 9
 groups with a real planning run in the timeline; w07–w13 pass. See
 w14-logs-reports.md, w14-live.json.
 
+## W15 — accepted 2026-10-02
+
+Supported Settings & core E2E. Server: persisted settings view with the
+target-change policy stated up front (draft-only lifecycle, no linked/locked
+runtime), saving through the existing validated PATCH, and the explicit danger
+delete that refuses while run holds are unreleased, then removes the DB
+record + threads + ledger in one transaction and answers
+`workspaceRetained: true` — no archive-vs-delete conflation, no secret
+settings (none exist). Frontend: Settings page with acknowledged save/reload,
+field-attributed errors, locked-target disabling, stated-absent feature areas
+and a confirm-step danger zone. Core E2E live gate proves the web-native
+create → planning → run execution → report loop (New Project form, real
+planning run to RUN SUCCESS, operations log entry, findings preview, JSON
+export download, settings save, danger delete) against the real API + DB +
+runtime. Gates: server 194, contracts 42, frontend 80 + browser lanes 8/8 +
+21/21 + core E2E 1/1, verifier `--w15` 11 groups; w07–w14 pass. See
+w15-settings.md, w15-live.json.
+
 ## Subsequent phases — pending (not started)
 
-W15–W16 settings/deployment; W17–W19 additional providers; W20 legacy
-retirement.
+W16 deployment/cutover; W17–W19 additional providers; W20 legacy retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB

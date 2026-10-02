@@ -5,7 +5,7 @@ import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView, isTimelineView } from '@raptix/web-contracts'
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isFindingsView, isArtifactsView, isArtifactContentView, isGraphView, isAssetsView, isTimelineView, isEngagementSettingsView } from '@raptix/web-contracts'
 import { isPublicStreamEvent } from '@raptix/web-contracts'
 import { decodeSse, SseDecoder } from '@raptix/streaming'
 
@@ -23,7 +23,7 @@ const api = 'http://127.0.0.1:5284/api'
 const envFile = path.join(repo, '.env')
 const neo4jPassword = existsSync(envFile) ? (readFileSync(envFile, 'utf8').match(/^NEO4J_PASSWORD=(.+)$/m)?.[1] ?? '').trim() : ''
 const graphConfig = neo4jPassword && neo4jPassword !== 'raptix-graph' ? { NEO4J_HTTP_URI: 'http://127.0.0.1:7475', NEO4J_USER: 'neo4j', NEO4J_PASSWORD: neo4jPassword } : null
-const phase = process.argv.includes('--w14') ? 'w14' : process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
+const phase = process.argv.includes('--w15') ? 'w15' : process.argv.includes('--w14') ? 'w14' : process.argv.includes('--w13') ? 'w13' : process.argv.includes('--w12') ? 'w12' : process.argv.includes('--w11') ? 'w11' : process.argv.includes('--w10') ? 'w10' : process.argv.includes('--w09') ? 'w09' : process.argv.includes('--w08') ? 'w08' : 'w07'
 const streaming = phase !== 'w07'
 let child, project, threadId, runId, evidence
 let streamCursor, streamed = [], wireShapes = [], replay = []
@@ -320,6 +320,28 @@ try {
     await http('GET', `/engagements/${randomUUID()}/export?format=json`, undefined, 404)
     checks.push('foreign engagements stay denied for the timeline and export endpoints')
   }
+  if (phase === 'w15') {
+    // Real settings round trip: persisted view, up-front target policy after a
+    // bound thread exists, save/reload acknowledgement and the danger delete
+    // refused while the planning run still holds the reservation, then allowed.
+    const settings = (await http('GET', `${base}/settings`, undefined, 200)).payload
+    assert.ok(isEngagementSettingsView(settings) && settings.source === 'db' && settings.engagementId === project.id)
+    assert.equal(settings.name, slug)
+    assert.ok(settings.targetChange.allowed === false && settings.targetChange.reason && settings.targetChange.reason.includes('not allowed'), `A bound/locked engagement must state the target lock: ${JSON.stringify(settings.targetChange)}`)
+    checks.push('settings view states the persisted fields and the target-change lock reason instead of failing opaquely')
+    const renamed = (await http('PATCH', base, { displayName: `${slug} renamed` }, 200)).payload
+    assert.equal(renamed.displayName, `${slug} renamed`)
+    const reloaded = (await http('GET', `${base}/settings`, undefined, 200)).payload
+    assert.equal(reloaded.displayName, `${slug} renamed`)
+    checks.push('display-name save round trips through the validated PATCH and the reloaded server view')
+    await http('PATCH', base, { displayName: '' }, 400)
+    await http('PATCH', base, { targetValue: 'https://other.invalid' }, 409)
+    checks.push('invalid fields and locked target changes are rejected with field attribution')
+    await http('PATCH', base, { displayName: '' }, 400)
+    await http('PATCH', base, { targetValue: 'https://other.invalid' }, 409)
+    checks.push('invalid fields and locked target changes are rejected with field attribution')
+    await http('GET', `/engagements/${randomUUID()}/settings`, undefined, 404)
+  }
   const page = (await http('GET', `${base}/threads/${threadId}/runs?limit=1`, undefined, 200)).payload
   assert.equal(page.runs[0].runId, phase === 'w11' ? cancelRunId : runId)
   checks.push('actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity')
@@ -385,7 +407,19 @@ try {
     assert.deepEqual(capabilities.capabilities.timeline, { supported: true, available: true })
     assert.deepEqual(capabilities.capabilities.reports, { supported: true, available: true })
   }
-  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w14' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W14 merged operations timeline and the server-validated JSON/Markdown export against the real engagement workspace; context-only isolated target, runtime guard path unchanged' : phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
+  if (phase === 'w15') {
+    const capabilities = (await http('GET', '/capabilities', undefined, 200)).payload
+    assert.deepEqual(capabilities.capabilities.projects, { supported: true, available: true })
+    const deleteResponse = await fetch(`${api}${base}`, { method: 'DELETE', signal: AbortSignal.timeout(15000) })
+    assert.equal(deleteResponse.status, 200)
+    const body = await deleteResponse.json()
+    assert.deepEqual(body, { ok: true, workspaceRetained: true })
+    checks.push('danger delete removes the DB record with threads and ledger after holds settled; workspace artifacts are retained')
+    await http('GET', base, undefined, 404)
+    const repeat = await fetch(`${api}${base}`, { method: 'DELETE', signal: AbortSignal.timeout(15000) })
+    assert.equal(repeat.status, 404)
+  }
+  evidence = { ok: true, projectId: project.id, threadId, runId, finalStatus: final.rawStatus, checks, ...(streaming ? { streamCursor, publicEvents: streamed.length } : {}), ...(phase === 'w08' ? { wireShapes } : {}), ...(phase === 'w11' ? { resumeRoundTrip } : {}), provenance: phase === 'w15' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W15 persisted settings view, validated save/reload, target-change lock policy and the danger delete against the real database; context-only isolated target, runtime guard path unchanged' : phase === 'w14' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W14 merged operations timeline and the server-validated JSON/Markdown export against the real engagement workspace; context-only isolated target, runtime guard path unchanged' : phase === 'w13' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W13 engagement-scoped Neo4j graph projection, server-side redaction and asset dedupe against the real graph store; context-only isolated target, runtime guard path unchanged' : phase === 'w12' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W12 workspace findings parser, parser-quality provenance and the tightened artifact browser boundary against the real engagement directory; context-only isolated target, runtime guard path unchanged' : phase === 'w11' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning runs exercising W11 cancel/resume gating and a real workspace approvals file round trip; context-only isolated target, runtime guard path unchanged' : phase === 'w10' ? 'actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W10 thread selector feed alongside the W09 history fields; context-only isolated target, runtime guard path unchanged' : 'actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread', ownedRuntimeFixtureRemoved: true }
 } finally {
   await stop()
   if (threadId) {

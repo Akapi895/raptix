@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "projectId": "cmuqqtezm0000s4fidp8qrifb",
+  "threadId": "61d59475-d604-44b0-9dbe-8923690dc2e5",
+  "runId": "01a0fbe1-55fc-7d42-af02-2782fbb6afd4",
+  "finalStatus": "success",
+  "checks": [
+    "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
+    "early SSE attach/abort preserves native cursor without cancelling the acknowledged run",
+    "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
+    "actual SSE cursor reconnect/late replay, pure reducer dedup and scope/cursor denial create no additional execution",
+    "settings view states the persisted fields and the target-change lock reason instead of failing opaquely",
+    "display-name save round trips through the validated PATCH and the reloaded server view",
+    "invalid fields and locked target changes are rejected with field attribution",
+    "invalid fields and locked target changes are rejected with field attribution",
+    "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
+    "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11",
+    "danger delete removes the DB record with threads and ledger after holds settled; workspace artifacts are retained"
+  ],
+  "streamCursor": "1790932244569-0",
+  "publicEvents": 4,
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W15 persisted settings view, validated save/reload, target-change lock policy and the danger delete against the real database; context-only isolated target, runtime guard path unchanged",
+  "ownedRuntimeFixtureRemoved": true
+}

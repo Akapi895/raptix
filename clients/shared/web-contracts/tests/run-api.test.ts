@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isArtifactContentView, isArtifactsView, isAssetSummaryView, isAssetsView, isEngagementSettingsView, isFindingView, isFindingsView, isGraphEdgeView, isGraphNodeView, isGraphView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView, isTimelineEntryView, isTimelineView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -91,4 +91,13 @@ it('validates merged operations-timeline entries with distinct source labels add
   expect(isTimelineEntryView(artifact)).toBe(true);
   expect(isTimelineView({ engagementId: 'eng', entries: [runEntry, artifact], truncated: false, source: 'mixed' })).toBe(true);
   expect(isTimelineView({ engagementId: 'eng', entries: [runEntry], truncated: false, source: 'runtime' })).toBe(false);
+});
+it('validates engagement settings with the explicit target-change policy additively', () => {
+  const settings = { engagementId: 'eng-1', displayName: 'Demo Engagement', name: 'demo-slug', targetType: 'web_url', targetValue: 'https://authorized.invalid', authorizationConfirmed: true, lifecycleStatus: 'draft', targetChange: { allowed: true, reason: null }, source: 'db' };
+  expect(isEngagementSettingsView(settings)).toBe(true);
+  expect(isEngagementSettingsView({ ...settings, source: 'derived' })).toBe(false);
+  expect(isEngagementSettingsView({ ...settings, targetChange: { allowed: false, reason: 'Only draft projects can change targets' } })).toBe(true);
+  expect(isEngagementSettingsView({ ...settings, targetChange: { allowed: false } })).toBe(false);
+  expect(isEngagementSettingsView({ ...settings, displayName: 5 })).toBe(false);
+  expect(isEngagementSettingsView({ ...settings, authorizationConfirmed: 'yes' })).toBe(false);
 });
