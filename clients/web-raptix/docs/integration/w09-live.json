@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "projectId": "cmuqlzdyl0000pgfimq2chb0c",
+  "threadId": "8aacc66b-1e97-4172-bb16-5511a7ff19ef",
+  "runId": "01a0fb65-72c2-7d62-8f14-a6034e6a3e5e",
+  "finalStatus": "success",
+  "checks": [
+    "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
+    "early SSE attach/abort preserves native cursor without cancelling the acknowledged run",
+    "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
+    "actual SSE cursor reconnect/late replay, pure reducer dedup and scope/cursor denial create no additional execution",
+    "actual planning run snapshot exposes owned thread-level history fields with stable ids, merge is idempotent with live replay, and foreign scope stays denied",
+    "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
+    "real API process restart preserves request/run deduplication; capability is live and resume remains gated"
+  ],
+  "streamCursor": "1790924125513-0",
+  "publicEvents": 4,
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run; context-only isolated target, runtime guard path unchanged; W09 history uses a controlled transcript state patch into the owned thread",
+  "ownedRuntimeFixtureRemoved": true
+}

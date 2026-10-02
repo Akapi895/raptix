@@ -12,7 +12,7 @@ export interface StreamState {
 export function emptyStreamState(engagementId: string, threadId: string): StreamState {
   return { engagementId, threadId, events: [], seen: [], messages: {}, tools: {}, invocations: {}, questions: {}, attempts: {}, handoffPending: false, transport: 'disconnected', recoveryRequired: false }
 }
-function bounded<T>(entries: Record<string, T>, limit: number): Record<string, T> { return Object.fromEntries(Object.entries(entries).slice(-limit)) }
+export function bounded<T>(entries: Record<string, T>, limit: number): Record<string, T> { return Object.fromEntries(Object.entries(entries).slice(-limit)) }
 function tool(state: StreamState, event: PublicStreamEvent, payload: ToolPayload | CustomPayload): void {
   const custom = payload.type !== 'tool_call' && payload.type !== 'tool_result'
   const session = custom && 'sessionId' in payload && payload.sessionId ? payload.sessionId : event.namespace

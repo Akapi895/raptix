@@ -273,10 +273,46 @@ Evidence: w08-streaming.md, w08-live.json, w08-faults.json,
 w08-oldcopy-faults.json and w08-independence.json. No new DB migration/collector.
 Real Console rendering is W10; full checkpoint/history recovery remains W09 scope.
 
-## W09 — authorized after W08 gate (not started)
+## W09 — accepted 2026-10-02
 
-Next scope: owned checkpoint/history/transcript recovery and stable attribution;
-unattributed history must remain thread-level rather than assigned to active run.
+Owned checkpoint history/transcript recovery shipped additively:
+
+- Thread snapshot (`GET .../threads/:thread`) now projects bounded
+  `values.subagent_transcripts` history via the same redaction/preview pipeline
+  as live frames: credential-shaped args redacted, `…[truncated]` producer
+  marker surfaces `truncated:true`, non-array/lossy channels flagged via
+  `transcriptsTruncated`, most-recent 500 entries.
+- Stable thread-level attribution: every history entry is `runId:null` /
+  `source:'checkpoint'` with provenance keys from the shared normalizer
+  (`session::type#id`, else `@createdAt`); unprovable identity stays `key:null`.
+  Parallel-branch duplicates dedupe by provenance key; key sequences are stable
+  across fetches. History is never attributed to an active run.
+- Root messages carry provable `messageId` (or explicit null).
+- Client `mergeThreadHistory` merges one snapshot into the W08 stream state by
+  provenance IDs only: messages insert-only, tools with the no-downgrade rule
+  (full live content never replaced by capped replay), invocations preserve
+  existing run attribution, questions dedupe, handoff stays live-only, and the
+  merge is idempotent across reconnects. Bounds reuse the reducer limits.
+- Contracts additive: `ThreadHistoryEvent`, `ScopedThreadMessage.messageId?`,
+  `ScopedThreadView.transcripts?/transcriptsTruncated?`; validators reject
+  forged attribution. `isPublicStreamPayload` extracted for reuse; event-level
+  validation unchanged.
+
+Gates: streaming19, contracts36, server154 (+typecheck/lint/build), frontend67
+(+typecheck/lint/build, 0 errors) pass. CLI typecheck passes. Live
+API5284/PostgreSQL/LangGraph2400 gate passes 7 groups (real planning run,
+history fields, thread-level attribution, idempotent merge over genuine replay,
+scope denial, restart identity); W08 lane re-run 6 groups. Controlled
+PostgreSQL/HTTP lanes pass 11 groups each on fresh and oldcopy DBs: producer
+representative transcripts prove dedup/full-vs-capped/redaction/stable keys
+through the real HTTP service (deployed runtime image does not yet expose the
+transcript channel on GET state — same pristine-state observation as W06/W07;
+no runtime change made). Mock browser 8/8, W04 real planning browser 1/1,
+independence clean-install gate pass.
+
+Evidence: w09-history.md, w09-live.json, w09-faults.json,
+w09-oldcopy-faults.json. No new migration; Console rendering is W10, HITL is
+W11.
 
 ## Subsequent phases — pending (not started)
 

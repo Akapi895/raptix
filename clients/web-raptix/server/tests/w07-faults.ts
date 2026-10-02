@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+﻿import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import * as path from 'node:path';
@@ -16,7 +16,7 @@ import { RuntimeContextService } from '../src/services/runtime/runtime-context.j
 import { RunService } from '../src/services/runtime/run-service.js';
 import { RuntimeExecutionClient } from '../src/integrations/runtime/execution-client.js';
 import { loadRuntimeConfig } from '../src/config/runtime.js';
-import { isRequestRecoveryView, isScopedRunView, isScopedThreadView } from '@raptix/web-contracts';
+import { isRequestRecoveryView, isScopedRunView, isScopedThreadView, type ThreadHistoryEvent } from '@raptix/web-contracts';
 
 const database = process.env.W07_TEST_DATABASE_URL ?? '';
 assert.match(database, /@127\.0\.0\.1:5433\/raptix_web_w02_(fresh|oldcopy)_20261001$/);
@@ -233,6 +233,32 @@ try {
     assert.ok(await ownership.active('local', project.id, bootstrap.threadId));
     assert.equal(runs.get(current.runId!)!.status, 'pending');
     checks.push('actual PostgreSQL SSE owner/cursor denial, peer abort/reconnect, seconds/flags/redaction and no extra execution/cancel/slot release');
+  }
+  if (process.env.W09_HISTORY_GATE === '1') {
+    const transcripts = [
+      { type: 'subagent_tool_result', agent: 'recon', session_id: 'w09-s1', id: 'w09-call-full', tool: 'nmap', created_at: '2026-10-02T09:00:00.000000+00:00', content: 'W09 full persisted output' },
+      { type: 'subagent_tool_result', agent: 'recon', session_id: 'w09-s1', id: 'w09-call-capped', tool: 'curl', created_at: '2026-10-02T09:00:01.000000+00:00', content: 'c'.repeat(8000) + '…[truncated]' },
+      { type: 'subagent_tool_result', agent: 'recon', session_id: 'w09-s2', id: 'w09-call-dup', tool: 'nmap', created_at: '2026-10-02T09:00:02.000000+00:00', content: 'parallel branch slice' },
+      { type: 'subagent_tool_result', agent: 'recon', session_id: 'w09-s2', id: 'w09-call-dup', tool: 'nmap', created_at: '2026-10-02T09:00:03.000000+00:00', content: 'parallel branch slice' },
+      { type: 'subagent_tool_call', agent: 'recon', session_id: 'w09-s3', tool: 'curl', args: { api_key: 'SECRET-W09', url: 'https://authorized.invalid' } },
+      { type: 'subagent_message', agent: 'recon', text: 'unattributed transcript note' },
+    ];
+    threads.get(bootstrap.threadId)!.values.subagent_transcripts = transcripts;
+    const history = (await http('GET', `${base}/threads/${bootstrap.threadId}`, undefined, 200)).body;
+    assert.ok(isScopedThreadView(history)); assert.equal(history.binding.threadId, bootstrap.threadId);
+    const entries = history.transcripts ?? [];
+    assert.ok(entries.length > 0 && entries.every(t => t.runId === null && t.source === 'checkpoint'), 'Checkpoint history must stay thread-level, never assigned to a run');
+    assert.equal(entries.filter(t => t.payload.toolId === 'w09-call-dup').length, 1, 'Parallel duplicate emissions must dedupe by provenance key');
+    assert.equal(entries.find(t => t.payload.toolId === 'w09-call-capped')?.truncated, true, 'Producer-capped results must surface truncated:true');
+    assert.equal(entries.find(t => t.payload.toolId === 'w09-call-full')?.truncated, false);
+    assert.equal(entries.find(t => t.payload.type === 'subagent_message')?.key, null, 'Unprovable identity stays null instead of invented attribution');
+    assert.ok(!JSON.stringify(history).includes('SECRET-W09'), 'History projection must redact credential-shaped args');
+    const repeat = (await http('GET', `${base}/threads/${bootstrap.threadId}`, undefined, 200)).body;
+    assert.deepEqual(repeat.transcripts?.map((t: ThreadHistoryEvent) => t.key), entries.map((t: ThreadHistoryEvent) => t.key), 'Provenance keys must be stable across snapshot fetches');
+    assert.equal(typeof history.transcriptsTruncated, 'boolean');
+    await http('GET', `/api/engagements/${foreign.id}/threads/${bootstrap.threadId}`, undefined, 404);
+    await http('GET', `/api/engagements/${foreign.id}/threads/${randomUUID()}`, undefined, 404);
+    checks.push('owned checkpoint transcript history dedupes parallel duplicates, marks capped results, redacts args, stays thread-level with stable provenance and foreign scope is denied');
   }
   await writeFile(process.env.W07_EVIDENCE_PATH!, JSON.stringify({ ok: true, checks, provider: 'controlled HTTP fault runtime, real PostgreSQL and new Fastify service', threadCreates: control.threadCreates, runCreates: control.runCreates }, null, 2) + '\n');
   console.log(`W07 PostgreSQL/HTTP concurrency and failure gates passed (${checks.length} groups)`);

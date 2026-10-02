@@ -29,6 +29,10 @@ function custom(raw: unknown): CustomPayload | null {
   if (result.options) result.options = result.options.slice(0, 6).map(o => ({ label: preview(o.label, 256).text, description: preview(o.description, 1000).text }));
   return result;
 }
+/** Public custom projection for durable checkpoint transcripts (W09); same redaction/bounds as live frames. */
+export function projectCustomPayload(raw: unknown): CustomPayload | null {
+  return custom(raw);
+}
 function message(raw: unknown, mode: 'delta' | 'snapshot'): PublicStreamPayload[] {
   if (!record(raw)) return [];
   let m = raw;

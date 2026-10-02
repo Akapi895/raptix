@@ -13,12 +13,8 @@ export interface PublicStreamEvent {
   payload: PublicStreamPayload
 }
 const customTypes = ['subagent_start', 'subagent_end', 'subagent_tool_call', 'subagent_tool_result', 'subagent_message', 'ask_user_question', 'engagement_ready', 'background_complete']
-export function isPublicStreamEvent(value: unknown): value is PublicStreamEvent {
-  if (!isRecord(value) || value.version !== 1 || !['eventId', 'engagementId', 'threadId', 'streamRunId'].every(k => isNonEmptyString(value[k])) || value.runId !== null && !isNonEmptyString(value.runId)) return false
-  if (value.source === 'runtime' && value.runId !== value.streamRunId || value.source === 'checkpoint' && value.runId !== null) return false
-  if (typeof value.source !== 'string' || !['runtime', 'checkpoint'].includes(value.source) || typeof value.identity !== 'string' || !['upstream', 'domain', 'occurrence'].includes(value.identity) || !Array.isArray(value.namespace) || !value.namespace.every(n => typeof n === 'string')) return false
-  if (value.upstreamCursor !== undefined && !isNonEmptyString(value.upstreamCursor) || value.occurredAt !== null && !isIsoUtcTimestamp(value.occurredAt) || !isIsoUtcTimestamp(value.observedAt)) return false
-  const p = value.payload
+export function isPublicStreamPayload(value: unknown): value is PublicStreamPayload {
+  const p = value
   if (!isRecord(p) || typeof p.type !== 'string') return false
   if (p.type === 'interrupt') return p.interruptId === null || isNonEmptyString(p.interruptId)
   if (typeof p.truncated !== 'boolean') return false
@@ -31,4 +27,11 @@ export function isPublicStreamEvent(value: unknown): value is PublicStreamEvent 
   if (p.elapsedSeconds !== undefined && (typeof p.elapsedSeconds !== 'number' || !Number.isFinite(p.elapsedSeconds))) return false
   if (p.exitCode !== undefined && p.exitCode !== null && (typeof p.exitCode !== 'number' || !Number.isFinite(p.exitCode))) return false
   return p.options === undefined || Array.isArray(p.options) && p.options.every(o => isRecord(o) && typeof o.label === 'string' && typeof o.description === 'string')
+}
+export function isPublicStreamEvent(value: unknown): value is PublicStreamEvent {
+  if (!isRecord(value) || value.version !== 1 || !['eventId', 'engagementId', 'threadId', 'streamRunId'].every(k => isNonEmptyString(value[k])) || value.runId !== null && !isNonEmptyString(value.runId)) return false
+  if (value.source === 'runtime' && value.runId !== value.streamRunId || value.source === 'checkpoint' && value.runId !== null) return false
+  if (typeof value.source !== 'string' || !['runtime', 'checkpoint'].includes(value.source) || typeof value.identity !== 'string' || !['upstream', 'domain', 'occurrence'].includes(value.identity) || !Array.isArray(value.namespace) || !value.namespace.every(n => typeof n === 'string')) return false
+  if (value.upstreamCursor !== undefined && !isNonEmptyString(value.upstreamCursor) || value.occurredAt !== null && !isIsoUtcTimestamp(value.occurredAt) || !isIsoUtcTimestamp(value.observedAt)) return false
+  return isPublicStreamPayload(value.payload)
 }
