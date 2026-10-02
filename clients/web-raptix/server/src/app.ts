@@ -14,11 +14,13 @@ import type { RunService } from './services/runtime/run-service.js';
 import { registerRunRoutes } from './http/routes/runs.routes.js';
 import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import { registerFindingsRoutes } from './http/routes/findings.routes.js';
+import { registerGraphRoutes } from './http/routes/graph.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
 import type { ApprovalsService } from './services/approvals-service.js';
 import type { FindingsService } from './services/findings-service.js';
 import type { ArtifactsService } from './services/artifacts-service.js';
+import type { GraphService } from './services/graph-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -36,6 +38,7 @@ export interface AppOptions {
   readonly approvalsService?: ApprovalsService;
   readonly findingsService?: FindingsService;
   readonly artifactsService?: ArtifactsService;
+  readonly graphService?: GraphService;
   /** Local single-user identity; defaults to getLocalIdentity(). */
   readonly identity?: LocalIdentity;
   /**
@@ -60,6 +63,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     approvalsSupported: options.approvalsService !== undefined,
     findingsSupported: options.findingsService !== undefined,
     artifactsSupported: options.artifactsService !== undefined,
+    graphsSupported: options.graphService !== undefined,
   });
 
   if (options.projectsService !== undefined) {
@@ -76,6 +80,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
   if (options.streamService) registerEventRoutes(app, options.streamService, options.identity ?? getLocalIdentity());
   if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, options.identity ?? getLocalIdentity());
   if (options.findingsService && options.artifactsService) registerFindingsRoutes(app, options.findingsService, options.artifactsService, options.identity ?? getLocalIdentity());
+  if (options.graphService) registerGraphRoutes(app, options.graphService, options.identity ?? getLocalIdentity());
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

@@ -59,6 +59,7 @@ export async function buildCapabilitiesResponse(
   approvalsSupported = false,
   findingsSupported = false,
   artifactsSupported = false,
+  graphsSupported = false,
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -89,6 +90,10 @@ export async function buildCapabilitiesResponse(
   const filesBacked: CapabilityState = !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
   const findings: CapabilityState = findingsSupported ? filesBacked : missingCapability();
   const artifacts: CapabilityState = artifactsSupported ? filesBacked : missingCapability();
+  // Graphs/assets are Neo4j-backed projections (W13): configured only when a
+  // non-default NEO4J_PASSWORD is present; availability is decided per request
+  // (503 unavailable vs 200 empty), the capability only reflects wiring.
+  const graphs: CapabilityState = !graphsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
   return {
     version: CAPABILITIES_VERSION,
     mode: 'local-single-user',
@@ -101,7 +106,7 @@ export async function buildCapabilitiesResponse(
       approvals,
       artifacts,
       findings,
-      graphs: missingCapability(),
+      graphs,
       reports: missingCapability(),
     },
   };
@@ -115,6 +120,7 @@ export interface CapabilitiesRouteOptions {
   readonly approvalsSupported?: boolean;
   readonly findingsSupported?: boolean;
   readonly artifactsSupported?: boolean;
+  readonly graphsSupported?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -130,6 +136,7 @@ export function registerCapabilitiesRoutes(
       options.approvalsSupported === true,
       options.findingsSupported === true,
       options.artifactsSupported === true,
+      options.graphsSupported === true,
     ),
   );
 }

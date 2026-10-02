@@ -381,6 +381,7 @@ describe('server environment', () => {
     });
     expect(env.databaseUrl).toBe(secretUrl);
     expect(env.workspacePath).toBe('D:/tmp/w02-workspace');
+    expect(env.graph).toBeUndefined();
     expect(Object.keys(env).sort()).toEqual([
       'databaseUrl',
       'host',
@@ -389,6 +390,18 @@ describe('server environment', () => {
       'port',
       'workspacePath',
     ]);
+  });
+
+  it('serves graph config only with an explicit non-default NEO4J_PASSWORD', () => {
+    const env = loadServerEnv({
+      NEO4J_PASSWORD: 'explicit-secret',
+      NEO4J_HTTP_PORT: '7475',
+    });
+    expect(env.graph).toEqual({ httpUri: 'http://127.0.0.1:7475', user: 'neo4j', password: 'explicit-secret' });
+    const custom = loadServerEnv({ NEO4J_PASSWORD: 'explicit-secret', NEO4J_HTTP_URI: 'http://neo4j.internal:7474', NEO4J_USER: 'reader' });
+    expect(custom.graph).toEqual({ httpUri: 'http://neo4j.internal:7474', user: 'reader', password: 'explicit-secret' });
+    expect(() => loadServerEnv({ NEO4J_PASSWORD: 'raptix-graph' })).toThrow(/public default/);
+    expect(loadServerEnv({}).graph).toBeUndefined();
   });
 
   it('rejects an empty DATABASE_URL without echoing the value', () => {

@@ -122,3 +122,50 @@ export function isArtifactsView(v: unknown): v is ArtifactsView {
 export function isArtifactContentView(v: unknown): v is ArtifactContentView {
   return isRecord(v) && isNonEmptyString(v.engagementId) && isNonEmptyString(v.path) && typeof v.content === 'string' && (v.mediaType === 'json' || v.mediaType === 'text') && typeof v.sizeBytes === 'number' && Number.isFinite(v.sizeBytes) && typeof v.truncated === 'boolean' && v.source === 'workspace'
 }
+/** Public graph property value: already whitelisted/redacted server-side. */
+export type GraphPropertyValue = string | number | boolean | null
+const isGraphPropertyValue = (v: unknown): v is GraphPropertyValue => v === null || typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+export interface GraphNodeView {
+  id: string; labels: string[]
+  properties: Record<string, GraphPropertyValue>
+}
+export interface GraphEdgeView {
+  id: string; source: string; target: string; type: string
+  properties: Record<string, GraphPropertyValue>
+}
+/** Engagement-scoped attack-chain graph with server-side redaction applied before the response. */
+export interface GraphView {
+  engagementId: string; nodes: GraphNodeView[]; edges: GraphEdgeView[]
+  truncated: boolean; source: 'graph'
+}
+export interface AssetSummaryView {
+  id: string; type: 'Host' | 'Web' | 'API' | 'Identity' | 'Mobile'; label: string
+  hostname?: string; ip?: string; url?: string; os?: string
+  ports: string[]; services: string[]
+  relatedFindingIds: string[]; source: 'graph'
+}
+export interface AssetsView {
+  engagementId: string; assets: AssetSummaryView[]; truncated: boolean; source: 'graph'
+}
+export function isGraphNodeView(v: unknown): v is GraphNodeView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !Array.isArray(v.labels) || !v.labels.every(isNonEmptyString) || !isRecord(v.properties)) return false
+  return Object.values(v.properties).every(isGraphPropertyValue)
+}
+export function isGraphEdgeView(v: unknown): v is GraphEdgeView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || !isNonEmptyString(v.source) || !isNonEmptyString(v.target) || !isNonEmptyString(v.type) || !isRecord(v.properties)) return false
+  return Object.values(v.properties).every(isGraphPropertyValue)
+}
+export function isGraphView(v: unknown): v is GraphView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.nodes) && v.nodes.every(isGraphNodeView) && Array.isArray(v.edges) && v.edges.every(isGraphEdgeView) && typeof v.truncated === 'boolean' && v.source === 'graph'
+}
+const ASSET_TYPES = ['Host', 'Web', 'API', 'Identity', 'Mobile']
+export function isAssetSummaryView(v: unknown): v is AssetSummaryView {
+  if (!isRecord(v) || !isNonEmptyString(v.id) || (v.type !== 'Host' && v.type !== 'Web' && v.type !== 'API' && v.type !== 'Identity' && v.type !== 'Mobile') || typeof v.label !== 'string') return false
+  for (const key of ['hostname', 'ip', 'url', 'os'] as const) {
+    if (v[key] !== undefined && !isNonEmptyString(v[key])) return false
+  }
+  return Array.isArray(v.ports) && v.ports.every(p => isNonEmptyString(p)) && Array.isArray(v.services) && v.services.every(s => isNonEmptyString(s)) && Array.isArray(v.relatedFindingIds) && v.relatedFindingIds.every(f => isNonEmptyString(f)) && v.source === 'graph'
+}
+export function isAssetsView(v: unknown): v is AssetsView {
+  return isRecord(v) && isNonEmptyString(v.engagementId) && Array.isArray(v.assets) && v.assets.every(isAssetSummaryView) && typeof v.truncated === 'boolean' && v.source === 'graph'
+}
