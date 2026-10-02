@@ -153,6 +153,7 @@ class KGStore:
                 ) from exc
         self._driver = driver
         self._database = config.database
+        self._revision_schema_ready = False
 
     @classmethod
     def from_env(cls) -> KGStore:
@@ -226,16 +227,31 @@ class KGStore:
     # ── AttackGraphProtocol implementation ─────────────────────────────
 
     def revision(self, *, engagement: str) -> str:
-        """Opaque token. Changes when any node's ``lastupdated`` advances
-        for this engagement."""
+        """Read an atomic per-engagement write counter plus legacy graph timestamps.
+
+        Separate subqueries avoid the node × edge Cartesian product. The counter
+        advances inside the observation transaction across stores/processes;
+        legacy graph writers still contribute via node/edge timestamps.
+        """
         self._check_engagement(engagement)
         cypher = (
-            "MATCH (n) WHERE n.engagement = $engagement "
-            "RETURN coalesce(max(n.lastupdated), 0) AS rev"
+            "CALL () { MATCH (v:KGRevision {scope: $engagement}) "
+            "RETURN coalesce(max(v.counter), 0) AS seq } "
+            "CALL () { MATCH (n) WHERE n.engagement = $engagement "
+            "RETURN coalesce(max(n.lastupdated), 0) AS node_rev } "
+            "CALL () { MATCH (src)-[r]->(dst) WHERE src.engagement = $engagement "
+            "AND dst.engagement = $engagement AND r.engagement = $engagement "
+            "RETURN coalesce(max(r.lastupdated), 0) AS edge_rev } "
+            "RETURN seq, node_rev, edge_rev"
         )
         rows = self.execute_read(cypher, {"engagement": engagement}, engagement=engagement)
-        rev_val = rows[0]["rev"] if rows else 0
-        return f"rev-{engagement}-{int(rev_val)}"
+        row = rows[0] if rows else {}
+        seq = int(row.get("seq") or 0)
+        node = int(row.get("node_rev") or row.get("rev") or 0)
+        edge = int(row.get("edge_rev") or 0)
+        if not seq and not edge:
+            return f"rev-{engagement}-{node}"
+        return f"rev-{engagement}-{seq}:{node}:{edge}"
 
     def snapshot(self, *, engagement: str):
         """Build an EngagementSnapshot for ``cart.diff_snapshots`` consumption.
@@ -341,6 +357,17 @@ class KGStore:
                 "revision": self.revision(engagement=engagement),
             }
 
+        # The schema migration is not part of every runtime boot. Enforce the
+        # uniqueness invariant before the first write from each store as well,
+        # so two independent processes cannot create duplicate markers.
+        if not self._revision_schema_ready:
+            self.execute_write(
+                "CREATE CONSTRAINT kg_revision_scope IF NOT EXISTS "
+                "FOR (v:KGRevision) REQUIRE v.scope IS UNIQUE",
+                engagement="schema",
+            )
+            self._revision_schema_ready = True
+
         update_tag = int(time.time())
         node_rows: list[dict[str, Any]] = []
         edge_rows: list[dict[str, Any]] = []
@@ -432,7 +459,7 @@ class KGStore:
         merged = 0
         edges_written = 0
 
-        def _do_writes(tx: Any) -> tuple[int, int, int]:
+        def _do_writes(tx: Any) -> tuple[int, int, int, int]:
             local_created = 0
             local_merged = 0
             local_edges = 0
@@ -493,16 +520,25 @@ class KGStore:
                     source_episode_id=source_episode_id,
                 ):
                     local_edges += int(record["written"] or 0)
-            return local_created, local_merged, local_edges
+            # This marker has no `engagement` property: it is invisible to
+            # engagement graph projections and cleanup. A unique scope
+            # constraint (V006) serializes concurrent writers.
+            revision = tx.run(
+                "MERGE (v:KGRevision {scope: $engagement}) "
+                "ON CREATE SET v.counter = 0 "
+                "SET v.counter = v.counter + 1 RETURN v.counter AS counter",
+                engagement=engagement,
+            ).single()["counter"]
+            return local_created, local_merged, local_edges, int(revision)
 
         with self._driver.session(database=self._database) as session:
-            created, merged, edges_written = session.execute_write(_do_writes)
+            created, merged, edges_written, _revision = session.execute_write(_do_writes)
 
         return {
             "created": created,
             "merged": merged,
             "edges": edges_written,
-            "revision": f"rev-{engagement}-{update_tag}",
+            "revision": self.revision(engagement=engagement),
         }
 
     # ── Stale-node cleanup (Cartography update_tag pattern) ────────────

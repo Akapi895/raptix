@@ -320,7 +320,14 @@ def test_record_observations_strips_reserved_provenance_from_props() -> None:
             assert "created_by" not in row_props
             assert "source_episode_id" not in row_props
         # The trusted provenance is bound separately as named params.
-        assert params.get("engagement") == "acme"
-        assert params.get("created_by") == "analyst"
-        assert params.get("source_episode_id") == "tc-real"
-        assert isinstance(params.get("now"), int)
+        assert params.get("engagement") in {"acme", "schema"}
+        if rows:
+            assert params["engagement"] == "acme"
+            assert params.get("created_by") == "analyst"
+            assert params.get("source_episode_id") == "tc-real"
+            assert isinstance(params.get("now"), int)
+        else:
+            # The separate revision marker advances in the same transaction,
+            # without pretending to be an attributed observation.
+            assert "created_by" not in params
+            assert "source_episode_id" not in params

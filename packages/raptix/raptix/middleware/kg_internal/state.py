@@ -1,6 +1,6 @@
 """KGState — agent-state extension owned by ``KGMiddleware``.
 
-Three ``NotRequired`` fields stash KG-relevant context for the agent's
+Four ``NotRequired`` fields stash KG-relevant context for the agent's
 turn. The middleware's ``before_agent`` hook hydrates them; the
 ``wrap_model_call`` hook reads ``kg_summary`` and injects it into the
 system message.
@@ -65,3 +65,4 @@ class KGState(AgentState):
             reduce_converging_value,
         ]
     ]
+    kg_operational_state: NotRequired[Annotated[str, reduce_converging_value]]

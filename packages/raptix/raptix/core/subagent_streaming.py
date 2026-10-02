@@ -217,8 +217,12 @@ class StreamingRunnable(RunnableBinding):
         """Increment the failure counter; return the message body for the
         returned state. Switches to a distinct TERMINAL marker once the cap
         is reached so the orchestrator can stop re-delegating."""
-        n = int(getattr(self, "_consecutive_failures", 0)) + 1
-        object.__setattr__(self, "_consecutive_failures", n)
+        from raptix.core.dispatch_context import active_dispatch
+
+        context = active_dispatch.get()
+        n = context.attempt if context else int(getattr(self, "_consecutive_failures", 0)) + 1
+        if context is None:
+            object.__setattr__(self, "_consecutive_failures", n)
         if n >= MAX_SUBAGENT_CONSECUTIVE_FAILURES:
             return (
                 f"{_TERMINAL_MARKER} subagent '{self._name}' failed {n} "
@@ -229,6 +233,43 @@ class StreamingRunnable(RunnableBinding):
 
     def _reset_failures(self) -> None:
         object.__setattr__(self, "_consecutive_failures", 0)
+
+    def _failure_message(self, exc: BaseException, transcript: list[dict]) -> AIMessage:
+        from raptix.core.dispatch_context import active_dispatch
+        from raptix_core.types.dispatch_outcome import (
+            DispatchFailureOutcome,
+            classify_dispatch_failure,
+        )
+
+        text = self._bump_failure_and_format(exc)
+        context = active_dispatch.get()
+        if context is None:
+            return AIMessage(content=text)
+        refs = []
+        for event in transcript:
+            if event.get("type") != "subagent_tool_result" or event.get("status") != "success":
+                continue
+            if event.get("tool") not in {"write_file", "edit_file"}:
+                continue
+            args = event.get("args") or {}
+            value = args.get("file_path") or args.get("path")
+            if isinstance(value, str) and value not in refs:
+                refs.append(value[:512])
+        outcome = DispatchFailureOutcome(
+            dispatch_id=context.dispatch_id,
+            objective_id=context.objective_id,
+            failure_kind=classify_dispatch_failure(exc),
+            consecutive_failure_count=context.attempt,
+            terminal_for_this_dispatch=context.attempt >= MAX_SUBAGENT_CONSECUTIVE_FAILURES,
+            error_type=type(exc).__name__,
+            error_message=str(exc)[:2000],
+            partial_state_refs=refs[:20],
+        )
+        context.failures.append(outcome)
+        return AIMessage(
+            content=text,
+            additional_kwargs={"dispatch_failure_outcome": outcome.model_dump(mode="json")},
+        )
 
     # ── Back-compat aliases for OSS callers / tests ────────────────────
     # Internal code (and unit tests) refer to ``self._runnable`` / ``self._name``;
@@ -539,11 +580,11 @@ class StreamingRunnable(RunnableBinding):
             # thread state. On the next run, PatchToolCallsMiddleware finds the
             # dangling tool calls and injects "cancelled" messages, causing the
             # orchestrator to retry in an infinite loop.
-            error_msg = self._bump_failure_and_format(exc)
+            error_msg = self._failure_message(exc, transcript)
             if last_state is not None:
-                last_state.setdefault("messages", []).append(AIMessage(content=error_msg))
+                last_state.setdefault("messages", []).append(error_msg)
                 return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
-            return {"messages": [AIMessage(content=error_msg)], TRANSCRIPT_STATE_KEY: transcript}
+            return {"messages": [error_msg], TRANSCRIPT_STATE_KEY: transcript}
 
         self._emit_end(
             renderer,
@@ -666,11 +707,11 @@ class StreamingRunnable(RunnableBinding):
             # thread state. On the next run, PatchToolCallsMiddleware finds the
             # dangling tool calls and injects "cancelled" messages, causing the
             # orchestrator to retry in an infinite loop.
-            error_msg = self._bump_failure_and_format(exc)
+            error_msg = self._failure_message(exc, transcript)
             if last_state is not None:
-                last_state.setdefault("messages", []).append(AIMessage(content=error_msg))
+                last_state.setdefault("messages", []).append(error_msg)
                 return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
-            return {"messages": [AIMessage(content=error_msg)], TRANSCRIPT_STATE_KEY: transcript}
+            return {"messages": [error_msg], TRANSCRIPT_STATE_KEY: transcript}
 
         self._emit_end(
             renderer,
