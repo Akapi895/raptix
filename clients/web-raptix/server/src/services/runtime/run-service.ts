@@ -4,10 +4,11 @@ import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtim
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
 import { RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
-import { parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
+import { parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
 import type { RuntimeContextService, TrustedRuntimeContext } from './runtime-context.js';
 import { projectThreadHistory } from './history-projection.js';
+import { assertResumeValue, findPendingQuestion } from './interrupt-projection.js';
 
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
 const terminal = (status: string): boolean => ['success', 'error', 'timeout'].includes(status);
@@ -102,6 +103,52 @@ export class RunService {
     const threads = await this.options.ownership.listBindings(user, engagement);
     return { engagementId: engagement, threads, source: 'runtime' };
   }
+  /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
+  public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
+    const { requestId, value, questionId, intent } = parseResumeCreate(raw);
+    const { ownership, context, runtime, reads } = this.options;
+    const replay = await ownership.replay(user, engagement, requestId, 'resume', intent, thread);
+    if (replay) return replay;
+    let trusted: TrustedRuntimeContext;
+    try {
+      const binding = await ownership.getBinding(user, engagement, thread);
+      trusted = await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
+      if (!trusted.configurable.authorization_confirmed) throw conflict();
+      const pending = findPendingQuestion((await reads.state(thread)).values);
+      if (!pending || (questionId !== null && questionId !== pending.questionId)) throw conflict();
+      try { assertResumeValue(value, pending); }
+      catch { throw new ProjectPolicyError('bad_request', 'Resume answer does not match the pending question options'); }
+    } catch (error) {
+      const winner = await ownership.replay(user, engagement, requestId, 'resume', intent, thread);
+      if (winner) return winner;
+      throw error;
+    }
+    const reservation = await ownership.reserve(user, engagement, requestId, 'resume', intent, thread);
+    if (!reservation.reserved) return reservation.request;
+    await ownership.recordDispatch(user, engagement, requestId, reservation.token, trusted);
+    return this.dispatch(user, engagement, requestId, reservation.token, async () => {
+      const remote = await runtime.createResumeRun(thread, trusted, requestId, value);
+      metadata(remote.metadata, { ...trusted.metadata, ui_request_id: requestId });
+      return ownership.accept(user, engagement, requestId, reservation.token, thread, remote.runId);
+    });
+  }
+  /** W11 pause/cancel: interrupt keeps the checkpoint resumable; terminal runs return truthfully unchanged. */
+  public async cancelRun(user: string, engagement: string, thread: string, runId: string): Promise<ScopedRunView> {
+    const { runtime } = this.options;
+    const current = await this.getRun(user, engagement, thread, runId);
+    if (['pending', 'running'].includes(current.rawStatus)) {
+      try { await runtime.cancelRun(thread, runId); }
+      catch (error) {
+        if (error instanceof RuntimeRejectedError) {
+          const settled = await this.getRun(user, engagement, thread, runId);
+          if (!['pending', 'running'].includes(settled.rawStatus)) return settled;
+        }
+        throw error;
+      }
+      return this.getRun(user, engagement, thread, runId);
+    }
+    return current;
+  }
   public async snapshot(user: string, engagement: string, thread: string): Promise<ScopedThreadView> {
     const { ownership, context, reads } = this.options;
     const binding = await ownership.getBinding(user, engagement, thread);
@@ -123,7 +170,8 @@ export class RunService {
     }
     const scope = { engagementId: engagement, threadId: thread, runId: '' };
     const transcripts = projectThreadHistory(scope, values);
-    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated };
+    const pendingQuestion = findPendingQuestion(values);
+    return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}) };
   }
   public async reconcile(user: string, engagement: string, requestId: string): Promise<RequestRecoveryView> {
     const { ownership, context, runtime, reads } = this.options;

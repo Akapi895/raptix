@@ -9,6 +9,10 @@ export interface RuntimeRun {
 export interface RuntimeExecutionPort {
   createThread(id: string, metadata: Record<string, string>, initial: TrustedRuntimeContext['configurable']): Promise<{ threadId: string; metadata: Record<string, unknown> }>;
   createRun(threadId: string, context: TrustedRuntimeContext, requestId: string, message: string): Promise<RuntimeRun>;
+  /** W11 graph-interrupt resume: a new run carrying `command.resume`, never an input message. */
+  createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, value: string | string[]): Promise<RuntimeRun>;
+  /** W11 pause/cancel semantics: interrupt action keeps the checkpoint resumable. */
+  cancelRun(threadId: string, runId: string): Promise<void>;
   run(threadId: string, runId: string): Promise<RuntimeRun>;
   listRuns(threadId: string, offset: number, limit: number): Promise<RuntimeRun[]>;
 }
@@ -31,6 +35,17 @@ export class RuntimeExecutionClient extends RuntimeReadClient implements Runtime
       multitask_strategy: 'reject', if_not_exists: 'reject', stream_mode: STREAM_OPTIONS.streamMode,
       stream_subgraphs: STREAM_OPTIONS.streamSubgraphs, stream_resumable: STREAM_OPTIONS.streamResumable,
     }, true), threadId);
+  }
+  public async createResumeRun(threadId: string, context: TrustedRuntimeContext, requestId: string, value: string | string[]): Promise<RuntimeRun> {
+    return run(await this.read(`/threads/${encodeURIComponent(threadId)}/runs`, {
+      assistant_id: context.assistantId, command: { resume: value },
+      config: { configurable: context.configurable }, metadata: { ...context.metadata, ui_request_id: requestId },
+      multitask_strategy: 'reject', if_not_exists: 'reject', stream_mode: STREAM_OPTIONS.streamMode,
+      stream_subgraphs: STREAM_OPTIONS.streamSubgraphs, stream_resumable: STREAM_OPTIONS.streamResumable,
+    }, true), threadId);
+  }
+  public async cancelRun(threadId: string, runId: string): Promise<void> {
+    await this.raw(`/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}/cancel?wait=1&action=interrupt`);
   }
   public async run(threadId: string, runId: string): Promise<RuntimeRun> {
     const found = run(await this.read(`/threads/${encodeURIComponent(threadId)}/runs/${encodeURIComponent(runId)}`), threadId);

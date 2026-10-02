@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
+import { isApprovalRequestView, isApprovalsView, isPendingInterruptView, isScopedRunView, isScopedThreadListView, isScopedThreadView } from '../src/run-api.js';
 const time = '2026-10-02T00:00:00.000Z';
 it('preserves raw runtime status and requires acknowledged scoped run identity', () => {
   const run = { engagementId: 'eng', threadId: 'thread', runId: 'run', requestId: 'request', rawStatus: 'pending', createdAt: time, updatedAt: time, source: 'runtime' };
@@ -30,4 +30,20 @@ it('validates the owner-scoped thread selector list', () => {
   expect(isScopedThreadListView({ ...list, source: 'fixture' })).toBe(false);
   expect(isScopedThreadListView({ ...list, threads: [{ ...list.threads[0], kind: 'unknown' }] })).toBe(false);
   expect(isScopedThreadListView({ ...list, engagementId: '' })).toBe(false);
+});
+it('validates restored interrupt questions and workspace approvals additively', () => {
+  const thread = { binding: { engagementId: 'eng', threadId: 'thread', assistantId: 'soundwave', kind: 'planning', createdAt: time, updatedAt: time }, rawStatus: 'interrupted', messages: [], messagesTruncated: false, historyScope: 'root_messages_only', source: 'runtime', pendingQuestion: { questionId: 'q1', question: 'Proceed?', header: 'Confirm', options: [{ label: 'Yes', description: 'go' }], multiSelect: false, allowOther: true, source: 'runtime' } };
+  expect(isScopedThreadView(thread)).toBe(true);
+  expect(isScopedThreadView({ ...thread, pendingQuestion: { ...thread.pendingQuestion, source: 'checkpoint' } })).toBe(false);
+  expect(isScopedThreadView({ ...thread, pendingQuestion: { ...thread.pendingQuestion, multiSelect: 'yes' } })).toBe(false);
+  expect(isPendingInterruptView(thread.pendingQuestion)).toBe(true);
+  expect(isPendingInterruptView({ ...thread.pendingQuestion, questionId: '' })).toBe(false);
+  const approval = { engagementId: 'eng', requestId: 'req-1', engagementName: 'slug', agentName: 'soundwave', toolName: 'bash', toolArgsRedacted: { cmd: 'ls' }, matchedRule: { techniqueTag: null, toolPattern: '^bash$', timeoutSeconds: 120, defaultOnTimeout: 'allow' }, reason: 'policy match', createdAtSeconds: 1790925255.367, source: 'workspace' };
+  expect(isApprovalRequestView(approval)).toBe(true);
+  expect(isApprovalRequestView({ ...approval, createdAtSeconds: 'soon' })).toBe(false);
+  expect(isApprovalRequestView({ ...approval, toolArgsRedacted: [] })).toBe(false);
+  expect(isApprovalRequestView({ ...approval, matchedRule: { ...approval.matchedRule, techniqueTag: 'T1003' } })).toBe(true);
+  expect(isApprovalRequestView({ ...approval, matchedRule: { ...approval.matchedRule, timeoutSeconds: '120' } })).toBe(false);
+  expect(isApprovalsView({ engagementId: 'eng', approvals: [approval], source: 'workspace' })).toBe(true);
+  expect(isApprovalsView({ engagementId: 'eng', approvals: [approval], source: 'runtime' })).toBe(false);
 });

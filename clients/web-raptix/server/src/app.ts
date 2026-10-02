@@ -12,8 +12,10 @@ import type { RuntimeOwnershipService } from './services/runtime-ownership.js';
 import type { RuntimeContextService } from './services/runtime/runtime-context.js';
 import type { RunService } from './services/runtime/run-service.js';
 import { registerRunRoutes } from './http/routes/runs.routes.js';
+import { registerApprovalRoutes } from './http/routes/approvals.routes.js';
 import type { StreamService } from './services/runtime/stream-service.js';
 import { registerEventRoutes } from './http/routes/events.routes.js';
+import type { ApprovalsService } from './services/approvals-service.js';
 
 export interface AppOptions {
   readonly logger?: FastifyServerOptions['logger'];
@@ -28,6 +30,7 @@ export interface AppOptions {
   readonly runtimeContext?: RuntimeContextService;
   readonly runsService?: RunService;
   readonly streamService?: StreamService;
+  readonly approvalsService?: ApprovalsService;
   /** Local single-user identity; defaults to getLocalIdentity(). */
   readonly identity?: LocalIdentity;
   /**
@@ -49,6 +52,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     databaseHealth: options.databaseHealth,
     runtimeContext: options.runtimeContext,
     runsSupported: options.runsService !== undefined,
+    approvalsSupported: options.approvalsService !== undefined,
   });
 
   if (options.projectsService !== undefined) {
@@ -63,6 +67,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
 
   if (options.runsService) registerRunRoutes(app, options.runsService, options.identity ?? getLocalIdentity());
   if (options.streamService) registerEventRoutes(app, options.streamService, options.identity ?? getLocalIdentity());
+  if (options.approvalsService) registerApprovalRoutes(app, options.approvalsService, options.identity ?? getLocalIdentity());
 
   if (options.runtimeOwnership) {
     const ownership = options.runtimeOwnership;

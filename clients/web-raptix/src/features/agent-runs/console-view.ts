@@ -35,11 +35,13 @@ export interface ConsoleItem {
   /* invocation */
   sessionId?: string
   elapsedSeconds?: number
-  /* question (read-only until W11 HITL) */
+  /* question (answerable when the server restored/pends this exact interrupt) */
   question?: string
   header?: string
   options?: { label: string; description: string }[]
   questionId?: string | null
+  multiSelect?: boolean
+  allowOther?: boolean
   /* interrupt */
   interruptId?: string | null
 }
@@ -61,7 +63,7 @@ function liveItems(state: StreamState): ConsoleItem[] {
     else if (p.type === 'tool_call' || p.type === 'tool_result') items.push({ ...base, kind: 'tool', tool: p.name, toolId: p.toolCallId, sessionId: undefined, argsPreview: p.argsPreview, content: p.content, status: p.status, error: p.error, cancelled: p.cancelled, delegation: p.delegation, truncated: p.truncated })
     else if (p.type === 'subagent_tool_call' || p.type === 'subagent_tool_result') items.push({ ...base, kind: 'tool', tool: p.tool ?? 'tool', toolId: p.toolId ?? null, sessionId: p.sessionId, argsPreview: p.argsPreview, content: p.content, status: p.status, error: p.error, cancelled: p.cancelled, delegation: p.tool === 'task', truncated: p.truncated })
     else if (p.type === 'subagent_start' || p.type === 'subagent_message' || p.type === 'subagent_end') items.push({ ...base, kind: 'invocation', agent: p.agent, sessionId: p.sessionId, text: p.type === 'subagent_message' ? p.text : p.type === 'subagent_start' ? p.prompt : undefined, status: p.status, error: p.error, cancelled: p.cancelled, elapsedSeconds: p.elapsedSeconds })
-    else if (p.type === 'ask_user_question') items.push({ ...base, kind: 'question', question: p.question, header: p.header, options: p.options, questionId: p.questionId })
+    else if (p.type === 'ask_user_question') items.push({ ...base, kind: 'question', question: p.question, header: p.header, options: p.options, questionId: p.questionId, multiSelect: p.multiSelect === true, allowOther: p.allowOther === true })
     else if (p.type === 'interrupt') items.push({ ...base, kind: 'interrupt', interruptId: p.interruptId })
     else if (p.type === 'engagement_ready') items.push({ ...base, kind: 'handoff', agent: p.agent })
   }
@@ -93,7 +95,7 @@ export function consoleTimeline(state: StreamState): ConsoleItem[] {
     const domain = question.questionId ?? key
     if (seenQuestions.has(domain)) continue
     seenQuestions.add(domain)
-    items.push({ id: `history-question:${key}`, kind: 'question', runId: null, source: question.source, question: question.question, header: question.header, options: question.options, questionId: question.questionId ?? null })
+    items.push({ id: `history-question:${key}`, kind: 'question', runId: null, source: question.source, question: question.question, header: question.header, options: question.options, questionId: question.questionId ?? null, multiSelect: question.multiSelect === true, allowOther: question.allowOther === true })
   }
   return items
 }

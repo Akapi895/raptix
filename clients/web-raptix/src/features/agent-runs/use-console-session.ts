@@ -1,18 +1,19 @@
 /**
- * W10 real Console session: one canonical per-thread run store wired to the
- * new API only. Loads the owner-scoped thread selector feed, merges owned
+ * W10/W11 real Console session: one canonical per-thread run store wired to
+ * the new API only. Loads the owner-scoped thread selector feed, merges owned
  * checkpoint history (W09) on select/reconnect, observes the acknowledged run
  * through the W08 GET-only stream, and submits root messages with server ACK
- * recovery. Question answering/HITL and pause/cancel controls are W11: they
- * are never faked here.
+ * recovery. W11 adds truthful graph-interrupt resume, file-backed HITL
+ * decisions and pause/cancel (interrupt) controls; nothing is faked locally.
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import {
-  isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView,
-  type RequestRecoveryView, type ScopedRunView, type StreamScope, type ThreadBindingView,
+  isApprovalsView, isRequestRecoveryView, isScopedRunView, isScopedThreadListView, isScopedThreadView,
+  type ApprovalRequestView, type RequestRecoveryView, type ScopedRunView, type StreamScope, type ThreadBindingView,
 } from '@raptix/web-contracts'
+import type { PendingInterruptView } from '@raptix/web-contracts'
 import { apiBaseUrl } from '../../app/config'
-import { ApiInvalidResponseError } from '../../shared/api/errors'
+import { ApiInvalidResponseError, ApiStatusError } from '../../shared/api/errors'
 import { encodePathSegment, requestJson } from '../../shared/api/http'
 import { emptyStreamState, mergeRunObservation, reduceStreamEvent, streamDisconnected, type StreamState } from './stream-reducer'
 import { mergeThreadHistory } from './history-merge'
@@ -20,6 +21,14 @@ import { activeRunFromPage } from './console-view'
 import { observeRunStream } from './observe-stream'
 
 export type ConsoleStatus = 'loading' | 'ready' | 'error'
+
+export interface ConsoleApprovalsState {
+  list: readonly ApprovalRequestView[]
+  loading: boolean
+  error: string | null
+  decidingId: string | null
+  decideError: string | null
+}
 
 export interface ConsoleSession {
   status: ConsoleStatus
@@ -33,9 +42,20 @@ export interface ConsoleSession {
   submitting: boolean
   creating: boolean
   submitError: string | null
+  pendingQuestion: PendingInterruptView | null
+  answered: readonly string[]
+  answering: boolean
+  answerError: string | null
+  cancelling: boolean
+  cancelError: string | null
+  approvals: ConsoleApprovalsState
   createThread(kind: 'planning' | 'execution'): Promise<void>
   selectThread(threadId: string): void
   send(text: string): Promise<void>
+  answerQuestion(questionId: string, value: string | string[]): Promise<void>
+  cancelRun(): Promise<void>
+  decideApproval(requestId: string, action: 'allow' | 'deny'): Promise<void>
+  refreshApprovals(): void
   refresh(): void
 }
 
@@ -70,7 +90,15 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
   const [submitting, setSubmitting] = useState(false)
   const [creating, setCreating] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [pendingQuestion, setPendingQuestion] = useState<PendingInterruptView | null>(null)
+  const [answered, setAnswered] = useState<readonly string[]>([])
+  const [answering, setAnswering] = useState(false)
+  const [answerError, setAnswerError] = useState<string | null>(null)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelError, setCancelError] = useState<string | null>(null)
+  const [approvals, setApprovals] = useState<ConsoleApprovalsState>({ list: [], loading: false, error: null, decidingId: null, decideError: null })
   const [revision, setRevision] = useState(0)
+  const [approvalsRevision, setApprovalsRevision] = useState(0)
 
   const observeController = useRef<AbortController | null>(null)
   const pollController = useRef<AbortController | null>(null)
@@ -106,6 +134,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
       onEvent: event => apply(state => reduceStreamEvent(state, event)),
       onRecovery: (observed, snapshot) => {
         setRun(observed)
+        setPendingQuestion(snapshot.pendingQuestion ?? null)
         apply(state => mergeThreadHistory(mergeRunObservation(state, observed), snapshot))
       },
       onTransport: next => { setTransport(next); if (next === 'disconnected') apply(streamDisconnected) },
@@ -127,6 +156,10 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
     setRun(null)
     setRecoveryRequired(false)
     setSubmitError(null)
+    setPendingQuestion(null)
+    setAnswered([])
+    setAnswerError(null)
+    setCancelError(null)
     setActiveThreadId(threadId)
   }, [activeThreadId, engagementId, stopObservation])
 
@@ -141,6 +174,7 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
       if (cancelled || controller.signal.aborted) return
       streamRef.current = mergeThreadHistory(emptyStreamState(engagementId, activeThreadId), snapshot)
       setStream(streamRef.current)
+      setPendingQuestion(snapshot.pendingQuestion ?? null)
       const page: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, activeThreadId)}/runs?limit=10`, { signal: controller.signal, retries: 1 })
       const list = (page as { runs?: unknown }).runs
       if (!Array.isArray(list) || !list.every(isScopedRunView)) throw new ApiInvalidResponseError('Run page was not a validated scoped run list')
@@ -214,6 +248,16 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
       const accepted = ack.state === 'accepted' ? ack : await waitForAcceptance(engagementId, requestId, controller.signal)
       if (accepted.state !== 'accepted' || !accepted.runId) throw new ApiInvalidResponseError(`Run submission ended as ${accepted.state}`)
       setRecoveryRequired(true)
+      // Resolve the run view now so live header status and W11 controls bind
+      // during execution; the stream recovery settles the final state later.
+      try {
+        const view: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/runs/${encodePathSegment(accepted.runId)}`, { signal: controller.signal, retries: 1 })
+        if (isScopedRunView(view) && view.engagementId === engagementId && view.threadId === threadId && view.runId === accepted.runId) {
+          setRun(view)
+          streamRef.current = mergeRunObservation(streamRef.current ?? emptyStreamState(engagementId, threadId), view)
+          setStream(streamRef.current)
+        }
+      } catch { /* run view stays unset; stream recovery still resolves it truthfully */ }
       observeRun(threadId, accepted.runId)
     } catch (cause) {
       if (!controller.signal.aborted) setSubmitError(cause instanceof Error ? cause.message : 'Run submission failed')
@@ -225,6 +269,95 @@ export function useConsoleSession(engagementId: string): ConsoleSession {
 
   const refresh = useCallback((): void => { setRevision(value => value + 1) }, [])
 
+  /** W11 graph-interrupt resume: one validated answer, new run identity, no second attempt for the same requestId. */
+  const answerQuestion = useCallback(async (questionId: string, value: string | string[]): Promise<void> => {
+    const threadId = activeThreadId
+    if (!threadId || answering) return
+    setAnswering(true)
+    setAnswerError(null)
+    const controller = new AbortController()
+    pollController.current?.abort()
+    pollController.current = controller
+    try {
+      const requestId = newRequestId()
+      const ack: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/resume`, { method: 'POST', body: { requestId, value, questionId }, signal: controller.signal })
+      if (!isRequestRecoveryView(ack) || ack.engagementId !== engagementId || ack.threadId !== threadId || ack.operation !== 'resume') throw new ApiInvalidResponseError('Resume acknowledgement did not match this thread')
+      const accepted = ack.state === 'accepted' ? ack : await waitForAcceptance(engagementId, requestId, controller.signal)
+      if (accepted.state !== 'accepted' || !accepted.runId) throw new ApiInvalidResponseError(`Resume ended as ${accepted.state}`)
+      setAnswered(previous => previous.includes(questionId) ? previous : [...previous, questionId])
+      setPendingQuestion(current => current?.questionId === questionId ? null : current)
+      setRecoveryRequired(true)
+      try {
+        const view: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/runs/${encodePathSegment(accepted.runId)}`, { signal: controller.signal, retries: 1 })
+        if (isScopedRunView(view) && view.engagementId === engagementId && view.threadId === threadId && view.runId === accepted.runId) {
+          setRun(view)
+          streamRef.current = mergeRunObservation(streamRef.current ?? emptyStreamState(engagementId, threadId), view)
+          setStream(streamRef.current)
+        }
+      } catch { /* run view stays unset; stream recovery still resolves it truthfully */ }
+      observeRun(threadId, accepted.runId)
+    } catch (cause) {
+      if (!controller.signal.aborted) setAnswerError(cause instanceof Error ? cause.message : 'Resume submission failed')
+    } finally {
+      if (pollController.current === controller) pollController.current = null
+      setAnswering(false)
+    }
+  }, [activeThreadId, answering, engagementId, observeRun])
+
+  /** W11 pause/cancel: server interrupt keeps the checkpoint resumable; the settled state replaces the local view. */
+  const cancelRun = useCallback(async (): Promise<void> => {
+    const threadId = activeThreadId
+    const runId = run?.runId
+    if (!threadId || !runId || cancelling) return
+    setCancelling(true)
+    setCancelError(null)
+    try {
+      const view: unknown = await requestJson(apiBaseUrl, `${threadPath(engagementId, threadId)}/runs/${encodePathSegment(runId)}/cancel`, { method: 'POST', timeoutMs: 30000 })
+      if (!isScopedRunView(view) || view.engagementId !== engagementId || view.threadId !== threadId || view.runId !== runId) throw new ApiInvalidResponseError('Cancel acknowledgement did not match this run')
+      setRun(view)
+    } catch (cause) {
+      setCancelError(cause instanceof Error ? cause.message : 'Cancel request failed')
+    } finally {
+      setCancelling(false)
+    }
+  }, [activeThreadId, cancelling, engagementId, run])
+
+  const loadApprovals = useCallback(async (signal: AbortSignal): Promise<void> => {
+    setApprovals(previous => ({ ...previous, loading: true, error: null }))
+    try {
+      const view: unknown = await requestJson(apiBaseUrl, `${engagementPath(engagementId)}/approvals`, { signal, retries: 1 })
+      if (!isApprovalsView(view) || view.engagementId !== engagementId) throw new ApiInvalidResponseError('Approvals did not match this engagement')
+      if (signal.aborted) return
+      setApprovals({ list: view.approvals, loading: false, error: null, decidingId: null, decideError: null })
+    } catch (cause) {
+      if (signal.aborted) return
+      setApprovals({ list: [], loading: false, error: cause instanceof Error ? cause.message : 'Approvals unavailable', decidingId: null, decideError: null })
+    }
+  }, [engagementId])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void loadApprovals(controller.signal)
+    return () => controller.abort()
+  }, [engagementId, approvalsRevision, loadApprovals])
+
+  /** W11 file-backed HITL decision: server acknowledgement only; 409 refreshes authoritative state. */
+  const decideApproval = useCallback(async (requestId: string, action: 'allow' | 'deny'): Promise<void> => {
+    if (approvals.decidingId !== null) return
+    setApprovals(previous => ({ ...previous, decidingId: requestId, decideError: null }))
+    try {
+      const result: unknown = await requestJson(apiBaseUrl, `${engagementPath(engagementId)}/approvals`, { method: 'POST', body: { requestId, action } })
+      if (typeof result !== 'object' || result === null || (result as { ok?: unknown }).ok !== true || (result as { requestId?: unknown }).requestId !== requestId) throw new ApiInvalidResponseError('Decision acknowledgement did not match this request')
+      setApprovalsRevision(value => value + 1)
+    } catch (cause) {
+      const conflict = cause instanceof ApiStatusError && cause.statusCode === 409
+      if (conflict) setApprovalsRevision(value => value + 1)
+      setApprovals(previous => ({ ...previous, decidingId: null, decideError: conflict ? 'Another decision already settled this request; refreshed from the server.' : cause instanceof Error ? cause.message : 'Decision submission failed' }))
+    }
+  }, [approvals.decidingId, engagementId])
+
+  const refreshApprovals = useCallback((): void => { setApprovalsRevision(value => value + 1) }, [])
+
   useEffect(() => () => stopObservation(), [stopObservation])
-  return { status, error, threads, activeThreadId, stream, run, transport, recoveryRequired, submitting, creating, submitError, createThread, selectThread, send, refresh }
+  return { status, error, threads, activeThreadId, stream, run, transport, recoveryRequired, submitting, creating, submitError, pendingQuestion, answered, answering, answerError, cancelling, cancelError, approvals, createThread, selectThread, send, answerQuestion, cancelRun, decideApproval, refreshApprovals, refresh }
 }

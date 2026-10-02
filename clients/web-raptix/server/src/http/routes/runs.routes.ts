@@ -16,6 +16,16 @@ export function registerRunRoutes(app: FastifyInstance, service: RunService, ide
     const ack = await service.submit(identity.id, id, thread, request.body);
     reply.status(202); return ack;
   }));
+  app.post(`${prefix}/threads/:thread/resume`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread } = request.params as { id: string; thread: string };
+    const ack = await service.resume(identity.id, id, thread, request.body);
+    reply.status(202); return ack;
+  }));
+  app.post(`${prefix}/threads/:thread/runs/:run/cancel`, (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, thread, run } = request.params as { id: string; thread: string; run: string };
+    const view = await service.cancelRun(identity.id, id, thread, run);
+    reply.status(200); return view;
+  }));
   app.get(`${prefix}/threads`, (request, reply) => runProjectsHandler(request, reply, () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };

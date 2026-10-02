@@ -109,7 +109,9 @@ export class RuntimeOwnershipService {
         return { reserved: false, request: recoveryView(existing) };
       }
       if (bound && await tx.webRequestLedger.count({ where: { engagementId, activeThreadId: { not: null }, thread: { kind: bound.kind === 'planning' ? 'execution' : 'planning' } } })) throw conflict();
-      const row = await tx.webRequestLedger.create({ data: { engagementId, requestId, operation, payloadHash, threadId, activeThreadId: threadId, reservationToken: randomUUID() } });
+      // A resume never double-holds the active slot: the interrupted run keeps
+      // the slot until the resume dispatch is acknowledged (accept transfers it).
+      const row = await tx.webRequestLedger.create({ data: { engagementId, requestId, operation, payloadHash, threadId, activeThreadId: operation === 'resume' ? null : threadId, reservationToken: randomUUID() } });
       return { reserved: true, token: row.reservationToken, request: recoveryView(row) };
     });
   }
@@ -195,6 +197,12 @@ export class RuntimeOwnershipService {
       if (row.state === 'accepted') {
         if (row.threadId !== threadId || row.runId !== runId) throw conflict();
         return recoveryView(row);
+      }
+      if (row.operation === 'resume') {
+        // Slot transfer: the interrupted holder releases exactly when the
+        // resume run is acknowledged; the resume becomes the active holder.
+        await tx.webRequestLedger.updateMany({ where: { engagementId, activeThreadId: threadId, id: { not: row.id } }, data: { activeThreadId: null } });
+        return recoveryView(await tx.webRequestLedger.update({ where: { id: row.id }, data: { state: 'accepted', threadId, runId, activeThreadId: threadId } }));
       }
       return recoveryView(await tx.webRequestLedger.update({ where: { id: row.id }, data: { state: 'accepted', threadId, runId } }));
     });

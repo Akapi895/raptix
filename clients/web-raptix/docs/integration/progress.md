@@ -348,10 +348,32 @@ HEAD gate:
 Evidence: w10-console.md, w10-live.json and the console browser screenshot in
 test output. No new migration; question resume and HITL are W11.
 
+## W11 — accepted 2026-10-02
+
+Question resume, file-backed tool HITL and pause/cancel controls. Additive server
+surface: `POST .../threads/:thread/resume` (validated scoped graph-interrupt resume,
+new run identity via `command.resume`, replay idempotent, no-pending → 409),
+`POST .../runs/:run/cancel` (runtime interrupt, truthful settled view),
+`GET/POST .../approvals` (producer-contract JSONL in the engagement workspace,
+public view without producer metadata, serialized decision append → duplicate 409).
+Contracts add `PendingInterruptView` (snapshot-restored picker on
+`ScopedThreadView.pendingQuestion`) and `ApprovalRequestView`/`ApprovalsView`;
+`capabilities.approvals` is now implemented. Frontend: server-validated answer form
+on question cards (single/multi/Other, only for the exact server-observed pending
+interrupt), engagement-scoped HITL approvals panel with in-flight disabling and
+409-refresh, and a truthfully labelled interrupt control; send/resume bind the live
+run view so header status and controls work during execution. No migration, no demo
+data, no fabricated decisions. Gates: server 172 tests, contracts 38, frontend 70 +
+browser lanes 8/8 + 6/6 + 1/1 + 1/1 + 1/1, live verifier `--w11` 10 groups including
+a real approvals file round trip; live resume happy path recorded `resumeRoundTrip:
+false` (deployed model never interrupted — happy path proven in controlled service
+lanes, W09 precedent). All verifier phases w07–w11 pass. See w11-controls.md,
+w11-live.json.
+
 ## Subsequent phases — pending (not started)
 
-W11 console HITL; W12–W16
-outcomes/settings/deployment; W17–W19 additional providers; W20 legacy retirement.
+W12–W16 outcomes/settings/deployment; W17–W19 additional providers; W20 legacy
+retirement.
 
 Deployment-agent recommendations are evidence to review, not authority over the
 guide: production data may be preserved with a single new migration owner. A new DB

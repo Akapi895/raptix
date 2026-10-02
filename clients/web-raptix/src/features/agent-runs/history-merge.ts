@@ -1,5 +1,5 @@
 import type { CustomPayload, ScopedThreadView, ThreadHistoryEvent } from '@raptix/web-contracts'
-import { bounded, type Invocation, type StreamMessage, type StreamState, type StreamTool } from './stream-reducer'
+import { bounded, type Invocation, type StreamMessage, type StreamState, type StreamTool } from './stream-reducer.ts'
 
 /**
  * W09 history recovery: merge one owned checkpoint snapshot into the stream
