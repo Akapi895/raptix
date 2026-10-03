@@ -6,7 +6,6 @@ from pathlib import Path
 from typing import Any
 
 from raptix_core.types import engagement
-
 from raptix_core.types.engagement import (
     CONOPS,
     OPPLAN,
@@ -31,6 +30,7 @@ MODELS = {
     "cleanup": CleanupPlan,
 }
 
+
 def schema_with_factory_defaults(model: Any) -> dict[str, Any]:
     schema = model.model_json_schema()
     sections = [(model, schema)] + [
@@ -51,9 +51,12 @@ def schema_with_factory_defaults(model: Any) -> dict[str, Any]:
 
 if __name__ == "__main__":
     destination = Path(__file__).resolve().parents[1] / "server/src/services/planning-schemas.json"
-    exported = json.dumps(
-        {name: schema_with_factory_defaults(model) for name, model in MODELS.items()}, indent=2
-    ) + "\n"
+    exported = (
+        json.dumps(
+            {name: schema_with_factory_defaults(model) for name, model in MODELS.items()}, indent=2
+        )
+        + "\n"
+    )
     if "--check" in sys.argv:
         if destination.read_text(encoding="utf-8") != exported:
             raise SystemExit("Planning schemas differ from the runtime models")

@@ -125,7 +125,9 @@ def test_next_surface_exploit_batch_skips_terminal_cells_and_stops_when_none_pen
         _batch_objective("OBJ-4", 4, "ssrf", "se-ssrf"),
     ]
 
-    assert [payload["objective_id"] for payload in next_surface_exploit_batch(objectives)] == ["OBJ-4"]
+    assert [payload["objective_id"] for payload in next_surface_exploit_batch(objectives)] == [
+        "OBJ-4"
+    ]
     objectives[-1]["status"] = "completed"
     assert next_surface_exploit_batch(objectives) == []
 
