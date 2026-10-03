@@ -91,7 +91,8 @@ class TestIsEnabled:
 
 
 class TestPhaseForRoleMapping:
-    """The 19 OSS standard agents (orchestrators + specialists) must each resolve to a known phase.
+    """The 20 OSS standard agents (orchestrators + specialists, including the
+    post-rename ``raptix`` coordinator alias) must each resolve to a known phase.
 
     Without this, ``maybe_install_skillogy`` quietly hands the middleware
     no phase block and the agent loses its MoC summary. The mapping is
@@ -122,6 +123,7 @@ class TestPhaseForRoleMapping:
             "soundwave",
             "autohunt",
             "decepticon",
+            "raptix",
         }
         assert set(_PHASE_FOR_ROLE) == expected, (
             "OSS standard roles drifted from phase mapping — "
