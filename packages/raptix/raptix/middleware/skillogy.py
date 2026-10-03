@@ -132,6 +132,8 @@ _PHASE_FOR_ROLE: dict[str, str] = {
     "soundwave": "planning",
     "autohunt": "planning",
     "decepticon": "orchestration",
+    # Post-rename canonical coordinator alias — serves decepticon's graph.
+    "raptix": "orchestration",
 }
 
 

@@ -29,7 +29,11 @@ from raptix_core.plugin_loader import is_bundle_enabled, load_plugin_agents
 # group and are always loaded when installed.
 
 # Standard bundle — official OSS main agent + subagents + soundwave.
+# ``raptix`` is the post-rename canonical coordinator name; it serves the
+# exact same compiled graph object as ``decepticon``, which stays as the
+# historical alias for existing engagements and health probes.
 STANDARD_GRAPHS: dict[str, str] = {
+    "raptix": "./raptix/agents/standard/decepticon.py:graph",
     "decepticon": "./raptix/agents/standard/decepticon.py:graph",
     "recon": "./raptix/agents/standard/recon.py:graph",
     "autohunt": "./raptix/agents/standard/autohunt.py:graph",
