@@ -18,6 +18,8 @@ type Compose struct {
 	Home        string
 	ComposeFile string
 	EnvFile     string
+	Project     string
+	Standalone  bool
 	// Runtime is the container runtime selected at construction time
 	// (docker / podman / nerdctl). Stored so every call uses the same
 	// binary + socket and we don't re-probe on every invocation.
@@ -101,7 +103,11 @@ func (c *Compose) baseArgs() []string {
 	// normal flows but breaks the moment any caller passes a different
 	// `-p` (CI, manual debugging, …) and produces a "container_name in
 	// use by another project" conflict on the next ops_start.
-	args = append(args, "-p", opscontrol.ComposeProjectName())
+	project := c.Project
+	if project == "" {
+		project = opscontrol.ComposeProjectName()
+	}
+	args = append(args, "-p", project)
 	args = append(args, "-f", c.ComposeFile, "--env-file", c.EnvFile)
 	// ADR-0006 Sprint 1: include the opscontrol overlay only when
 	// the file exists AND the host socket has been bound. Attaching
@@ -113,7 +119,7 @@ func (c *Compose) baseArgs() []string {
 	// EnsureRunning() exports the env var on success; the user-side
 	// fallback (no service manager + spawn failed) keeps the overlay
 	// out so the boot doesn't silently regress to the broken state.
-	if override := filepath.Join(c.Home, "docker-compose.opscontrol.yml"); fileExists(override) &&
+	if override := filepath.Join(c.Home, "docker-compose.opscontrol.yml"); !c.Standalone && fileExists(override) &&
 		os.Getenv("RAPTIX_OPSCONTROL_SOCK_HOST") != "" {
 		args = append(args, "-f", override)
 	}
@@ -282,6 +288,30 @@ func (c *Compose) Logs(service string) error {
 func (c *Compose) Exec(service string, command ...string) error {
 	args := append([]string{"exec", "-T", service}, command...)
 	return c.run(args, false)
+}
+
+// Web selects the independent web project; it must not merge with base/opscontrol.
+func (c *Compose) Web() *Compose {
+	web := *c
+	web.ComposeFile = filepath.Join(c.Home, "docker-compose.web-raptix.yml")
+	web.Project = opscontrol.ComposeProjectName() + "-web-raptix"
+	web.Standalone = true
+	return &web
+}
+
+// EnsureWebDatabase creates only the dedicated new-server database when absent.
+func (c *Compose) EnsureWebDatabase() error {
+	args := append(c.baseArgs(), "exec", "-T", "postgres", "psql", "-U", "raptix", "-d", "postgres", "-At", "-c", "SELECT 1 FROM pg_database WHERE datname = 'raptix_web_raptix'")
+	cmd := exec.Command(c.Runtime.Bin, args...)
+	cmd.Env = c.composeEnv()
+	output, err := cmd.Output()
+	if err != nil {
+		return fmt.Errorf("check web database: %w", err)
+	}
+	if strings.TrimSpace(string(output)) == "1" {
+		return nil
+	}
+	return c.Exec("postgres", "createdb", "-U", "raptix", "raptix_web_raptix")
 }
 
 // RunInteractive runs a one-off container with stdin attached.

@@ -33,10 +33,10 @@ jobs:
           set -euo pipefail
           # GITHUB_REF_NAME is the tag (e.g. v1.1.42) for a release event.
           version="${GITHUB_REF_NAME#v}"
-          images="raptix-litellm raptix-langgraph raptix-cli raptix-skillogy raptix-sandbox raptix-c2-sliver raptix-web"
+          images="raptix-litellm raptix-langgraph raptix-cli raptix-skillogy raptix-sandbox raptix-c2-sliver raptix-web-raptix-ui raptix-web-raptix-api"
           : > image-digests.txt
           for image in ${images}; do
-            ref="ghcr.io/bittersecurity/${image}:${version}"
+            ref="ghcr.io/akapi895/${image}:${version}"
             digest="$(docker buildx imagetools inspect "${ref}" --format '{{.Manifest.Digest}}')"
             printf '%s@%s\n' "${ref}" "${digest}" >> image-digests.txt
           done

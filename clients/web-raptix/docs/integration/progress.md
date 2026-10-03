@@ -1,5 +1,12 @@
 # Independent web integration — phase gates
 
+> Readiness update 2026-10-03: the W00–W20 entries below are historical phase
+> implementation evidence, not a claim that every screen/provider is operational.
+> Current deployment evidence and open remote gates are maintained in
+> `interactive-web-readiness-backlog.md`; lifecycle in `p1-release-runbook.md`.
+> Local core/Vault/SQLite recreate gates pass. Campaign delivery, C2 providers,
+> HITL-enabled live evidence and hosted/multi-user readiness remain outside that scope.
+
 Guide: `summary/impl-guide-web-raptix-integration.md` (independent backend revision).
 
 Each WP is a phase. Only the current phase may be implemented; the next starts after

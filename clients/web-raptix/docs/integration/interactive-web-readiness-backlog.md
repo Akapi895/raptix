@@ -2,6 +2,8 @@
 
 > Audit ban đầu: **2026-10-02**. Nghiệm thu bổ sung: **2026-10-03**.
 > Trạng thái: **IW-01/IW-02/IW-04 hoàn tất; IW-03 pass lõi local; IW-13 pass recreate/resume cho SQLite-backed threads**. HITL tắt; các mục khác còn mở.
+> **IW-05:** implementation và local gates pass; remote CI logs/acceptance còn chờ commit/push và PR run.
+> **P1 bổ sung:** IW-06 code/lifecycle local pass (release remote còn mở); IW-07 absence gate pass; IW-12 copy/docs/health semantics pass và đã deploy local.
 > Có evidence backend/runtime thật cho lõi, Vault và graceful recreate; chưa phải xác nhận readiness toàn bộ sản phẩm/hosted multi-user.
 
 ## Kết luận và phạm vi
@@ -132,49 +134,79 @@ Evidence: `clients/web-raptix/test-results-deployed/iw04/vault.json`, 13 live ch
 
 ### IW-05 — P1 — Sửa CI đang bỏ qua quality lane web-raptix
 
-**Trạng thái:** lỗi wiring CI đã xác nhận.
+**Trạng thái:** implementation hoàn tất và đã kiểm chứng local ngày 2026-10-03 trên base `bacba41` + working-tree fixes; chưa đóng remote acceptance vì chưa có GitHub Actions run của bản sửa.
 
 **Tham chiếu:** `.github/workflows/ci.yml`, job `changes` và `web-raptix`.
 
 Việc cần làm:
 
-- [ ] Export output của paths-filter `web-raptix` từ job `changes`.
-- [ ] Đồng bộ expression downstream với tên output; có thể dùng bracket notation cho tên chứa dấu gạch nối.
-- [ ] Xác nhận thay đổi source/UI/API/shared contracts kích hoạt đúng lane.
-- [ ] Thêm kiểm tra deployment real-mode vào lane phù hợp; bổ sung live E2E riêng khi có môi trường tích hợp.
+- [x] Export `changes.outputs['web-raptix']` từ `steps.app.outputs['web-raptix']`.
+- [x] Downstream quality steps dùng cùng bracket notation; required aggregate `ci-ok` phụ thuộc `web-raptix`, không còn job legacy `web` đã xóa.
+- [x] Contract tests đọc workflow thật: UI/API/shared contracts/streaming/Dockerfiles/proxy/Compose/lockfile/CI edits match web filter; docs và legacy web/launcher không match. Job `changes` có quyền read-only để dorny đọc PR files.
+- [x] Thêm Docker default real-mode bootstrap smoke vào web quality lane và upload evidence cả khi fail. CI cũng validate Compose web mới. Full DB/LLM live E2E vẫn là lane riêng, không thay bằng bootstrap smoke.
+- [ ] Sau commit/push + PR run, lưu GitHub Actions URL/logs chứng minh quality steps thực sự chạy khi thay đổi web và required aggregate phản ánh failure.
 
 **Nghiệm thu:** CI logs chứng minh các bước server/UI quality thực sự chạy khi thay đổi web; lỗi typecheck/test cố ý trong thử nghiệm kiểm soát làm gate fail, không chỉ emit success vì output trống.
 
+**Các blocker đã sửa:** output web chưa export; `ci-ok.needs` còn `web` không tồn tại (actionlint báo workflow invalid); quyền PR file-read chưa được khai báo; generated Prisma client không tracked nhưng lane chưa generate trong checkout sạch. Server lane nay chạy Prisma generate → typecheck → lint → build → tests. Bốn unused-import errors cũ trong `export-service.ts`, `timeline-service.ts`, `w14-logs-reports.test.ts` đã được loại bỏ để lint trở thành blocking gate thực.
+
+**Local verification:**
+
+- `tests/test_web_raptix_ci.py`: **17/17** pass. Tests đã fail trước fix tại missing output, missing new-web dependency, missing PR-read permission và missing Prisma generation.
+- actionlint **v1.7.7**, schema/expressions trên toàn bộ workflows: pass. Local command tắt shellcheck/pyflakes vì công cụ đó không được setup ở Windows; job actionlint trên Ubuntu vẫn giữ command đầy đủ.
+- Shared builds, server Prisma generate không cần DATABASE_URL, server typecheck/lint/build pass; server tests **215/215** theo chính command CI, không skip test failures.
+- UI typecheck/lint/build/test pass, **81/81**, lint 0 errors/39 existing warnings; mock E2E **8/8**.
+- Docker UI/API images build từ checkout này; `verify-docker-real-mode.mjs` pass: browser gọi `/api/engagements` qua nginx tới compiled new API thật; backend bootstrap không có DB nên response lỗi, UI không render Acme/NovaPay/Alex Kim. Không dùng `page.route()` hoặc API fixtures.
+- Negative Docker canary: build cùng Dockerfile với `VITE_DATA_MODE=mock` → smoke **exit 1** vì không có browser API request. Positive image mặc định real → pass.
+- Negative quality canary: tạm thêm TS2322 type error trong source → chính `npm run typecheck --workspace=@raptix/web-raptix` **exit 2**, dependent lint không chạy. File canary đã xóa, typecheck chạy lại pass.
+
+```powershell
+# Repo root. Hai image tag :ci là test images, không recreate local deployment.
+docker build -f containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
+docker build -f containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
+node clients/web-raptix/tools/verify-docker-real-mode.mjs
+```
+
+Evidence local: `clients/web-raptix/test-results-deployed/iw05/smoke.json`, `docker-real-mode.png`; canary mock tại `iw05/negative-demo/smoke.json` và `failure.png`. Smoke tạo network/containers riêng, loopback port ngẫu nhiên, không truyền `.env`/credentials/volumes, và tự cleanup. Không dùng dữ liệu hay ports của deployment đang vận hành.
+
+**Remote gap:** `gh` chưa authenticated; bản sửa chưa commit/push, nên chưa có remote run để đối chiếu. Workflow hiện trigger trên PR target `main`, push `main` và merge group; push feature branch đơn lẻ không tự trigger nếu chưa có PR. Chỉ đóng IW-05 sau khi lưu run URL/logs của đúng revision. Local pass không được gọi là full CI green.
+
 ### IW-06 — P1 — Hoàn thiện release, update và retirement lifecycle
 
-**Trạng thái:** retirement chưa bao phủ hết workflows; pipeline phân phối new-stack images chưa đầy đủ.
+**Trạng thái:** implementation và local verification hoàn tất ngày 2026-10-03; publish/sign/promote/recover và install từ release thực còn chờ remote release gate.
 
 **Tham chiếu:** `.github/workflows/{release,promote-stable,release-recover,pin-digests}.yml`, `docker-compose.web-raptix.yml`, `clients/launcher/internal/updater/updater.go`, CLI `/web`, desktop bootstrap.
 
 Việc cần làm:
 
-- [ ] Gỡ legacy `raptix-web` khỏi các active verify/promote/recover/digest lists còn sót, đồng bộ với quyết định retirement.
-- [ ] Thêm build/publish/version verification cho hai new-stack images; thống nhất image names/registry/tags giữa release và Compose.
-- [ ] Bổ sung compose/config assets cần thiết vào install/update flow nếu muốn người dùng cài từ release sử dụng web mới.
-- [ ] Làm rõ lifecycle: hiện CLI `/web` chỉ in URL/hướng dẫn, desktop không auto-start web. Nếu yêu cầu là một lệnh khởi động được toàn hệ thống, phải implement lifecycle new stack hoặc cung cấp entrypoint host đầy đủ.
-- [ ] Kiểm tra update, stable promotion và recovery với image/config mới; bảo toàn DB/workspace.
+- [x] Active verify/promote/recover/digest lists dùng UI/API mới, không còn legacy `raptix-web`.
+- [x] Release matrix build/push/sign/SBOM cho `raptix-web-raptix-ui` và `raptix-web-raptix-api`; registry `ghcr.io/akapi895` đồng nhất với Compose. OCI version label được stamp; publish/recover/stable preflight kiểm tra labels và toàn catalog trước promote.
+- [x] Config manifest/install/update thêm `docker-compose.web-raptix.yml`; GoReleaser/updater/install URLs cùng `Akapi895/raptix`. Installer stage/verify trước install; updater verify mọi config trước replace, abort lỗi config/pull trước binary/version stamp, giữ `.env`.
+- [x] Host Go launcher có `raptix web start/status/stop`; project web tách base/opscontrol, dedicated DB ensure, API-owned migrations. CLI `/web` và desktop vẫn URL/reporting-only, được ghi rõ trong runbook.
+- [ ] Remote release gate: publish/sign/digest/stable promotion/recovery và install/update từ assets của một tagged release thực, có run URL/logs.
 
 **Nghiệm thu:** install/update từ release lấy được đúng new-stack images/config, khởi động được web mới; promotion/recovery không đòi image legacy đã ngừng build; CLI/desktop mô tả đúng khả năng thực tế.
 
+**Local evidence:** `tests/test_web_raptix_release.py` 6/6 (đã fail trước fix), Go tests toàn launcher pass, test web-project isolation và checksum mismatch giữ nguyên installed config/`.env`. Installer Bash/PowerShell syntax pass. `raptix web start --pull=false --start-infra=false`, `web status`, `web stop` rồi `start` đã chạy trên deployment local; chỉ web containers bị thay đổi, không dùng `--volumes`. Hai image canary từ absence snapshot carry version `0.0.0-iw07`, đã kiểm tra labels qua Docker inspect. Không publish/retag remote trong đợt này.
+
+Chi tiết lifecycle/backup/rollback và semantics: `p1-release-runbook.md`. OCI label là build version metadata, không thay DB migration compatibility hay model/tool readiness.
+
 ### IW-07 — P1 — Chứng minh không phụ thuộc folder legacy trong môi trường sạch
 
-**Trạng thái:** chưa có bằng chứng mới đạt tiêu chí absence thực sự của W20.
+**Trạng thái:** hoàn tất local gate 2026-10-03, snapshot thật không có `clients/web`; original reference folder không bị xóa.
 
 **Tham chiếu:** `docs/integration/w20-retirement.md`, root `package.json`/`package-lock.json`, Dockerfiles mới.
 
 Việc cần làm:
 
-- [ ] Tạo checkout/bản sao độc lập chỉ phục vụ gate, loại `clients/web/` khỏi bản sao đó; giữ nguyên folder reference trong checkout gốc theo lựa chọn người dùng.
-- [ ] Chạy `npm ci`, shared/UI/API builds, tests và Docker build từ bản sao không có legacy folder.
-- [ ] Chạy deployment/live E2E trên entrypoint mới với legacy service dừng.
-- [ ] Lưu evidence ghi rõ folder absence, commands, exit codes và artifacts.
+- [x] Snapshot `C:\Users\tuanp\AppData\Local\Temp\opencode\raptix-iw07-independent-1791015032914` thực sự không có `clients/web`, `.env`, node_modules/dist/generated ban đầu; giữ folder reference gốc.
+- [x] `npm ci`, shared builds, Prisma generate, API/UI typecheck/lint/build/tests, mock E2E và cả 2 Docker builds pass từ snapshot. API 216/216, UI 81/81, mock E2E 8/8.
+- [x] Docker UI/API + PostgreSQL riêng dùng images build từ snapshot, nối shared Python runtime thật; UI create/reload, planning chat/run `success`, reload history recovery pass, không intercept API. Legacy web không running. Test này là acknowledgement-only independence probe, không thay full core gate IW-03.
+- [x] `test-results-deployed/iw07/independence.json`, `live.json`, `independent-live-console.png` ghi target, absence, commands/exit codes, image names/version và 10 live checks pass. Một lỗi harness `fetch.Response.ok()` đã sửa thành property `ok`; live retry trong cùng snapshot pass, failed attempt vẫn được giữ trong evidence.
 
 **Nghiệm thu:** lane mới install/build/run/E2E pass dù `clients/web/` không tồn tại. Không dùng lockfile scan hoặc test trong checkout còn folder đó làm bằng chứng thay thế.
+
+Tái chạy từ repo root: `node clients/web-raptix/tools/verify-iw07-independence.mjs`. Script dùng temporary snapshot, PostgreSQL/network/containers riêng, cleanup test thread/containers; shared runtime/workspace chỉ nhận engagement test có slug duy nhất.
 
 ### IW-08 — P2 — Implement campaign generation và deployment providers
 
@@ -240,18 +272,25 @@ Việc cần làm theo phạm vi sản phẩm:
 
 ### IW-12 — P1 — Đồng bộ tài liệu readiness, UI copy và health/capability semantics
 
-**Trạng thái:** có claims/copy cũ và health/capabilities chưa đủ làm readiness gate.
+**Trạng thái:** hoàn tất code/docs và local deployed verification ngày 2026-10-03; scope và các gate remote còn thiếu được ghi rõ.
 
 **Tham chiếu:** `docs/integration/{progress,w16-cutover,w20-retirement}.md`, `src/features/settings/RealSettings.tsx`, `src/features/agent-runs/RealConsole.tsx`, `server/src/http/routes/{health,capabilities}.routes.ts`.
 
 Việc cần làm:
 
-- [ ] Điều chỉnh claims “hoàn tất W00–W20” để nêu rõ scope, deployment revision và các evidence còn thiếu.
-- [ ] Cập nhật stale UI copy như “resume arrives with W11” và “no secret storage service exists” sau khi các phần tương ứng đã implement.
-- [ ] Phân biệt liveness, wiring support và operational availability: catalog có graph không bảo đảm model inference/tool integration thành công.
-- [ ] Ghi lại kết quả sau mỗi fix, không chỉ cập nhật số test; readiness report phải chỉ ra thao tác nào đã chạy với backend/provider thật.
+- [x] `progress.md`, W16/W20 notes được đánh dấu historical implementation evidence và trỏ về current backlog/runbook, không đồng nhất code với full product readiness.
+- [x] Console W11 stale copy đã sửa ở IW-03; Settings nay ghi Credentials Vault cung cấp encrypted storage nhưng integration registry/connect settings chưa có. Real-mode UI regression và live Settings copy probe pass.
+- [x] `/api/health` trả `scope: process_liveness`, integration status `not_checked`; `/api/health/ready` trả `scope: dependency_wiring`, `notProbed` liệt kê inference/tool/provider operations. Health 200 không được dùng để suy diễn inference đã pass.
+- [x] Evidence ghi rõ actual DB/runtime flow, fixture UI tests, version labels, workspace-only/local limits và remote acceptance chưa có. Provider-less features vẫn unavailable đúng contract.
 
 **Nghiệm thu:** docs/UI/API không mâu thuẫn; trạng thái ready được hỗ trợ bằng probe/evidence phù hợp và không che giấu tính năng stated-absent.
+
+**Verification:** health semantic tests đã fail trước change rồi pass; server suite 216/216, real-mode UI regressions 29/29 (fixtures). `tools/verify-p1-readiness.mjs` probe Docker port 3000 + actual Settings UI pass; evidence `test-results-deployed/p1/readiness.json` + `settings-readiness.png`. Current deployment built từ base `bacba41` + working-tree P1 fixes, OCI development version `0.0.0`, không phải published release:
+
+| Image | Local image ID |
+|---|---|
+| `ghcr.io/akapi895/raptix-web-raptix-ui:stable` | `sha256:f7434d0a2bcbb4270a43f9fac2833e9cfaf1fc47b0201f893af4a5219bf6e4d2` |
+| `ghcr.io/akapi895/raptix-web-raptix-api:stable` | `sha256:fb293077b44590e07fb6b86a0ed96379deeccf027acd285aa34af9d5152b0309` |
 
 ## Phát hiện bổ sung và evidence
 
@@ -333,8 +372,8 @@ Live evidence local tại `C:\Users\tuanp\AppData\Local\Temp\opencode\iw-verify\
 1. **IW-01 + IW-02:** đã hoàn tất real build/deploy; dùng deployed smoke để kiểm tra mỗi lần rebuild.
 2. **IW-03 + IW-13:** lõi workspace-only/HITL-off và local recreate/resume pass; kiểm tra approval producer nếu chọn bật HITL, hosted/power-loss durability cần gate riêng.
 3. **IW-04:** Vault local pass; giữ key ổn định và dùng live verification khi redeploy.
-4. **IW-05 + IW-06 + IW-07:** sửa CI/release/install/update và chứng minh independence, để deployment có thể tái tạo và duy trì.
-5. **IW-12:** cập nhật tài liệu/copy/readiness cùng các gate tương ứng.
+4. **IW-05 + IW-06:** code/local gates pass; chờ remote CI/release/promotion/recovery acceptance. **IW-07:** absence gate local hoàn tất.
+5. **IW-12:** docs/copy/health scope đã đồng bộ; cập nhật tiếp khi có remote evidence/revision mới.
 6. **IW-08 → IW-11:** triển khai providers và tính năng quản trị theo phạm vi sản phẩm. Không đánh dấu chúng hoàn tất chỉ vì trang UI đã tồn tại.
 
 Sau mỗi nhóm sửa: ghi revision, commands, environment, kết quả và đường dẫn evidence vào mục tương ứng. Không cần commit/push tự động khi chỉ cập nhật backlog.
@@ -358,13 +397,13 @@ Sau mỗi nhóm sửa: ghi revision, commands, environment, kết quả và đư
 ### Mốc B — Phân phối và chức năng sản phẩm hoàn chỉnh theo phạm vi đã chọn
 
 - [ ] CI web quality steps thực sự chạy và fail khi có regression.
-- [ ] Install/build/run/live E2E pass trong bản sao không có `clients/web/`.
+- [x] Install/build/run/live E2E pass trong bản sao không có `clients/web/` (independence scope).
 - [ ] Release/update/promotion/recovery hỗ trợ images/config mới; legacy image không còn trong active lanes.
-- [ ] Lifecycle host/CLI/desktop rõ ràng và dùng được theo tài liệu.
+- [x] Lifecycle host/CLI/desktop rõ ràng; Go host start/status/stop đã chạy local, CLI/desktop URL-only được nêu rõ.
 - [ ] Campaign provider và C2 provider được nghiệm thu nếu tuyên bố hai nhóm này hoạt động đầy đủ.
 - [ ] Auth/membership/RBAC được nghiệm thu nếu tuyên bố hỗ trợ nhiều người dùng.
 - [ ] Settings/integrations/notifications/templates được nghiệm thu theo tính năng công bố.
-- [ ] Readiness docs phản ánh revision và evidence mới nhất.
+- [x] Readiness docs phản ánh revision/evidence local mới nhất và remote gaps.
 
 ## Tài liệu và code tham chiếu
 

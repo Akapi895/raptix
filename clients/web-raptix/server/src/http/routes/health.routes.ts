@@ -1,7 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { RuntimeContextService } from '../../services/runtime/runtime-context.js';
 
-export type HealthCheckStatus = 'ok' | 'not_connected' | 'not_configured';
+export type HealthCheckStatus = 'ok' | 'not_connected' | 'not_configured' | 'not_checked';
 
 export interface HealthCheck {
   readonly status: HealthCheckStatus;
@@ -23,6 +23,8 @@ export interface DatabaseHealth {
 }
 
 export interface LivenessResponse {
+  readonly scope: 'process_liveness';
+  readonly notProbed: readonly string[];
   readonly status: 'ok';
   readonly service: string;
   readonly checks: {
@@ -32,6 +34,8 @@ export interface LivenessResponse {
 }
 
 export interface ReadinessResponse {
+  readonly scope: 'dependency_wiring';
+  readonly notProbed: readonly string[];
   /** `degraded` = at least the database dependency is healthy. */
   readonly status: 'ok' | 'unavailable' | 'degraded';
   readonly service: string;
@@ -44,11 +48,13 @@ export interface ReadinessResponse {
 }
 
 const LIVENESS_RESPONSE: LivenessResponse = {
+  scope: 'process_liveness',
+  notProbed: ['database', 'runtime_catalog', 'model_inference', 'tool_execution', 'provider_operations'],
   status: 'ok',
   service: 'web-raptix-server',
   checks: {
     bootstrap: { status: 'ok' },
-    integrations: { status: 'not_connected' },
+    integrations: { status: 'not_checked' },
   },
 };
 
@@ -91,6 +97,8 @@ export function registerHealthRoutes(
       }
       const ready = database.status === 'ok' && runtime.status === 'ok';
       const response: ReadinessResponse = {
+        scope: 'dependency_wiring',
+        notProbed: ['model_inference', 'tool_execution', 'provider_operations'],
         status: ready ? 'ok' : database.status === 'ok' ? 'degraded' : 'unavailable',
         service: 'web-raptix-server',
         checks: {

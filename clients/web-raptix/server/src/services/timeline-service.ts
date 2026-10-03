@@ -1,4 +1,4 @@
-import { readdir, stat } from 'node:fs/promises';
+import { stat } from 'node:fs/promises';
 import * as path from 'node:path';
 import type { TimelineEntryView, TimelineView } from '@raptix/web-contracts';
 import type { PrismaClient } from '../generated/prisma/client.js';

@@ -43,7 +43,9 @@ async function listOrchestrators(): Promise<string[]> {
   const res = await fetch(`${apiBase()}/assistants/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({}),
+    // The server defaults to a short page; orchestration graphs such as
+    // Soundwave can otherwise be omitted once specialist graphs are loaded.
+    body: JSON.stringify({ limit: 100 }),
   });
   if (!res.ok) {
     throw new Error(`assistants/search HTTP ${res.status}: ${await res.text()}`);

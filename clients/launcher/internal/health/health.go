@@ -19,12 +19,15 @@ const (
 	DefaultLiteLLMPort   = "4000"
 	DefaultNeo4jHTTPPort = "7474"
 	DefaultWebPort       = "3000"
+	// The canonical Raptix coordinator graph. langgraph.json retains the
+	// historical decepticon ID as an alias for existing engagements.
+	coordinatorGraphID = "raptix"
 )
 
 // Timeouts are var (not const) so tests can shrink them.
 var (
 	// LangGraph healthcheck (compose) only verifies /ok responds. The graph may
-	// still be compiling — this functional probe waits for the raptix
+	// still be compiling — this functional probe waits for the coordinator
 	// assistant to appear in /assistants/search.
 	LangGraphTimeout = 60 * time.Second
 
@@ -48,7 +51,7 @@ func CheckLangGraph(env map[string]string) error {
 	url := fmt.Sprintf("http://localhost:%s/assistants/search", port)
 
 	body, _ := json.Marshal(map[string]any{
-		"graph_id": "raptix",
+		"graph_id": coordinatorGraphID,
 		"limit":    1,
 	})
 
@@ -67,7 +70,7 @@ func CheckLangGraph(env map[string]string) error {
 			if resp.StatusCode == http.StatusOK {
 				respBody, _ := io.ReadAll(resp.Body)
 				resp.Body.Close()
-				if bytes.Contains(respBody, []byte(`"raptix"`)) {
+				if bytes.Contains(respBody, []byte(`"`+coordinatorGraphID+`"`)) {
 					return nil
 				}
 			} else {

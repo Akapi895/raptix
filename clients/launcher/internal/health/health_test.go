@@ -1,6 +1,7 @@
 package health
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,6 +11,15 @@ import (
 func TestCheckLangGraph_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == "POST" && r.URL.Path == "/assistants/search" {
+			var request struct {
+				GraphID string `json:"graph_id"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+				t.Fatalf("decode assistant search request: %v", err)
+			}
+			if request.GraphID != coordinatorGraphID {
+				t.Fatalf("graph_id = %q, want %q", request.GraphID, coordinatorGraphID)
+			}
 			w.WriteHeader(http.StatusOK)
 			w.Write([]byte(`[{"assistant_id": "abc", "graph_id": "raptix"}]`))
 			return
@@ -44,7 +54,7 @@ func TestCheckLangGraph_RejectsEmptyBody(t *testing.T) {
 	env := map[string]string{"LANGGRAPH_PORT": port[len("127.0.0.1:"):]}
 
 	if err := CheckLangGraph(env); err == nil {
-		t.Error("CheckLangGraph() should fail when body lacks raptix assistant")
+		t.Error("CheckLangGraph() should fail when body lacks the coordinator assistant")
 	}
 }
 

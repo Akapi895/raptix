@@ -25,4 +25,6 @@ RUN npm run build --workspace=@raptix/streaming \
 FROM nginx:1.27-alpine
 COPY containers/web-raptix-proxy.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/clients/web-raptix/dist /usr/share/nginx/html
+ARG VERSION=0.0.0
+LABEL org.opencontainers.image.version="${VERSION}"
 EXPOSE 8080

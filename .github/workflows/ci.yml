@@ -42,11 +42,15 @@ jobs:
   # Any change to ci.yml itself triggers everything (safety net).
   changes:
     name: Detect changes
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       python: ${{ steps.app.outputs.python }}
       cli: ${{ steps.app.outputs.cli }}
+      web-raptix: ${{ steps.app.outputs['web-raptix'] }}
       desktop: ${{ steps.app.outputs.desktop }}
       launcher: ${{ steps.app.outputs.launcher }}
       compose: ${{ steps.app.outputs.compose }}
@@ -172,6 +176,8 @@ jobs:
         run: touch .env
       - name: Validate base docker-compose.yml
         run: docker compose -f docker-compose.yml config > /dev/null
+      - name: Validate new web-raptix deployment
+        run: docker compose -f docker-compose.web-raptix.yml config > /dev/null
       - name: Validate base + dev override
         run: docker compose -f docker-compose.yml -f docker-compose.dev.yml config > /dev/null
       - name: Validate base + dev + watch
@@ -483,35 +489,58 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
-      - if: needs.changes.outputs.web-raptix != 'true'
+      - if: needs.changes.outputs['web-raptix'] != 'true'
         run: 'echo "No web-raptix-relevant changes — emitting success."'
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        if: needs.changes.outputs.web-raptix == 'true'
+        if: needs.changes.outputs['web-raptix'] == 'true'
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        if: needs.changes.outputs.web-raptix == 'true'
+        if: needs.changes.outputs['web-raptix'] == 'true'
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
-      - if: needs.changes.outputs.web-raptix == 'true'
+      - if: needs.changes.outputs['web-raptix'] == 'true'
         run: npm ci
       - name: Build shared workspaces
-        if: needs.changes.outputs.web-raptix == 'true'
+        if: needs.changes.outputs['web-raptix'] == 'true'
         run: |
           npm run build --workspace=@raptix/streaming
           npm run build --workspace=@raptix/web-contracts
-      - name: Server typecheck + tests
-        if: needs.changes.outputs.web-raptix == 'true'
+      - name: Server Prisma generate + typecheck + lint + build + tests
+        if: needs.changes.outputs['web-raptix'] == 'true'
         run: |
+          npm run prisma:generate --workspace=@raptix/web-raptix-server
           npm run typecheck --workspace=@raptix/web-raptix-server
+          npm run lint --workspace=@raptix/web-raptix-server
+          npm run build --workspace=@raptix/web-raptix-server
           npm run test --workspace=@raptix/web-raptix-server
       - name: UI typecheck + lint + build + tests
-        if: needs.changes.outputs.web-raptix == 'true'
+        if: needs.changes.outputs['web-raptix'] == 'true'
         run: |
           npm run typecheck --workspace=@raptix/web-raptix
           npm run lint --workspace=@raptix/web-raptix
           npm run build --workspace=@raptix/web-raptix
           npm run test --workspace=@raptix/web-raptix
+      - name: Install Chromium for Docker mode smoke
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        working-directory: clients/web-raptix
+        run: npx playwright install --with-deps chromium
+      - name: Build Docker UI and bootstrap API images
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: |
+          docker build -f containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
+          docker build -f containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
+      - name: Docker default real-mode smoke (bootstrap API, no DB or LLM)
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: node clients/web-raptix/tools/verify-docker-real-mode.mjs
+      - name: Upload Docker mode smoke evidence
+        if: always() && needs.changes.outputs['web-raptix'] == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: web-raptix-docker-mode-smoke
+          path: clients/web-raptix/test-results-deployed/iw05/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Go launcher: vet + test. Mirrors what release.yml runs before GoReleaser
   # builds the binaries on tag push, so a broken `go test ./...` is caught
@@ -715,7 +744,7 @@ jobs:
       - python
       - cli
       - desktop
-      - web
+      - web-raptix
       - launcher
       - docker-build
       - docker-build-arm64

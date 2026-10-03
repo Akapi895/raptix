@@ -1,7 +1,6 @@
 import * as path from 'node:path';
 import { readFile, readdir, stat } from 'node:fs/promises';
 import type { PrismaClient } from '../generated/prisma/client.js';
-import { ProjectPolicyError } from '../security/project-policy.js';
 import { resolveEngagementWorkspaceDir } from '../security/workspace-policy.js';
 import { ProjectNotFoundError } from './projects-service.js';
 

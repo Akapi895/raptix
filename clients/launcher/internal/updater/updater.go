@@ -24,17 +24,16 @@ import (
 
 // ConfigManifestAsset is the name of the sha256sum-format manifest the
 // release workflow uploads alongside the Go binaries. It pins
-// docker-compose.yml, config/litellm.yaml, and .env.example.
+// base/web Compose files, config/litellm.yaml, and .env.example.
 const ConfigManifestAsset = "config-checksums.txt"
 
 // BinaryChecksumsAsset is GoReleaser's binary checksum manifest. Same
 // "<hex>  <name>" format as ConfigManifestAsset.
 const BinaryChecksumsAsset = "checksums.txt"
 
-const (
-	Repo       = "BitterSecurity/Raptix"
-	RawBaseURL = "https://raw.githubusercontent.com/" + Repo
-)
+const Repo = "Akapi895/raptix"
+
+var RawBaseURL = "https://raw.githubusercontent.com/" + Repo
 
 // APIBaseURL is a var (not const) so tests can point release fetches at
 // an httptest server.
@@ -337,7 +336,7 @@ func parseUint(s string) (int, bool) {
 	return n, true
 }
 
-// SyncConfigFiles downloads updated docker-compose.yml and litellm.yaml.
+// SyncConfigFiles verifies and installs the base/web Compose and LiteLLM configs.
 //
 // When “release“ is non-nil AND the release exposes a
 // “config-checksums.txt“ asset, every downloaded file is verified
@@ -358,8 +357,9 @@ func SyncConfigFiles(branch string, release *Release) error {
 		// is never downloaded, never manifest-verified, and never
 		// release-tied. Previously every overlay change forced a point
 		// release with a "no checksum entry" sync warning.
-		"docker-compose.yml":  filepath.Join(home, "docker-compose.yml"),
-		"config/litellm.yaml": filepath.Join(home, "config", "litellm.yaml"),
+		"docker-compose.yml":            filepath.Join(home, "docker-compose.yml"),
+		"docker-compose.web-raptix.yml": filepath.Join(home, "docker-compose.web-raptix.yml"),
+		"config/litellm.yaml":           filepath.Join(home, "config", "litellm.yaml"),
 	}
 
 	client := &http.Client{Timeout: 30 * time.Second}
@@ -369,7 +369,11 @@ func SyncConfigFiles(branch string, release *Release) error {
 		return err
 	}
 
+	// Verify all downloads before replacing any installed configuration file.
 	for src, dst := range files {
+		if err := os.MkdirAll(filepath.Dir(dst), 0o755); err != nil {
+			return fmt.Errorf("%s: prepare directory: %w", src, err)
+		}
 		url := fmt.Sprintf("%s/%s/%s", RawBaseURL, branch, src)
 		tmp := dst + ".tmp"
 		defer os.Remove(tmp)
@@ -381,7 +385,9 @@ func SyncConfigFiles(branch string, release *Release) error {
 				return fmt.Errorf("%s: %w", src, err)
 			}
 		}
-		if err := os.Rename(tmp, dst); err != nil {
+	}
+	for src, dst := range files {
+		if err := os.Rename(dst+".tmp", dst); err != nil {
 			return fmt.Errorf("%s: rename: %w", src, err)
 		}
 		ui.Success("Updated " + src)
@@ -665,10 +671,8 @@ func NotifyIfUpdateAvailable(currentVersion string, ch Channel) bool {
 // “ref“ is the git ref used for “SyncConfigFiles“ — “release.TagName“
 // for tagged releases, or a branch name for development tracking.
 //
-// Errors from individual steps are surfaced as warnings via ui rather
-// than propagated, so a transient image-pull failure does not abort the
-// otherwise-completed binary update. The caller is responsible for
-// surfacing the final state.
+// Config verification and image-pull failures abort before replacing the binary
+// or version marker, so a partial release is never announced as installed.
 func ApplyUpdate(release *Release, ref string) error {
 	if release == nil {
 		return fmt.Errorf("nil release")
@@ -684,21 +688,24 @@ func ApplyUpdate(release *Release, ref string) error {
 		syncRelease = nil
 	}
 	if err := SyncConfigFiles(ref, syncRelease); err != nil {
-		ui.Warning("Config sync: " + err.Error())
+		return fmt.Errorf("config sync: %w", err)
 	}
 
 	c := compose.New()
 	targetVersion := strings.TrimPrefix(release.TagName, "v")
 	ui.Info("Pulling Docker images (" + targetVersion + ")...")
 	if err := c.Pull(targetVersion); err != nil {
-		ui.Warning("Image pull: " + err.Error())
+		return fmt.Errorf("image pull: %w", err)
+	}
+	if err := c.Web().Pull(targetVersion); err != nil {
+		return fmt.Errorf("new web image pull: %w", err)
 	}
 
 	if err := SelfUpdate(release); err != nil {
 		return fmt.Errorf("binary update: %w", err)
 	}
 	if err := WriteVersion(release.TagName); err != nil {
-		ui.Warning("Write version stamp: " + err.Error())
+		return fmt.Errorf("write version stamp: %w", err)
 	}
 	return nil
 }

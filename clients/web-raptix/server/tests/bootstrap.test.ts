@@ -99,13 +99,15 @@ describe('server bootstrap (unconfigured)', () => {
     expect(app.server.listening).toBe(false);
   });
 
-  it('GET /api/health returns liveness 200 with bootstrap ok and integrations not connected', async () => {
+  it('GET /api/health reports process liveness without pretending integrations were probed', async () => {
     const response = await app.inject({ method: 'GET', url: '/api/health' });
     expect(response.statusCode).toBe(200);
     const body = response.json();
     expect(body.status).toBe('ok');
     expect(body.checks.bootstrap.status).toBe('ok');
-    expect(body.checks.integrations.status).toBe('not_connected');
+    expect(body.checks.integrations.status).toBe('not_checked');
+    expect(body.scope).toBe('process_liveness');
+    expect(body.notProbed).toContain('model_inference');
   });
 
   it('GET /api/health/ready returns 503 and does not claim fullstack health', async () => {
@@ -167,6 +169,17 @@ describe('server bootstrap (unconfigured)', () => {
     expect(body.error.code).toBe('not_found');
     expect(typeof body.error.message).toBe('string');
   });
+});
+
+it('dependency readiness can be healthy without claiming inference or tool execution was tested', async () => {
+  const runtime = { agents: vi.fn(async () => ({ source: 'runtime', graphs: ['soundwave'] })) };
+  const app = await buildApp({ databaseHealth: { check: async () => ({ status: 'ok' }) }, runtimeContext: runtime as unknown as NonNullable<Parameters<typeof buildApp>[0]>['runtimeContext'] });
+  try {
+    const response = await app.inject('/api/health/ready');
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({ scope: 'dependency_wiring', notProbed: ['model_inference', 'tool_execution', 'provider_operations'] });
+    expect(runtime.agents).toHaveBeenCalledOnce();
+  } finally { await app.close(); }
 });
 
 describe('server bootstrap (injected projects service + database health)', () => {

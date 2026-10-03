@@ -116,7 +116,7 @@ jobs:
       - name: Generate config manifest
         run: |
           set -euo pipefail
-          sha256sum docker-compose.yml config/litellm.yaml .env.example > config-checksums.txt
+          sha256sum docker-compose.yml docker-compose.web-raptix.yml config/litellm.yaml .env.example > config-checksums.txt
           cat config-checksums.txt
 
       - name: Upload config manifest to draft release
@@ -158,6 +158,12 @@ jobs:
           # pull ghcr.io/akapi895/raptix-skillogy:<version>.
           - image: raptix-skillogy
             dockerfile: containers/skillogy.Dockerfile
+            platforms: linux/amd64,linux/arm64
+          - image: raptix-web-raptix-ui
+            dockerfile: containers/web-raptix.Dockerfile
+            platforms: linux/amd64,linux/arm64
+          - image: raptix-web-raptix-api
+            dockerfile: containers/web-raptix-server.Dockerfile
             platforms: linux/amd64,linux/arm64
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -206,7 +212,7 @@ jobs:
           # publish-release job AFTER every image has been verified on GHCR,
           # so a half-finished release never updates the moving tag.
           tags: |
-            ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }}
+            ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -216,12 +222,12 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           cosign sign --yes \
-            "ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+            "ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
 
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }}
+          image: ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }}
           format: cyclonedx-json
           output-file: sbom-${{ matrix.image }}.cdx.json
 
@@ -247,7 +253,7 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           set -uo pipefail
-          target="ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+          target="ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
           predicate="sbom-${{ matrix.image }}.cdx.json"
           extra=()
           if [ "${{ matrix.image }}" = "raptix-sandbox" ]; then
@@ -332,7 +338,7 @@ jobs:
           platforms: linux/${{ matrix.platform }}
           provenance: mode=max
           sbom: ${{ matrix.image != 'raptix-sandbox' }}
-          outputs: type=image,name=ghcr.io/bittersecurity/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/akapi895/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.platform }}
 
@@ -394,10 +400,10 @@ jobs:
         run: |
           # shellcheck disable=SC2046  # intentional word-split: one image ref arg per digest file
           docker buildx imagetools create \
-            --tag ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }} \
-            $(printf 'ghcr.io/bittersecurity/${{ matrix.image }}@sha256:%s ' *)
+            --tag ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }} \
+            $(printf 'ghcr.io/akapi895/${{ matrix.image }}@sha256:%s ' *)
           digest=$(docker buildx imagetools inspect \
-            ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }} \
+            ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }} \
             --format '{{json .Manifest}}' | jq -r '.digest')
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
@@ -407,12 +413,12 @@ jobs:
           DIGEST: ${{ steps.manifest.outputs.digest }}
         run: |
           cosign sign --yes \
-            "ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+            "ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
 
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }}
+          image: ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }}
           format: cyclonedx-json
           output-file: sbom-${{ matrix.image }}.cdx.json
 
@@ -422,7 +428,7 @@ jobs:
           DIGEST: ${{ steps.manifest.outputs.digest }}
         run: |
           set -uo pipefail
-          target="ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+          target="ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
           predicate="sbom-${{ matrix.image }}.cdx.json"
           extra=()
           if [ "${{ matrix.image }}" = "raptix-sandbox" ]; then
@@ -504,11 +510,20 @@ jobs:
             raptix-cli
             raptix-skillogy
             raptix-c2-sliver
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
           for img in "${images[@]}"; do
-            ref="ghcr.io/bittersecurity/${img}:${VERSION}"
+            ref="ghcr.io/akapi895/${img}:${VERSION}"
             echo "Verifying ${ref}"
             docker buildx imagetools inspect "${ref}" >/dev/null
+            case "${img}" in
+              raptix-web-raptix-*)
+                docker pull "${ref}"
+                actual=$(docker image inspect "${ref}" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')
+                test "${actual}" = "${VERSION}" || { echo "::error::Version label mismatch for ${ref}"; exit 1; }
+                ;;
+            esac
           done
 
       # Channel tags (Claude-Code-style soak model; see
@@ -532,10 +547,12 @@ jobs:
             raptix-cli
             raptix-skillogy
             raptix-c2-sliver
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
           for img in "${images[@]}"; do
-            src="ghcr.io/bittersecurity/${img}:${VERSION}"
-            dst="ghcr.io/bittersecurity/${img}:latest"
+            src="ghcr.io/akapi895/${img}:${VERSION}"
+            dst="ghcr.io/akapi895/${img}:latest"
             echo "Promoting ${src} → ${dst}"
             docker buildx imagetools create --tag "${dst}" "${src}"
           done

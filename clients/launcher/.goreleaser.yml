@@ -36,8 +36,8 @@ checksum:
 
 release:
   github:
-    owner: BitterSecurity
-    name: Raptix
+    owner: Akapi895
+    name: raptix
   # Publish as draft so the GitHub `releases/latest` endpoint (used by the
   # launcher's update notice and explicit `raptix update`) does NOT see
   # this version until every Docker image is verified on GHCR. The publish-release job in

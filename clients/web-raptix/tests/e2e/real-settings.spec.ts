@@ -74,6 +74,8 @@ test('unsupported feature areas are stated with reasons, never faked as connecta
   await page.goto(`/projects/${PROJECT_ID}/settings`)
   await expect(page.getByText('AI provider / model / runtime')).toBeVisible()
   await expect(page.getByText('Integrations & keys')).toBeVisible()
+  await expect(page.getByText(/Credentials Vault provides encrypted secret storage/)).toBeVisible()
+  await expect(page.getByText(/No integration registry or secret storage service exists/)).toHaveCount(0)
   await expect(page.getByText('Notification delivery')).toBeVisible()
   await expect(page.getByText('Report templates')).toBeVisible()
   await expect(page.getByRole('button', { name: /Connect|Test|Save key/i })).toHaveCount(0)
