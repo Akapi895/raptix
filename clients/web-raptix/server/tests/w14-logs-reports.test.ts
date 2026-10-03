@@ -4,14 +4,13 @@ import * as path from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { isTimelineView, isScopedRunView, type ScopedRunView, type ScopedThreadView, type ThreadBindingView } from '@raptix/web-contracts';
+import { isTimelineView, type ScopedRunView, type ScopedThreadView, type ThreadBindingView } from '@raptix/web-contracts';
 import { registerErrorHandler } from '../src/http/error-handler.js';
 import { registerTimelineRoutes } from '../src/http/routes/timeline.routes.js';
 import { ArtifactsService } from '../src/services/artifacts-service.js';
 import { ExportService, isExportFormat } from '../src/services/export-service.js';
 import { TimelineService } from '../src/services/timeline-service.js';
 import type { RunService } from '../src/services/runtime/run-service.js';
-import { ProjectNotFoundError } from '../src/services/projects-service.js';
 
 const OLD = '2026-10-01T08:00:00.000Z';
 
