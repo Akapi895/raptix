@@ -4,6 +4,7 @@ description: Hunt LLM misinformation / overreliance (OWASP LLM09:2025) — confi
 metadata:
   subdomain: ai-security
   when_to_use: "llm misinformation overreliance owasp llm09 confident wrong output downstream automation compliance autonomous commit verification"
+  upstream_ref: "OWASP LLM09:2025 Misinformation"
 ---
 
 # LLM Misinformation and Overreliance (LLM09:2025)

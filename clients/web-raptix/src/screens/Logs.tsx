@@ -1,10 +1,5 @@
 import { useState } from 'react'
-import type { Project } from '../types'
 import { SearchIcon, DownloadIcon, TerminalIcon, RefreshIcon, XIcon } from '../components/Icons'
-
-interface Props {
-  project: Project
-}
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug' | 'critical'
 type LogStatus = 'success' | 'warning' | 'error' | 'info'
@@ -80,7 +75,7 @@ function Select({ value, onChange, options }: { value: string; onChange: (v: str
   )
 }
 
-export default function Logs({ project: _project }: Props) {
+export default function Logs() {
   const [agentFilter, setAgentFilter] = useState('All agents')
   const [phaseFilter, setPhaseFilter] = useState('All phases')
   const [toolFilter, setToolFilter]   = useState('All tools')

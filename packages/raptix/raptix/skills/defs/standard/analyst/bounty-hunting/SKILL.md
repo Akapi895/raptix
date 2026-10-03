@@ -4,6 +4,7 @@ description: Bug bounty white-box hunting methodology. Load when the target is a
 metadata:
   subdomain: analyst
   when_to_use: "bug bounty white-box methodology open source security advisory program responsible disclosure policy h1 bugcrowd"
+  upstream_ref: "Raptix analyst lane: white-box bounty hunting methodology"
 ---
 
 # Bug Bounty Hunting Methodology

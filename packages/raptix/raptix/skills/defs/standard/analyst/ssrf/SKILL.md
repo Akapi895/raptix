@@ -4,6 +4,7 @@ description: Hunt Server-Side Request Forgery (CWE-918) through taint analysis f
 metadata:
   subdomain: web-exploitation
   when_to_use: "ssrf server side request forgery cwe-918 taint url http client cloud metadata imds dns rebinding gopher smuggling iam role"
+  mitre_attack: T1190
 ---
 
 # SSRF Hunting Playbook

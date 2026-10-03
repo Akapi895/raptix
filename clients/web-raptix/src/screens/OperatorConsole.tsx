@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import type { Project } from '../types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type CardType = 'thought' | 'action' | 'observation' | 'operator' | 'hitl'
 
 type ActionStatus = 'running' | 'completed' | 'failed'
 
@@ -744,7 +741,7 @@ function PhaseGroupSection({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function OperatorConsole({ project: _project }: { project: Project }) {
+export default function OperatorConsole() {
   const [events, setEvents] = useState<TimelineEvent[]>(INITIAL_EVENTS)
   const [expandedOutputs, setExpandedOutputs] = useState<Set<string>>(new Set())
   const [hitlState, setHitlState] = useState<boolean | null>(null)

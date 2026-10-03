@@ -4,6 +4,7 @@ description: Hunt server-side template injection across Jinja2/Twig/Freemarker/V
 metadata:
   subdomain: web-exploitation
   when_to_use: "ssti server side template injection jinja2 twig freemarker velocity handlebars expression code execution"
+  mitre_attack: T1190
 ---
 
 # SSTI Playbook

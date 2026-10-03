@@ -4,6 +4,7 @@ description: Hunt LLM training-data and model poisoning (OWASP LLM04:2025) — a
 metadata:
   subdomain: ai-security
   when_to_use: "llm data model poisoning owasp llm04 training fine tune rlhf continuous learning adversarial input bias backdoor"
+  upstream_ref: "OWASP LLM04:2025 Data and Model Poisoning"
 ---
 
 # LLM Data and Model Poisoning (LLM04:2025)

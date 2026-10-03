@@ -4,6 +4,7 @@ description: Hunt LLM system-prompt leakage (OWASP LLM07:2025) — exfiltration 
 metadata:
   subdomain: ai-security
   when_to_use: "llm system prompt leakage owasp llm07 exfiltration privileged internal rules secrets tool inventory business logic client visible"
+  upstream_ref: "OWASP LLM07:2025 System Prompt Leakage"
 ---
 
 # LLM System Prompt Leakage (LLM07:2025)

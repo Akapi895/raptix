@@ -154,8 +154,8 @@ Việc cần làm:
 
 - `tests/test_web_raptix_ci.py`: **17/17** pass. Tests đã fail trước fix tại missing output, missing new-web dependency, missing PR-read permission và missing Prisma generation.
 - actionlint **v1.7.7**, schema/expressions trên toàn bộ workflows: pass. Local command tắt shellcheck/pyflakes vì công cụ đó không được setup ở Windows; job actionlint trên Ubuntu vẫn giữ command đầy đủ.
-- Shared builds, server Prisma generate không cần DATABASE_URL, server typecheck/lint/build pass; server tests **215/215** theo chính command CI, không skip test failures.
-- UI typecheck/lint/build/test pass, **81/81**, lint 0 errors/39 existing warnings; mock E2E **8/8**.
+- Shared builds, server Prisma generate không cần DATABASE_URL, server typecheck/lint/build pass; server tests **215/215** theo chính command CI, không skip test failures (hiện 216/216 sau regression tests IW-13/graph).
+- UI typecheck/lint/build/test pass, **81/81**, lint 0 errors/0 warnings (2026-10-03 đã xóa 39 unused-vars); mock E2E **8/8**.
 - Docker UI/API images build từ checkout này; `verify-docker-real-mode.mjs` pass: browser gọi `/api/engagements` qua nginx tới compiled new API thật; backend bootstrap không có DB nên response lỗi, UI không render Acme/NovaPay/Alex Kim. Không dùng `page.route()` hoặc API fixtures.
 - Negative Docker canary: build cùng Dockerfile với `VITE_DATA_MODE=mock` → smoke **exit 1** vì không có browser API request. Positive image mặc định real → pass.
 - Negative quality canary: tạm thêm TS2322 type error trong source → chính `npm run typecheck --workspace=@raptix/web-raptix` **exit 2**, dependent lint không chạy. File canary đã xóa, typecheck chạy lại pass.
@@ -314,7 +314,7 @@ $env:IW13_ENGAGEMENT_ID='cmurr2706000136piyrqtthmm'
 node clients/web-raptix/tools/verify-runtime-durability.mjs --recreate
 ```
 
-**Evidence final:** `clients/web-raptix/test-results-deployed/iw13/durability.json` + `restored-question.png` + `resumed-run.png`; 19 live checks không API interception. Python round-trip test pass; Ruff check/format và basedpyright cho hai files Python mới: 0 errors/0 warnings. Server suite hiện 215/215; UI suite 81/81, mock E2E 8/8; frontend typecheck/build/lint pass (39 existing warnings).
+**Evidence final:** `clients/web-raptix/test-results-deployed/iw13/durability.json` + `restored-question.png` + `resumed-run.png`; 19 live checks không API interception. Python round-trip test pass; Ruff check/format và basedpyright cho hai files Python mới: 0 errors/0 warnings. Server suite hiện 216/216; UI suite 81/81, mock E2E 8/8; frontend typecheck/build/lint pass (0 warnings sau khi xóa 39 unused-vars).
 
 Execution tool-flow trên SQLite cũng pass **14/14**: reload/interrupt/follow-up, tool events, runtime finding và report export. Evidence: `clients/web-raptix/test-results-deployed/iw13/core/iw-final-core.json`; execution thread `f6a26c14-7e18-41a5-9c0f-0d5ff3db3b9c`, success run `01a0ffdd-669e-7d93-8335-f3302f84cab5`.
 
@@ -349,13 +349,13 @@ docker exec raptix-web-raptix-api npx prisma migrate status
 
 Gates:
 
-- API typecheck/build pass; unit tests **213/213** (`npm test --workspace=@raptix/web-raptix-server -- --maxWorkers=1`). Graph mock test flaky khi chạy parallel, pass khi chạy riêng/serial.
+- API typecheck/build/lint pass; unit tests **216/216**. Graph mock test từng flake hiếm (~1/6 full runs, `fetch failed` chung chung): đã surface nguyên nhân gốc (`ECONNREFUSED`/timeout từ `cause`) vào `GraphUnavailableError` kèm test dùng port đã đóng xác định; full suite xanh 2 vòng liên tiếp sau fix.
 - Regression sensitivity check: tạm vô hiệu hóa riêng các fix task interrupts/pending UI/terminal ownership trên source local làm 5 server assertions và 1 UI assertion fail đúng lỗi; khôi phục fix → targeted server **16/16**, UI **4/4** pass. Container deployment không bị thay đổi trong phép kiểm tra này.
-- UI typecheck/build pass, lint **0 errors/39 existing warnings**, unit tests **81/81**, mock E2E **8/8**.
+- UI typecheck/build pass, lint **0 errors/0 warnings** (2026-10-03 đã xóa 39 unused-vars: icon imports, mock-screen `project` props + call sites, `openDrawer`, `tabs`, `setRevision`), unit tests **81/81**, mock E2E **8/8**.
 - `npx playwright test --config playwright.real.config.ts`: **29/29**, API fixtures/error states — không dùng làm full-stack evidence.
 - `npx playwright test --config playwright.deployed.config.ts`: **1/1**, actual Docker create/reload/download, không API intercept.
-- Soundwave strict audit: **17 files, 0 violations**. Full corpus strict audit vẫn báo 28 attribution violations ở skills khác. `skills.cypher` đã regenerate và builder `--check` pass; generated delta chứa skill `defense-evasion` đã được thêm ở audit-control-plane commit.
-- API lint còn **4 errors** unused imports ở `export-service.ts`, `timeline-service.ts`, `tests/w14-logs-reports.test.ts`, các file này không sửa trong đợt IW.
+- Skill audit strict toàn corpus: **323 files, 0 violations** (2026-10-03 đã bổ sung attribution thật cho 28 skills: MITRE Enterprise IDs cho web-exploitation/chains/reporting, OWASP LLM Top 10 `upstream_ref` cho các lỗi LLM-specific, `T1574` cho trust-boundary). `skills.cypher` đã regenerate và builder `--check` pass (2137 nodes, 5773 edges).
+- API lint **sạch** (4 unused-import errors cũ ở `export-service.ts`, `timeline-service.ts`, `tests/w14-logs-reports.test.ts` đã xóa trong IW-05).
 
 Live evidence local tại `C:\Users\tuanp\AppData\Local\Temp\opencode\iw-verify\evidence\`:
 

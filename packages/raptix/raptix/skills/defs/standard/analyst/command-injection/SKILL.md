@@ -4,6 +4,7 @@ description: Hunt OS command injection (CWE-78) — user input reaching shell, e
 metadata:
   subdomain: web-exploitation
   when_to_use: "command injection cwe-78 os shell exec system call argument array bypass path confusion template string"
+  mitre_attack: T1190, T1059
 ---
 
 # Command Injection Playbook

@@ -4,6 +4,7 @@ description: Hunt XML External Entity flaws in parsers and validate file read / 
 metadata:
   subdomain: web-exploitation
   when_to_use: "xxe xml external entity parser file read ssrf cwe-611 dtd parameter entity blind oob"
+  mitre_attack: T1190, T1005
 ---
 
 # XXE Playbook

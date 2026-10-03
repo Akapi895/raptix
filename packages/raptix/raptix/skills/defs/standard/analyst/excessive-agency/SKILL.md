@@ -4,6 +4,7 @@ description: Hunt LLM excessive agency (OWASP LLM06:2025) — agentic systems gr
 metadata:
   subdomain: ai-security
   when_to_use: "llm excessive agency owasp llm06 agentic tools broad permissions unsupervised authority destructive financial loss data loss"
+  upstream_ref: "OWASP LLM06:2025 Excessive Agency"
 ---
 
 # LLM Excessive Agency (LLM06:2025)

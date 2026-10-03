@@ -4,6 +4,7 @@ description: Hunt Insecure Direct Object Reference (CWE-639) — missing authori
 metadata:
   subdomain: web-exploitation
   when_to_use: "idor insecure direct object reference cwe-639 authorization horizontal vertical privilege escalation uuid integer graphql introspection"
+  mitre_attack: T1190
 ---
 
 # IDOR Hunting Playbook

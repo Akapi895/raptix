@@ -2,17 +2,14 @@ import { useState } from 'react'
 import type { Project, ProjectStatus } from '../types'
 import {
   SettingsIcon,
-  ShieldIcon,
   AlertTriangleIcon,
   CheckIcon,
   XIcon,
   BotIcon,
   DatabaseIcon,
   BellIcon,
-  KeyIcon,
   ChevronDownIcon,
   TrashIcon,
-  PlusIcon,
   EyeIcon,
   EyeOffIcon,
   RefreshIcon,

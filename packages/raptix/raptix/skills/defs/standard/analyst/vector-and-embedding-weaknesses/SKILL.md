@@ -4,6 +4,7 @@ description: Hunt vector / embedding weaknesses (OWASP LLM08:2025) — adversari
 metadata:
   subdomain: ai-security
   when_to_use: "llm vector embedding weakness owasp llm08 rag similarity cross-tenant leak inversion privacy semantic retriever prompt injection"
+  upstream_ref: "OWASP LLM08:2025 Vector and Embedding Weaknesses"
 ---
 
 # LLM Vector and Embedding Weaknesses (LLM08:2025)

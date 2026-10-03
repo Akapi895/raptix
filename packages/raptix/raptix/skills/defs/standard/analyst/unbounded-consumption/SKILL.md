@@ -4,6 +4,7 @@ description: Hunt LLM unbounded consumption (OWASP LLM10:2025) — denial-of-wal
 metadata:
   subdomain: ai-security
   when_to_use: "llm unbounded consumption owasp llm10 denial of wallet dos prompt size tool loop expensive model unauthenticated fan-out"
+  mitre_attack: T1499
 ---
 
 # LLM Unbounded Consumption (LLM10:2025)

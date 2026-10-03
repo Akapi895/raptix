@@ -4,6 +4,7 @@ description: Build chains from XSS into account takeover or privileged action ex
 metadata:
   subdomain: web-exploitation
   when_to_use: "xss chain account takeover privileged action cookie session csrf token theft post-message"
+  mitre_attack: T1189
 ---
 
 # Chain: XSS to Takeover

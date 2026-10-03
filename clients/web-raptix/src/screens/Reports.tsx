@@ -1,24 +1,13 @@
 import { useState } from 'react'
 import type { Project } from '../types'
 import {
-  FileTextIcon,
   DownloadIcon,
   PlusIcon,
   SearchIcon,
   ChevronRightIcon,
-  ChevronDownIcon,
-  XIcon,
-  CheckIcon,
-  EditIcon,
   BotIcon,
-  ZapIcon,
   ShieldIcon,
-  AlertTriangleIcon,
   ExternalLinkIcon,
-  EyeIcon,
-  ClockIcon,
-  UserIcon,
-  UploadIcon,
 } from '../components/Icons'
 
 interface Props {
