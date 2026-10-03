@@ -224,11 +224,23 @@ export function isEngagementSettingsView(v: unknown): v is EngagementSettingsVie
  * draft until a real provider contract exists.
  */
 export type CampaignVector = 'phishing' | 'web' | 'mobile'
+export interface CampaignProviderCapabilities {
+  engagementId: string; source: 'configuration'; draftPersistence: true
+  providers: Array<{ provider: 'gophish' | 'evilginx2'; generateConfigured: boolean; deployConfigured: boolean; deploymentScope: 'isolated-lab' }>
+}
+export function isCampaignProviderCapabilities(v: unknown): v is CampaignProviderCapabilities {
+  if (!isRecord(v) || !isNonEmptyString(v.engagementId) || v.source !== 'configuration' || v.draftPersistence !== true || !Array.isArray(v.providers) || v.providers.length !== 2) return false
+  return new Set(v.providers.map(provider => isRecord(provider) ? provider.provider : null)).size === 2 && v.providers.every(provider =>
+    isRecord(provider) && ['gophish', 'evilginx2'].includes(String(provider.provider)) && typeof provider.generateConfigured === 'boolean' && typeof provider.deployConfigured === 'boolean' && provider.deploymentScope === 'isolated-lab')
+}
 export interface CampaignJobView {
   id: string; campaignId: string
   kind: 'generate' | 'deploy'
   status: string
   provider: string | null; error: string | null
+  requestId?: string | null
+  providerId?: string | null; providerStatus?: string | null
+  summary?: { total: number; sent: number; errors: number } | null
   createdAt: string
 }
 export interface CampaignView {
@@ -249,6 +261,11 @@ export function isCampaignJobView(v: unknown): v is CampaignJobView {
   if (!isNonEmptyString(v.status)) return false
   if (v.provider !== null && !isNonEmptyString(v.provider)) return false
   if (v.error !== null && !isNonEmptyString(v.error)) return false
+  if (v.requestId !== undefined && v.requestId !== null && !isNonEmptyString(v.requestId)) return false
+  if (['providerId', 'providerStatus'].some(key => v[key] !== undefined && v[key] !== null && !isNonEmptyString(v[key]))) return false
+  if (v.summary !== undefined && v.summary !== null && (!isRecord(v.summary) || !['total', 'sent', 'errors'].every(key => {
+    const count = (v.summary as Record<string, unknown>)[key]; return typeof count === 'number' && Number.isSafeInteger(count) && count >= 0
+  }))) return false
   return isNonEmptyString(v.createdAt) && !Number.isNaN(Date.parse(v.createdAt))
 }
 export function isCampaignView(v: unknown): v is CampaignView {

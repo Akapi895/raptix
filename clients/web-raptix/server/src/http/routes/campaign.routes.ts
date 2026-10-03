@@ -11,6 +11,10 @@ import type { C2Service } from '../../services/c2-service.js';
  * the durable job (status `unavailable`) — never a fabricated delivery.
  */
 export function registerCampaignRoutes(app: FastifyInstance, campaigns: CampaignService, c2: C2Service, identity: LocalIdentity): void {
+  app.get('/api/engagements/:id/campaigns/capabilities', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    return campaigns.capabilities(identity.id, (request.params as { id: string }).id);
+  }));
   app.get('/api/engagements/:id/campaigns', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };
@@ -30,18 +34,23 @@ export function registerCampaignRoutes(app: FastifyInstance, campaigns: Campaign
   app.post('/api/engagements/:id/campaigns/:campaignId/generate', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id, campaignId } = request.params as { id: string; campaignId: string };
-    return campaigns.runJob(identity.id, id, campaignId, 'generate');
+    return campaigns.runJob(identity.id, id, campaignId, 'generate', request.body);
   }));
   app.post('/api/engagements/:id/campaigns/:campaignId/deploy', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id, campaignId } = request.params as { id: string; campaignId: string };
-    return campaigns.runJob(identity.id, id, campaignId, 'deploy');
+    return campaigns.runJob(identity.id, id, campaignId, 'deploy', request.body);
   }));
 
   app.get('/api/engagements/:id/c2/sessions', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id } = request.params as { id: string };
     return c2.sessions(identity.id, id);
+  }));
+  app.post('/api/engagements/:id/campaigns/:campaignId/jobs/:jobId/reconcile', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store');
+    const { id, campaignId, jobId } = request.params as { id: string; campaignId: string; jobId: string };
+    return campaigns.reconcile(identity.id, id, campaignId, jobId);
   }));
   app.post('/api/engagements/:id/c2/sessions/:sessionId/commands', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');

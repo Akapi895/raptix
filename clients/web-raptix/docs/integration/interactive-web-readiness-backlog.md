@@ -2,6 +2,7 @@
 
 > Audit ban đầu: **2026-10-02**. Nghiệm thu bổ sung: **2026-10-03**.
 > Trạng thái: **IW-01/IW-02/IW-04 hoàn tất; IW-03 pass lõi local; IW-13 pass recreate/resume cho SQLite-backed threads**. HITL tắt; các mục khác còn mở.
+> Phạm vi P2 chốt 2026-10-03: **làm IW-08 (GoPhish + evilginx2) + IW-09 (Sliver + C2 Profiles)**; IW-10 đóng (single-user), IW-11 tạm bỏ qua.
 > **IW-05:** implementation và local gates pass; remote CI logs/acceptance còn chờ commit/push và PR run.
 > **P1 bổ sung:** IW-06 code/lifecycle local pass (release remote còn mở); IW-07 absence gate pass; IW-12 copy/docs/health semantics pass và đã deploy local.
 > Có evidence backend/runtime thật cho lõi, Vault và graceful recreate; chưa phải xác nhận readiness toàn bộ sản phẩm/hosted multi-user.
@@ -144,7 +145,8 @@ Việc cần làm:
 - [x] Downstream quality steps dùng cùng bracket notation; required aggregate `ci-ok` phụ thuộc `web-raptix`, không còn job legacy `web` đã xóa.
 - [x] Contract tests đọc workflow thật: UI/API/shared contracts/streaming/Dockerfiles/proxy/Compose/lockfile/CI edits match web filter; docs và legacy web/launcher không match. Job `changes` có quyền read-only để dorny đọc PR files.
 - [x] Thêm Docker default real-mode bootstrap smoke vào web quality lane và upload evidence cả khi fail. CI cũng validate Compose web mới. Full DB/LLM live E2E vẫn là lane riêng, không thay bằng bootstrap smoke.
-- [ ] Sau commit/push + PR run, lưu GitHub Actions URL/logs chứng minh quality steps thực sự chạy khi thay đổi web và required aggregate phản ánh failure.
+- [x] PR #9 (`feat/audit-control-plane-fixes` → `main`): `Web raptix (lint + test + build)` **pass** 3m29s và `Docker build (web-raptix[-server])` pass — lane chạy thật, không skip. `Detect changes`, `Compose YAML validate`, `actionlint` pass.
+- [ ] `ci-ok` vẫn đỏ do các lỗi có sẵn trên `main` (xác minh bằng 2 push runs gần nhất của `main` cũng đỏ cùng tập lỗi): `pip-audit`, `Trivy`, `Semgrep`, `CodeQL` ×2. Python lane từng đỏ vì `ruff check`/`format` ở tool scripts cũ và 1 parity test thiếu alias `raptix` — đã sửa (`b0c6da1`, `19f45f0`), Python lane **pass** 2m02s gồm pytest 5247 passed. Sandbox `no space left` là sự cố runner tạm thời, rerun pass 4m34s.
 
 **Nghiệm thu:** CI logs chứng minh các bước server/UI quality thực sự chạy khi thay đổi web; lỗi typecheck/test cố ý trong thử nghiệm kiểm soát làm gate fail, không chỉ emit success vì output trống.
 
@@ -210,28 +212,41 @@ Tái chạy từ repo root: `node clients/web-raptix/tools/verify-iw07-independe
 
 ### IW-08 — P2 — Implement campaign generation và deployment providers
 
-**Trạng thái:** hiện chỉ có durable drafts và unavailable jobs; chưa có generation/delivery thực.
+**Trạng thái:** hoàn tất implementation + native lab gate cho cả hai providers (GoPhish prepare/deploy/reconcile, evilginx2 prepare/deploy/reconcile qua typed bridge). **Providers = GoPhish + evilginx2.** Deployment port 3000 chưa được cutover sang slice mới này; commit/push do operator tự quản.
 
-**Tham chiếu:** `server/src/services/campaign-service.ts`, `src/features/campaigns/RealCampaigns.tsx`.
+**Tham chiếu:** `server/src/services/{campaign-service,campaign-job-ledger,campaign-deployment-service,evilginx-campaign-service}.ts`, `server/src/integrations/campaigns/{gophish-client,evilginx-client}.ts`, `src/features/campaigns/{RealCampaigns.tsx,real-campaigns-api.ts}`, `containers/campaign-bridge/`.
 
 Việc cần làm:
 
-- [ ] Chốt provider/adapters cần hỗ trợ và contract cho spec, generated artifacts, delivery/deployment.
-- [ ] Implement dispatch và job lifecycle thực, provider IDs/status/errors; tránh báo thành công chỉ vì request đã được nhận.
-- [ ] Implement retry/idempotency và reload/reconciliation theo semantics provider đã chọn.
-- [ ] UI hiển thị trạng thái/provider outcome thực, capabilities phân biệt draft persistence với generate/deploy availability.
+- [x] Chốt providers GoPhish + evilginx2. Người dùng xác nhận Generate = chuẩn bị bundle provider assets có version, không phải AI viết nội dung mới.
+- [x] GoPhish preparation: draft nhận `gophish: {templateId,pageId,groupId,smtpId}`; Generate đọc native REST resources, ghi job `succeeded` và manifest `spec.prepared`, campaign `prepared`, tăng version atomically. Manifest chứa native refs/names, recipient count, fingerprint; không chứa SMTP credentials, recipient records hoặc HTML.
+- [x] GoPhish lab deploy: `GOPHISH_LAB_DEPLOYMENT=1` mới cho dispatch; Deploy validate manifest fingerprint, scope lab (example.test recipients, mail-sink SMTP, non-capturing page, target `http://gophish:8080`), freeze recipients trong job-owned group, POST native campaign, persist providerId/status. Kết quả reconcile đọc native summary (total/sent/errors); SMTP acceptance không được gọi là inbox delivery. Uncertain POST outcomes giữ lock `activeCampaignId`, chặn redispatch cho đến khi reconcile.
+- [x] Request ledger bền vững: `requestId` + version theo từng campaign (`CampaignJob.requestId/payloadHash/campaignVersion/activeCampaignId/providerId/providerStatus/summary`); retry cùng identity replay cùng job, reuse ID với input khác → 409, version cũ → 409, concurrent retries chỉ một job thắng. Deploy yêu cầu request identity rõ ràng (thiếu → 400).
+- [x] evilginx2 typed bridge: `containers/campaign-bridge/` (evilginx2 **3.3.0** pinned `5557960`, build từ source) nhận duy nhất typed operations prepare/deploy/inspect qua `POST /v1/campaigns`, không nhận shell text; ownership `(engagement,campaign,version)` trong SQLite, label SHA256 deterministic, hostname `.lab.test`, lure URL port 8443. Bridge output chỉ có lure metadata, không có captures/cookies/console text. API enforce target `https://login.origin.test` + authorization; thiếu bridge → `unavailable` rõ ràng.
+- [x] evilginx2 generate/deploy qua API: generate tạo child phishlet + lure native, persist bundle `prepared` + version bump; deploy enable native config (`enabled`); reconcile inspect xác nhận trạng thái. Capabilities route phân biệt draft persistence với generate/deploy availability theo từng provider (configuration, không phải connectivity probe).
+- [x] UI: chọn GoPhish assets hoặc evilginx lab profile (mutually exclusive), hiển thị prepared bundle, provider/status/request IDs, native counts, nút Reconcile cho jobs chưa terminal; capabilities banner nêu rõ configuration ≠ connectivity.
 
 **Nghiệm thu:** một draft có thể generate/deploy qua provider lab thực; kết quả và lỗi được persist, reload/restart vẫn đối chiếu được với provider. Khi provider thiếu vẫn phải unavailable rõ ràng.
 
+**Evidence native lab (2026-10-03, rerun trên cây hiện tại):** base `b0c6da1` + uncommitted IW-08 changes. `test-results-deployed/iw08/preparation/native.json` + `native-ui-prepared.png` + `native-ui-deployed.png`; `failed.json` lưu các failed harness attempts. Harness hợp nhất GoPhish + evilginx trong một lab: **40 checks pass**, gồm GoPhish create/select/prepare, browser reload, API restart, request-identity replay (cùng job, không duplicate mutation), 409 khi reuse identity với input khác, browser Deploy → mail sink nhận đúng 1 message, reconcile `emails_sent` (sent 1/1), reload giữ counts, retry không gửi thêm mail, foreign engagement 404, missing-asset failed job persisted — và evilginx capabilities (configuration ≠ connectivity), generate `succeeded`/`prepared` v2 qua typed bridge, deploy `enabled`, reconcile không redispatch, replay cùng job, foreign reconcile 404, outputs không chứa bridge token/captures.
+
+GoPhish source image pinned `sha256:8a57cd171999dcd1fa33f346d6898440913ae14be114ffc850cc678354672d29` (0.12.1); lab derivative bỏ binary file capability để chạy high ports với `cap_drop=ALL`, user `app`, no-new-privileges. evilginx2 **3.3.0** pinned commit `5557960`, build từ source trong `containers/campaign-bridge/Dockerfile`; bridge chạy user `bridge` (uid 10001), `cap_drop=ALL`. GoPhish/PostgreSQL/mail-sink/bridge chỉ nối network `internal`, không publish ports; API nối thêm control network, publish loopback port tạm. Test containers/networks/volumes đã cleanup. Lab chỉ dùng example.test recipients, mail sink nội bộ và synthetic `login.origin.test`; không gửi mail ra ngoài, không proxy traffic thật.
+
+Server env: cấu hình cùng lúc `GOPHISH_API_URL` + `GOPHISH_API_KEY`; HTTPS giữ verification mặc định (private CA dùng `NODE_EXTRA_CA_CERTS`), HTTP chỉ loopback hoặc service `gophish` trong lab. Endpoint/key không nhận từ browser; startup errors không echo secrets. Client không follow redirects, timeout 5s, mỗi response tối đa 512 KiB. Scope/authorization và optimistic campaign-version check được enforce trước persist; provider errors thành failed jobs, database errors không bị đổi thành provider success.
+
+Verification: IW-08 focused server **56/56** (preparation 20 + deployment 6 + job ledger 10 + evilginx client 6 + evilginx service 6 + w17 campaigns 8); toàn suite server **264 tests** (263 pass + 1 flake heartbeat timing ở stream-service khi chạy full, pass khi rerun riêng — không liên quan IW-08). Server/frontend typecheck/lint/build pass, Prisma schema validate pass, Ruff check/format bridge pass, frontend unit **81/81**, mock E2E **8/8**, campaign real-mode fixture browser **5/5** (thêm evilginx profile flow + capabilities intercept). Native 40-check lab gate ở trên là evidence riêng, không coi fixture tests là provider E2E. Negative UI canary ẩn asset selection làm test mới fail tại checkbox; đã restore và pass lại. Một lỗi teardown fixture oversized HTTP response đã sửa bằng đóng connections do fixture sở hữu, không tăng timeout/skip test.
+
+Harness local: `C:\Users\tuanp\AppData\Local\Temp\opencode\verify-iw08-gophish.mjs` (hợp nhất GoPhish + evilginx, 40 checks), `iw08-gophish-config.json`, `iw08-gophish.Dockerfile`, `verify-iw08-evilginx-bridge.mjs` (bridge trực tiếp, 11 checks). Chạy harness sau build `raptix-iw08-api:preparation` từ `containers/web-raptix-server.Dockerfile`, lab derivative `raptix-iw08-gophish:capless` và `raptix-iw08-evilginx-bridge:lab` từ `containers/campaign-bridge/Dockerfile`. Các image tags này dành cho test, không phải release hay replacement cho deployment đang vận hành. Lab/harness/container bridge là diện cần review riêng khi tách changeset/commit (operator tự commit).
+
 ### IW-09 — P2 — Implement C2 session registry và commands
 
-**Trạng thái:** scoped routes có sẵn, nhưng service luôn trả provider unavailable.
+**Trạng thái:** scoped routes có sẵn, nhưng service luôn trả provider unavailable. **Quyết định phạm vi 2026-10-03 (làm): provider = Sliver, tận dụng tính năng C2 Profiles.**
 
 **Tham chiếu:** `server/src/services/c2-service.ts`, `src/features/c2/RealC2.tsx`.
 
 Việc cần làm:
 
-- [ ] Chốt C2 provider và session ownership mapping theo engagement.
+- [x] Chốt C2 provider Sliver; người dùng xác nhận **HTTP C2 profiles**, phân biệt với implant build profiles. Ownership mapping theo engagement chưa thiết kế/implement; IW-09 chưa bắt đầu.
 - [ ] Implement session discovery/status, scoped command dispatch và output/history theo contract provider.
 - [ ] Kiểm tra reconnect, stale sessions, timeout/error và isolation giữa engagements.
 - [ ] Nối UI C2 vào dữ liệu/provider output thực.
@@ -240,7 +255,7 @@ Việc cần làm:
 
 ### IW-10 — P2 — Multi-user authentication, memberships và RBAC
 
-**Trạng thái:** chưa implement; hiện chỉ local single-user.
+**Trạng thái:** **đóng theo phạm vi 2026-10-03 — giữ local single-user, không implement.** Các việc dưới đây chỉ mở lại nếu mục tiêu chuyển sang hosted/team deployment.
 
 **Tham chiếu:** `server/src/services/members-service.ts`, `server/src/auth/`, `src/features/members/RealMembers.tsx`.
 
@@ -257,7 +272,7 @@ Việc cần làm nếu mục tiêu bao gồm nhiều người dùng:
 
 ### IW-11 — P2 — Hoàn thiện Settings ngoài metadata engagement
 
-**Trạng thái:** hiện chỉ có persisted engagement fields; các nhóm dưới đây chưa có đầy đủ settings contracts.
+**Trạng thái:** **tạm bỏ qua theo quyết định 2026-10-03.** Hiện chỉ có persisted engagement fields; các nhóm dưới đây chưa có đầy đủ settings contracts.
 
 **Tham chiếu:** `src/features/settings/RealSettings.tsx`, `server/src/services/settings-service.ts`.
 
@@ -374,7 +389,7 @@ Live evidence local tại `C:\Users\tuanp\AppData\Local\Temp\opencode\iw-verify\
 3. **IW-04:** Vault local pass; giữ key ổn định và dùng live verification khi redeploy.
 4. **IW-05 + IW-06:** code/local gates pass; chờ remote CI/release/promotion/recovery acceptance. **IW-07:** absence gate local hoàn tất.
 5. **IW-12:** docs/copy/health scope đã đồng bộ; cập nhật tiếp khi có remote evidence/revision mới.
-6. **IW-08 → IW-11:** triển khai providers và tính năng quản trị theo phạm vi sản phẩm. Không đánh dấu chúng hoàn tất chỉ vì trang UI đã tồn tại.
+6. **IW-08 + IW-09:** triển khai providers đã chốt (GoPhish + evilginx2; Sliver + C2 Profiles). IW-10 đóng theo single-user scope, IW-11 tạm bỏ qua. Không đánh dấu chúng hoàn tất chỉ vì trang UI đã tồn tại.
 
 Sau mỗi nhóm sửa: ghi revision, commands, environment, kết quả và đường dẫn evidence vào mục tương ứng. Không cần commit/push tự động khi chỉ cập nhật backlog.
 
@@ -401,8 +416,8 @@ Sau mỗi nhóm sửa: ghi revision, commands, environment, kết quả và đư
 - [ ] Release/update/promotion/recovery hỗ trợ images/config mới; legacy image không còn trong active lanes.
 - [x] Lifecycle host/CLI/desktop rõ ràng; Go host start/status/stop đã chạy local, CLI/desktop URL-only được nêu rõ.
 - [ ] Campaign provider và C2 provider được nghiệm thu nếu tuyên bố hai nhóm này hoạt động đầy đủ.
-- [ ] Auth/membership/RBAC được nghiệm thu nếu tuyên bố hỗ trợ nhiều người dùng.
-- [ ] Settings/integrations/notifications/templates được nghiệm thu theo tính năng công bố.
+- [x] Auth/membership/RBAC: đóng theo phạm vi — tuyên bố single-user, không hỗ trợ nhiều người dùng (quyết định 2026-10-03).
+- [ ] Settings/integrations/notifications/templates: tạm bỏ qua theo quyết định 2026-10-03.
 - [x] Readiness docs phản ánh revision/evidence local mới nhất và remote gaps.
 
 ## Tài liệu và code tham chiếu

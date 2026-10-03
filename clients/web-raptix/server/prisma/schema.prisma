@@ -144,11 +144,19 @@ model CampaignJob {
   status     String @default("unavailable")
   provider   String?
   error      String?
+  requestId  String?
+  payloadHash String?
+  activeCampaignId String? @unique
+  providerId String?
+  providerStatus String?
+  summary Json?
+  campaignVersion Int?
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
   @@index([campaignId, createdAt])
+  @@unique([campaignId, requestId])
 }
 
 
