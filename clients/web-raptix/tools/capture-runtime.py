@@ -33,7 +33,13 @@ TOOL_RESULT = "x" * 8001
 SID_A, SID_B, SID_ERR = "aaaa1111aaaa", "bbbb2222bbbb", "cccc3333cccc"
 SID_CANCEL, SID_NOID = "dddd4444dddd", "eeee5555eeee"
 OUTPUT_NAME = "runtime-emitter-capture.json"
-EVENT_TYPES = ["subagent_start", "subagent_message", "subagent_tool_call", "subagent_tool_result", "subagent_end"]
+EVENT_TYPES = [
+    "subagent_start",
+    "subagent_message",
+    "subagent_tool_call",
+    "subagent_tool_result",
+    "subagent_end",
+]
 
 
 def load_source_module(source: Path):
@@ -54,13 +60,22 @@ def ai_message(tool_calls=None, content=AI_TEXT):
 
 
 def emit_session(run, session_id, batches, *, error=False, cancelled=False):
-    live: list = []; transcript: list = []
+    live: list = []
+    transcript: list = []
     run._emit_start(None, False, live.append, PROMPT, session_id, transcript)
     active: dict = {}
     for batch in batches:
         run._process_messages(batch, active, None, False, live.append, session_id, transcript)
-    run._emit_end(None, False, live.append, ELAPSED_S, session_id,
-                  cancelled=cancelled, error=error, transcript=transcript)
+    run._emit_end(
+        None,
+        False,
+        live.append,
+        ELAPSED_S,
+        session_id,
+        cancelled=cancelled,
+        error=error,
+        transcript=transcript,
+    )
     return {"sessionId": session_id, "live": live, "persisted": transcript}
 
 
@@ -68,13 +83,17 @@ def build_sessions(run):
     paired = [{"name": TOOL_NAME, "args": dict(TOOL_ARGS), "id": TOOL_CALL_ID, "type": "tool_call"}]
     idless = [{"name": TOOL_NAME, "args": dict(TOOL_ARGS), "id": None, "type": "tool_call"}]
     full = ToolMessage(content=TOOL_RESULT, tool_call_id=TOOL_CALL_ID)
-    orphan = ToolMessage(content="fixture orphan tool result (harmless).", tool_call_id=ORPHAN_RESULT_ID)
+    orphan = ToolMessage(
+        content="fixture orphan tool result (harmless).", tool_call_id=ORPHAN_RESULT_ID
+    )
     return {
         "parallel-a": emit_session(run, SID_A, [[ai_message(tool_calls=paired)], [full]]),
         "parallel-b": emit_session(run, SID_B, []),
         "error": emit_session(run, SID_ERR, [], error=True),
         "cancelled": emit_session(run, SID_CANCEL, [], cancelled=True),
-        "no-tool-id": emit_session(run, SID_NOID, [[ai_message(tool_calls=idless, content="")], [orphan]]),
+        "no-tool-id": emit_session(
+            run, SID_NOID, [[ai_message(tool_calls=idless, content="")], [orphan]]
+        ),
     }
 
 
@@ -101,26 +120,41 @@ def build_checks(run, module, sessions):
     pers_txt = pers_res.get("content", "")
     nid_call = events_of(sessions["no-tool-id"]["live"], "subagent_tool_call")[0]
     orphan = events_of(sessions["no-tool-id"]["live"], "subagent_tool_result")[0]
-    starts = {n: events_of(sessions[n]["live"], "subagent_start")[0] for n in ("parallel-a", "parallel-b")}
+    starts = {
+        n: events_of(sessions[n]["live"], "subagent_start")[0] for n in ("parallel-a", "parallel-b")
+    }
     ends = {n: events_of(s["live"], "subagent_end")[0] for n, s in sessions.items()}
     cap = module._transcript_result_cap()
     marker = module._TRANSCRIPT_TRUNCATION_MARKER
     stamp_ok = all(iso_utc_ok(ev.get("created_at")) for ev in channel_events(sessions))
-    mirror_ok = all(s["persisted"][i] is ev for s in sessions.values() for i, ev in enumerate(s["live"]) if ev["type"] != "subagent_tool_result")
+    mirror_ok = all(
+        s["persisted"][i] is ev
+        for s in sessions.values()
+        for i, ev in enumerate(s["live"])
+        if ev["type"] != "subagent_tool_result"
+    )
     return {
         "ids": {
             "toolCallIdPaired": call.get("id") == TOOL_CALL_ID,
             "toolResultIdPaired": live_res.get("id") == TOOL_CALL_ID,
             "toolNameResolvedFromCall": live_res.get("tool") == TOOL_NAME,
-            "parallelSessionIdsDistinct": starts["parallel-a"].get("session_id") != starts["parallel-b"].get("session_id"),
+            "parallelSessionIdsDistinct": starts["parallel-a"].get("session_id")
+            != starts["parallel-b"].get("session_id"),
             "missingToolCallIdIsNull": nid_call.get("id") is None,
-            "orphanResultFallsBackToUnknown": orphan.get("tool") == "unknown" and orphan.get("id") == ORPHAN_RESULT_ID,
+            "orphanResultFallsBackToUnknown": orphan.get("tool") == "unknown"
+            and orphan.get("id") == ORPHAN_RESULT_ID,
         },
         "created_at": {"isoUtcOnEveryEvent": stamp_ok},
-        "elapsed": {"everyEndReportsSeconds": ELAPSED_S, "matches": all(e.get("elapsed") == ELAPSED_S for e in ends.values())},
+        "elapsed": {
+            "everyEndReportsSeconds": ELAPSED_S,
+            "matches": all(e.get("elapsed") == ELAPSED_S for e in ends.values()),
+        },
         "parallel": {
             "sameAgentBothSessions": all(s.get("agent") == AGENT_NAME for s in starts.values()),
-            "oneStartPerSession": all(len(events_of(sessions[n]["live"], "subagent_start")) == 1 for n in ("parallel-a", "parallel-b")),
+            "oneStartPerSession": all(
+                len(events_of(sessions[n]["live"], "subagent_start")) == 1
+                for n in ("parallel-a", "parallel-b")
+            ),
         },
         "truncation": {
             "sourceCapIs8000": cap == 8000,
@@ -130,23 +164,37 @@ def build_checks(run, module, sessions):
         },
         "units": {
             "eventOrderPerSession": [ev["type"] for ev in live_a] == EVENT_TYPES,
-            "commonFieldsOnEveryEvent": all({"type", "created_at", "agent", "session_id"} <= set(ev) for ev in channel_events(sessions)),
-            "agentNameOnEveryEvent": all(ev.get("agent") == AGENT_NAME for ev in channel_events(sessions)),
+            "commonFieldsOnEveryEvent": all(
+                {"type", "created_at", "agent", "session_id"} <= set(ev)
+                for ev in channel_events(sessions)
+            ),
+            "agentNameOnEveryEvent": all(
+                ev.get("agent") == AGENT_NAME for ev in channel_events(sessions)
+            ),
         },
         "ends": {
-            "errorVariant": ends["error"].get("error") is True and ends["error"].get("cancelled") is False,
-            "cancelledVariant": ends["cancelled"].get("cancelled") is True and ends["cancelled"].get("error") is False,
-            "normalVariant": ends["parallel-a"].get("error") is False and ends["parallel-a"].get("cancelled") is False,
+            "errorVariant": ends["error"].get("error") is True
+            and ends["error"].get("cancelled") is False,
+            "cancelledVariant": ends["cancelled"].get("cancelled") is True
+            and ends["cancelled"].get("error") is False,
+            "normalVariant": ends["parallel-a"].get("error") is False
+            and ends["parallel-a"].get("cancelled") is False,
         },
         "persistence": {"nonResultEventsByteIdenticalObject": mirror_ok},
         "constructor": {
-            "classNameIsStreamingRunnable": type(run).__name__ == "StreamingRunnable", "agentNameProperty": run._name == AGENT_NAME,
+            "classNameIsStreamingRunnable": type(run).__name__ == "StreamingRunnable",
+            "agentNameProperty": run._name == AGENT_NAME,
         },
     }
 
 
 def failing_paths(checks):
-    return [f"{g}.{n}" for g, body in checks.items() for n, ok in body.items() if isinstance(ok, bool) and not ok]
+    return [
+        f"{g}.{n}"
+        for g, body in checks.items()
+        for n, ok in body.items()
+        if isinstance(ok, bool) and not ok
+    ]
 
 
 def main() -> int:
@@ -175,7 +223,9 @@ def main() -> int:
     payload = {
         "provenance": PROVENANCE,
         "schemaSource": {
-            "file": source.name, "agent": AGENT_NAME, "class": type(run).__name__,
+            "file": source.name,
+            "agent": AGENT_NAME,
+            "class": type(run).__name__,
             "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
             "transcriptResultCap": module._transcript_result_cap(),
             "truncationMarker": module._TRANSCRIPT_TRUNCATION_MARKER,
