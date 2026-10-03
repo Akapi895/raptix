@@ -33,19 +33,25 @@ function campaignFixture(id: string, name: string, jobs: CampaignRow['jobs']): C
   return { id, engagementId: PROJECT_ID, name: name.length > 0 ? name : `Draft ${id}`, vector: 'phishing', status: 'draft', version: 1, spec: { scenario: 'it-security-alert' }, jobs, createdAt: TIME, updatedAt: TIME }
 }
 
-async function intercept(page: Page): Promise<{ created: unknown[]; jobs: Array<{ campaignId: string; kind: string }> }> {
+async function intercept(page: Page, preparation = false, evilginx = false): Promise<{ created: unknown[]; jobs: Array<{ campaignId: string; kind: string }> }> {
   const state = { created: [] as unknown[], jobs: [] as Array<{ campaignId: string; kind: string }> }
   const campaigns: CampaignRow[] = []
   let seq = 0
   const json = (route: Route, body: unknown, status = 200): Promise<void> => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) })
   await page.route(`**/api/engagements/${PROJECT_ID}`, route => json(route, project))
+  await page.route(`**/api/engagements/${PROJECT_ID}/campaigns/capabilities`, route => json(route, {
+    engagementId: PROJECT_ID, source: 'configuration', draftPersistence: true, providers: [
+      { provider: 'gophish', generateConfigured: preparation, deployConfigured: preparation, deploymentScope: 'isolated-lab' },
+      { provider: 'evilginx2', generateConfigured: evilginx, deployConfigured: evilginx, deploymentScope: 'isolated-lab' },
+    ],
+  }))
   await page.route(`**/api/engagements/${PROJECT_ID}/campaigns`, route => {
     if (route.request().method() === 'POST') {
-      const body = route.request().postDataJSON() as { name?: string; vector?: string; scenario?: string }
+      const body = route.request().postDataJSON() as { name?: string; vector?: string; scenario?: string; gophish?: Record<string, number>; evilginx?: { profile: string } }
       seq += 1
       const row = campaignFixture(`camp-${seq}`, body.name ?? '', [])
       row.vector = body.vector ?? 'phishing'
-      row.spec = { scenario: body.scenario ?? null }
+      row.spec = { scenario: body.scenario ?? null, ...(body.gophish ? { gophish: body.gophish } : {}), ...(body.evilginx ? { evilginx: body.evilginx } : {}) }
       campaigns.push(row)
       state.created.push(body)
       return json(route, row, 201)
@@ -55,9 +61,18 @@ async function intercept(page: Page): Promise<{ created: unknown[]; jobs: Array<
   await page.route(`**/api/engagements/${PROJECT_ID}/campaigns/*/generate`, route => {
     const campaignId = route.request().url().split('/campaigns/')[1]?.split('/generate')[0] ?? ''
     state.jobs.push({ campaignId, kind: 'generate' })
-    const job = { id: `job-${campaignId}-g`, campaignId, kind: 'generate', status: 'unavailable', provider: null, error: 'campaign provider not configured', createdAt: TIME }
     const row = campaigns.find(entry => entry.id === campaignId)
+    const isEvilginx = evilginx && row?.spec.evilginx !== undefined
+    const job = { id: `job-${campaignId}-g`, campaignId, kind: 'generate', status: preparation || isEvilginx ? 'succeeded' : 'unavailable', provider: preparation ? 'gophish' : isEvilginx ? 'evilginx2' : null, error: preparation || isEvilginx ? null : 'campaign provider not configured', createdAt: TIME }
     if (row) row.jobs = [job, ...row.jobs]
+    if (row && preparation) {
+      row.status = 'prepared'; row.version = 2
+      row.spec.prepared = { provider: 'gophish', assets: [{ kind: 'templates', id: 1, name: 'Lab notice' }], recipientCount: 1, fingerprint: 'a'.repeat(64), version: 2 }
+    }
+    if (row && isEvilginx) {
+      row.status = 'prepared'; row.version = 2
+      row.spec.prepared = { provider: 'evilginx2', phishlet: 'lab:aaaaaaaaaaaaaaaaaaaa', lureId: 0, providerId: 'lab:aaaaaaaaaaaaaaaaaaaa:0', providerStatus: 'disabled', version: 2, fingerprint: 'b'.repeat(64), url: 'https://login.aaaaaaaaaaaaaaaaaaaa.lab.test:8443/lab' }
+    }
     return json(route, job)
   })
   await page.route(`**/api/engagements/${PROJECT_ID}/campaigns/*/deploy`, route => {
@@ -109,4 +124,41 @@ test('C2 sessions state the unavailable provider instead of fabricating sessions
   await expect(page.getByText('Server answered 503', { exact: false })).toBeVisible()
   await expect(page.getByText('whoami', { exact: false })).toHaveCount(0)
   await expect(page.getByText('hostname', { exact: false })).toHaveCount(0)
+})
+
+test('selects native asset IDs and displays the prepared bundle after reload', async ({ page }) => {
+  const fixture = await intercept(page, true)
+  await page.goto(`/projects/${PROJECT_ID}/campaigns`)
+  await page.getByLabel('Campaign name').fill('Native GoPhish preparation')
+  await page.getByLabel('Select native GoPhish assets').check()
+  await expect(page.getByRole('button', { name: 'Create draft' })).toBeDisabled()
+  for (const [key, value] of Object.entries({ templateId: 1, pageId: 2, groupId: 3, smtpId: 4 })) await page.getByLabel(`GoPhish ${key}`).fill(`${value}`)
+  await page.getByRole('button', { name: 'Create draft' }).click()
+  await expect(page.getByText('Native GoPhish preparation')).toBeVisible()
+  expect(fixture.created[0]).toMatchObject({ gophish: { templateId: 1, pageId: 2, groupId: 3, smtpId: 4 } })
+  await page.getByRole('button', { name: 'Generate', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('status succeeded')
+  await expect(page.getByText('Prepared provider asset bundle')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('Prepared provider asset bundle')).toBeVisible()
+  await expect(page.getByText('status prepared')).toBeVisible()
+  await expect(page.getByText('Lab notice', { exact: false })).toBeVisible()
+})
+
+test('selects the synthetic evilginx lab profile and displays its prepared lure after reload', async ({ page }) => {
+  const fixture = await intercept(page, false, true)
+  await page.goto(`/projects/${PROJECT_ID}/campaigns`)
+  await expect(page.getByText('evilginx2: Generate configured · Deploy configured · isolated lab')).toBeVisible()
+  await page.getByLabel('Campaign name').fill('Synthetic evilginx lab')
+  await page.getByLabel('Select synthetic evilginx2 lab profile').check()
+  await page.getByRole('button', { name: 'Create draft' }).click()
+  await expect(page.getByText('Synthetic evilginx lab')).toBeVisible()
+  expect(fixture.created[0]).toMatchObject({ evilginx: { profile: 'lab' } })
+  await page.getByRole('button', { name: 'Generate', exact: true }).click()
+  await expect(page.getByRole('status')).toContainText('status succeeded')
+  await expect(page.getByText('Prepared provider asset bundle')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('Prepared provider asset bundle')).toBeVisible()
+  await expect(page.getByText('status prepared')).toBeVisible()
+  await expect(page.getByText('evilginx2', { exact: false }).first()).toBeVisible()
 })

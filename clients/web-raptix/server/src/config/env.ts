@@ -1,3 +1,6 @@
+import type { GoPhishConfig } from '../integrations/campaigns/gophish-client.js';
+import type { EvilginxBridgeConfig } from '../integrations/campaigns/evilginx-client.js';
+
 export type ServerLogLevel =
   | 'fatal'
   | 'error'
@@ -38,6 +41,8 @@ export interface ServerEnv {
    * the value is a secret and is never logged or echoed.
    */
   readonly vaultKey?: Buffer;
+  readonly gophish?: GoPhishConfig;
+  readonly evilginx?: EvilginxBridgeConfig;
 }
 
 export const SERVER_ENV_DEFAULTS: Readonly<
@@ -213,6 +218,26 @@ function readVaultKey(
   return decoded;
 }
 
+function readGoPhish(source: NodeJS.ProcessEnv, issues: string[]): GoPhishConfig | undefined {
+  if (source.GOPHISH_API_URL === undefined && source.GOPHISH_API_KEY === undefined) return undefined;
+  const apiKey = source.GOPHISH_API_KEY;
+  if (!apiKey || apiKey.trim() !== apiKey || apiKey.length > 512 || /[\r\n]/.test(apiKey)) {
+    issues.push('GOPHISH_API_KEY must be a non-empty API key when GOPHISH_API_URL is configured');
+  }
+  let url: URL;
+  try { url = new URL(source.GOPHISH_API_URL ?? ''); }
+  catch { issues.push('GOPHISH_API_URL must be a valid absolute URL when GOPHISH_API_KEY is configured'); return undefined; }
+  const labHttp = url.protocol === 'http:' && ['localhost', '127.0.0.1', '[::1]', 'gophish'].includes(url.hostname);
+  if (source.GOPHISH_LAB_DEPLOYMENT !== undefined && source.GOPHISH_LAB_DEPLOYMENT !== '0' && source.GOPHISH_LAB_DEPLOYMENT !== '1') {
+    issues.push('GOPHISH_LAB_DEPLOYMENT must be 0 or 1');
+  }
+  if ((url.protocol !== 'https:' && !labHttp) || url.username || url.password || url.search || url.hash || url.pathname !== '/') {
+    issues.push('GOPHISH_API_URL requires HTTPS (or loopback/gophish lab HTTP), without credentials, query, fragment or path');
+    return undefined;
+  }
+  return apiKey ? { apiUrl: url.origin, apiKey, labDeployment: source.GOPHISH_LAB_DEPLOYMENT === '1' } : undefined;
+}
+
 export function loadServerEnv(
   source: NodeJS.ProcessEnv = process.env,
 ): ServerEnv {
@@ -225,6 +250,18 @@ export function loadServerEnv(
   const workspacePath = readWorkspacePath(source, issues);
   const graph = readGraphConfig(source, issues);
   const vaultKey = readVaultKey(source, issues);
+  const gophish = readGoPhish(source, issues);
+  let evilginx: EvilginxBridgeConfig | undefined;
+  if (source.EVILGINX_BRIDGE_URL !== undefined || source.EVILGINX_BRIDGE_TOKEN !== undefined) {
+    const apiKey = source.EVILGINX_BRIDGE_TOKEN;
+    if (!apiKey || apiKey.length < 32 || apiKey.length > 512 || apiKey.trim() !== apiKey || /[\r\n]/.test(apiKey)) issues.push('EVILGINX_BRIDGE_TOKEN requires a private token of 32-512 characters');
+    try {
+      const url = new URL(source.EVILGINX_BRIDGE_URL ?? '');
+      const lab = url.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]', 'evilginx-bridge'].includes(url.hostname);
+      if ((url.protocol !== 'https:' && !lab) || url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new TypeError('invalid bridge URL');
+      if (apiKey) evilginx = { apiUrl: url.origin, apiKey };
+    } catch { issues.push('EVILGINX_BRIDGE_URL requires HTTPS or loopback/evilginx-bridge lab HTTP, without credentials, path, query or fragment'); }
+  }
   if (issues.length > 0) {
     throw new EnvValidationError(issues);
   }
@@ -237,6 +274,8 @@ export function loadServerEnv(
     ...(workspacePath === undefined ? {} : { workspacePath }),
     ...(graph === undefined ? {} : { graph }),
     ...(vaultKey === undefined ? {} : { vaultKey }),
+    ...(gophish === undefined ? {} : { gophish }),
+    ...(evilginx === undefined ? {} : { evilginx }),
   } satisfies ServerEnv;
 }
 
