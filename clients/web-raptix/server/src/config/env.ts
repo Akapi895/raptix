@@ -1,5 +1,6 @@
 import type { GoPhishConfig } from '../integrations/campaigns/gophish-client.js';
 import type { EvilginxBridgeConfig } from '../integrations/campaigns/evilginx-client.js';
+import type { SliverConfig } from '../integrations/c2/sliver-client.js';
 
 export type ServerLogLevel =
   | 'fatal'
@@ -43,6 +44,7 @@ export interface ServerEnv {
   readonly vaultKey?: Buffer;
   readonly gophish?: GoPhishConfig;
   readonly evilginx?: EvilginxBridgeConfig;
+  readonly sliver?: SliverConfig;
 }
 
 export const SERVER_ENV_DEFAULTS: Readonly<
@@ -251,6 +253,7 @@ export function loadServerEnv(
   const graph = readGraphConfig(source, issues);
   const vaultKey = readVaultKey(source, issues);
   const gophish = readGoPhish(source, issues);
+  const sliver = readSliver(source, issues);
   let evilginx: EvilginxBridgeConfig | undefined;
   if (source.EVILGINX_BRIDGE_URL !== undefined || source.EVILGINX_BRIDGE_TOKEN !== undefined) {
     const apiKey = source.EVILGINX_BRIDGE_TOKEN;
@@ -276,9 +279,20 @@ export function loadServerEnv(
     ...(vaultKey === undefined ? {} : { vaultKey }),
     ...(gophish === undefined ? {} : { gophish }),
     ...(evilginx === undefined ? {} : { evilginx }),
+    ...(sliver === undefined ? {} : { sliver }),
   } satisfies ServerEnv;
 }
 
 export function readServerEnv(): ServerEnv {
   return loadServerEnv(process.env);
+}
+
+function readSliver(source: NodeJS.ProcessEnv, issues: string[]): SliverConfig | undefined {
+  if (source.SLIVER_BRIDGE_URL === undefined && source.SLIVER_BRIDGE_TOKEN === undefined) return undefined;
+  const key = source.SLIVER_BRIDGE_TOKEN;
+  if (!key || key.length < 32 || key.length > 512 || key.trim() !== key || /[\r\n]/.test(key)) issues.push('SLIVER_BRIDGE_TOKEN requires a private token of 32-512 characters');
+  try { const url = new URL(source.SLIVER_BRIDGE_URL ?? '');
+    if (!(url.protocol === 'https:' || url.protocol === 'http:' && ['sliver-bridge','localhost','127.0.0.1','[::1]'].includes(url.hostname)) || url.username || url.password || url.pathname !== '/' || url.search || url.hash) throw new EnvValidationError([]);
+    return key ? { apiUrl: url.origin, apiKey: key } : undefined;
+  } catch { issues.push('SLIVER_BRIDGE_URL requires HTTPS or loopback/sliver-bridge lab HTTP without credentials, path, query or fragment'); return undefined; }
 }

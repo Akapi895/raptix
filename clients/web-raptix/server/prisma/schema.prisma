@@ -46,6 +46,7 @@ model Engagement {
   requests WebRequestLedger[]
   campaigns Campaign[]
   vaultSecrets VaultSecret[]
+  c2Commands C2Command[]
 
   createdAt   DateTime         @default(now())
   updatedAt   DateTime         @updatedAt
@@ -189,5 +190,28 @@ model VaultAudit {
   action       String
   createdAt    DateTime @default(now())
 
+  @@index([engagementId, createdAt])
+}
+
+model C2Command {
+  id String @id @default(cuid())
+  engagementId String
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  sessionId String
+  requestId String
+  payloadHash String
+  path String
+  args Json
+  status String @default("creating")
+  exitCode Int?
+  pid Int?
+  stdout String @default("")
+  stderr String @default("")
+  stdoutTruncated Boolean @default(false)
+  stderrTruncated Boolean @default(false)
+  activeSessionId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, requestId])
   @@index([engagementId, createdAt])
 }
