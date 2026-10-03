@@ -21,7 +21,7 @@ function bridge(mode: 'valid' | 'failing' | 'already-enabled' = 'valid') {
 }
 
 function database(status = 'draft', version = 1) {
-  const campaign = { id: 'camp-1', engagementId: 'eng-1', name: 'Lab', vector: 'phishing', status, version, spec: { evilginx: { profile: 'lab' } } };
+  const campaign = { id: 'camp-1', engagementId: 'eng-1', name: 'Lab', vector: 'phishing', status, version, spec: { evilginx: { profile: 'lab' } }, createdAt: new Date(), updatedAt: new Date() };
   const jobs: Array<Record<string, unknown>> = [];
   const db = {
     campaign: {
@@ -56,7 +56,7 @@ function database(status = 'draft', version = 1) {
     },
     $transaction: async (operation: (transaction: unknown) => Promise<unknown>) => operation(db),
   };
-  return { db: db as never, campaign: campaign as never, jobs };
+  return { db: db as never, campaign, jobs };
 }
 
 describe('IW-08 evilginx lab campaign service', () => {
