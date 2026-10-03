@@ -4,6 +4,7 @@ description: Build chains where IDOR enables privilege escalation and high-impac
 metadata:
   subdomain: web-exploitation
   when_to_use: "idor chain privilege escalation control plane high impact horizontal vertical authorization bypass"
+  mitre_attack: T1190
 ---
 
 # Chain: IDOR to Privilege Escalation

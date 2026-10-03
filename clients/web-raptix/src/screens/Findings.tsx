@@ -1,23 +1,14 @@
 import { useState } from 'react'
-import type { Project } from '../types'
 import {
-  AlertTriangleIcon,
   SearchIcon,
   DownloadIcon,
   CheckIcon,
   ClockIcon,
   XIcon,
-  FileTextIcon,
   EyeIcon,
-  FilterIcon,
   ChevronRightIcon,
-  TagIcon,
   UserIcon,
 } from '../components/Icons'
-
-interface Props {
-  project: Project
-}
 
 type Severity = 'critical' | 'high' | 'medium' | 'low' | 'info'
 type FindingStatus = 'Open' | 'In Review' | 'Closed' | 'False Positive'
@@ -358,7 +349,7 @@ function extractPoc(md: string): string | null {
   return match ? match[1].trim() : null
 }
 
-export default function Findings({ project }: Props) {
+export default function Findings() {
   const [sevFilter, setSevFilter] = useState<Severity | 'All'>('All')
   const [statusFilter, setStatusFilter] = useState<FindingStatus | 'All'>('All')
   const [search, setSearch] = useState('')
@@ -378,12 +369,6 @@ export default function Findings({ project }: Props) {
   ) as Record<Severity, number>
 
   const total = MOCK_FINDINGS.length
-
-  const openDrawer = (f: Finding) => {
-    setSelectedItem(f)
-    setDrawer(f)
-    setDrawerTab('summary')
-  }
 
   return (
     <div className="flex flex-col h-full" style={{ backgroundColor: '#F8FAFC' }}>

@@ -4,6 +4,7 @@ description: Hunt authentication/authorization bypass in route guards, role chec
 metadata:
   subdomain: web-exploitation
   when_to_use: "authentication authorization bypass route guard role check tenant boundary state machine transition session jwt"
+  mitre_attack: T1078
 ---
 
 # Auth Bypass Playbook

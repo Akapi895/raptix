@@ -4,6 +4,7 @@ description: Hunt LLM sensitive-information disclosure (OWASP LLM02:2025) — le
 metadata:
   subdomain: ai-security
   when_to_use: "llm sensitive information disclosure owasp llm02 pii secrets internal source model leak training data extraction cross tenant retrieval"
+  mitre_attack: T1213
 ---
 
 # LLM Sensitive Information Disclosure (LLM02:2025)

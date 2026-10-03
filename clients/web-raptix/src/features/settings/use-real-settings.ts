@@ -35,7 +35,7 @@ export function useRealSettings(project: ProjectViewModel): RealSettingsState {
   const [deleting, setDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleted, setDeleted] = useState(false)
-  const [revision, setRevision] = useState(0)
+  const [revision] = useState(0)
 
   useEffect(() => {
     const controller = new AbortController()

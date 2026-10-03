@@ -4,6 +4,7 @@ description: Hunt insecure deserialization (CWE-502) across Python pickle, Java 
 metadata:
   subdomain: web-exploitation
   when_to_use: "insecure deserialization cwe-502 pickle jackson snakeyaml binaryformatter datacontractjson unserialize marshal yaml load node vm gadget chain"
+  mitre_attack: T1190
 ---
 
 # Insecure Deserialization Playbook

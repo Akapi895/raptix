@@ -82,7 +82,13 @@ async function runScopedQuery(config: GraphConfig, engagementName: string): Prom
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     });
   } catch (cause) {
-    throw new GraphUnavailableError(`Graph store unreachable: ${cause instanceof Error ? cause.message : 'unknown error'}`);
+    // Undici reports every transport failure as a generic "fetch failed";
+    // the actionable reason (refused/timeout/reset) hides in `cause`.
+    // Surface it so a rare loopback/parallel flake is diagnosable instead
+    // of being indistinguishable from a downed Neo4j.
+    const reason = cause instanceof Error ? cause.message : 'unknown error';
+    const detail = cause instanceof Error && cause.cause instanceof Error ? `: ${cause.cause.message}` : '';
+    throw new GraphUnavailableError(`Graph store unreachable: ${reason}${detail}`);
   }
   if (response.status === 401 || response.status === 403) throw new GraphUnavailableError('Graph store rejected authentication');
   if (!response.ok) throw new GraphUnavailableError(`Graph store responded ${response.status}`);

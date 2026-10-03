@@ -52,7 +52,7 @@ function VisualApp() {
   if (route.notFound || (route.projectId && !project)) return <main className="p-6 max-w-2xl mx-auto"><h1 className="text-xl font-semibold mb-3">Project or page not found</h1><p className="mb-4">This preview contains only the 13 requested workspace pages.</p><button className="border rounded-lg px-4 py-2" onClick={() => navigateUrl('/projects')}>All projects</button></main>
   const hitlPending = !!project && !decisions[project.id]
   return <>
-    {!project ? <Home projects={projects} onEnter={enterProject} onNewChat={() => setNewChatOpen(true)} onNewProject={() => setNewProjectOpen(true)} /> :
+    {!project ? <Home projects={projects} onEnter={enterProject} onNewProject={() => setNewProjectOpen(true)} /> :
       <div className="flex h-dvh overflow-hidden bg-slate-50">
         <Sidebar screen={route.screen} navigate={navigate} project={project} allProjects={projects} onHitl={() => setHitlOpen(true)} hitlPending={hitlPending} onSwitchProject={selected => enterProject(selected)} open={narrow ? menuOpen : undefined} onClose={() => setMenuOpen(false)} />
         <div className="app-shell-content flex-1 min-w-0 flex flex-col overflow-hidden">
@@ -61,13 +61,13 @@ function VisualApp() {
             <Suspense fallback={<p role="status" className="p-6">Loading view…</p>}>
               <div key={`${project.id}:${route.screen}`} className={`visual-page ${['operator-console', 'c2-sessions', 'infrastructure', 'assets', 'credentials', 'findings', 'logs', 'reports'].includes(route.screen) ? 'visual-page--wide' : ''}`}>
                 {route.screen === 'charter' && <Charter project={project} />}
-                {route.screen === 'scope-boundaries' && <ScopeBoundaries project={project} />}
-                {route.screen === 'operator-console' && <OperatorConsole project={project} />}
+                {route.screen === 'scope-boundaries' && <ScopeBoundaries />}
+                {route.screen === 'operator-console' && <OperatorConsole />}
                 {route.screen === 'vector-campaigns' && <VectorCampaigns project={project} />}
-                {route.screen === 'c2-sessions' && <C2Sessions project={project} />}
-                {['infrastructure', 'assets', 'credentials'].includes(route.screen) && <InfrastructureData project={project} screen={route.screen} navigate={navigate} />}
-                {route.screen === 'findings' && <Findings project={project} />}
-                {route.screen === 'logs' && <Logs project={project} />}
+                {route.screen === 'c2-sessions' && <C2Sessions />}
+                {['infrastructure', 'assets', 'credentials'].includes(route.screen) && <InfrastructureData screen={route.screen} navigate={navigate} />}
+                {route.screen === 'findings' && <Findings />}
+                {route.screen === 'logs' && <Logs />}
                 {route.screen === 'reports' && <Reports project={project} />}
                 {route.screen === 'members' && <Members project={project} />}
                 {route.screen === 'project-settings' && <ProjectSettings project={project} />}

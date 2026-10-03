@@ -1,17 +1,15 @@
 import { useState } from 'react'
-import type { Project, ProjectStatus, MemberRole, Screen } from '../types'
+import type { Project, ProjectStatus, Screen } from '../types'
 import {
-  SearchIcon, PlusIcon, ChevronRightIcon,
-  DatabaseIcon, AlertTriangleIcon, BotIcon, MoreIcon,
-  ShieldIcon, BellIcon, UserIcon, GridIcon, ListIcon,
-  ZapIcon, TargetIcon, KeyIcon, TerminalIcon, CheckIcon,
-  XIcon, ChevronDownIcon,
+  SearchIcon, PlusIcon,
+  AlertTriangleIcon, MoreIcon,
+  ShieldIcon, BellIcon, GridIcon, ListIcon,
+  ZapIcon, TerminalIcon, CheckIcon,
 } from '../components/Icons'
 
 interface Props {
   projects: Project[]
   onEnter: (p: Project, screen?: Screen) => void
-  onNewChat: () => void
   onNewProject: () => void
 }
 
@@ -486,7 +484,7 @@ function ListRow({ project, onEnter }: { project: Project; onEnter: (p: Project)
   )
 }
 
-export default function Home({ projects, onEnter, onNewChat: _onNewChat, onNewProject }: Props) {
+export default function Home({ projects, onEnter, onNewProject }: Props) {
   const [filter, setFilter] = useState<string>('all')
   const [search, setSearch] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')

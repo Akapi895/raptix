@@ -4,6 +4,7 @@ description: Hunt improper LLM output handling (OWASP LLM05:2025) — downstream
 metadata:
   subdomain: ai-security
   when_to_use: "llm improper output handling owasp llm05 unstructured model output sanitisation downstream xss ssrf sql injection rce ssti via model channel"
+  upstream_ref: "OWASP LLM05:2025 Improper Output Handling"
 ---
 
 # LLM Improper Output Handling (LLM05:2025)

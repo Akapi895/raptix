@@ -4,6 +4,7 @@ description: Hunt LLM prompt injection and tool-call hijacking in modern AI-inte
 metadata:
   subdomain: ai-security
   when_to_use: "llm prompt injection cwe-1427 tool call hijack rag indirect exfiltration jailbreak rce agentic owasp llm01"
+  upstream_ref: "OWASP LLM01:2025 Prompt Injection (CWE-1427)"
 ---
 
 # Prompt Injection Playbook

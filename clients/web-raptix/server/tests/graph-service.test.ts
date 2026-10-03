@@ -82,8 +82,13 @@ describe('W13 scoped graph projection', () => {
     expect(view.edges).toEqual([]);
     expect(view.truncated).toBe(false);
     await expect(service.graph('local', 'eng-other')).rejects.toMatchObject({ name: 'ProjectNotFoundError' });
-    const down = new GraphService(db, { httpUri: 'http://127.0.0.1:1', user: 'neo4j', password: 'gate-secret' });
+    const closed = createServer();
+    await new Promise<void>(resolve => closed.listen(0, '127.0.0.1', resolve));
+    const closedPort = (closed.address() as { port: number }).port;
+    await new Promise<void>(resolve => closed.close(() => resolve()));
+    const down = new GraphService(db, { httpUri: `http://127.0.0.1:${closedPort}`, user: 'neo4j', password: 'gate-secret' });
     await expect(down.graph('local', 'eng-1')).rejects.toBeInstanceOf(Error);
+    await expect(down.graph('local', 'eng-1')).rejects.toThrow(/ECONNREFUSED/i);
   });
   it('derives deduped asset summaries from the graph projection without collapsing distinct assets', () => {
     const assets = toAssetSummaries({

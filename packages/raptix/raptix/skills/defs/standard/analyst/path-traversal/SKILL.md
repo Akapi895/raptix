@@ -4,6 +4,7 @@ description: Hunt directory traversal and archive traversal (ZipSlip/TarSlip) fr
 metadata:
   subdomain: web-exploitation
   when_to_use: "path directory traversal zipslip tarslip archive filesystem cwe-22 dot dot slash"
+  mitre_attack: T1005, T1083
 ---
 
 # Path Traversal Playbook

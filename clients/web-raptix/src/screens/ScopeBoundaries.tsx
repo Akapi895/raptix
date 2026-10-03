@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Project } from '../types'
+
 
 interface Target {
   id: number
@@ -61,7 +61,7 @@ function typeBadge(t: string) {
   return { bg: '#FFFBEB', color: '#D97706' }
 }
 
-export default function ScopeBoundaries({ project: _project }: { project: Project }) {
+export default function ScopeBoundaries() {
   const [activeTab, setActiveTab] = useState<'in-scope' | 'blacklist'>('in-scope')
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
   const [pasteInput, setPasteInput] = useState('')

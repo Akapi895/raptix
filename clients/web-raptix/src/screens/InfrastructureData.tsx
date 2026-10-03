@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Project, Screen } from '../types'
+import type { Screen } from '../types'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1329,19 +1329,12 @@ function CredentialsVault({ navigate }: { navigate: (s: Screen) => void }) {
 // ─── Root export ──────────────────────────────────────────────────────────────
 
 export default function InfrastructureData({
-  project: _project,
   screen: currentScreen,
   navigate,
 }: {
-  project: Project
   screen: Screen
   navigate: (s: Screen) => void
 }) {
-  const tabs: { screen: Screen; label: string }[] = [
-    { screen: 'infrastructure', label: 'Infrastructure & Data' },
-    { screen: 'assets', label: 'Assets & Inventory' },
-    { screen: 'credentials', label: 'Credentials Vault' },
-  ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#F8FAFC', fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif' }}>

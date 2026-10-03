@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
-import type { Project } from '../types'
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -190,7 +190,6 @@ const DEFAULT_HISTORIES: Record<string, TerminalLine[]> = {
 function processCommand(cmd: string, session: SessionRow): string[] {
   const c = cmd.trim().toLowerCase()
   const isWindows = session.platform === 'windows'
-  const isLinux = session.platform === 'linux'
 
   if (c === 'whoami') {
     return [session.username]
@@ -334,7 +333,7 @@ function processCommand(cmd: string, session: SessionRow): string[] {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function C2Sessions({ project }: { project: Project }) {
+export default function C2Sessions() {
   const [ghostMode, setGhostMode] = useState(true)
   const [sessionSubTab, setSessionSubTab] = useState<SessionSubTab>('sessions')
   const [activeSessionId, setActiveSessionId] = useState('SID-001')

@@ -4,6 +4,7 @@ description: Trust boundary mapping and startup sequence audit for developer too
 metadata:
   subdomain: analyst
   when_to_use: "trust boundary startup sequence developer tool cli ide extension plugin config load current directory analysis"
+  mitre_attack: T1574
 ---
 
 # Trust Boundary Analysis

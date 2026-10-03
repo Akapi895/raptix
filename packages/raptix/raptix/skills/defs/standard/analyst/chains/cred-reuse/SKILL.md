@@ -4,6 +4,7 @@ description: Build chains where leaked or weak credentials pivot across services
 metadata:
   subdomain: credential-access
   when_to_use: "credential reuse chain pivot leaked weak password sso oauth across services privileged access"
+  mitre_attack: T1078
 ---
 
 # Chain: Credential Reuse Pivot

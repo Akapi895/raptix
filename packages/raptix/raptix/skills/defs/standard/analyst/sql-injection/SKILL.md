@@ -4,6 +4,7 @@ description: Hunt SQL injection (CWE-89) via source-level taint tracking. Covers
 metadata:
   subdomain: web-exploitation
   when_to_use: "sql injection sqli cwe-89 taint tracking string concat format orm raw second order nosql mongodb dynamodb"
+  mitre_attack: T1190
 ---
 
 # SQL Injection Hunting Playbook
