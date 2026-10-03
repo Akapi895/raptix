@@ -1,5 +1,11 @@
 # W20 — Legacy retirement gate (reference-only decommission)
 
+> Updated evidence 2026-10-03: IW-07 performs clean install/build/tests, both
+> Docker builds and a real DB/runtime browser flow in a snapshot actually lacking
+> `clients/web`. The original reference folder is retained. IW-06 adds the new
+> image lifecycle/catalog and host `raptix web` commands; remote publication and
+> channel/recovery acceptance remain unverified until a release run exists.
+
 Date: 2026-10-02. Guide: W20 row — "decommission legacy folder/workspace/image/active
 references … clean install/build/run/E2E without clients/web; final retirement gate".
 

@@ -103,11 +103,24 @@ jobs:
             raptix-cli
             raptix-skillogy
             raptix-c2-sliver
-            raptix-web
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
+          # Preflight the entire catalog before moving any channel tag.
           for img in "${images[@]}"; do
-            src="ghcr.io/bittersecurity/${img}:${VERSION}"
-            dst="ghcr.io/bittersecurity/${img}:stable"
+            ref="ghcr.io/akapi895/${img}:${VERSION}"
+            docker buildx imagetools inspect "${ref}" >/dev/null
+            case "${img}" in
+              raptix-web-raptix-*)
+                docker pull "${ref}"
+                actual=$(docker image inspect "${ref}" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')
+                test "${actual}" = "${VERSION}" || { echo "::error::Version label mismatch for ${ref}"; exit 1; }
+                ;;
+            esac
+          done
+          for img in "${images[@]}"; do
+            src="ghcr.io/akapi895/${img}:${VERSION}"
+            dst="ghcr.io/akapi895/${img}:stable"
             echo "Promoting ${src} → ${dst}"
             docker buildx imagetools create --tag "${dst}" "${src}"
           done

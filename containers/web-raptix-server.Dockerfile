@@ -39,6 +39,8 @@ COPY --from=build /app/clients/web-raptix/server/prisma clients/web-raptix/serve
 COPY --from=build /app/clients/web-raptix/server/prisma.config.ts clients/web-raptix/server/prisma.config.ts
 
 WORKDIR /app/clients/web-raptix/server
+ARG VERSION=0.0.0
+LABEL org.opencontainers.image.version="${VERSION}"
 EXPOSE 8081
 # The new server owns its migrations (guide §13.4): deploy them at boot before
 # serving. Migrations run against the dedicated new-stack database only.

@@ -48,12 +48,20 @@ jobs:
             raptix-cli
             raptix-skillogy
             raptix-c2-sliver
-            raptix-web
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
           for img in "${images[@]}"; do
-            ref="ghcr.io/bittersecurity/${img}:${VERSION}"
+            ref="ghcr.io/akapi895/${img}:${VERSION}"
             echo "Verifying ${ref}"
             docker buildx imagetools inspect "${ref}" >/dev/null
+            case "${img}" in
+              raptix-web-raptix-*)
+                docker pull "${ref}"
+                actual=$(docker image inspect "${ref}" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')
+                test "${actual}" = "${VERSION}" || { echo "::error::Version label mismatch for ${ref}"; exit 1; }
+                ;;
+            esac
           done
 
       - name: Promote :<version> to :latest
@@ -69,11 +77,12 @@ jobs:
             raptix-cli
             raptix-skillogy
             raptix-c2-sliver
-            raptix-web
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
           for img in "${images[@]}"; do
-            src="ghcr.io/bittersecurity/${img}:${VERSION}"
-            dst="ghcr.io/bittersecurity/${img}:latest"
+            src="ghcr.io/akapi895/${img}:${VERSION}"
+            dst="ghcr.io/akapi895/${img}:latest"
             echo "Promoting ${src} -> ${dst}"
             docker buildx imagetools create --tag "${dst}" "${src}"
           done

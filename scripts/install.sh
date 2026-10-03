@@ -18,7 +18,7 @@
 set -euo pipefail
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="BitterSecurity/Raptix"
+REPO="Akapi895/raptix"
 BRANCH="${BRANCH:-main}"
 
 # Update channel (Claude-Code-style soak model; both are final-only):
@@ -224,16 +224,19 @@ resolve_version() {
 # ── Download files ────────────────────────────────────────────────
 download_files() {
     local install_dir="$1"
+    local stage="$install_dir/.config-stage"
+    mkdir -p "$stage/config"
 
     info "Downloading configuration files..."
 
     # docker-compose.yml (always overwrite — this is infrastructure, not user config)
-    curl -fsSL "$RAW_BASE/docker-compose.yml" -o "$install_dir/docker-compose.yml"
+    curl -fsSL "$RAW_BASE/docker-compose.yml" -o "$stage/docker-compose.yml"
+    curl -fsSL "$RAW_BASE/docker-compose.web-raptix.yml" -o "$stage/docker-compose.web-raptix.yml"
 
     # .env.example — reference template only. Do NOT auto-create .env: the
     # onboard wizard checks for the file's presence to decide whether to run,
     # so a pre-seeded template would silently skip first-time configuration.
-    curl -fsSL "$RAW_BASE/.env.example" -o "$install_dir/.env.example"
+    curl -fsSL "$RAW_BASE/.env.example" -o "$stage/.env.example"
 
     # Existing .env (upgrade path) — preserve user's keys, just ensure
     # RAPTIX_HOME points at the current install dir.
@@ -257,17 +260,22 @@ download_files() {
 
     # LiteLLM config
     mkdir -p "$install_dir/config"
-    curl -fsSL "$RAW_BASE/config/litellm.yaml" -o "$install_dir/config/litellm.yaml"
+    curl -fsSL "$RAW_BASE/config/litellm.yaml" -o "$stage/config/litellm.yaml"
 
     # Workspace directory (bind-mounted into containers)
     mkdir -p "$install_dir/workspace"
 
-    # Verify the three files we just wrote against the release-pinned
+    # Verify all four staged files against the release-pinned
     # config-checksums.txt manifest before announcing success. raw.* is
     # served from GitHub's CDN; GitHub Releases assets carry the manifest
     # for the same tag. Cross-checking closes the "tampered raw download"
     # vector that previously let an attacker swap docker-compose.yml.
-    verify_config_manifest "$install_dir"
+    verify_config_manifest "$stage"
+    for file in docker-compose.yml docker-compose.web-raptix.yml .env.example config/litellm.yaml; do
+        mv "$stage/$file" "$install_dir/$file"
+    done
+    rm -f "$stage/.config-checksums.txt"
+    rmdir "$stage/config" "$stage"
 
     # Version marker
     echo "$RAPTIX_VERSION" > "$install_dir/.version"
@@ -299,6 +307,10 @@ verify_config_manifest() {
         return
     fi
     info "Verifying configuration files against release manifest..."
+    if ! grep -Eq '^[0-9a-fA-F]{64}[[:space:]]+\*?docker-compose\.web-raptix\.yml$' "$manifest"; then
+        error "Release manifest does not cover docker-compose.web-raptix.yml; use a new-stack release."
+        exit 1
+    fi
     while IFS=' ' read -r expected _ path; do
         [[ -z "$expected" || -z "$path" ]] && continue
         # path is whatever the release job recorded (e.g. "docker-compose.yml",

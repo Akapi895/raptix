@@ -523,21 +523,27 @@ func TestWriteVersion_NoPrefix(t *testing.T) {
 
 // ---- ApplyUpdate ----
 
-func TestApplyUpdate_SelfUpdateErrorPropagates(t *testing.T) {
-	// SyncConfigFiles and compose.Pull failures are downgraded to warnings;
-	// only SelfUpdate failure is returned as an error. A release with no
-	// asset for the current platform forces SelfUpdate to fail so we can
-	// verify the error is propagated and labelled correctly.
+func TestApplyUpdate_ConfigFailurePreventsVersionChange(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("RAPTIX_HOME", home)
+	server := httptest.NewServer(http.NotFoundHandler())
+	defer server.Close()
+	old := RawBaseURL
+	RawBaseURL = server.URL
+	defer func() { RawBaseURL = old }()
 	release := &Release{
 		TagName: "v9.9.9",
 		Assets:  []Asset{{Name: "raptix-plan9-mips", BrowserDownloadURL: "http://localhost/plan9"}},
 	}
 	err := ApplyUpdate(release, "v9.9.9")
 	if err == nil {
-		t.Fatal("ApplyUpdate with failing SelfUpdate: expected error, got nil")
+		t.Fatal("ApplyUpdate with failing config sync: expected error, got nil")
 	}
-	if !strings.Contains(err.Error(), "binary update") {
-		t.Errorf("error %q should contain 'binary update'", err)
+	if !strings.Contains(err.Error(), "config sync") {
+		t.Errorf("error %q should contain 'config sync'", err)
+	}
+	if _, err := os.Stat(filepath.Join(home, ".version")); !os.IsNotExist(err) {
+		t.Fatal("failed update wrote a version marker")
 	}
 }
 

@@ -1,5 +1,10 @@
 # W16 — New-stack deployment cutover (accepted 2026-10-02)
 
+> Historical cutover evidence. IW updates (2026-10-03) enable real-mode Docker
+> builds, synchronized migrations, durable local checkpoints and Vault. Current
+> image/version/mount/readiness details are in the interactive readiness backlog
+> and P1 release runbook; health 200 alone is not inference/tool evidence.
+
 ## Scope
 
 Guide §14.3/§14.5: deploy the new web-raptix stack from containers, same-origin

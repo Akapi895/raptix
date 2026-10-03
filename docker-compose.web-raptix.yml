@@ -9,10 +9,12 @@ name: raptix-web-raptix
 
 services:
   web-raptix-api:
-    image: raptix-web-raptix-api:${RAPTIX_VERSION:-stable}
+    image: ghcr.io/akapi895/raptix-web-raptix-api:${RAPTIX_VERSION:-stable}
     build:
       context: .
       dockerfile: containers/web-raptix-server.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-api
     env_file: .env
     environment:
@@ -39,10 +41,12 @@ services:
     restart: unless-stopped
 
   web-raptix-ui:
-    image: raptix-web-raptix-ui:${RAPTIX_VERSION:-stable}
+    image: ghcr.io/akapi895/raptix-web-raptix-ui:${RAPTIX_VERSION:-stable}
     build:
       context: .
       dockerfile: containers/web-raptix.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-ui
     # Cutover binds the SAME host port the legacy web served (3000), so the
     # CLI `/web` command and launcher health checks keep working unchanged.
@@ -63,4 +67,4 @@ volumes:
 networks:
   raptix-net:
     external: true
-    name: ${RAPTIX_NETWORK:-raptix_raptix-net}
+    name: ${RAPTIX_NETWORK:-raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}_raptix-net}

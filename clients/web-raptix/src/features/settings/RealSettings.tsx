@@ -19,7 +19,7 @@ const INPUT: CSSProperties = { border: `1px solid ${C.border}`, borderRadius: 7,
 
 const UNSUPPORTED: Array<{ title: string; reason: string }> = [
   { title: 'AI provider / model / runtime', reason: 'No generic settings contract exists for runtime configuration yet; runtime identity comes from the server environment (W17+ provider work).' },
-  { title: 'Integrations & keys', reason: 'No integration registry or secret storage service exists in this build (W18 vault work). Nothing here can be connected.' },
+  { title: 'Integrations & keys', reason: 'Credentials Vault provides encrypted secret storage. This Settings page has no integration registry or connection settings yet; storing a secret does not connect a provider.' },
   { title: 'Notification delivery', reason: 'No delivery provider or preferences schema exists yet.' },
   { title: 'Report templates', reason: 'Report rendering has no template API; exports are the validated JSON/Markdown attachments (W14).' },
 ]

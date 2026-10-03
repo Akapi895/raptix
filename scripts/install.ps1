@@ -17,7 +17,7 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$Repo        = 'BitterSecurity/Raptix'
+$Repo        = 'Akapi895/raptix'
 $Branch      = if ($env:BRANCH) { $env:BRANCH } else { 'main' }
 $RawBase     = "https://raw.githubusercontent.com/$Repo/$Branch"
 $ReleaseBase = "https://github.com/$Repo/releases/download"
@@ -121,14 +121,17 @@ function Main {
 
     # ── Config files (pinned to the release tag) ─────────────────────
     $rawBase = "https://raw.githubusercontent.com/$Repo/v$version"
+    $stage = Join-Path $installDir '.config-stage'
+    New-Item -ItemType Directory -Force -Path $stage, (Join-Path $stage 'config') | Out-Null
     Write-Info 'Downloading configuration files...'
-    Invoke-WebRequest -Uri "$rawBase/docker-compose.yml" -OutFile (Join-Path $installDir 'docker-compose.yml')
-    Invoke-WebRequest -Uri "$rawBase/.env.example"       -OutFile (Join-Path $installDir '.env.example')
-    Invoke-WebRequest -Uri "$rawBase/config/litellm.yaml" -OutFile (Join-Path $installDir 'config\litellm.yaml')
+    Invoke-WebRequest -Uri "$rawBase/docker-compose.yml" -OutFile (Join-Path $stage 'docker-compose.yml')
+    Invoke-WebRequest -Uri "$rawBase/docker-compose.web-raptix.yml" -OutFile (Join-Path $stage 'docker-compose.web-raptix.yml')
+    Invoke-WebRequest -Uri "$rawBase/.env.example"       -OutFile (Join-Path $stage '.env.example')
+    Invoke-WebRequest -Uri "$rawBase/config/litellm.yaml" -OutFile (Join-Path $stage 'config\litellm.yaml')
 
     # Verify config files against the release-pinned manifest.
     if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
-        $manifestPath = Join-Path $installDir '.config-checksums.txt'
+        $manifestPath = Join-Path $stage '.config-checksums.txt'
         try {
             Invoke-WebRequest -Uri "$ReleaseBase/v$version/config-checksums.txt" -OutFile $manifestPath
         } catch {
@@ -137,14 +140,23 @@ function Main {
             exit 1
         }
         Write-Info 'Verifying configuration files against release manifest...'
+        if (-not (Select-String -LiteralPath $manifestPath -Pattern '^[0-9a-fA-F]{64}\s+\*?docker-compose\.web-raptix\.yml$' -Quiet)) {
+            Write-Err 'Release manifest does not cover docker-compose.web-raptix.yml; use a new-stack release.'
+            exit 1
+        }
         foreach ($line in Get-Content $manifestPath) {
             $parts = $line -split '\s+', 2 | Where-Object { $_ }
             if ($parts.Count -ne 2) { continue }
-            $target = Join-Path $installDir ($parts[1].Trim())
-            if (Test-Path $target) { Assert-Sha256 $target $parts[0].Trim() $parts[1].Trim() }
+            $target = Join-Path $stage ($parts[1].Trim())
+            if (-not (Test-Path $target)) { Write-Err "Manifest file missing: $($parts[1])"; exit 1 }
+            Assert-Sha256 $target $parts[0].Trim() $parts[1].Trim()
         }
         Remove-Item $manifestPath -ErrorAction SilentlyContinue
     }
+    foreach ($file in @('docker-compose.yml', 'docker-compose.web-raptix.yml', '.env.example', 'config\litellm.yaml')) {
+        Move-Item -LiteralPath (Join-Path $stage $file) -Destination (Join-Path $installDir $file) -Force
+    }
+    Remove-Item -LiteralPath $stage -Recurse -Force
     Set-Content -Path (Join-Path $installDir '.version') -Value $version
     Write-Success 'Configuration files downloaded.'
 
