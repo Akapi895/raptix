@@ -240,16 +240,27 @@ Harness local: `C:\Users\tuanp\AppData\Local\Temp\opencode\verify-iw08-gophish.m
 
 ### IW-09 — P2 — Implement C2 session registry và commands
 
-**Trạng thái:** scoped routes có sẵn, nhưng service luôn trả provider unavailable. **Quyết định phạm vi 2026-10-03 (làm): provider = Sliver, tận dụng tính năng C2 Profiles.**
+**Trạng thái:** implementation và native gate cho local single-user lab đã pass ngày 2026-10-04 trên base `7c399a5` + working tree IW-09. Provider Sliver **1.7.7**, HTTP C2 profiles; normal deployment port 3000 chưa cutover, code IW-09 chưa commit/push.
 
 **Tham chiếu:** `server/src/services/c2-service.ts`, `src/features/c2/RealC2.tsx`.
 
 Việc cần làm:
 
-- [x] Chốt C2 provider Sliver; người dùng xác nhận **HTTP C2 profiles**, phân biệt với implant build profiles. Ownership mapping theo engagement chưa thiết kế/implement; IW-09 chưa bắt đầu.
-- [ ] Implement session discovery/status, scoped command dispatch và output/history theo contract provider.
-- [ ] Kiểm tra reconnect, stale sessions, timeout/error và isolation giữa engagements.
-- [ ] Nối UI C2 vào dữ liệu/provider output thực.
+- [x] Chốt Sliver **HTTP C2 profiles**, phân biệt implant build profiles. Người dùng chọn listener riêng theo engagement và command explicit path + argv có audit.
+- [x] Native gRPC/mTLS bridge: official 1.7.7 linux-amd64 release checksum verified; protobuf pinned `0aa7e5b`. CA + certificate identity `multiplayer` được verify, không dùng insecure channel. Operator config/key nằm trong private `/state` volume, không vào DTO/browser. HTTP API không expose Generate/Shell RPC.
+- [x] Session discovery/ownership: native ActiveC2 phải khớp lab host/protocol/owned port, FirstContact sau listener creation; immutable session-ID/UUID binding trong SQLite. Unattributed/foreign sessions bị ẩn; stopped listener ports không reuse. Listener intents khôi phục sau graceful bridge restart.
+- [x] Command dispatch/history: explicit binary + args, scoped ownership và authorization trước execution, request identity/payload hash, PostgreSQL audit `C2Command` + native bridge outcome ledger, session lock cho pending/uncertain. Nonzero exit = failed, output tối đa 65,536 bytes/stream + explicit truncation; late observations không được regress terminal state. Native timeout/malformed responses giữ uncertainty, không auto-redispatch.
+- [x] HTTP C2 profiles: clone native default thành namespace theo engagement, trả configuration counts từ native detail lookup; create replay không overwrite profile. Profile lab được áp dụng khi enrol implant trong harness; không đổi traffic config của implant đã chạy.
+- [x] UI session/listener/profile forms, explicit argv command composer, provider error/empty states, refresh và persisted audit output/reconciliation. Mock 13-tab baseline giữ nguyên.
+- [x] Native gate **22/22**: actual Sliver + PostgreSQL + Linux implant + real browser không intercept; distinct listeners, native session, foreign isolation/dispatch denial, profile, command argv, nonzero exit, truncation, replay/conflicting identity, audit sau API restart, bridge restart + implant reconnect, profile/ownership isolation sau restart, browser invalid path 400 rồi sửa input/execute thành công và reload audit.
+
+**Evidence:** `clients/web-raptix/test-results-deployed/iw09/native.json`, `native-c2.png`; actual command marker `IW09_NATIVE_OK` và browser `/usr/bin/uname -s` → Linux. Linux HTTP sessions được nghiệm thu; Windows commands, beacon tasking, hosted multi-user, power-loss/HA không nằm trong native gate này. Unit fixtures kiểm tra stale/unconfirmed authorization, bridge failure/oversized output → uncertain, cross-engagement history/reconcile và invalid input.
+
+**Gates:** shared build + Prisma generate; server/frontend typecheck/lint/build pass; server **275/275**, UI **81/81**, mock **8/8**, campaign/C2 unavailable fixture regression **5/5**; Ruff check/format bridge pass. Negative sensitivity canary bỏ request replay lookup làm 2 IW-09 assertions fail đúng duplicate/changed-input lỗi; restore → focused **11/11** và full suite pass. Sửa nhỏ test fixture IW-08: bỏ cast `never` gây TS2339, bổ sung created/updated dates; không đổi behavior provider IW-08.
+
+**Rerun từ repo root:** build `raptix-iw09-sliver-bridge:lab` bằng `containers/sliver-bridge/Dockerfile`, build `raptix-iw09-api:lab` bằng `containers/web-raptix-server.Dockerfile`, rồi `node clients/web-raptix/tools/verify-sliver-lab.mjs`. Harness dùng internal network + private state volume + DB/target riêng; API thêm control network với loopback port tạm. Tokens/passwords chỉ truyền qua process-local env, không in/commit. Containers/networks/DB/bridge volumes test được cleanup; ephemeral compiler failures được chẩn đoán trước final gate.
+
+**Cấu hình:** API cần paired `SLIVER_BRIDGE_URL` + `SLIVER_BRIDGE_TOKEN`; HTTPS hoặc loopback/service `sliver-bridge` HTTP trong lab. Native root `/state/sliver`, bridge ownership/outcomes `/state/ownership.sqlite`, API audit trong PostgreSQL. Daemon bỏ HTTP bridge token khỏi environment để compiler diagnostics không log secret. Giới hạn GOMAXPROCS=2/GOFLAGS=-p=2 tránh fork exhaustion; không nới pids/container hardening. Xem ADR-0036 và `containers/sliver-bridge/README.md` cho lifecycle/unknown-outcome semantics.
 
 **Nghiệm thu:** UI liệt kê session lab thực và gửi/nhận command qua provider; không fabricate session hoặc dùng terminal demo làm bằng chứng C2 hoạt động.
 

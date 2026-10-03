@@ -72,6 +72,7 @@ export async function buildCapabilitiesResponse(
   vaultSupported = false,
   vaultKeyConfigured = false,
   membersSupported = false,
+  c2ProviderConfigured = false,
 ): Promise<CapabilitiesResponse> {
   let projects: CapabilityState;
   if (!projectsSupported) {
@@ -115,10 +116,9 @@ export async function buildCapabilitiesResponse(
   // draft persistence is available with the projects stack, while every
   // generate/deploy job honestly reports the absent provider per request.
   const campaigns: CapabilityState = !campaignsSupported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: true };
-  // C2 sessions (W17): the scoped routes exist and enforce engagement
-  // ownership, but no session provider registry is wired — the capability
-  // states that honestly instead of pretending availability.
-  const c2: CapabilityState = !c2Supported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : { supported: true, available: false, reason: 'provider_unavailable' };
+  // C2 availability denotes configured service wiring. Native connectivity
+  // and session ownership are checked by the scoped Sliver registry routes.
+  const c2: CapabilityState = !c2Supported ? missingCapability() : !projects.available ? { supported: true, available: false, reason: 'database_unavailable' } : c2ProviderConfigured ? { supported: true, available: true } : { supported: true, available: false, reason: 'provider_unavailable' };
   // Vault (W18): the encrypted storage service is wired with the database,
   // but it stays unavailable until VAULT_ENCRYPTION_KEY decodes to a usable
   // AES-256 key — it never degrades to plaintext storage.
@@ -165,6 +165,7 @@ export interface CapabilitiesRouteOptions {
   readonly vaultSupported?: boolean;
   readonly vaultKeyConfigured?: boolean;
   readonly membersSupported?: boolean;
+  readonly c2ProviderConfigured?: boolean;
 }
 
 export function registerCapabilitiesRoutes(
@@ -188,6 +189,7 @@ export function registerCapabilitiesRoutes(
       options.vaultSupported === true,
       options.vaultKeyConfigured === true,
       options.membersSupported === true,
+      options.c2ProviderConfigured === true,
     ),
   );
 }

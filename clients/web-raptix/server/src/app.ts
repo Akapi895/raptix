@@ -89,6 +89,7 @@ export async function buildApp(options: AppOptions = {}): Promise<FastifyInstanc
     reportsSupported: options.exportService !== undefined,
     campaignsSupported: options.campaignsService !== undefined,
     c2Supported: options.c2Service !== undefined,
+    c2ProviderConfigured: options.c2Service?.configured === true,
     vaultSupported: options.vaultService !== undefined,
     vaultKeyConfigured: options.vaultService !== undefined && options.vaultKeyConfigured === true,
     membersSupported: options.membersService !== undefined,

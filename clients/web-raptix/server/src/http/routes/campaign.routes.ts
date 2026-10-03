@@ -55,6 +55,17 @@ export function registerCampaignRoutes(app: FastifyInstance, campaigns: Campaign
   app.post('/api/engagements/:id/c2/sessions/:sessionId/commands', (request, reply) => runProjectsHandler(request, reply, async () => {
     reply.header('Cache-Control', 'no-store');
     const { id, sessionId } = request.params as { id: string; sessionId: string };
-    return c2.dispatchCommand(identity.id, id, sessionId);
+    return c2.dispatchCommand(identity.id, id, sessionId, request.body);
+  }));
+  app.post('/api/engagements/:id/c2/listeners', (request, reply) => runProjectsHandler(request, reply, async () => c2.configure(identity.id, (request.params as { id: string }).id, 'listener', request.body)));
+  app.post('/api/engagements/:id/c2/profiles', (request, reply) => runProjectsHandler(request, reply, async () => c2.configure(identity.id, (request.params as { id: string }).id, 'profile', request.body)));
+  app.delete('/api/engagements/:id/c2/listeners/:jobId', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, jobId } = request.params as { id: string; jobId: string }; return c2.stopListener(identity.id, id, Number(jobId));
+  }));
+  app.get('/api/engagements/:id/c2/commands', (request, reply) => runProjectsHandler(request, reply, async () => {
+    reply.header('Cache-Control', 'no-store'); return c2.history(identity.id, (request.params as { id: string }).id);
+  }));
+  app.post('/api/engagements/:id/c2/commands/:commandId/reconcile', (request, reply) => runProjectsHandler(request, reply, async () => {
+    const { id, commandId } = request.params as { id: string; commandId: string }; return c2.reconcile(identity.id, id, commandId);
   }));
 }
