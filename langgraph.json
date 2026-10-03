@@ -1,6 +1,7 @@
 {
   "dependencies": ["./packages/raptix"],
   "graphs": {
+    "raptix": "./packages/raptix/raptix/agents/standard/decepticon.py:graph",
     "decepticon": "./packages/raptix/raptix/agents/standard/decepticon.py:graph",
     "recon": "./packages/raptix/raptix/agents/standard/recon.py:graph",
     "autohunt": "./packages/raptix/raptix/agents/standard/autohunt.py:graph",
@@ -25,6 +26,9 @@
   },
   "env": ".env",
   "python_version": "3.13",
+  "checkpointer": {
+    "path": "./packages/raptix/raptix/server/checkpointer.py:sqlite_checkpointer"
+  },
   "http": {
     "multitask_strategy": "interrupt",
     "app": "./packages/raptix/raptix/server/plugins_api.py:app"

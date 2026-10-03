@@ -19,6 +19,7 @@ dependencies = [
 # root activates the framework's neo4j driver. Without this, the extra
 # is invisible at root because uv treats extras as per-project.
 neo4j = ["raptix[neo4j]"]
+runtime-persistence = ["raptix[runtime-persistence]"]
 
 [tool.uv]
 # Virtual root — no wheel built from the workspace umbrella. Real
@@ -52,6 +53,7 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.0.0",
     "pytest-xdist>=3.6.0",
+    "langgraph-checkpoint-sqlite>=3,<4",
     "ruff>=0.4.0",
     "basedpyright>=1.37.0",
 ]

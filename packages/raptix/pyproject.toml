@@ -92,6 +92,8 @@ dependencies = [
 # (raptix/middleware/kg_internal/store.py), so the base install
 # imports and runs everything except the KG graph tools.
 neo4j = ["neo4j>=6,<7"]
+# Durable local Agent Server checkpoints; installed in the LangGraph image.
+runtime-persistence = ["langgraph-checkpoint-sqlite>=3,<4"]
 telemetry = [
     "opentelemetry-api>=1.27",
     "opentelemetry-sdk>=1.27",

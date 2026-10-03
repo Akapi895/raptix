@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { RequestRecoveryView, ScopedRunView, ScopedThreadView, ThreadBindingView } from '@raptix/web-contracts';
 import type { RuntimeExecutionPort, RuntimeRun } from '../../integrations/runtime/execution-client.js';
 import type { RuntimeReadPort } from '../../integrations/runtime/read-client.js';
-import { RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
+import { RuntimeCheckpointMissingError, RuntimeRejectedError, RuntimeUnavailableError } from '../../integrations/runtime/read-client.js';
 import { ProjectPolicyError } from '../../security/project-policy.js';
 import { parseResumeCreate, parseRunCreate, parseRunPage, parseThreadCreate } from '../../security/run-policy.js';
 import type { RuntimeOwnershipService } from '../runtime-ownership.js';
@@ -11,12 +11,20 @@ import { projectThreadHistory } from './history-projection.js';
 import { assertResumeValue, findPendingQuestion } from './interrupt-projection.js';
 
 const conflict = (): ProjectPolicyError => new ProjectPolicyError('conflict', 'Runtime context, readiness or active-run policy prevents this operation');
-const terminal = (status: string): boolean => ['success', 'error', 'timeout'].includes(status);
+const terminal = (status: string): boolean => ['success', 'error', 'timeout', 'interrupted'].includes(status);
 function metadata(actual: Record<string, unknown>, expected: Record<string, string>): void {
   if (Object.entries(expected).some(([k, v]) => actual[k] !== v)) throw conflict();
 }
 export class RunService {
   public constructor(private readonly options: { ownership: RuntimeOwnershipService; context: RuntimeContextService; runtime: RuntimeExecutionPort; reads: RuntimeReadPort }) {}
+  private async threadState(user: string, engagement: string, thread: string): ReturnType<RuntimeReadPort['state']> {
+    const state = await this.options.reads.state(thread);
+    if (!Object.keys(state.values).length && !findPendingQuestion(state.values, state.tasks)) {
+      const previous = (await this.options.ownership.runs(user, engagement, thread, 0, 1))[0];
+      if (previous?.runId && terminal((await this.options.runtime.run(thread, previous.runId)).status)) throw new RuntimeCheckpointMissingError();
+    }
+    return state;
+  }
   private async dispatch(user: string, engagement: string, request: string, token: string, action: () => Promise<RequestRecoveryView>): Promise<RequestRecoveryView> {
     try { return await action(); }
     catch (error) {
@@ -61,6 +69,7 @@ export class RunService {
       const binding = await ownership.getBinding(user, engagement, thread);
       trusted = await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
       if (!trusted.configurable.authorization_confirmed || binding.kind === 'execution' && !trusted.publicView.executionReady) throw conflict();
+      await this.threadState(user, engagement, thread);
       const active = await ownership.active(user, engagement, thread);
       if (active?.state === 'accepted' && active.runId) await this.getRun(user, engagement, thread, active.runId);
       if (await ownership.active(user, engagement, thread)) throw conflict();
@@ -106,7 +115,7 @@ export class RunService {
   /** W11: resume a pending graph interrupt on the bound thread; ack returns the NEW run identity. */
   public async resume(user: string, engagement: string, thread: string, raw: unknown): Promise<RequestRecoveryView> {
     const { requestId, value, questionId, intent } = parseResumeCreate(raw);
-    const { ownership, context, runtime, reads } = this.options;
+    const { ownership, context, runtime } = this.options;
     const replay = await ownership.replay(user, engagement, requestId, 'resume', intent, thread);
     if (replay) return replay;
     let trusted: TrustedRuntimeContext;
@@ -114,7 +123,8 @@ export class RunService {
       const binding = await ownership.getBinding(user, engagement, thread);
       trusted = await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
       if (!trusted.configurable.authorization_confirmed) throw conflict();
-      const pending = findPendingQuestion((await reads.state(thread)).values);
+      const state = await this.threadState(user, engagement, thread);
+      const pending = findPendingQuestion(state.values, state.tasks);
       if (!pending || (questionId !== null && questionId !== pending.questionId)) throw conflict();
       try { assertResumeValue(value, pending); }
       catch { throw new ProjectPolicyError('bad_request', 'Resume answer does not match the pending question options'); }
@@ -154,7 +164,7 @@ export class RunService {
     const binding = await ownership.getBinding(user, engagement, thread);
     await context.resolve(user, engagement, { kind: binding.kind, threadId: thread });
     const remote = await reads.thread(thread);
-    const { values } = await reads.state(thread);
+    const { values, tasks } = await this.threadState(user, engagement, thread);
     const messages: ScopedThreadView['messages'] = [];
     const history = Array.isArray(values.messages) ? values.messages : [];
     let truncated = history.length > 50;
@@ -170,7 +180,7 @@ export class RunService {
     }
     const scope = { engagementId: engagement, threadId: thread, runId: '' };
     const transcripts = projectThreadHistory(scope, values);
-    const pendingQuestion = findPendingQuestion(values);
+    const pendingQuestion = findPendingQuestion(values, tasks);
     return { binding, rawStatus: remote.status ?? null, messages, messagesTruncated: truncated, historyScope: 'root_messages_only', source: 'runtime', transcripts: transcripts.transcripts, transcriptsTruncated: transcripts.transcriptsTruncated, ...(pendingQuestion ? { pendingQuestion } : {}) };
   }
   public async reconcile(user: string, engagement: string, requestId: string): Promise<RequestRecoveryView> {

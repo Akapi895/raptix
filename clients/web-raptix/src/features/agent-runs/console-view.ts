@@ -7,7 +7,7 @@
  * with thread-level provenance, deduped by provenance identity against the
  * live event set so reconnects never duplicate cards.
  */
-import type { ScopedRunView } from '@raptix/web-contracts'
+import type { PendingInterruptView, ScopedRunView } from '@raptix/web-contracts'
 import type { StreamState } from './stream-reducer'
 
 export type ConsoleItemKind = 'operator' | 'agent' | 'tool' | 'invocation' | 'question' | 'interrupt' | 'handoff'
@@ -70,7 +70,7 @@ function liveItems(state: StreamState): ConsoleItem[] {
   return items
 }
 
-export function consoleTimeline(state: StreamState): ConsoleItem[] {
+export function consoleTimeline(state: StreamState, pendingQuestion?: PendingInterruptView | null): ConsoleItem[] {
   const items = liveItems(state)
   const seenMessages = new Set(items.map(item => item.messageId).filter((id): id is string => typeof id === 'string'))
   const seenTools = new Set(items.filter(item => item.kind === 'tool').map(item => JSON.stringify([item.sessionId ?? '', item.toolId ?? item.id])))
@@ -96,6 +96,12 @@ export function consoleTimeline(state: StreamState): ConsoleItem[] {
     if (seenQuestions.has(domain)) continue
     seenQuestions.add(domain)
     items.push({ id: `history-question:${key}`, kind: 'question', runId: null, source: question.source, question: question.question, header: question.header, options: question.options, questionId: question.questionId ?? null, multiSelect: question.multiSelect === true, allowOther: question.allowOther === true })
+  }
+  // Some LangGraph runtimes expose the live interrupt only in
+  // tasks[].interrupts; the server validates and projects it into the thread
+  // snapshot, while neither the stream nor checkpoint transcript has a card.
+  if (pendingQuestion && !seenQuestions.has(pendingQuestion.questionId)) {
+    items.push({ id: `pending-question:${pendingQuestion.questionId}`, kind: 'question', runId: null, source: pendingQuestion.source, question: pendingQuestion.question, header: pendingQuestion.header, options: pendingQuestion.options, questionId: pendingQuestion.questionId, multiSelect: pendingQuestion.multiSelect, allowOther: pendingQuestion.allowOther })
   }
   return items
 }

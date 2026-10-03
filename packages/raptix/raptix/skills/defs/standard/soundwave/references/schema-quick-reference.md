@@ -1,8 +1,13 @@
 # Schema Quick Reference
 
-All planning documents are defined as Pydantic models in `raptix/core/schemas.py`. This reference summarizes the required fields and valid values for each schema so skills can generate valid documents without needing to read the source code directly.
+All planning documents are defined as Pydantic models in `raptix_core/types/engagement.py`. This reference summarizes the required fields and valid values for each schema so skills can generate valid documents without needing to read the source code directly.
 
-> **Source of truth**: `raptix.core.schemas` — if this reference diverges from the code, the code wins.
+> **Source of truth**: `raptix_core.types.engagement` — if this reference diverges from the code, the code wins.
+>
+> **Observed drift to avoid** (the web server rejects the document and blocks execution):
+> - RoE client field is EXACTLY `client` — never `client_organization`.
+> - `phase` is a closed enum: `recon`, `initial-access`, `post-exploit`, `c2`, `exfiltration` — never `reconnaissance` or prose forms.
+> - ThreatProfile `group_id` is a string — write `""` when unknown, never `null`.
 
 ## RoE (Rules of Engagement)
 
@@ -48,7 +53,7 @@ CONOPS
 ├── attack_narrative: str (story-form scenario)
 ├── kill_chain: list[KillChainPhase]
 │   └── KillChainPhase
-│       ├── phase: ObjectivePhase
+│       ├── phase: ObjectivePhase ("recon" | "initial-access" | "post-exploit" | "c2" | "exfiltration")
 │       ├── description: str
 │       ├── success_criteria: str
 │       └── tools: list[str]

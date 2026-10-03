@@ -192,7 +192,7 @@ function Card({ item, session }: { item: ConsoleItem; session: ConsoleSession })
             {item.interruptId && <span style={{ fontSize: 10, fontFamily: MONO, color: C.muted }}>{item.interruptId.slice(0, 24)}</span>}
             {provenance}
           </div>
-          <p style={{ margin: '8px 0 0', fontSize: 12, color: C.body }}>The run is waiting on a graph interrupt. Resume handling arrives with work package W11.</p>
+          <p style={{ margin: '8px 0 0', fontSize: 12, color: C.body }}>The thread is paused at a graph interrupt. Answer the server-observed pending question to resume.</p>
         </div>
       </div>
     )
@@ -218,7 +218,7 @@ export default function RealConsole({ project }: { project: ProjectViewModel }) 
   const timelineEnd = useRef<HTMLDivElement>(null)
   useEffect(() => { if (typeof document !== 'undefined' && !document.getElementById('raptix-console-pulse')) { const style = document.createElement('style'); style.id = 'raptix-console-pulse'; style.textContent = PULSE_CSS; document.head.appendChild(style) } }, [])
   useEffect(() => { timelineEnd.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }) }, [session.stream?.events.length])
-  const items = useMemo(() => (session.stream ? consoleTimeline(session.stream) : []), [session.stream])
+  const items = useMemo(() => (session.stream ? consoleTimeline(session.stream, session.pendingQuestion) : []), [session.stream, session.pendingQuestion])
   const inspector = useMemo(() => (session.stream ? consoleInspector(session.stream) : null), [session.stream])
   const runActive = session.run !== null && !isTerminalRunStatus(session.run.rawStatus)
   const canSend = session.activeThreadId !== null && !session.submitting && !runActive
