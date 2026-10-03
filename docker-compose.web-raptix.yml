@@ -27,7 +27,7 @@ services:
       - NEO4J_HTTP_URI=http://neo4j:7474
       - NEO4J_USER=neo4j
     volumes:
-      - ${RAPTIX_HOME:-~/.raptix}/workspace:/workspace
+      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:8081/api/health', r => { r.resume(); process.exit(r.statusCode < 500 ? 0 : 1); }).on('error', () => process.exit(1))"]
       interval: 5s
@@ -54,6 +54,11 @@ services:
     networks:
       - raptix-net
     restart: unless-stopped
+
+volumes:
+  workspace_data:
+    external: true
+    name: ${RAPTIX_WORKSPACE_VOLUME:-raptix_workspace_data}
 
 networks:
   raptix-net:

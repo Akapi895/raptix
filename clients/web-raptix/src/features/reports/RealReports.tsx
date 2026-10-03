@@ -37,6 +37,12 @@ export default function RealReports({ project }: { project: ProjectViewModel }):
     setExportState({ busy: format, done: null, error: null })
     try {
       const download = await exportEngagement(project.id, format, new AbortController().signal)
+      const url = URL.createObjectURL(new Blob([download.body], { type: download.contentType }))
+      const link = document.createElement('a')
+      link.href = url
+      link.download = download.filename
+      link.click()
+      setTimeout(() => URL.revokeObjectURL(url), 1000)
       setExportState({ busy: null, done: download, error: null })
     } catch (cause) {
       setExportState({ busy: null, done: null, error: cause instanceof Error ? cause.message : 'Export failed' })

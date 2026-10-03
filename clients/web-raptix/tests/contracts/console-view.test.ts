@@ -26,6 +26,14 @@ it('maps the merged stream state into ordered real timeline items with provenanc
   expect(items[3]).toMatchObject({ kind: 'question', question: 'Proceed?', runId: null, source: 'checkpoint', options: [{ label: 'Yes' }], multiSelect: true, allowOther: true });
 });
 
+it('renders a server-observed pending task interrupt once when no stream question exists', () => {
+  const state = emptyStreamState('eng', 'thread');
+  const pending = { questionId: 'q1', question: 'Which lab?', header: 'Scope', options: [{ label: 'Lab', description: 'isolated' }], multiSelect: false, allowOther: true, source: 'runtime' as const };
+  expect(consoleTimeline(state, pending)).toEqual([expect.objectContaining({ kind: 'question', questionId: 'q1', question: 'Which lab?', source: 'runtime' })]);
+  const observed = reduceStreamEvent(state, event('e1', { type: 'ask_user_question', questionId: 'q1', question: 'Which lab?', header: 'Scope', options: pending.options, multiSelect: false, allowOther: true, truncated: false }));
+  expect(consoleTimeline(observed, pending).filter(item => item.kind === 'question')).toHaveLength(1);
+});
+
 it('summarizes inspector sessions/tools/questions without inventing identity', () => {
   let state = emptyStreamState('eng', 'thread');
   state = reduceStreamEvent(state, event('e1', { type: 'subagent_start', agent: 'recon', sessionId: 's1', prompt: 'Scan', truncated: false }));

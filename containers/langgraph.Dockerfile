@@ -40,7 +40,7 @@ RUN sed -i 's/^version = "[^"]*"/version = "'"$VERSION"'"/' \
 # Neo4j driver onto the framework wheel so the KG health check works
 # inside the container. The default ``pip install raptix`` install
 # stays lean for library consumers.
-RUN uv sync --no-dev --frozen --extra neo4j
+RUN uv sync --no-dev --frozen --extra neo4j --extra runtime-persistence
 
 # uv sync creates /app/.venv but does NOT modify PATH. Prepend
 # the venv's bin/ so ``langgraph`` and any other workspace-installed

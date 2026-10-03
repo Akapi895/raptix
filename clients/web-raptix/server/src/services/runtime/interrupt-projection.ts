@@ -23,9 +23,19 @@ function questionFrom(value: unknown): PendingInterruptView | null {
   return { questionId, question: value.question, header, options, multiSelect: value.multi_select === true, allowOther: value.allow_other === true, source: 'runtime' };
 }
 
-/** Depth-first bounded scan of `values.__interrupt__` (and nested task entries). */
-export function findPendingQuestion(values: Record<string, unknown>): PendingInterruptView | null {
+/**
+ * Depth-first bounded scan for a pending `ask_user_question` interrupt.
+ * Covers both runtime shapes: the classic `values.__interrupt__` entries and
+ * the langgraph-api task layout (`tasks[].interrupts[].value`), which the
+ * platform 0.10 state response uses instead of merged values.
+ */
+export function findPendingQuestion(values: Record<string, unknown>, tasks?: unknown): PendingInterruptView | null {
   const queue: unknown[] = [values.__interrupt__];
+  if (Array.isArray(tasks)) {
+    for (const task of tasks.slice(0, 20)) {
+      if (record(task) && Array.isArray(task.interrupts)) queue.push(...task.interrupts.slice(0, 10));
+    }
+  }
   for (let seen = 0; queue.length && seen < 200; ) {
     const current = queue.shift();
     seen++;

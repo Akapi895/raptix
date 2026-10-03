@@ -3,13 +3,16 @@ import { ProjectApiError } from '../../services/projects-service.js';
 export class RuntimeUnavailableError extends ProjectApiError {
   public constructor() { super(503, 'Runtime discovery or context verification is unavailable'); }
 }
+export class RuntimeCheckpointMissingError extends ProjectApiError {
+  public constructor() { super(503, 'Runtime checkpoint is missing for this previously used thread. Restore runtime state or create a new chat; history and resume cannot be verified.'); }
+}
 export class RuntimeRejectedError extends ProjectApiError {
   public constructor(statusCode: number) { super(statusCode, 'Runtime rejected the requested operation'); }
 }
 export interface RuntimeReadPort {
   catalog(): Promise<readonly string[]>;
   thread(id: string): Promise<{ thread_id: string; metadata: Record<string, unknown>; status?: string }>;
-  state(id: string): Promise<{ values: Record<string, unknown>; graphId: string | null }>;
+  state(id: string): Promise<{ values: Record<string, unknown>; tasks?: unknown; graphId: string | null }>;
 }
 const record = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 export class RuntimeReadClient implements RuntimeReadPort {
@@ -70,9 +73,9 @@ export class RuntimeReadClient implements RuntimeReadPort {
     if (!record(value) || value.thread_id !== id || !record(value.metadata)) throw new RuntimeUnavailableError();
     return { thread_id: id, metadata: value.metadata, ...(typeof value.status === 'string' && value.status.length <= 64 ? { status: value.status } : {}) };
   }
-  public async state(id: string): Promise<{ values: Record<string, unknown>; graphId: string | null }> {
+  public async state(id: string): Promise<{ values: Record<string, unknown>; tasks: unknown; graphId: string | null }> {
     const value = await this.read(`/threads/${encodeURIComponent(id)}/state`);
     if (!record(value) || !record(value.values)) throw new RuntimeUnavailableError();
-    return { values: value.values, graphId: record(value.metadata) && typeof value.metadata.graph_id === 'string' ? value.metadata.graph_id : null };
+    return { values: value.values, tasks: Array.isArray(value.tasks) ? value.tasks : [], graphId: record(value.metadata) && typeof value.metadata.graph_id === 'string' ? value.metadata.graph_id : null };
   }
 }

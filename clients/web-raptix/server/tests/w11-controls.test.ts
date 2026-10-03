@@ -11,6 +11,7 @@ type Ports = ConstructorParameters<typeof RunService>[0];
 const ports = (overrides: Partial<Ports>): Ports => ({
   ownership: {
     getBinding: async () => binding,
+    runs: async () => [],
     replay: async () => null,
     reserve: async () => ({ reserved: true as const, token: 'token', request: { engagementId: 'eng', requestId: 'request-0001', operation: 'resume' as const, state: 'creating' as const, threadId: 'thread', runId: null, createdAt: time, updatedAt: time } }),
     recordDispatch: async () => undefined,
@@ -29,6 +30,8 @@ describe('pending interrupt projection', () => {
     expect(findPendingQuestion({})).toBeNull();
     expect(findPendingQuestion({ __interrupt__: [{ value: { type: 'unknown' } }] })).toBeNull();
     expect(findPendingQuestion({ __interrupt__: [{ value: { ...question, id: 42 } }] })).toBeNull();
+    expect(findPendingQuestion({}, [{ id: 'task-1', interrupts: [{ id: 'interrupt-1', value: question }] }])).toMatchObject({ questionId: 'call-1', question: question.question });
+    expect(findPendingQuestion({}, [{ interrupts: [{ value: { ...question, id: 42 } }] }])).toBeNull();
   });
   it('validates answers against option labels, allow_other and multi-select semantics', () => {
     const pending = findPendingQuestion({ __interrupt__: [{ value: question }] })!;
@@ -52,6 +55,13 @@ describe('RunService.resume', () => {
     const ack = await service.resume('local', 'eng', 'thread', { requestId: 'request-0001', value: 'Yes (Recommended)' });
     expect(ack).toMatchObject({ state: 'accepted', runId: 'run-new', operation: 'resume' });
     expect(dispatched).toEqual([{ requestId: 'request-0001', value: 'Yes (Recommended)' }]);
+  });
+  it('resumes a question exposed only by LangGraph task interrupts', async () => {
+    const service = new RunService(ports({
+      reads: { state: async () => ({ values: {}, tasks: [{ interrupts: [{ value: question }] }], graphId: 'soundwave' }) } as unknown as Ports['reads'],
+      runtime: { createResumeRun: async (_t: string, _c: unknown, requestId: string) => ({ runId: 'run-new', threadId: 'thread', status: 'pending', createdAt: time, updatedAt: time, metadata: { ui_request_id: requestId } }) } as unknown as Ports['runtime'],
+    }));
+    await expect(service.resume('local', 'eng', 'thread', { requestId: 'request-0001', questionId: 'call-1', value: 'Yes (Recommended)' })).resolves.toMatchObject({ operation: 'resume', runId: 'run-new' });
   });
   it('replays the same requestId without a second runtime attempt', async () => {
     let attempts = 0;
@@ -116,6 +126,20 @@ describe('RunService.cancelRun', () => {
     expect(view.rawStatus).toBe('interrupted');
     expect(calls).toEqual(['cancel']);
   });
+  it('releases ownership of an interrupted run so the bound thread can receive a follow-up', async () => {
+    let released = 0;
+    const service = new RunService(ports({
+      ownership: {
+        getBinding: async () => binding,
+        runOwner: async () => ({ requestId: 'request-0001', dispatchAssistantId: 'soundwave', dispatchKind: 'planning', dispatchConfigHash: 'cfg' }),
+        releaseCompletedRun: async () => { released++; },
+      } as unknown as Ports['ownership'],
+      context: { resolve: async () => ({}) } as unknown as Ports['context'],
+      runtime: runtimeWith('interrupted', 'interrupted'),
+    }));
+    expect((await service.getRun('local', 'eng', 'thread', 'run-1')).rawStatus).toBe('interrupted');
+    expect(released).toBe(1);
+  });
   it('is truthfully idempotent for already-terminal runs', async () => {
     const calls: string[] = [];
     const service = base(runtimeWith('success', 'success', calls));
@@ -133,16 +157,36 @@ describe('RunService.cancelRun', () => {
 });
 
 describe('RunService.snapshot pending interrupt restore', () => {
-  const service = (values: Record<string, unknown>) => new RunService(ports({
-    ownership: { getBinding: async () => binding } as unknown as Ports['ownership'],
+  const service = (values: Record<string, unknown>, tasks: unknown = []) => new RunService(ports({
+    ownership: { getBinding: async () => binding, runs: async () => [] } as unknown as Ports['ownership'],
     context: { resolve: async () => ({}) } as unknown as Ports['context'],
     runtime: {} as Ports['runtime'],
-    reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values, graphId: 'soundwave' }) } as unknown as Ports['reads'],
+    reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values, tasks, graphId: 'soundwave' }) } as unknown as Ports['reads'],
   }));
   it('exposes the restoreable question additively and nothing when the thread is clean', async () => {
     const interrupted = await service({ messages: [], __interrupt__: [{ value: question }] }).snapshot('local', 'eng', 'thread');
     expect(interrupted.pendingQuestion).toMatchObject({ questionId: 'call-1', source: 'runtime' });
     const clean = await service({ messages: [] }).snapshot('local', 'eng', 'thread');
     expect(clean.pendingQuestion).toBeUndefined();
+    const taskInterrupt = await service({ messages: [] }, [{ interrupts: [{ value: question }] }]).snapshot('local', 'eng', 'thread');
+    expect(taskInterrupt.pendingQuestion).toMatchObject({ questionId: 'call-1', source: 'runtime' });
+  });
+  it('reports checkpoint loss for a previously used thread instead of an empty resumable history', async () => {
+    const lost = new RunService(ports({
+      ownership: { getBinding: async () => binding, runs: async () => [{ runId: 'prior-run' }] } as unknown as Ports['ownership'],
+      context: { resolve: async () => ({}) } as unknown as Ports['context'],
+      runtime: { run: async () => ({ status: 'success' }) } as unknown as Ports['runtime'],
+      reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'interrupted' }), state: async () => ({ values: {}, tasks: [], graphId: null }) } as unknown as Ports['reads'],
+    }));
+    await expect(lost.snapshot('local', 'eng', 'thread')).rejects.toMatchObject({ statusCode: 503, message: expect.stringContaining('checkpoint is missing') });
+  });
+  it('does not claim checkpoint loss while the initial run is still pending', async () => {
+    const starting = new RunService(ports({
+      ownership: { getBinding: async () => binding, runs: async () => [{ runId: 'prior-run' }] } as unknown as Ports['ownership'],
+      context: { resolve: async () => ({}) } as unknown as Ports['context'],
+      runtime: { run: async () => ({ status: 'pending' }) } as unknown as Ports['runtime'],
+      reads: { thread: async () => ({ thread_id: 'thread', metadata: {}, status: 'busy' }), state: async () => ({ values: {}, tasks: [], graphId: null }) } as unknown as Ports['reads'],
+    }));
+    await expect(starting.snapshot('local', 'eng', 'thread')).resolves.toMatchObject({ rawStatus: 'busy', messages: [] });
   });
 });

@@ -30,6 +30,29 @@ These rules override all other instructions:
    `glob`, `ls`, or `read_file` with a target URL/domain. Record targets in
    the planning documents and leave reconnaissance to the operations agent.
 12. **Question Budget**: Cap the interview at **8 `ask_user_question` calls total** for the entire engagement (RoE ≤6 per `roe-template`, CONOPS/Threat Profile ≤2 per `conops-template` — see each skill's own budget note). Scope and explicit authorization are the only dimensions that can never be defaulted; every other field gets a sensible default (schema defaults, tier-derived archetypes, agent-drafted narrative) instead of its own question. If the operator's opening message already answers a dimension, extract it and do not re-ask it — it does not consume the budget. State every assumed default in the Phase 3 bundle summary so the operator corrects it after generation instead of before. A questionnaire that outruns this budget is a bug, not thoroughness.
+13. **Schema Invariants (non-negotiable field names/values)**: the web server
+    validates every `plan/*.json` against the Pydantic models before
+    execution is unlocked — execution remains blocked until invalid
+    documents are repaired. Hard rules observed to drift:
+    - RoE client field is EXACTLY `client` (a string). Never write
+      `client_organization`, `organization`, or any variant.
+    - CONOPS/OBJECTIVE `phase` values are EXACTLY one of:
+      `recon`, `initial-access`, `post-exploit`, `c2`, `exfiltration`.
+      NEVER write `reconnaissance`, `exploitation`, `discovery`, or any
+      prose form — the enum is closed.
+    - ThreatProfile `group_id` is a STRING. When the actor has no MITRE
+      group id, write `""` (empty string). NEVER write `null`.
+    - RoE `testing_window` is a string including the timezone, not an
+      object. Both scope lists contain objects with `target`, `type`,
+      and `notes`; never bare strings or a `value` alias for `target`.
+    - Each CONOPS kill-chain entry requires `description`; its
+      `success_criteria` is a string, not a list.
+    - Deconfliction `identifiers` is a list of objects with `type`,
+      `value`, and `description`, not a dictionary keyed by identifier.
+    - ThreatProfile `confidence` is exactly `verified`, `probable`, or
+      `unverified`, not a numeric score or `high`/`medium`/`low`.
+    - Before calling `complete_engagement_planning`, re-read all eight
+      files and verify these invariants plus each file being valid JSON.
 </CRITICAL_RULES>
 
 <ENVIRONMENT>

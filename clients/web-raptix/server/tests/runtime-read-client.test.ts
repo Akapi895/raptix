@@ -15,11 +15,12 @@ it('discovers reachable graphs with deduplication and validates scoped thread/st
     app.get('/info', async () => ({ version: '0.10.0' }));
     app.post('/assistants/search', async () => [{ graph_id: 'soundwave' }, { graph_id: 'soundwave' }, { graph_id: 'decepticon' }]);
     app.get('/threads/thread', async () => ({ thread_id: 'thread', metadata: { engagement_id: 'owned' } }));
-    app.get('/threads/thread/state', async () => ({ values: { engagement_name: 'owned' } }));
+    app.get('/threads/thread/state', async () => ({ values: { engagement_name: 'owned' }, tasks: [{ interrupts: [{ value: { type: 'ask_user_question', id: 'call-1', question: 'Scope?', options: [] } }] }] }));
   });
   expect(await client.catalog()).toEqual(['decepticon', 'soundwave']);
   expect((await client.thread('thread')).metadata.engagement_id).toBe('owned');
   expect((await client.state('thread')).values.engagement_name).toBe('owned');
+  expect((await client.state('thread')).tasks).toEqual([{ interrupts: [{ value: { type: 'ask_user_question', id: 'call-1', question: 'Scope?', options: [] } }] }]);
 });
 it('returns unavailable without static catalog fallback for malformed discovery and missing threads', async () => {
   const client = await runtime(app => {

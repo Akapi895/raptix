@@ -1,0 +1,41 @@
+import { test, expect } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
+
+test('Docker real-mode project creation and reload use persisted new-API data', async ({ page, request }) => {
+  const slug = `iw-deployed-${Date.now()}`
+  const capabilities = await request.get('/api/capabilities')
+  expect(capabilities.ok()).toBe(true)
+  expect((await capabilities.json()).capabilities).toHaveProperty('campaigns')
+  const list = page.waitForResponse(response => response.url().endsWith('/api/engagements') && response.request().method() === 'GET')
+  await page.goto('/projects')
+  expect((await list).ok()).toBe(true)
+  await expect(page.getByText('Alex Kim', { exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'New Project', exact: true }).click()
+  await page.locator('#real-new-project-display-name').fill(slug)
+  await page.locator('#real-new-project-slug').fill(slug)
+  await page.locator('#real-new-project-target').fill('http://iw-authorized-lab.invalid')
+  await page.locator('#real-new-project-auth').check()
+  const create = page.waitForResponse(response => response.url().endsWith('/api/engagements') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Create Project', exact: true }).click()
+  const response = await create
+  expect(response.status()).toBe(201)
+  const engagement = await response.json()
+  await expect(page).toHaveURL(`/projects/${engagement.id}/charter`)
+  await page.reload()
+  await expect(page.getByRole('heading', { name: `${slug} — Charter & Rules of Engagement` })).toBeVisible()
+  await expect(page.locator('aside nav').getByRole('button')).toHaveCount(13)
+  const persisted = await request.get(`/api/engagements/${engagement.id}`)
+  expect(persisted.ok()).toBe(true)
+  expect((await persisted.json()).workspaceSlug).toBe(slug)
+  await page.screenshot({ path: test.info().outputPath('docker-real-project.png'), fullPage: true })
+  await page.getByRole('button', { name: 'Reports', exact: true }).click()
+  const downloaded = page.waitForEvent('download')
+  await page.getByRole('button', { name: 'Export JSON', exact: true }).click()
+  const download = await downloaded
+  expect(download.suggestedFilename()).toBe(`${slug}-export.json`)
+  const output = test.info().outputPath(download.suggestedFilename())
+  await download.saveAs(output)
+  const body = await readFile(output, 'utf8')
+  expect(body).toContain(slug)
+  expect(() => JSON.parse(body)).not.toThrow()
+})

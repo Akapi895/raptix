@@ -261,7 +261,7 @@ services:
       # ever sees its own engagement at /workspace. When the launcher is not in
       # play (raw `make dev`, benchmark harness, dev workflows), the fallback is
       # the whole tree under <home>/workspace.
-      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
+      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
       # Skills are no longer baked into this image — they live at
       # ``/app/skills/`` in the LANGGRAPH container (see
       # ``containers/langgraph.Dockerfile``) and are read in-process by
@@ -411,10 +411,12 @@ services:
       # (measured: 95% of "installs" survived a single day). Persisting it here
       # also makes the agent and the host CLI agree on one id.
       - ${RAPTIX_HOME:-~/.raptix}/telemetry:/root/.raptix/telemetry
+      # SQLite checkpoints and dev-server thread/run metadata survive recreate.
+      - langgraph_state:/app/.langgraph_api
       # Soundwave writes planning documents through the sandbox, while the
       # handoff validator runs in this container and reads them locally.
       # Mount the same per-engagement workspace at the same in-container path.
-      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
+      - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
     # Wait for litellm to be healthy: langgraph has retry logic but the launcher
     # uses `compose up --wait` and needs healthy as the single readiness signal.
     depends_on:
@@ -736,6 +738,9 @@ services:
 
 volumes:
   postgres_data:
+  langgraph_state:
+  workspace_data:
+    name: ${RAPTIX_WORKSPACE_VOLUME:-raptix_workspace_data}
   sliver_data:
   neo4j_data:
   neo4j_logs:
