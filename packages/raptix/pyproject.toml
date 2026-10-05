@@ -37,6 +37,9 @@ dependencies = [
     # Workspace-resolved to the in-tree packages/raptix-core/ during
     # dev; pinned to the same version as raptix at release time.
     "raptix-core",
+    # Skill corpus (split out in W9) — the operator-facing SKILL.md
+    # knowledge pack resolved via raptix.execution.backends.SKILLS_LOCAL_PATH.
+    "raptix-skills",
     # Core
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
@@ -197,8 +200,5 @@ build-backend = "hatchling.build"
 # Source under src/ — PEP 517 src-layout so editable installs don't
 # accidentally import from the workspace root during dev.
 packages = ["raptix"]
-# Skill markdown trees (standard/shared/plugins) ship as package data and are
-# included by default since they are VCS-tracked. Benchmark skills are
-# XBOW/CTF eval-harness conventions — kept in-repo for `make benchmark` but
-# excluded from the published wheel.
-exclude = ["raptix/skills/defs/benchmark/**"]
+# The skill corpus moved to the separate raptix-skills distribution
+# (W9); nothing else needs excluding from the raptix wheel.

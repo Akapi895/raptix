@@ -4,4 +4,4 @@ dist/
 build/
 .next/
 **/CHANGELOG.md
-packages/raptix/raptix/skills/defs/standard/decepticon/engagement-bundle/
+packages/raptix-skills/raptix_skills/defs/standard/decepticon/engagement-bundle/

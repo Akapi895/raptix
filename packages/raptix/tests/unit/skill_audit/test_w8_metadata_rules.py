@@ -22,7 +22,11 @@ def violations_for(text: str) -> list[tuple[RuleId, str]]:
 
 
 def test_legacy_skill_without_metadata_has_no_w8_violations() -> None:
-    w8 = [v for v in violations_for(_skill()) if v[0] in {RuleId.BAD_UKC_PHASE, RuleId.BAD_METADATA_LIST}]
+    w8 = [
+        v
+        for v in violations_for(_skill())
+        if v[0] in {RuleId.BAD_UKC_PHASE, RuleId.BAD_METADATA_LIST}
+    ]
     assert w8 == []
 
 

@@ -27,7 +27,7 @@ default_stages: [pre-commit]
 #   assets/.*
 #   reference/.*
 #   benchmarks/results/.*
-#   packages/raptix/raptix/skills/defs/_corpus/.*
+#   packages/raptix-skills/raptix_skills/defs/_corpus/.*
 #   .*\.snap
 #   .*\.lock
 
@@ -41,7 +41,7 @@ repos:
             assets/.*|
             reference/.*|
             benchmarks/results/.*|
-            packages/raptix/raptix/skills/defs/_corpus/.*|
+            packages/raptix-skills/raptix_skills/defs/_corpus/.*|
             .*\.snap|
             .*\.lock
           )$
@@ -51,7 +51,7 @@ repos:
             assets/.*|
             reference/.*|
             benchmarks/results/.*|
-            packages/raptix/raptix/skills/defs/_corpus/.*|
+            packages/raptix-skills/raptix_skills/defs/_corpus/.*|
             .*\.snap|
             .*\.lock
           )$

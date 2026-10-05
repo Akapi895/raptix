@@ -12,6 +12,7 @@ dependencies = [
     "raptix",
     "raptix-core",
     "raptix-sdk",
+    "raptix-skills",
 ]
 
 [project.optional-dependencies]
@@ -32,6 +33,7 @@ members = ["packages/*"]
 
 [tool.uv.sources]
 raptix = { workspace = true }
+raptix-skills = { workspace = true }
 raptix-core = { workspace = true }
 raptix-sdk = { workspace = true }
 

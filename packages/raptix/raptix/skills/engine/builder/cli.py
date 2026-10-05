@@ -84,7 +84,7 @@ def _build_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--skills-root",
         type=Path,
-        default=Path("packages/raptix/raptix/skills/defs"),
+        default=Path("packages/raptix-skills/raptix_skills/defs"),
         help="Corpus root to scan.",
     )
     parser.add_argument(

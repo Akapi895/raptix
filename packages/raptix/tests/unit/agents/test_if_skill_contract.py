@@ -5,7 +5,8 @@ from pathlib import Path
 from raptix.intelligence.agents.middleware_slots import skills_sources_for
 
 _ROOT = Path(__file__).resolve().parents[3] / "raptix"
-_DEFS = _ROOT / "skills" / "defs"
+# Corpus split into packages/raptix-skills (W9); prompts stay in raptix.
+_DEFS = _ROOT.parents[1] / "raptix-skills" / "raptix_skills" / "defs"
 _PROMPTS = _ROOT / "intelligence" / "prompts" / "standard"
 
 
