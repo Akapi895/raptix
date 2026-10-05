@@ -110,5 +110,6 @@ rules:
         - "**/raptix/execution/sandbox/kernel/**"
         - "**/raptix/execution/sandbox/server/**"
         - "**/raptix/runtime/**"
+        - "plugins/**"
       exclude:
         - "**/tests/**"

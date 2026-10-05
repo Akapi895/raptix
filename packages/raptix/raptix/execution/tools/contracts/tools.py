@@ -7,13 +7,9 @@ from pathlib import Path
 from typing import Any
 
 from langchain_core.tools import tool
+from raptix_contracts import tools as contract_tools
+from raptix_contracts.patterns import scan_solidity_source
 
-from raptix.execution.tools.contracts.foundry import (
-    generate_access_control_test,
-    generate_flashloan_test,
-    generate_reentrancy_test,
-)
-from raptix.execution.tools.contracts.patterns import scan_solidity_source
 from raptix.execution.tools.contracts.slither import (
     ingest_slither_json as _ingest_slither_json_impl,
 )
@@ -35,19 +31,7 @@ def _resolve_engagement() -> str:
     return get_active_engagement() or _LEGACY_ENGAGEMENT_LABEL
 
 
-@tool
-def solidity_scan(source: str) -> str:
-    """Run offline Solidity pattern scanner.
-
-    Returns findings for: reentrancy, tx.origin, delegatecall, bad randomness,
-    unchecked ecrecover, proxy init, missing access control, unchecked casts,
-    flash-loan callbacks, oracle abuse.
-
-    Args:
-        source: Raw Solidity source code to scan.
-    """
-    findings = scan_solidity_source(source)
-    return _json([f.to_dict() for f in findings])
+solidity_scan = tool(contract_tools.solidity_scan)
 
 
 @tool
@@ -83,25 +67,9 @@ def slither_ingest(path: str) -> str:
     return _json({"ingested": count})
 
 
-@tool
-def foundry_reentrancy_test(target: str, function: str, target_path: str = "src/Target.sol") -> str:
-    """Generate a Foundry reentrancy PoC test for target.function."""
-    h = generate_reentrancy_test(target, function, target_path)
-    return _json({"path": h.path, "source": h.source})
-
-
-@tool
-def foundry_access_test(target: str, function: str, target_path: str = "src/Target.sol") -> str:
-    """Generate a Foundry access-control bypass test for target.function."""
-    h = generate_access_control_test(target, function, target_path)
-    return _json({"path": h.path, "source": h.source})
-
-
-@tool
-def foundry_flashloan_test(target: str, target_path: str = "src/Target.sol") -> str:
-    """Generate a Foundry flash-loan callback auth test for target."""
-    h = generate_flashloan_test(target, target_path)
-    return _json({"path": h.path, "source": h.source})
+foundry_reentrancy_test = tool(contract_tools.foundry_reentrancy_test)
+foundry_access_test = tool(contract_tools.foundry_access_test)
+foundry_flashloan_test = tool(contract_tools.foundry_flashloan_test)
 
 
 CONTRACT_TOOLS = [

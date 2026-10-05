@@ -17,8 +17,6 @@ services:
           # tree to packages/raptix/raptix/. The Dockerfile
           # COPY now pulls packages/, and uv sync installs editable from
           # there — hot-reload mirrors the same path inside the image.
-          # Skills live under packages/raptix/raptix/skills,
-          # so this sync covers them too — no dedicated entry needed.
           path: ./packages/raptix/raptix
           target: /app/packages/raptix/raptix
         - action: sync
@@ -28,8 +26,43 @@ services:
           path: ./packages/raptix-core/raptix_core
           target: /app/packages/raptix-core/raptix_core
         - action: sync
+          # The skill corpus moved to its own workspace member in W9
+          # (packages/raptix-skills); sync it so SKILL.md edits
+          # hot-reload like the runtime tree.
+          path: ./packages/raptix-skills/raptix_skills
+          target: /app/packages/raptix-skills/raptix_skills
+        - action: sync
           path: ./langgraph.json
           target: /app/langgraph.json
+        - action: sync
+          path: ./plugins
+          target: /app/plugins
+          ignore:
+            - "**/pyproject.toml"
+            - "**/__pycache__/"
+            - "**/tests/"
+        - action: rebuild
+          path: ./plugins/contracts/pyproject.toml
+        - action: rebuild
+          path: ./plugins/reversing/pyproject.toml
+        - action: rebuild
+          path: ./plugins/mobile/pyproject.toml
+        - action: rebuild
+          path: ./plugins/iot/pyproject.toml
+        - action: rebuild
+          path: ./plugins/ics/pyproject.toml
+        - action: rebuild
+          path: ./plugins/wireless/pyproject.toml
+        - action: rebuild
+          path: ./plugins/cloud/pyproject.toml
+        - action: rebuild
+          path: ./plugins/phishing/pyproject.toml
+        - action: rebuild
+          path: ./plugins/active-directory/pyproject.toml
+        - action: rebuild
+          path: ./plugins/web/pyproject.toml
+        - action: rebuild
+          path: ./plugins/network/pyproject.toml
         - action: rebuild
           # Any workspace pyproject change forces a rebuild — uv sync
           # must re-resolve the dependency closure.

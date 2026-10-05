@@ -7,19 +7,19 @@ from pathlib import Path
 from typing import Any
 
 from langchain_core.tools import tool
+from raptix_reversing.binary import identify_binary
+from raptix_reversing.packer import detect_packer
+from raptix_reversing.rop import filter_gadgets_by_pattern, find_rop_gadgets
+from raptix_reversing.scripts import ghidra_recon_script, r2_recon_script
+from raptix_reversing.strings import extract_strings, group_by_category
+from raptix_reversing.symbols import summarize_symbols
 
-from raptix.execution.tools.reversing.binary import identify_binary
 from raptix.execution.tools.reversing.ghidra import (
     ghidra_analyze_binary,
     ghidra_available,
     ghidra_decompile_function,
     ghidra_get_xrefs,
 )
-from raptix.execution.tools.reversing.packer import detect_packer
-from raptix.execution.tools.reversing.rop import filter_gadgets_by_pattern, find_rop_gadgets
-from raptix.execution.tools.reversing.scripts import ghidra_recon_script, r2_recon_script
-from raptix.execution.tools.reversing.strings import extract_strings, group_by_category
-from raptix.execution.tools.reversing.symbols import summarize_symbols
 
 
 def _json(data: Any) -> str:

@@ -4,7 +4,8 @@ from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[5]
 _PROMPTS = _REPO_ROOT / "packages/raptix/raptix/intelligence/prompts/standard"
-_REVERSER_AGENT = _REPO_ROOT / "packages/raptix/raptix/intelligence/agents/standard/reverser.py"
+_REVERSER_AGENT = _REPO_ROOT / "plugins/reversing/raptix_reversing/agent.py"
+_REVERSER_PROMPT = _REPO_ROOT / "plugins/reversing/raptix_reversing/prompts/reverser.md"
 
 _REVERSER_SKILL = (
     _REPO_ROOT / "packages/raptix-skills/raptix_skills/defs/standard/reverser/SKILL.md"
@@ -24,7 +25,7 @@ def test_orchestrator_dispatches_reverser_for_no_workload_triage() -> None:
 
 
 def test_reverser_prompt_has_radare2_fallback_path() -> None:
-    prompt = (_PROMPTS / "reverser.md").read_text()
+    prompt = _REVERSER_PROMPT.read_text(encoding="utf-8")
 
     assert "RADARE2" in prompt
     assert "bin_r2_script" in prompt
@@ -45,7 +46,7 @@ def test_reverser_skill_catalog_names_radare2_fallback() -> None:
 
 
 def test_reverser_routes_vmprotect_vmp2_themida_workflow() -> None:
-    prompt = (_PROMPTS / "reverser.md").read_text()
+    prompt = _REVERSER_PROMPT.read_text(encoding="utf-8")
     catalog = _REVERSER_SKILL.read_text()
 
     assert "VMProtect / VMP2 / Themida" in prompt

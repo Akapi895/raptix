@@ -2,8 +2,10 @@
 
 > Authoritative mapping of **which agent / which skill is instructed to write
 > which file**, extracted verbatim from the agent system prompts
-> (`packages/raptix/raptix/intelligence/prompts/standard/*.md`) and the
-> skill catalogs (`packages/raptix/raptix/skills/**/SKILL.md`).
+> (`packages/raptix/raptix/intelligence/prompts/standard/*.md` for
+> orchestrator/phase roles; `plugins/<domain>/raptix_<domain>/prompts/*.md`
+> for the nine W10 plugin-owned specialists) and the skill catalogs
+> (`packages/raptix-skills/raptix_skills/defs/**/SKILL.md`).
 >
 > This is a *literal* inventory of the instructions as written — not a
 > normative spec. Where the prompts and skills disagree on a path, both are
@@ -286,5 +288,7 @@ item below records the original conflict and its **Resolution**.
 ### Source files
 
 - Agent prompts: `packages/raptix/raptix/intelligence/prompts/standard/*.md`
-- Skills: `packages/raptix/raptix/skills/{shared,standard,benchmark}/**/SKILL.md`
+  (orchestrator/phase roles) and
+  `plugins/<domain>/raptix_<domain>/prompts/*.md` (plugin-owned specialists)
+- Skills: `packages/raptix-skills/raptix_skills/defs/{shared,standard,benchmark}/**/SKILL.md`
 - Schemas: `packages/raptix-core/raptix_core/types/`

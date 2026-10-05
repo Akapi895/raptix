@@ -17,13 +17,14 @@
 
 from __future__ import annotations
 
-from raptix.execution.tools.ad.adcs import ADCSFinding, analyze_adcs_templates
+from raptix_active_directory.adcs import ADCSFinding, analyze_adcs_templates
+from raptix_active_directory.dcsync import dcsync_candidates
+from raptix_active_directory.delegation import DelegationFinding, analyze_delegation
+from raptix_active_directory.gpo import GPOFinding, analyze_gpo_abuse
+from raptix_active_directory.kerberos import KerberosTicket, classify_hashcat_hash, parse_ticket
+from raptix_active_directory.shadow_creds import ShadowCredsFinding, analyze_shadow_credentials
+
 from raptix.execution.tools.ad.bloodhound import ingest_bloodhound_zip, merge_bloodhound_json
-from raptix.execution.tools.ad.dcsync import dcsync_candidates
-from raptix.execution.tools.ad.delegation import DelegationFinding, analyze_delegation
-from raptix.execution.tools.ad.gpo import GPOFinding, analyze_gpo_abuse
-from raptix.execution.tools.ad.kerberos import KerberosTicket, classify_hashcat_hash, parse_ticket
-from raptix.execution.tools.ad.shadow_creds import ShadowCredsFinding, analyze_shadow_credentials
 
 __all__ = [
     "ADCSFinding",

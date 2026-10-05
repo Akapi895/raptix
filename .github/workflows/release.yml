@@ -11,9 +11,9 @@ permissions:
   attestations: write
 
 jobs:
-  # Publish all three workspace wheels (raptix-core, raptix,
-  # raptix-sdk) to PyPI via Trusted Publishing (OIDC). Lockstep
-  # release per spec §13.1 — all three share one version string and
+  # Publish workspace wheels, including skills and domain packs,
+  # to PyPI via Trusted Publishing (OIDC). Lockstep
+  # release per spec §13.1 — all members share one version string and
   # publish in one job so the dependency closure is consistent.
   #
   # PyPI side requires a Trusted Publisher config per project on
@@ -23,7 +23,7 @@ jobs:
   #   - raptix-sdk   -> same
   # See: https://docs.pypi.org/trusted-publishers/
   publish-pypi:
-    name: Publish three workspace wheels to PyPI
+    name: Publish workspace wheels to PyPI
     runs-on: ubuntu-latest
     environment: pypi-release
     permissions:
@@ -43,17 +43,16 @@ jobs:
       - name: Stamp version from the tag across the workspace
         run: |
           version="${GITHUB_REF_NAME#v}"
-          # All four pyprojects share one version string per spec §13.1
+          # All workspace pyprojects share one version string per spec §13.1
           # (lockstep release). Root umbrella stays at the sentinel since
           # it doesn't ship as a wheel, but stamping it keeps uv build
           # invariants happy.
           sed -i 's/^version = "[^"]*"/version = "'"$version"'"/' \
               pyproject.toml \
-              packages/raptix-core/pyproject.toml \
-              packages/raptix/pyproject.toml \
-              packages/raptix-sdk/pyproject.toml
+              packages/*/pyproject.toml \
+              plugins/*/pyproject.toml
 
-      - name: Build three workspace wheels + sdists
+      - name: Build workspace wheels + sdists
         run: |
           # uv build --all-packages from the workspace root produces wheel
           # + sdist for every workspace member into ./dist/:
@@ -62,7 +61,7 @@ jobs:
           #   dist/raptix_sdk-<v>-py3-none-any.whl   + .tar.gz
           uv build --all-packages
 
-      - name: Publish to PyPI (all three wheels atomically)
+      - name: Publish workspace distributions to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           # Idempotent re-runs: if a version is already on PyPI (e.g. a
@@ -70,7 +69,7 @@ jobs:
           # skip the upload instead of failing the workflow. PyPI itself
           # still forbids overwriting an existing version's files.
           skip-existing: true
-          # ``dist/`` carries wheels + sdists for all three packages — the
+          # ``dist/`` carries wheels + sdists for all workspace packages — the
           # gh-action-pypi-publish step uploads every artifact found there
           # in one transaction.
           packages-dir: dist

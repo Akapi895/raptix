@@ -7,17 +7,17 @@ import os
 from typing import Any
 
 from langchain_core.tools import tool
-
-from raptix.execution.tools.web.graphql import GraphQLSchema
-from raptix.execution.tools.web.http import HTTPSession
-from raptix.execution.tools.web.jwt import (
+from raptix_web.jwt import (
     DEFAULT_WEAK_SECRETS,
     crack_hs_secret,
     forge_token,
     parse_token,
 )
-from raptix.execution.tools.web.oauth import analyze_oauth_callback
-from raptix.execution.tools.web.session import analyze_cookie
+from raptix_web.oauth import analyze_oauth_callback
+from raptix_web.session import analyze_cookie
+
+from raptix.execution.tools.web.graphql import GraphQLSchema
+from raptix.execution.tools.web.http import HTTPSession
 
 
 def _json(data: Any) -> str:

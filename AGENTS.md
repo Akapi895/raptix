@@ -76,6 +76,17 @@ Plan invariants (violating these reopens settled design):
   shadow-mode state machine — nothing in the runtime gates on it yet.
   Phases are never a source-tree layout; skills carry `ukc_phases`
   metadata (W8). See `docs/adr/0037-ukc-phase-is-runtime-state.md`.
+- W10 domain ownership lives in `plugins/{contracts,reversing,mobile,iot,
+  ics,wireless,cloud,phishing,active-directory,web,network}`. Nine specialist
+  definitions and their identity/workflow prompts are plugin-owned;
+  offline domain analyzers are canonical there. Plugins import only
+  stdlib + public SDK/core. `raptix_sdk.create_domain_agent` dispatches to
+  the runtime's `raptix.agent_composers` provider, which retains model,
+  sandbox, middleware, live transport and KG lifecycle assembly. Runtime
+  graph hosts and analyzer re-exports preserve old imports until W11.
+  Prompt resources resolve before shared policy assembly; default bundle
+  names, tool sets, priorities and skill paths are preserved. See
+  `docs/adr/0038-domain-plugin-composition.md` and `plugins/README.md`.
 - `langgraph.json` maps graph names to
   `packages/raptix/raptix/intelligence/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
