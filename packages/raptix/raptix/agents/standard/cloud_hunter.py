@@ -168,7 +168,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "pivoting after an SSRF is confirmed by recon or analyst."
     ),
     factory=create_cloud_hunter_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=60,
 )

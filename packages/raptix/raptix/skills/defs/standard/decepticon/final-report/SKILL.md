@@ -426,7 +426,7 @@ engagement context that sub-agents could not infer mid-engagement.
 
 Promotion is a step within this skill's report generation workflow.
 Skip promotion in any mode where the loaded mode skill (e.g.
-`skills/benchmark/SKILL.md`) replaces decepticon.md's
+`skills/benchmark/SKILL.md`) replaces raptix.md's
 `<COMPLETION_CRITERIA>` Final-response sequence with a mode-specific
 terminal behaviour (e.g. SHORT-CIRCUIT for direct credential / target
 return). The mode skill specifies the deliverable for that mode.

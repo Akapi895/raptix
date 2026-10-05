@@ -182,7 +182,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "engagements."
     ),
     factory=create_ad_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=70,
 )

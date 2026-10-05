@@ -181,8 +181,8 @@ _BASH_AGENT_SLOTS: frozenset[MiddlewareSlot] = _BASE_SLOTS | {
 
 
 SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
-    # ── Standard orchestrator ──
-    "decepticon": _BASE_SLOTS
+    # ── Standard orchestrator (canonical post-rename role) ──
+    "raptix": _BASE_SLOTS
     | {
         MiddlewareSlot.ENGAGEMENT_CONTEXT,
         MiddlewareSlot.KG,
@@ -243,6 +243,11 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
 the role's set; anything else is skipped silently. Plugin agents
 register their own role here via the ``raptix.agents`` entry-point
 group (handled by ``plugin_loader``)."""
+
+# Compat alias for the historical orchestrator role name. Anything still
+# building with role="decepticon" (old threads, external plugins) keeps
+# resolving to the same slots. Remove at 2.0.0 with the other renames.
+SLOTS_PER_ROLE["decepticon"] = SLOTS_PER_ROLE["raptix"]
 
 
 __all__ = [

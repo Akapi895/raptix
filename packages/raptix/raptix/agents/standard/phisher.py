@@ -149,7 +149,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "handshake with the blue team via plan/roe.json before sending."
     ),
     factory=create_phisher_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=15,
 )

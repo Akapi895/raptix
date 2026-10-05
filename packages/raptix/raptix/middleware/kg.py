@@ -1,6 +1,6 @@
 """KGMiddleware — owner of the Neo4j-backed attack graph for an agent run.
 
-Mirrors :class:`OPPLANMiddleware` (decepticon/middleware/opplan.py): state
+Mirrors :class:`OPPLANMiddleware` (raptix/middleware/opplan.py): state
 schema + tools-on-init + lifecycle hooks. Once attached to an agent via
 ``langchain.agents.create_agent(... middleware=[KGMiddleware(), ...])``
 the agent gains the ``kg_record`` and ``kg_ingest`` tools and sees a
@@ -12,6 +12,8 @@ Hooks:
                           fetch the current revision from the store,
                           rebuild the summary block when the revision
                           advances or this is the first turn.
+  * ``before_model``    — compare revisions before every model decision,
+                          including writes performed by child agents.
   * ``wrap_model_call`` — inject the cached summary block into the
                           system message as a cache-friendly two-block
                           insertion (static prompt-cache breakpoint +
@@ -23,7 +25,7 @@ Hooks:
                           error before the adapter even runs.
   * ``after_model``     — when a KG write tool ran in the last AI step,
                           mark ``kg_revision`` dirty so the next
-                          ``before_agent`` re-fetches it and rebuilds
+                          ``before_model`` re-fetches it and rebuilds
                           the summary.
 """
 
@@ -68,7 +70,7 @@ KG_SYSTEM_PROMPT = (
 
 
 # Marker the middleware writes into ``kg_revision`` when a write tool
-# ran. Forces the next ``before_agent`` to re-fetch the real revision
+# ran. Forces the next ``before_model`` to re-fetch the real revision
 # and rebuild the summary. Any non-empty string different from the
 # real ``rev-<engagement>-<update_tag>`` works; ``dirty`` is the
 # convention.

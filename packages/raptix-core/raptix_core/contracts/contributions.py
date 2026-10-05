@@ -119,7 +119,7 @@ class SubAgentContribution:
             raise ValueError(
                 "SubAgentContribution requires an explicit non-empty "
                 "``parent_agents=`` tuple (closes spec §8 gap #6). "
-                "Pass parent_agents=('decepticon',) etc."
+                "Pass parent_agents=('raptix',) etc."
             )
 
 

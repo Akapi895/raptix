@@ -134,7 +134,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "tree at skills/standard/iot/."
     ),
     factory=create_iot_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=58,
 )

@@ -48,7 +48,7 @@ def test_subagent_spec_targets_orchestrator() -> None:
     spec = agent_mod.SUBAGENT_SPEC
     assert spec.name == "blue_cell"
     assert spec.factory is agent_mod.create_blue_cell_agent
-    assert spec.parent_agents == ("decepticon",)
+    assert spec.parent_agents == ("raptix", "decepticon")
     assert spec.bundle == "standard"
 
 
@@ -60,7 +60,7 @@ def test_langgraph_registers_blue_cell_graph() -> None:
     )
 
 
-def test_blue_cell_published_as_decepticon_subagent() -> None:
+def test_blue_cell_published_as_orchestrator_subagent() -> None:
     """The orchestrator only delegates to specs published under the
     ``raptix.subagents`` entry-point group (load_subagents_for_parent).
     Without this line Blue Cell is graph-served but never delegated — the

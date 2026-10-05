@@ -52,7 +52,7 @@ class SubAgentTaskSpec:
       may read (findings, screenshots, captures). Never inline content.
     * ``engagement_id`` — parent's engagement identifier.
     * ``parent_agent`` — name of the dispatching agent (typically
-      ``"decepticon"``).
+      ``"raptix"``).
     """
 
     objective: str

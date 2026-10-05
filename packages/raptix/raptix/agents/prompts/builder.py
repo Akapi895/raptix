@@ -7,7 +7,7 @@ Structured prompt composition with:
    per invocation. A cache boundary marker separates them for Anthropic prompt caching.
 
 2. **Tool prompt co-location** — tool prompts live with their tool code (e.g.,
-   decepticon/tools/bash/prompt.py) and are injected here with role-specific variations.
+   raptix/tools/bash/prompt.py) and are injected here with role-specific variations.
 
 3. **Cross-cutting patterns** — faithful reporting, verification gates, output discipline
    are injected consistently across all operational agents.
@@ -46,7 +46,7 @@ _PROMPTS_DIR = Path(__file__).parent
 # each base directory in order, returning the first ``<base>/<name>.md``
 # that exists. The top-level dir holds cross-cutting fragments
 # (``language.md``); ``standard/`` and ``plugins/`` hold per-agent
-# prompts mirroring the bundle split applied to ``decepticon/agents/``
+# prompts mirroring the bundle split applied to ``raptix/agents/``
 # and ``skills/``. External plugin packages ship their own prompts via
 # their own ``importlib.resources`` lookups; this list is OSS-internal.
 _PROMPT_SEARCH_PATHS: tuple[Path, ...] = (
@@ -196,7 +196,7 @@ def _get_tool_prompt(tool_name: str, role: str | None = None) -> str:
 
 
 # ── Roles that get cross-cutting prompt patterns ─────────────────────────────
-# The orchestrator (decepticon) and soundwave don't do direct tool execution,
+# The orchestrator (raptix) and soundwave don't do direct tool execution,
 # so they get a subset of the patterns.
 _OPERATIONAL_ROLES = {
     "recon",
@@ -273,7 +273,7 @@ class PromptBuilder:
             parts.append(_FINDING_PROTOCOL_POINTER)
             parts.append(_OUTPUT_DISCIPLINE)
             parts.append(_ANALYST_MINDSET)
-        elif self._role == "decepticon":
+        elif self._role == "raptix":
             # Orchestrator gets reporting + output discipline but not verification gate
             parts.append(_FAITHFUL_REPORTING)
             parts.append(_FINDING_PROTOCOL_POINTER)
@@ -384,7 +384,7 @@ def load_prompt(
         )
 
     # Apply Claude 4.x compatibility shim (no-op for other model families).
-    # See decepticon/agents/prompts/claude4_compat.py and docs/model-compatibility.md.
+    # See raptix/agents/prompts/claude4_compat.py and docs/model-compatibility.md.
     try:
         from raptix.agents.prompts.claude4_compat import apply_compat_for_role
 

@@ -1,7 +1,7 @@
 """BlueCellTap - normalize sandbox + target telemetry into a single stream.
 
 The sandbox already pipes every tmux pane to ``<workspace>/.sessions/<name>.log``
-(see ``decepticon/sandbox_kernel/tmux.py``). The Blue Cell agent
+(see ``raptix/sandbox_kernel/tmux.py``). The Blue Cell agent
 consumes that stream PLUS, when configured, target-side telemetry
 collected by a sidecar daemon on each foothold (push to
 ``<workspace>/.sessions/_target/<host>.log``).

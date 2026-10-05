@@ -175,7 +175,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "and exploit dev hand-offs."
     ),
     factory=create_reverser_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=40,
 )

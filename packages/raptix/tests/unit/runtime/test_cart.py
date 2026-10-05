@@ -223,7 +223,7 @@ def test_replay_runner_execute_live_dispatches_one_spec_per_objective():
     assert len(fake.specs) == 1
     spec = fake.specs[0]
     assert isinstance(spec, SubAgentTaskSpec)
-    assert spec.agent_name == "decepticon"
+    assert spec.agent_name == "raptix"
     assert spec.objective_ids == ("scan",)
     assert spec.technique_tags == ("T1190",)
     assert spec.replay_record_path == "/tmp/rec.jsonl"
@@ -281,7 +281,7 @@ def test_replay_runner_execute_live_empty_objectives_dispatches_orchestrator_spe
     assert len(fake.specs) == 1
     spec = fake.specs[0]
     assert spec.objective_ids == ()
-    assert spec.agent_name == "decepticon"
+    assert spec.agent_name == "raptix"
     assert spec.replay_record_path == "/tmp/rec.jsonl"
     assert result["status"] == "completed"
     assert len(result["results"]) == 1
@@ -322,14 +322,14 @@ def test_make_replay_dispatcher_installs_replay_middleware(monkeypatch):
 
     dispatcher = make_replay_dispatcher(fake_invoke)
     spec = SubAgentTaskSpec(
-        agent_name="decepticon",
+        agent_name="raptix",
         prompt="replay",
         objective_ids=("scan",),
         replay_record_path="/tmp/rec.jsonl",
     )
     result = dispatcher(spec)
     assert result == {"ok": True}
-    assert captured["agent_name"] == "decepticon"
+    assert captured["agent_name"] == "raptix"
     assert captured["prompt"] == "replay"
     assert len(captured["middleware"]) == 1
     installed = captured["middleware"][0]

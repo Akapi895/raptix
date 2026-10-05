@@ -135,7 +135,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "skills/standard/supply-chain/."
     ),
     factory=create_supply_chain_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=25,
 )

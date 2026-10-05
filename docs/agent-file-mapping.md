@@ -37,17 +37,17 @@ summarizes the trigger; "Cite" is the prompt line.
 
 ### Orchestration tier
 
-#### Raptix (orchestrator) — `agents/prompts/standard/decepticon.md`
+#### Raptix (orchestrator) — `agents/prompts/standard/raptix.md`
 
 No bash; writes only via workspace file tools and OPPLAN CRUD.
 
 | File | Format | When / why | Cite |
 |------|--------|-----------|------|
-| `exploit/creds/credentials.md` | Markdown (verbatim secret) | Immediately when a `task()` return yields a high-value secret, before `update_objective` | decepticon.md:60 |
-| `report/executive-summary.md` | Markdown | Final-report sequence at engagement close | decepticon.md:124 |
-| `report/technical-report.md` | Markdown | Final-report sequence | decepticon.md:125 |
-| `report/finding-NNN.md` | Markdown | Promote each `findings/FIND-NNN.md` to deliverable tier | decepticon.md:126 |
-| `plan/opplan.json` | JSON | Auto-persisted by `add_objective`/`update_objective` (not a manual write) | decepticon.md:21 |
+| `exploit/creds/credentials.md` | Markdown (verbatim secret) | Immediately when a `task()` return yields a high-value secret, before `update_objective` | raptix.md:60 |
+| `report/executive-summary.md` | Markdown | Final-report sequence at engagement close | raptix.md:124 |
+| `report/technical-report.md` | Markdown | Final-report sequence | raptix.md:125 |
+| `report/finding-NNN.md` | Markdown | Promote each `findings/FIND-NNN.md` to deliverable tier | raptix.md:126 |
+| `plan/opplan.json` | JSON | Auto-persisted by `add_objective`/`update_objective` (not a manual write) | raptix.md:21 |
 
 Reads (not writes): `plan/roe.json` before every dispatch; `recon/SUMMARY.md` after every recon return.
 

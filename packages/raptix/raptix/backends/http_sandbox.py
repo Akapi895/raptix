@@ -298,7 +298,7 @@ class HTTPSandbox(BaseSandbox):
 
     # ── tmux / background surface — mirrors DockerSandbox ────────────────
     # These are the methods the bash tool consumes via
-    # `decepticon/tools/bash/bash.py:_sandbox.execute_tmux_async(...)`
+    # `raptix/tools/bash/bash.py:_sandbox.execute_tmux_async(...)`
     # etc. The HTTP transport adds <1ms of overhead on loopback compared
     # to docker-exec; the tmux session state itself lives on the daemon
     # side where TmuxSessionManager always lived.

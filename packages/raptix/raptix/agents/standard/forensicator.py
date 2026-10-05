@@ -134,7 +134,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "at skills/standard/dfir/."
     ),
     factory=create_forensicator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=95,
 )

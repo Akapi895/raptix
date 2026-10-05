@@ -182,7 +182,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "Foundry PoC test harness generation."
     ),
     factory=create_contract_auditor_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=50,
 )

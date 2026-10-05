@@ -522,7 +522,8 @@ METHOD_MODELS: dict[AuthMethod, dict[Tier, str]] = {
 AGENT_TIERS: dict[str, Tier] = {
     # HIGH — deep reasoning, multi-step planning, source-level analysis,
     # long context accumulation. Failure cost is mission-critical.
-    "decepticon": Tier.HIGH,
+    "raptix": Tier.HIGH,
+    "decepticon": Tier.HIGH,  # compat alias for the historical role name
     "exploit": Tier.HIGH,
     "surface_exploit": Tier.HIGH,
     "exploiter": Tier.HIGH,
@@ -555,7 +556,8 @@ AGENT_TIERS: dict[str, Tier] = {
 }
 
 AGENT_TEMPERATURES: dict[str, float] = {
-    "decepticon": 0.4,
+    "raptix": 0.4,
+    "decepticon": 0.4,  # compat alias for the historical role name
     "soundwave": 0.4,
     "autohunt": 0.4,
     "exploit": 0.3,

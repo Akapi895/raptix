@@ -14,7 +14,7 @@ _VIRTUALIZED_SKILL = (
 
 
 def test_orchestrator_dispatches_reverser_for_no_workload_triage() -> None:
-    prompt = (_PROMPTS / "decepticon.md").read_text()
+    prompt = (_PROMPTS / "raptix.md").read_text()
 
     assert "Basic triage / Radare2 work still goes to `reverser`" in prompt
     assert "only for Ghidra MCP / headless decompilation" in prompt

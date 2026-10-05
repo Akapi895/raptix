@@ -1,6 +1,6 @@
-# Standard bundle — decepticon main agent + 16 official subagents + soundwave.
+# Standard bundle — raptix main agent + 16 official subagents + soundwave.
 # Plugins bundle — vulnresearch main agent + its 5 subagents (community-plugin
-# shape demonstrated from inside OSS). See decepticon/agents/plugins/__init__.py.
+# shape demonstrated from inside OSS). See raptix/agents/plugins/__init__.py.
 from raptix.agents.plugins.detector import create_detector_agent
 from raptix.agents.plugins.exploiter import create_exploiter_agent
 from raptix.agents.plugins.patcher import create_patcher_agent

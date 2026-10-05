@@ -52,6 +52,19 @@ def test_every_registered_subagent_has_a_graph():
     assert not missing, f"subagents without a built-in graph: {missing}"
 
 
+def test_orchestrator_discovers_specialists_under_canonical_role():
+    """The renamed orchestrator role must discover its subagents.
+
+    Specs attach via ``parent_agents`` membership, so a role string with
+    no matching spec silently yields an empty roster — no error, no
+    dispatch targets. This pins the decepticon→raptix role rename.
+    """
+    from raptix_core.plugin_loader import load_subagents_for_parent
+
+    names = {spec.name for spec in load_subagents_for_parent("raptix")}
+    assert {"recon", "exploit", "postexploit", "analyst", "phisher", "blue_cell"} <= names
+
+
 def test_every_slot_role_has_a_model_tier():
     """Every role in ``SLOTS_PER_ROLE`` must have an ``AGENT_TIERS`` entry.
 

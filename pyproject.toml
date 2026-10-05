@@ -6,7 +6,7 @@ name = "raptix-workspace"
 # workflow runs uniformly across the three published packages under
 # ``packages/``.
 version = "0.0.0"
-description = "Decepticon monorepo workspace (core / framework / sdk split)"
+description = "Raptix monorepo workspace (core / framework / sdk split)"
 requires-python = ">=3.13"
 dependencies = [
     "raptix",
