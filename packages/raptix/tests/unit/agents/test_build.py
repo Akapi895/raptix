@@ -606,6 +606,7 @@ def test_middleware_slot_enum_order_is_assembly_order():
         "summarization",
         "prompt-caching",
         "patch-tool-calls",
+        "record",
     ]
 
 
@@ -640,3 +641,48 @@ def test_hitl_is_safety_critical_and_additive_slots_are_not():
     # critical so a plugin bundle can't disable it without an explicit
     # RAPTIX_ALLOW_SAFETY_OVERRIDES.
     assert MiddlewareSlot.PROMPT_INJECTION_SHIELD in SAFETY_CRITICAL_SLOTS
+
+
+# ── RECORD slot: env-gated full-fidelity run recording ───────────────
+
+
+def test_record_slot_absent_by_default(monkeypatch):
+    """Without ``RAPTIX_RUNTIME__RECORD_PATH`` the stack assembles
+    byte-identical to before — no recorder, no behavior change."""
+    monkeypatch.delenv("RAPTIX_RUNTIME__RECORD_PATH", raising=False)
+    from raptix.runtime.recording import RecordingMiddleware
+
+    stack = _build_exploit_stack()
+    assert not any(isinstance(m, RecordingMiddleware) for m in stack)
+
+
+def test_record_slot_is_innermost_when_enabled(monkeypatch, tmp_path):
+    """With the env var set the recorder assembles LAST (innermost), so
+    it observes exact model/tool payloads, and it is observability-only:
+    responses pass through unchanged and land in the JSONL."""
+    from raptix.runtime.recording import RecordingMiddleware
+
+    record_path = tmp_path / "record.jsonl"
+    monkeypatch.setenv("RAPTIX_RUNTIME__RECORD_PATH", str(record_path))
+    stack = _build_exploit_stack()
+    assert isinstance(stack[-1], RecordingMiddleware)
+
+    request = SimpleNamespace(
+        tool=SimpleNamespace(name="bash"),
+        tool_call={"args": {"command": "echo hi"}},
+    )
+    reply = ToolMessage(content="hi", tool_call_id="t1", name="bash", status="success")
+    out = stack[-1].wrap_tool_call(request, lambda req: reply)
+    assert out is reply
+    lines = record_path.read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) == 1
+    import json as _json
+
+    entry = _json.loads(lines[0])
+    assert entry["kind"] == "tool_call"
+    assert entry["request"]["tool"] == "bash"
+    assert entry["response"]["content"] == "hi"
+
+
+def test_record_slot_is_not_safety_critical():
+    assert MiddlewareSlot.RECORD not in SAFETY_CRITICAL_SLOTS
