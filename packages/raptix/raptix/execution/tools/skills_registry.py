@@ -30,9 +30,12 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
 
+from raptix.skills.audit.frontmatter import FrontmatterParseError, parse_frontmatter
+
 SKILL_PATH_PREFIX = "/skills/"
 _SLUG_NORMALIZE = re.compile(r"[\s_]+")
 _RULE_SAFE = re.compile(r"[^A-Za-z0-9_\-]+")
+_W8_LIST_FIELDS = ("capabilities", "ukc_phases", "requires", "produces")
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,6 +49,8 @@ class SkillRecord:
     * ``name`` — frontmatter ``name`` field or slug fallback
     * ``description`` — frontmatter ``description`` field or empty string
     * ``source`` — first allowlist source prefix that exposed this record
+    * ``capabilities`` / ``ukc_phases`` / ``requires`` / ``produces`` —
+      optional W8 metadata; empty on legacy skills without the block
     """
 
     id: str
@@ -53,6 +58,10 @@ class SkillRecord:
     name: str
     description: str
     source: str
+    capabilities: tuple[str, ...] = ()
+    ukc_phases: tuple[str, ...] = ()
+    requires: tuple[str, ...] = ()
+    produces: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True, slots=True)
@@ -119,6 +128,28 @@ def _walk_skills_root(skills_root: Path) -> Iterator[tuple[Path, str]]:
         yield md, virtual
 
 
+def _optional_lists(text: str) -> dict[str, tuple[str, ...]]:
+    """Extract W8 optional list metadata, tolerating malformed frontmatter.
+
+    Returns an empty mapping for legacy skills without frontmatter and
+    for blocks that fail YAML parsing (the audit CLI reports those).
+    """
+    try:
+        meta, _body = parse_frontmatter(text)
+    except FrontmatterParseError:
+        return {}
+    out: dict[str, tuple[str, ...]] = {}
+    for field_name in _W8_LIST_FIELDS:
+        raw = meta.get(field_name)
+        if isinstance(raw, list):
+            out[field_name] = tuple(
+                item
+                for item in (entry.strip() if isinstance(entry, str) else "" for entry in raw)
+                if item
+            )
+    return out
+
+
 def iter_skill_records(
     skills_root: Path, source_prefix: str = SKILL_PATH_PREFIX
 ) -> Iterator[SkillRecord]:
@@ -142,12 +173,17 @@ def iter_skill_records(
             slug = parts[-1].removesuffix(".md")
         name = fm.get("name") or slug
         description = fm.get("description", "").strip()
+        lists = _optional_lists(body)
         yield SkillRecord(
             id=virtual,
             slug=slug,
             name=name,
             description=description,
             source=source_prefix,
+            capabilities=lists.get("capabilities", ()),
+            ukc_phases=lists.get("ukc_phases", ()),
+            requires=lists.get("requires", ()),
+            produces=lists.get("produces", ()),
         )
 
 

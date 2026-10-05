@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from raptix.capabilities.contracts import validate_contract_metadata
+from raptix.orchestration.phases.ukc import phase_from_slug
 from raptix.skills.audit.aliases import resolve_subdomain
 from raptix.skills.audit.canonical import load_canonical_subdomains
 from raptix.skills.audit.frontmatter import (
@@ -22,6 +23,8 @@ from raptix.skills.audit.path_kind import is_offensive_path
 
 _REQUIRED_TOP_LEVEL = ("name", "description")
 _REQUIRED_METADATA = ("subdomain", "when_to_use")
+# W8 optional metadata: absent on legacy skills, validated when present.
+_OPTIONAL_LIST_FIELDS = ("capabilities", "requires", "produces")
 
 
 class RuleId(enum.Enum):
@@ -34,6 +37,8 @@ class RuleId(enum.Enum):
     NO_ATTRIBUTION = "R-no-attribution"
     DUPLICATE_NAME = "R-duplicate-name"
     BAD_CAPABILITY_CONTRACT = "R-bad-capability-contract"
+    BAD_UKC_PHASE = "R-bad-ukc-phase"
+    BAD_METADATA_LIST = "R-bad-metadata-list"
 
 
 @dataclass(frozen=True)
@@ -58,6 +63,8 @@ def validate_skill_file(path: str, text: str) -> list[Violation]:
     violations.extend(_check_mitre(path, meta))
     violations.extend(_check_attribution(path, meta))
     violations.extend(_check_capability_contract(path, meta))
+    violations.extend(_check_ukc_phases(path, meta))
+    violations.extend(_check_optional_lists(path, meta))
     return violations
 
 
@@ -146,6 +153,53 @@ def _check_attribution(path: str, meta: dict[str, Any]) -> list[Violation]:
             "offensive skill has no mitre_attack, aatmf_tactic, or upstream_ref",
         )
     ]
+
+
+def _check_ukc_phases(path: str, meta: dict[str, Any]) -> list[Violation]:
+    """``ukc_phases`` (W8) references the W7 canonical macro-phase slugs."""
+    raw = meta.get("ukc_phases")
+    if raw is None:
+        return []
+    if not isinstance(raw, list):
+        return [Violation(path, RuleId.BAD_UKC_PHASE, "ukc_phases must be a YAML list of slugs")]
+    out: list[Violation] = []
+    for entry in raw:
+        if not isinstance(entry, str) or phase_from_slug(entry) is None:
+            out.append(
+                Violation(
+                    path,
+                    RuleId.BAD_UKC_PHASE,
+                    f"ukc_phases entry {entry!r} is not a canonical macro-phase slug",
+                )
+            )
+    return out
+
+
+def _check_optional_lists(path: str, meta: dict[str, Any]) -> list[Violation]:
+    out: list[Violation] = []
+    for field_name in _OPTIONAL_LIST_FIELDS:
+        raw = meta.get(field_name)
+        if raw is None:
+            continue
+        if not isinstance(raw, list) or not all(isinstance(item, str) for item in raw):
+            out.append(
+                Violation(
+                    path,
+                    RuleId.BAD_METADATA_LIST,
+                    f"{field_name} must be a YAML list of strings",
+                )
+            )
+            continue
+        cleaned = [item.strip() for item in raw]
+        if any(not item for item in cleaned):
+            out.append(
+                Violation(path, RuleId.BAD_METADATA_LIST, f"{field_name} entries must be non-empty")
+            )
+        elif len(set(cleaned)) != len(cleaned):
+            out.append(
+                Violation(path, RuleId.BAD_METADATA_LIST, f"{field_name} entries must be unique")
+            )
+    return out
 
 
 def _check_capability_contract(path: str, meta: dict[str, Any]) -> list[Violation]:
