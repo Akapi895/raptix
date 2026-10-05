@@ -19,7 +19,7 @@ freeze waiting on a human.
 Source of record:
 [`middleware/hitl.py`](../../packages/raptix/raptix/middleware/hitl.py)
 (middleware, policy, transports) and
-[`agents/middleware_slots.py`](../../packages/raptix/raptix/agents/middleware_slots.py)
+[`agents/middleware_slots.py`](../../packages/raptix/raptix/intelligence/agents/middleware_slots.py)
 (the opt-in slot factory).
 
 ## Enabling it

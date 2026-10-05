@@ -74,7 +74,7 @@ This prevents context window bloat and token accumulation across a long engageme
 
 ## Middleware Stack
 
-Each agent assembles its middleware stack from a fixed set of named **slots** (`MiddlewareSlot`). The enum declaration order is the canonical assembly order — every factory walks the enum top-to-bottom and instantiates only the slots its role opts into via `SLOTS_PER_ROLE`. Plugins replace or disable slots by name (`PluginBundle.replaced_middleware` / `disabled_middleware`); slot definitions and the per-role mapping live in `raptix_core.contracts.slots`, the langchain-bound factories in `raptix.agents.middleware_slots`.
+Each agent assembles its middleware stack from a fixed set of named **slots** (`MiddlewareSlot`). The enum declaration order is the canonical assembly order — every factory walks the enum top-to-bottom and instantiates only the slots its role opts into via `SLOTS_PER_ROLE`. Plugins replace or disable slots by name (`PluginBundle.replaced_middleware` / `disabled_middleware`); slot definitions and the per-role mapping live in `raptix_core.contracts.slots`, the langchain-bound factories in `raptix.intelligence.agents.middleware_slots`.
 
 ### Safety stack (every agent)
 
@@ -112,7 +112,7 @@ Bash-executing agents and the orchestrator additionally get:
 
 ### Safety-critical slots
 
-`SAFETY_CRITICAL_SLOTS` — `engagement-context`, `roe-guardrail`, `untrusted-output`, `prompt-injection-shield`, `sandbox-notification`, `hitl-approval` — can only be replaced or disabled by a plugin when `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set in the environment. The gate is enforced by `build_middleware` in `raptix.agents.build`; without it, an override raises `SafetyOverrideViolation`. Replacement is fine if the new middleware honours the same contract — the gate exists so an accidentally-installed plugin can't silently subvert the safety story.
+`SAFETY_CRITICAL_SLOTS` — `engagement-context`, `roe-guardrail`, `untrusted-output`, `prompt-injection-shield`, `sandbox-notification`, `hitl-approval` — can only be replaced or disabled by a plugin when `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set in the environment. The gate is enforced by `build_middleware` in `raptix.intelligence.agents.build`; without it, an override raises `SafetyOverrideViolation`. Replacement is fine if the new middleware honours the same contract — the gate exists so an accidentally-installed plugin can't silently subvert the safety story.
 
 ### Stack per Agent Role
 

@@ -474,7 +474,7 @@ class EngagementContextMiddleware(AgentMiddleware):
         # Lazy import to avoid a circular: agents.__init__ pulls in agents
         # which pull in middleware which would otherwise pull back into
         # agents.prompts before that package is fully initialized.
-        from raptix.agents.prompts import build_language_policy
+        from raptix.intelligence.prompts import build_language_policy
 
         language_policy = build_language_policy(language)
         if language_policy:

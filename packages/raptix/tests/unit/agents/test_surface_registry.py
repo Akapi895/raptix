@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from raptix.agents.standard._surface_registry import (
+from raptix.intelligence.agents.standard._surface_registry import (
     VULN_CLASSES,
     applicable_vuln_classes,
     build_coverage_matrix,

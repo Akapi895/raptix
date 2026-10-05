@@ -1,11 +1,11 @@
-"""Unit tests for raptix.llm.factory."""
+"""Unit tests for raptix.intelligence.llm.factory."""
 
 import asyncio
 import logging
 
 import pytest
 
-from raptix.llm.factory import (
+from raptix.intelligence.llm.factory import (
     LLM_MAX_TOKENS_ENV,
     LLMFactory,
     _is_real_key,
@@ -683,7 +683,7 @@ class TestTemperatureDrop:
     openrouter/anthropic/) and keep it for everyone else."""
 
     def setup_method(self):
-        from raptix.llm.factory import _model_drops_temperature
+        from raptix.intelligence.llm.factory import _model_drops_temperature
 
         self._drops = _model_drops_temperature
 
@@ -739,7 +739,7 @@ class TestActionableErrorTranslation:
     failure."""
 
     def setup_method(self):
-        from raptix.llm.factory import _reraise_with_actionable_message
+        from raptix.intelligence.llm.factory import _reraise_with_actionable_message
 
         self._translate = _reraise_with_actionable_message
 
@@ -822,7 +822,7 @@ class TestActionableErrorTranslation:
         assert "rejected the request (400)" in msg
 
     def test_redact_secrets_preserves_nonsecret_text(self):
-        from raptix.llm.factory import _redact_secrets
+        from raptix.intelligence.llm.factory import _redact_secrets
 
         text = "No fallback model group found for model_group=anthropic/claude-opus-4-7."
         assert _redact_secrets(text) == text
@@ -843,7 +843,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessage
         from langchain_core.outputs import ChatGeneration, ChatResult
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         # Simulate the OpenAI response dict with reasoning_content
         response_dict = {
@@ -884,7 +884,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessage
         from langchain_core.outputs import ChatGeneration, ChatResult
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         response_dict = {
             "choices": [
@@ -915,7 +915,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessageChunk
         from langchain_core.outputs import ChatGenerationChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         # Build a fake raw SSE chunk dict with reasoning_content in the delta
         raw_chunk = {
@@ -960,7 +960,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessageChunk
         from langchain_core.outputs import ChatGenerationChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         raw_chunk = {
             "choices": [
@@ -1007,7 +1007,7 @@ class TestDeepSeekReasoningContent:
 
         from langchain_core.messages import AIMessage, HumanMessage
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         messages = [
             HumanMessage(content="hi"),
@@ -1046,7 +1046,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessageChunk
         from langchain_core.outputs import ChatGenerationChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         raw_chunk = {
             "choices": [
@@ -1083,7 +1083,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessageChunk
         from langchain_core.outputs import ChatGenerationChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         raw_chunk = {
             "choices": [
@@ -1116,7 +1116,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessageChunk
         from langchain_core.outputs import ChatGenerationChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         raw_chunk = {"choices": []}
 
@@ -1141,7 +1141,7 @@ class TestDeepSeekReasoningContent:
 
         from langchain_core.messages import AIMessageChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         raw_chunk = {"type": "content.delta"}  # parent returns None for these
         instance = MagicMock(spec=_DeepSeekThinkingChatOpenAI)
@@ -1163,7 +1163,7 @@ class TestDeepSeekReasoningContent:
         from langchain_core.messages import AIMessageChunk
         from langchain_core.outputs import ChatGenerationChunk
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         # Some LangChain versions nest under "chunk" key
         raw_chunk = {
@@ -1203,7 +1203,7 @@ class TestDeepSeekReasoningContent:
 
         from langchain_core.messages import AIMessage, HumanMessage
 
-        from raptix.llm.factory import _DeepSeekThinkingChatOpenAI
+        from raptix.intelligence.llm.factory import _DeepSeekThinkingChatOpenAI
 
         messages = [
             HumanMessage(content="q1"),
@@ -1243,7 +1243,7 @@ class TestDeepSeekReasoningContent:
         returns ``reasoning_content`` and the API rejects subsequent
         tool turns when the field is omitted. Closes #201, #220.
         """
-        from raptix.llm.factory import _model_is_deepseek_thinking
+        from raptix.intelligence.llm.factory import _model_is_deepseek_thinking
 
         assert _model_is_deepseek_thinking("deepseek/deepseek-v4-pro") is True
         assert _model_is_deepseek_thinking("deepseek/deepseek-v4-flash") is True
@@ -1381,7 +1381,7 @@ class TestLLMTimeout:
         monkeypatch.delenv("RAPTIX_LLM__TIMEOUT", raising=False)
 
     def test_call_with_timeout_raises_typed_exception(self) -> None:
-        from raptix.llm.factory import LLMTimeoutError, call_with_timeout
+        from raptix.intelligence.llm.factory import LLMTimeoutError, call_with_timeout
 
         async def slow_call() -> str:
             await asyncio.sleep(10)
@@ -1391,7 +1391,7 @@ class TestLLMTimeout:
             asyncio.run(call_with_timeout(slow_call(), 0.01))
 
     def test_call_with_timeout_preserves_original_timeout_as_cause(self) -> None:
-        from raptix.llm.factory import LLMTimeoutError, call_with_timeout
+        from raptix.intelligence.llm.factory import LLMTimeoutError, call_with_timeout
 
         async def slow_call() -> None:
             await asyncio.sleep(10)
@@ -1404,7 +1404,7 @@ class TestLLMTimeout:
             raise AssertionError("expected LLMTimeoutError")
 
     def test_call_with_timeout_returns_successful_result(self) -> None:
-        from raptix.llm.factory import call_with_timeout
+        from raptix.intelligence.llm.factory import call_with_timeout
 
         async def fast_call() -> str:
             await asyncio.sleep(0)
@@ -1413,7 +1413,7 @@ class TestLLMTimeout:
         assert asyncio.run(call_with_timeout(fast_call(), 1)) == "ok"
 
     def test_call_with_timeout_propagates_non_timeout_exceptions(self) -> None:
-        from raptix.llm.factory import LLMTimeoutError, call_with_timeout
+        from raptix.intelligence.llm.factory import LLMTimeoutError, call_with_timeout
 
         async def failing_call() -> None:
             raise RuntimeError("upstream 500")
@@ -1429,32 +1429,32 @@ class TestLLMTimeout:
             pass
 
     def test_env_override_takes_effect(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM_TIMEOUT_SECONDS", "3")
         assert _resolve_llm_timeout_seconds() == 3.0
 
     def test_default_timeout_is_600_when_env_absent(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.delenv("RAPTIX_LLM_TIMEOUT_SECONDS", raising=False)
         assert _resolve_llm_timeout_seconds() == 600.0
 
     def test_blank_env_falls_back_to_default(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM_TIMEOUT_SECONDS", "   ")
         assert _resolve_llm_timeout_seconds() == 600.0
 
     def test_invalid_env_raises_value_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM_TIMEOUT_SECONDS", "not-a-number")
         with pytest.raises(ValueError):
             _resolve_llm_timeout_seconds()
 
     def test_non_positive_env_raises_value_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM_TIMEOUT_SECONDS", "0")
         with pytest.raises(ValueError, match="greater than 0"):
@@ -1465,13 +1465,13 @@ class TestLLMTimeout:
             _resolve_llm_timeout_seconds()
 
     def test_pydantic_nested_alias_takes_effect(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM__TIMEOUT", "900")
         assert _resolve_llm_timeout_seconds() == 900.0
 
     def test_explicit_env_wins_over_pydantic_alias(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM_TIMEOUT_SECONDS", "120")
         monkeypatch.setenv("RAPTIX_LLM__TIMEOUT", "900")
@@ -1480,7 +1480,7 @@ class TestLLMTimeout:
     def test_alias_invalid_value_attributes_error_to_alias(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM__TIMEOUT", "nonsense")
         with pytest.raises(ValueError, match="RAPTIX_LLM__TIMEOUT"):
@@ -1489,7 +1489,7 @@ class TestLLMTimeout:
     def test_alias_non_positive_attributes_error_to_alias(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from raptix.llm.factory import _resolve_llm_timeout_seconds
+        from raptix.intelligence.llm.factory import _resolve_llm_timeout_seconds
 
         monkeypatch.setenv("RAPTIX_LLM__TIMEOUT", "0")
         with pytest.raises(ValueError, match="RAPTIX_LLM__TIMEOUT.*greater than 0"):
@@ -1506,7 +1506,7 @@ class TestLLMTimeout:
         from langchain_openai import ChatOpenAI
         from pydantic import SecretStr
 
-        from raptix.llm.factory import _ProxiedChatOpenAI
+        from raptix.intelligence.llm.factory import _ProxiedChatOpenAI
 
         called = False
 

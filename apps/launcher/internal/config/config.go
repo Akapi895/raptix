@@ -192,7 +192,7 @@ func writePrivateFile(path string, data []byte) (retErr error) {
 // APIKeyNames lists the API key environment variable names to check.
 // Order matters: a valid key in this list satisfies the "at least one
 // credential" startup gate. Keep in sync with keyFormatRules below and
-// with raptix/llm/factory.py::_API_METHOD_ENV.
+// with raptix/intelligence/llm/factory.py::_API_METHOD_ENV.
 var APIKeyNames = []string{
 	"ANTHROPIC_API_KEY",
 	"OPENAI_API_KEY",

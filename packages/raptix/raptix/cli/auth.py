@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from raptix.llm.factory import AuthInventory
+    from raptix.intelligence.llm.factory import AuthInventory
 
 EXIT_OK = 0
 EXIT_CONFIG = 2
@@ -173,7 +173,7 @@ def main(argv: list[str] | None = None) -> int:
     # credential files; a failure there is a misconfiguration, not a crash —
     # report it actionably instead of dumping a traceback at the operator.
     try:
-        from raptix.llm.factory import auth_inventory  # noqa: PLC0415
+        from raptix.intelligence.llm.factory import auth_inventory  # noqa: PLC0415
 
         inv = auth_inventory()
     except Exception as exc:  # noqa: BLE001 — top-level CLI guard; report, don't crash

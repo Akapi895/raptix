@@ -10,8 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from raptix.agents import build
-from raptix.agents.standard import blue_cell as agent_mod
+from raptix.intelligence.agents import build
+from raptix.intelligence.agents.standard import blue_cell as agent_mod
 from raptix_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
 
 _REPO_ROOT = Path(__file__).resolve().parents[5]
@@ -56,7 +56,7 @@ def test_langgraph_registers_blue_cell_graph() -> None:
     config = json.loads((_REPO_ROOT / "langgraph.json").read_text(encoding="utf-8"))
     assert (
         config["graphs"]["blue_cell"]
-        == "./packages/raptix/raptix/agents/standard/blue_cell.py:graph"
+        == "./packages/raptix/raptix/intelligence/agents/standard/blue_cell.py:graph"
     )
 
 
@@ -71,4 +71,6 @@ def test_blue_cell_published_as_orchestrator_subagent() -> None:
     pyproject = _REPO_ROOT / "packages" / "raptix" / "pyproject.toml"
     data = tomllib.loads(pyproject.read_text(encoding="utf-8"))
     subagents = data["project"]["entry-points"]["raptix.subagents"]
-    assert subagents.get("blue_cell") == "raptix.agents.standard.blue_cell:SUBAGENT_SPEC"
+    assert (
+        subagents.get("blue_cell") == "raptix.intelligence.agents.standard.blue_cell:SUBAGENT_SPEC"
+    )

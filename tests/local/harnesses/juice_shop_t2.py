@@ -1050,7 +1050,7 @@ def _execute_run(
         repo_root
         / ".t2-worktrees"
         / f"arm-{arm.lower()}"
-        / "packages/raptix/raptix/agents/prompts/standard/raptix.md"
+        / "packages/raptix/raptix/intelligence/prompts/standard/raptix.md"
     )
 
     run_dir.mkdir(parents=True, exist_ok=True)

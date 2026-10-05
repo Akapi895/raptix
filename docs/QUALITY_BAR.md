@@ -105,7 +105,7 @@ changes," "obvious refactors," "docs-only" touching runtime code, or
 1. **You executed the new or changed code path on your machine.** Not
    imported. Not unit-tested in isolation. Actually called, in the
    actual runtime, against the actual surrounding system. If your
-   change is in `packages/raptix/raptix/agents/`, you ran an
+   change is in `packages/raptix/raptix/intelligence/agents/`, you ran an
    engagement that exercised the agent. If it is a CLI command, you
    ran the command. If it is an HTTP route, you hit the route. If it
    is a skill, you triggered the skill from an agent that loads it.

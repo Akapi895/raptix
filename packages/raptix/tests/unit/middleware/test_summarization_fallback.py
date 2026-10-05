@@ -16,13 +16,13 @@ from typing import Any
 
 import pytest
 
-from raptix.agents.middleware_slots import _SafeSummarizationProxy
+from raptix.intelligence.agents.middleware_slots import _SafeSummarizationProxy
 
 # The ``decepticon`` parent logger is configured with ``propagate=False``
 # (see raptix_core.utils.logging), so caplog's root-attached handler
 # never sees records emitted under it. We attach a dedicated handler
 # directly to the proxy's logger to assert the warning is fired.
-_PROXY_LOGGER = "raptix.agents.middleware_slots"
+_PROXY_LOGGER = "raptix.intelligence.agents.middleware_slots"
 
 
 @pytest.fixture

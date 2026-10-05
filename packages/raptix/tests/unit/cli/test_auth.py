@@ -7,8 +7,8 @@ import json
 import pytest
 
 from raptix.cli.auth import main as auth_main
-from raptix.llm import factory
-from raptix.llm.factory import AuthMethod
+from raptix.intelligence.llm import factory
+from raptix.intelligence.llm.factory import AuthMethod
 
 # Every env var that could enable a method, so a test starts from a known
 # blank slate regardless of the host/CI environment.

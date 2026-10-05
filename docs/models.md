@@ -78,7 +78,7 @@ Your inventory is built at startup from environment variables, written by `rapti
 # `_DEFAULT_AUTH_PRIORITY` order applies (OAuth subscriptions ahead of their
 # paid per-token peers, hosted providers before local endpoints, with
 # unconfigured methods skipped at runtime). See `_DEFAULT_AUTH_PRIORITY` in
-# `raptix/llm/factory.py` for the full ordered list.
+# `raptix/intelligence/llm/factory.py` for the full ordered list.
 RAPTIX_AUTH_PRIORITY=anthropic_oauth,openai_api
 
 # Set true if you have an active Claude Code OAuth subscription

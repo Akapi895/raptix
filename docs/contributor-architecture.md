@@ -35,7 +35,7 @@ Use this table when deciding which package owns a new feature:
 | Plugin extension contract (Protocol, Contribution) | `raptix-core/contracts/` or `protocols/` | Plugin authors implement these |
 | Registry primitive (pluggable catalog) | `raptix-core/registry/` | Cross-cutting; framework consumes it |
 | Utility used by multiple framework subsystems | `raptix-core/utils/` | Cheap to share if no runtime deps |
-| Agent factory (`create_*_agent`) | `raptix/agents/` | Uses langchain, langgraph — framework-only |
+| Agent factory (`create_*_agent`) | `raptix/intelligence/agents/` | Uses langchain, langgraph — framework-only |
 | Middleware implementation | `raptix/middleware/` | Uses langchain — framework-only |
 | Tool implementation (the `@tool`-decorated callable) | `raptix/tools/` | Uses langchain — framework-only |
 | Bash sandbox client logic | `raptix/backends/` or `sandbox_kernel/` | HTTP + framework-internal |

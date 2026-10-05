@@ -2,7 +2,7 @@
 
 > Authoritative mapping of **which agent / which skill is instructed to write
 > which file**, extracted verbatim from the agent system prompts
-> (`packages/raptix/raptix/agents/prompts/standard/*.md`) and the
+> (`packages/raptix/raptix/intelligence/prompts/standard/*.md`) and the
 > skill catalogs (`packages/raptix/raptix/skills/**/SKILL.md`).
 >
 > This is a *literal* inventory of the instructions as written — not a
@@ -285,6 +285,6 @@ item below records the original conflict and its **Resolution**.
 
 ### Source files
 
-- Agent prompts: `packages/raptix/raptix/agents/prompts/standard/*.md`
+- Agent prompts: `packages/raptix/raptix/intelligence/prompts/standard/*.md`
 - Skills: `packages/raptix/raptix/skills/{shared,standard,benchmark}/**/SKILL.md`
 - Schemas: `packages/raptix-core/raptix_core/types/`

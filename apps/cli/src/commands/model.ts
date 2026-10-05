@@ -12,14 +12,14 @@
  * just type the command and the next prompt routes to the new model.
  *
  * The list of supported models is the same matrix
- * raptix/llm/models.py uses: every (AuthMethod, Tier) pair that
+ * raptix/intelligence/llm/models.py uses: every (AuthMethod, Tier) pair that
  * resolves to a real LiteLLM model id, grouped by AuthMethod.
  */
 
 import type { Command } from "./types.js";
 import { setModelOverride, getModelOverride } from "./modelOverride.js";
 
-/** Static catalog mirroring raptix/llm/models.py::METHOD_MODELS.
+/** Static catalog mirroring raptix/intelligence/llm/models.py::METHOD_MODELS.
  * Kept here (instead of fetched live) so /model works offline before
  * the agent stack is up and so completion is instant. Edit this list
  * whenever METHOD_MODELS gains entries. */

@@ -56,7 +56,7 @@ def _result() -> ToolMessage:
 
 
 def test_autoingest_slot_only_on_network_roles():
-    from raptix.agents.middleware_slots import DEFAULT_SLOT_FACTORIES
+    from raptix.intelligence.agents.middleware_slots import DEFAULT_SLOT_FACTORIES
 
     assert MiddlewareSlot.KG_AUTOINGEST in DEFAULT_SLOT_FACTORIES
     assert {
@@ -72,14 +72,14 @@ def test_autoingest_slot_only_on_network_roles():
 
 
 def test_factory_default_off_does_not_open_kg(monkeypatch):
-    from raptix.agents.middleware_slots import _make_kg_autoingest
+    from raptix.intelligence.agents.middleware_slots import _make_kg_autoingest
 
     monkeypatch.delenv("RAPTIX_KG_AUTOINGEST")
     assert _make_kg_autoingest(sandbox=_Sandbox(), role="recon") is None
 
 
 def test_factory_flag_on_builds_hook(monkeypatch):
-    from raptix.agents.middleware_slots import _make_kg_autoingest
+    from raptix.intelligence.agents.middleware_slots import _make_kg_autoingest
     from raptix.knowledge.graph.store import KGStore
     from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[5]
-_PROMPTS = _REPO_ROOT / "packages/raptix/raptix/agents/prompts/standard"
-_REVERSER_AGENT = _REPO_ROOT / "packages/raptix/raptix/agents/standard/reverser.py"
+_PROMPTS = _REPO_ROOT / "packages/raptix/raptix/intelligence/prompts/standard"
+_REVERSER_AGENT = _REPO_ROOT / "packages/raptix/raptix/intelligence/agents/standard/reverser.py"
 
 _REVERSER_SKILL = _REPO_ROOT / "packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md"
 _VIRTUALIZED_SKILL = (

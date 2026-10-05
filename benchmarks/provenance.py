@@ -44,7 +44,7 @@ def capture_declared_model_assignments() -> tuple[str, dict[str, list[str]]]:
     stack_name = os.environ.get("RAPTIX_STACK_NAME", "").strip()
     container = f"raptix-{stack_name}-langgraph" if stack_name else "raptix-langgraph"
     script = """import json, os
-from raptix.llm.factory import LLMFactory
+from raptix.intelligence.llm.factory import LLMFactory
 factory = LLMFactory()
 chains = {}
 for role, assignment in factory._mapping.assignments.items():

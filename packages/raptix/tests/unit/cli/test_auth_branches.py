@@ -6,8 +6,8 @@ import pytest
 
 from raptix.cli import auth
 from raptix.cli.auth import main as auth_main
-from raptix.llm import factory
-from raptix.llm.factory import AuthInventory, AuthMethod, AuthMethodStatus
+from raptix.intelligence.llm import factory
+from raptix.intelligence.llm.factory import AuthInventory, AuthMethod, AuthMethodStatus
 
 _PROVIDER_ENV_VARS = (
     *factory._API_METHOD_ENV.values(),

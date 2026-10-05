@@ -4,7 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from raptix.agents.standard import (
+from raptix.backends import SKILLS_LOCAL_PATH
+from raptix.intelligence.agents.standard import (
     ad_operator,
     contract_auditor,
     forensicator,
@@ -16,7 +17,6 @@ from raptix.agents.standard import (
     supply_chain_operator,
     wireless_operator,
 )
-from raptix.backends import SKILLS_LOCAL_PATH
 
 _SKILLS_ROOT = Path(SKILLS_LOCAL_PATH)
 

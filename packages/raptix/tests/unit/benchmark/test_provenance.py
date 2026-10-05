@@ -306,7 +306,7 @@ def test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record(
     tmp_path: Path,
     monkeypatch,
 ) -> None:
-    prompts = tmp_path / "packages/raptix/raptix/agents/prompts"
+    prompts = tmp_path / "packages/raptix/raptix/intelligence/prompts"
     skills = tmp_path / "packages/raptix/raptix/skills"
     config_dir = tmp_path / "infra/config"
     prompts.mkdir(parents=True)

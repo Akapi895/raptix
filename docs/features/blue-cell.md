@@ -233,7 +233,7 @@ Proposed rule improvements:
 
 **Follow-up (tracked):**
 
-- `raptix.agents.standard.blue_cell.create_blue_cell_agent` —
+- `raptix.intelligence.agents.standard.blue_cell.create_blue_cell_agent` —
   read-only agent factory consuming the tap + matcher.
 - Orchestrator pre-iteration hook reading `DetectionFired` events
   for adaptive OPSEC.

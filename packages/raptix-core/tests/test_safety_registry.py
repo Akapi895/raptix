@@ -89,7 +89,7 @@ def test_check_safety_gate_consumes_registry() -> None:
     security review flagged — registry-only data participates in
     the live safety gate.
     """
-    from raptix.agents.build import SafetyOverrideViolation, _check_safety_gate
+    from raptix.intelligence.agents.build import SafetyOverrideViolation, _check_safety_gate
 
     SafetyRegistry.register(
         SafetyDeclaration(tools=("plugin_special_tool",)),

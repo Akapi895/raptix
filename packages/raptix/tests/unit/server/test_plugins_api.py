@@ -86,20 +86,20 @@ def _install_graph_module(graphs: dict[str, Any], register_calls: list[Any]) -> 
 
 
 def test_path_to_module_happy_path() -> None:
-    module, variable = _path_to_module("./raptix/agents/plugins/vulnresearch.py:graph")
-    assert module == "raptix.agents.plugins.vulnresearch"
+    module, variable = _path_to_module("./raptix/intelligence/agents/plugins/vulnresearch.py:graph")
+    assert module == "raptix.intelligence.agents.plugins.vulnresearch"
     assert variable == "graph"
 
 
 def test_path_to_module_strips_leading_dot_slash_and_py_suffix() -> None:
-    module, variable = _path_to_module("raptix/agents/standard/recon.py:graph")
-    assert module == "raptix.agents.standard.recon"
+    module, variable = _path_to_module("raptix/intelligence/agents/standard/recon.py:graph")
+    assert module == "raptix.intelligence.agents.standard.recon"
     assert variable == "graph"
 
 
 def test_path_to_module_missing_variable_suffix_raises_value_error() -> None:
     with pytest.raises(ValueError, match="missing ':variable' suffix"):
-        _path_to_module("./raptix/agents/plugins/vulnresearch.py")
+        _path_to_module("./raptix/intelligence/agents/plugins/vulnresearch.py")
 
 
 # ── _resolve_bundle ──────────────────────────────────────────────────────

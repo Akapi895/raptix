@@ -755,7 +755,7 @@ def test_inject_combines_engagement_slug_and_language_in_one_message(
 
 def test_build_language_policy_helper_handles_aliases_and_no_op_cases() -> None:
     """The shared helper is the single source of truth for both paths."""
-    from raptix.agents.prompts import build_language_policy
+    from raptix.intelligence.prompts import build_language_policy
 
     # No-op codes
     assert build_language_policy("") is None

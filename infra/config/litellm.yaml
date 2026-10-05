@@ -4,7 +4,7 @@
 # This file configures the LiteLLM Proxy server as the central LLM gateway.
 #
 # Model names use LiteLLM provider-prefix format (e.g., "anthropic/claude-opus-4-7")
-# matching the names in raptix/llm/models.py. Agents send these names directly;
+# matching the names in raptix/intelligence/llm/models.py. Agents send these names directly;
 # the proxy resolves them to the correct provider endpoint + API key.
 #
 # Features:
@@ -17,7 +17,7 @@
 # Docs: https://docs.litellm.ai/docs/proxy/configs
 
 # --- Model Definitions ---
-# model_name must match the constants in raptix/llm/models.py exactly.
+# model_name must match the constants in raptix/intelligence/llm/models.py exactly.
 
 model_list:
   # ── Anthropic ────────────────────────────────────────────────────────

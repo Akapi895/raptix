@@ -13,7 +13,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from raptix.llm.factory import (
+from raptix.intelligence.llm.factory import (
     LLMTimeoutError,
     _classify_provider_error,
     _reraise_with_actionable_message,

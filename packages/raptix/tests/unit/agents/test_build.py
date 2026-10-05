@@ -18,8 +18,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 from langchain_core.messages import ToolMessage
 
-from raptix.agents import build as build_module
-from raptix.agents.middleware_slots import SAFETY_CRITICAL_SLOTS, MiddlewareSlot
+from raptix.intelligence.agents import build as build_module
+from raptix.intelligence.agents.middleware_slots import SAFETY_CRITICAL_SLOTS, MiddlewareSlot
 from raptix.middleware.budget import BudgetEnforcementMiddleware
 from raptix.middleware.event_logging import EventLogMiddleware
 from raptix.middleware.hitl import HITLApprovalMiddleware
@@ -368,7 +368,7 @@ def test_skills_sources_appends_plugin_paths():
     """``skills_sources_for`` layers plugin-contributed skill paths on
     top of the OSS baseline so commercial / 3rd-party skills are
     discoverable without overriding the whole SKILLS slot."""
-    from raptix.agents.middleware_slots import skills_sources_for
+    from raptix.intelligence.agents.middleware_slots import skills_sources_for
 
     plugin_paths = ["/skills/vendor-pro/recon/", "/skills/vendor-shared/"]
 

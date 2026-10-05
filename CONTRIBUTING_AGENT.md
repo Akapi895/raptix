@@ -198,7 +198,7 @@ If you ticked Tier-supply-chain, also confirm:
 - [ ] If you touched `docker-compose.yml`, you ran
       `pytest tests/test_compose_network_isolation.py` locally (or the
       whole `tests/` suite). The isolation invariants are not negotiable.
-- [ ] If you touched any agent prompt under `packages/raptix/raptix/agents/**/prompts/`,
+- [ ] If you touched any agent prompt under `packages/raptix/raptix/intelligence/agents/**/prompts/`,
       you read the diff yourself and confirmed that no DO/DON'T item
       from [tradecraft & OPSEC](https://docs.decepticon.red/en/concepts/tradecraft)
       was weakened. (Prompts are not covered by Python tests; the

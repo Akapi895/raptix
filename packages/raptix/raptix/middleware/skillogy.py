@@ -566,7 +566,7 @@ def _resolve_allowed_path_prefixes(
     if not role:
         return None
     try:
-        from raptix.agents.middleware_slots import skills_sources_for  # noqa: PLC0415
+        from raptix.intelligence.agents.middleware_slots import skills_sources_for  # noqa: PLC0415
     except ImportError:
         return None
     try:

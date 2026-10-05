@@ -52,14 +52,19 @@ Plan invariants (violating these reopens settled design):
   `orchestration/`, `knowledge/`, `intelligence/`, `execution/`,
   `interfaces/` (docstring-only placeholders — no code moved, no re-export
   shims needed until W4–W6). The flat content layout is still canonical
-  until each move wave lands: `agents/`, `llm/`, `tools/`,
+  until each move wave lands: `tools/`,
   `sandbox_{kernel,server,web}/`, `backends/`, `mcp_server/`, `server/`.
 - W4 landed the knowledge subsystem: the engagement-graph implementation
   moved from `middleware/kg_internal` to `knowledge/graph`; middleware
   keeps only thin adapters (`kg.py`, `kg_autoingest.py`, `tried_edges.py`)
   plus a deprecated re-export shim at `raptix.middleware.kg_internal`
   (retired in W11).
-- `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
+- W5 landed agent/LLM/prompt ownership: `agents/` → `intelligence/agents`,
+  `agents/prompts/` → `intelligence/prompts`, `llm/` → `intelligence/llm`;
+  deprecated re-export shims at `raptix.agents` and `raptix.llm` (retired
+  in W11). The `raptix.agents` entry-point *group name* is unchanged.
+- `langgraph.json` maps graph names to
+  `packages/raptix/raptix/intelligence/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
 - Node workspaces are rooted in `package.json` (`apps/*`, `apps/shared/*`).
   Build `@raptix/streaming` and `@raptix/web-contracts` before CLI

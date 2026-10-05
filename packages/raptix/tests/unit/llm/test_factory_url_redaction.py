@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.llm.factory import _redact_url_credentials
+from raptix.intelligence.llm.factory import _redact_url_credentials
 
 
 def test_redacts_user_and_password() -> None:
