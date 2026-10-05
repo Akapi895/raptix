@@ -5,7 +5,7 @@ The old ``Neo4jStore`` class (``tools/research/neo4j_store.py``) is
 removed in this PR. Every caller that still imports from
 ``raptix.tools.research._state`` — AD_TOOLS, CONTRACT_TOOLS,
 RESEARCH_TOOLS, ``chain.py``, ``health.py``, ``dedupe.py`` — now sits
-on top of the new ``KGStore`` (``raptix.middleware.kg_internal.store``)
+on top of the new ``KGStore`` (``raptix.knowledge.graph.store``)
 through this shim. The agent-facing ``_load`` / ``_save`` /
 ``graph_transaction`` calling convention is preserved bit-for-bit, so
 the old tool surface keeps working while individual tools migrate to
@@ -40,7 +40,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
-from raptix.middleware.kg_internal.store import (
+from raptix.knowledge.graph.store import (
     KGStore,
     KGStoreConfigError,
     KGStoreUnavailableError,

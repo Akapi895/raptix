@@ -15,9 +15,9 @@ from typing import Any
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import ToolMessage
 
+from raptix.knowledge.graph.ingest import ingest
+from raptix.knowledge.graph.store import KGStore
 from raptix.middleware.filesystem import _normalize_engagement_workspace
-from raptix.middleware.kg_internal.ingest import ingest
-from raptix.middleware.kg_internal.store import KGStore
 
 log = logging.getLogger(__name__)
 

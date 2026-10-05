@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`kg_internal.migration_runner`.
+"""Unit tests for :mod:`raptix.knowledge.graph.migration_runner`.
 
 Covers the statement splitter, ``list_applied`` against a fake store,
 and the idempotent ``apply_migrations`` flow with multiple migration
@@ -14,14 +14,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from raptix.middleware.kg_internal.migration_runner import (
+from raptix.knowledge.graph.migration_runner import (
     _MIGRATION_ENGAGEMENT,
     _split_cypher_statements,
     _strip_line_comments,
     apply_migrations,
     list_applied,
 )
-from raptix.middleware.kg_internal.store import KGStore, KGStoreConfig
+from raptix.knowledge.graph.store import KGStore, KGStoreConfig
 
 # ── _strip_line_comments / _split_cypher_statements ─────────────────────
 
@@ -256,7 +256,7 @@ def test_apply_migrations_uses_reserved_schema_engagement(tmp_path: Path) -> Non
 
 def test_shipped_migrations_present_and_parseable() -> None:
     """The two migrations shipped with PR-A.3 must be loadable + non-empty."""
-    from raptix.middleware.kg_internal.migration_runner import _DEFAULT_MIGRATIONS_DIR
+    from raptix.knowledge.graph.migration_runner import _DEFAULT_MIGRATIONS_DIR
 
     files = sorted(_DEFAULT_MIGRATIONS_DIR.glob("V*.cypher"))
     names = [p.stem for p in files]
@@ -271,7 +271,7 @@ def test_shipped_migrations_present_and_parseable() -> None:
 def test_v001_creates_migration_log_constraint() -> None:
     """V001 must bootstrap the MigrationLog constraint so subsequent runs
     can record applied migrations."""
-    from raptix.middleware.kg_internal.migration_runner import _DEFAULT_MIGRATIONS_DIR
+    from raptix.knowledge.graph.migration_runner import _DEFAULT_MIGRATIONS_DIR
 
     v001 = next(
         (_DEFAULT_MIGRATIONS_DIR / "V001__initial_schema.cypher").parent.glob("V001*.cypher")
@@ -283,7 +283,7 @@ def test_v001_creates_migration_log_constraint() -> None:
 
 def test_v002_creates_vector_index_for_future_semantic_recall() -> None:
     """V002 must include the vector schema placeholder (Q5 = yes)."""
-    from raptix.middleware.kg_internal.migration_runner import _DEFAULT_MIGRATIONS_DIR
+    from raptix.knowledge.graph.migration_runner import _DEFAULT_MIGRATIONS_DIR
 
     v002 = next(
         (_DEFAULT_MIGRATIONS_DIR).glob("V002__*.cypher"),
@@ -298,7 +298,7 @@ def test_v002_creates_vector_index_for_future_semantic_recall() -> None:
 def test_v004_creates_technology_key_engagement_constraint() -> None:
     """V004 must enforce the ``(key, engagement)`` MERGE invariant for the
     Technology label (ADR-0007) so corroborating classifier writes dedup."""
-    from raptix.middleware.kg_internal.migration_runner import _DEFAULT_MIGRATIONS_DIR
+    from raptix.knowledge.graph.migration_runner import _DEFAULT_MIGRATIONS_DIR
 
     v004 = next((_DEFAULT_MIGRATIONS_DIR).glob("V004__*.cypher"))
     text = v004.read_text(encoding="utf-8")
@@ -317,7 +317,7 @@ def test_v004_creates_technology_key_engagement_constraint() -> None:
 def test_migration_log_uses_distinct_label_from_canonical_nodes() -> None:
     """Sanity: the MigrationLog label must not collide with any of the
     canonical node labels listed in V001."""
-    from raptix.middleware.kg_internal.migration_runner import _DEFAULT_MIGRATIONS_DIR
+    from raptix.knowledge.graph.migration_runner import _DEFAULT_MIGRATIONS_DIR
 
     v001 = (_DEFAULT_MIGRATIONS_DIR / "V001__initial_schema.cypher").read_text(encoding="utf-8")
     # Naive grep: every canonical node label appears as "FOR (n:Label)"
@@ -351,7 +351,7 @@ def test_migration_log_uses_distinct_label_from_canonical_nodes() -> None:
 def test_v001_constrains_high_traffic_labels(label: str) -> None:
     """The labels the analyst will write most often must be constrained
     so dedup MERGE is enforced engagement-scoped."""
-    from raptix.middleware.kg_internal.migration_runner import _DEFAULT_MIGRATIONS_DIR
+    from raptix.knowledge.graph.migration_runner import _DEFAULT_MIGRATIONS_DIR
 
     v001 = (_DEFAULT_MIGRATIONS_DIR / "V001__initial_schema.cypher").read_text(encoding="utf-8")
     assert f"FOR (n:{label})" in v001

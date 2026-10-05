@@ -14,8 +14,8 @@ from typing import Any
 
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
+from raptix.knowledge.graph.store import KGStore
 from raptix.middleware.kg import KG_SYSTEM_PROMPT, KGMiddleware
-from raptix.middleware.kg_internal.store import KGStore
 
 
 def _fake_request(

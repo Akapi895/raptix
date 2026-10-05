@@ -1,11 +1,9 @@
-"""Internal implementation of the KG middleware.
+"""Deprecated import path, kept as a compatibility shim.
 
-Modules under this package are NOT a public plugin surface. External
-plugin authors get the engagement-graph contract via
-``raptix_core.contracts`` and the agent-facing tools via
-``raptix.middleware.KGMiddleware``. Touching anything under
-``kg_internal/`` directly is unsupported and may break across minor
-releases.
+The engagement-graph implementation moved to `raptix.knowledge.graph`
+in W4. Every submodule stays importable at its old path through a
+deprecated re-export shim; it will be removed in W11 once callers
+have migrated.
 """
 
-from __future__ import annotations
+from raptix.knowledge.graph import *  # noqa: F401,F403

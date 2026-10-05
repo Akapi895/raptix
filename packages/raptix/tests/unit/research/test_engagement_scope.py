@@ -159,7 +159,7 @@ class TestWithEngagementProperty:
 # ``TestNeo4jUpsertCypherShape`` previously grepped ``neo4j_store.py``
 # for its Cypher templates to assert ``n.engagement = $engagement``
 # everywhere. That module has been removed; the new ``KGStore``
-# (``raptix.middleware.kg_internal.store``) enforces engagement
+# (``raptix.knowledge.graph.store``) enforces engagement
 # scoping via its V001 ``(key, engagement)`` composite uniqueness and
 # the mandatory ``engagement`` kwarg on every public method — covered
 # by the KG middleware's own integration tests.

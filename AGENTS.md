@@ -28,8 +28,8 @@ Plan invariants (violating these reopens settled design):
   metadata.
 - Dependency direction: `raptix-core` imports no runtime frameworks; SDK and
   plugins touch only SDK + core contracts; apps never import runtime
-  internals; middleware holds cross-cutting concerns only (`kg_internal` moves
-  to `knowledge/graph`).
+  internals; middleware holds cross-cutting concerns only (KG graphs live
+  under `knowledge/`, landed in W4).
 - Runtime artifacts (`workspace/`, `run/`, `telemetry/`, `test-results*/`,
   `dist/`, `node_modules/`, `generated/`) are outputs — never
   source-of-truth, never default fixtures.
@@ -53,8 +53,12 @@ Plan invariants (violating these reopens settled design):
   `interfaces/` (docstring-only placeholders — no code moved, no re-export
   shims needed until W4–W6). The flat content layout is still canonical
   until each move wave lands: `agents/`, `llm/`, `tools/`,
-  `sandbox_{kernel,server,web}/`, `backends/`, `mcp_server/`, `server/`,
-  and `middleware/kg_internal/`.
+  `sandbox_{kernel,server,web}/`, `backends/`, `mcp_server/`, `server/`.
+- W4 landed the knowledge subsystem: the engagement-graph implementation
+  moved from `middleware/kg_internal` to `knowledge/graph`; middleware
+  keeps only thin adapters (`kg.py`, `kg_autoingest.py`, `tried_edges.py`)
+  plus a deprecated re-export shim at `raptix.middleware.kg_internal`
+  (retired in W11).
 - `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
 - Node workspaces are rooted in `package.json` (`apps/*`, `apps/shared/*`).

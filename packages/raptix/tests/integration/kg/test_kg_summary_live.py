@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from raptix.middleware.kg_internal.store import KGStore
-from raptix.middleware.kg_internal.summary import (
+from raptix.knowledge.graph.store import KGStore
+from raptix.knowledge.graph.summary import (
     MAX_ENTRYPOINTS,
     MAX_VULNS,
     build_summary,

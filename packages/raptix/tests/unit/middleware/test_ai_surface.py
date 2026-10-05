@@ -8,7 +8,7 @@ AI runtime recon already saw.
 
 from __future__ import annotations
 
-from raptix.middleware.kg_internal.ai_surface import (
+from raptix.knowledge.graph.ai_surface import (
     DETECTED_BY_BANNER,
     DETECTED_BY_HEADER,
     DETECTED_BY_PATH,

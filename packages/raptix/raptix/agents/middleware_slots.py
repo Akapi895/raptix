@@ -143,7 +143,7 @@ def _make_tried_edges(*, role: str, **_: Any):
         "yes",
     }:
         return None
-    from raptix.middleware.kg_internal.store import (
+    from raptix.knowledge.graph.store import (
         KGStore,
         KGStoreConfigError,
         KGStoreUnavailableError,
@@ -233,7 +233,7 @@ def _make_kg(*, role: str, **_: Any):
     """
     import os
 
-    from raptix.middleware.kg_internal.store import (
+    from raptix.knowledge.graph.store import (
         KGStoreConfigError,
         KGStoreUnavailableError,
     )
@@ -261,12 +261,12 @@ def _make_kg(*, role: str, **_: Any):
 def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
     import os
 
-    from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
-    from raptix.middleware.kg_internal.store import (
+    from raptix.knowledge.graph.store import (
         KGStore,
         KGStoreConfigError,
         KGStoreUnavailableError,
     )
+    from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
 
     if sandbox is None or os.environ.get("RAPTIX_KG_AUTOINGEST", "0").lower() not in {
         "1",

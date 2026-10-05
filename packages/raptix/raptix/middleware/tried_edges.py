@@ -17,7 +17,7 @@ from typing import Any, cast
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import SystemMessage, ToolMessage
 
-from raptix.middleware.kg_internal.store import KGStore
+from raptix.knowledge.graph.store import KGStore
 
 log = logging.getLogger(__name__)
 _MAX_ENTRIES = 20

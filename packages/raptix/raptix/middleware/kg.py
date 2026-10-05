@@ -40,17 +40,17 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from typing_extensions import override
 
-from raptix.middleware.kg_internal.operational_state import build_operational_state
-from raptix.middleware.kg_internal.state import KGState
-from raptix.middleware.kg_internal.store import KGStore
-from raptix.middleware.kg_internal.summary import build_summary
-from raptix.middleware.kg_internal.tools import build_kg_tools
+from raptix.knowledge.graph.operational_state import build_operational_state
+from raptix.knowledge.graph.state import KGState
+from raptix.knowledge.graph.store import KGStore
+from raptix.knowledge.graph.summary import build_summary
+from raptix.knowledge.graph.tools import build_kg_tools
 
 log = logging.getLogger(__name__)
 
 
 # System prompt content the middleware injects with prompt-cache marker.
-# Kept short — the dynamic summary block (see :mod:`kg_internal.summary`)
+# Kept short — the dynamic summary block (see :mod:`raptix.knowledge.graph.summary`)
 # is what changes each turn; this block tells the LLM what the surface
 # is and is cache-eligible.
 KG_SYSTEM_PROMPT = (
@@ -90,7 +90,7 @@ class KGMiddleware(AgentMiddleware):
     enabled_tools
         Override the tool surface. Defaults to ``{"kg_record",
         "kg_ingest"}`` (see ``DEFAULT_KG_TOOLS`` in
-        ``kg_internal.tools``).
+        ``raptix.knowledge.graph.tools``).
     """
 
     state_schema = KGState

@@ -217,7 +217,7 @@ class AttackGraphProtocol(Protocol):
     """What CART expects of any attack-graph backend.
 
     Implemented by the KGMiddleware-owned ``KGStore`` (see
-    ``raptix.middleware.kg_internal.store``). CART consumes only
+    ``raptix.knowledge.graph.store``). CART consumes only
     this surface so a future plugin (e.g. an enterprise variant with
     extra fields, or a vector-augmented variant) can be substituted
     without touching ``cart.py`` internals.

@@ -203,7 +203,7 @@ def test_kg_state_fields_survive_parallel_fanout(field, value) -> None:
     """KG slot runs in analyst / contract_auditor / ad_operator — dispatching
     two in parallel writes these channels concurrently; the reducer must let
     them converge instead of tripping INVALID_CONCURRENT_GRAPH_UPDATE."""
-    from raptix.middleware.kg_internal.state import KGState
+    from raptix.knowledge.graph.state import KGState
 
     def branch_a(_state):
         return {field: value}

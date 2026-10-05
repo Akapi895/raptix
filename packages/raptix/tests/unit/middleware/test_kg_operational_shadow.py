@@ -7,9 +7,9 @@ from unittest.mock import MagicMock
 import pytest
 from langchain_core.messages import SystemMessage
 
+from raptix.knowledge.graph.operational_state import MAX_BLOCK, build_operational_state
+from raptix.knowledge.graph.store import KGStore
 from raptix.middleware.kg import KGMiddleware
-from raptix.middleware.kg_internal.operational_state import MAX_BLOCK, build_operational_state
-from raptix.middleware.kg_internal.store import KGStore
 
 
 def test_projection_bounds_untrusted_fields_and_does_not_echo_credential_labels() -> None:

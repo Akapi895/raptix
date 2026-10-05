@@ -142,7 +142,7 @@ model_list:
   # Skillogy hybrid retrieval (ADR-0011) embeds each skill at boot and each
   # find_skill query at runtime through this route. text-embedding-3-small
   # (1536 dims) is the OSS default — same model the KG layer pins as its
-  # OSS default (kg_internal migration V002). $0.02 / 1M input tokens.
+  # OSS default (KG migration V002). $0.02 / 1M input tokens.
   - model_name: openai/text-embedding-3-small
     litellm_params:
       model: openai/text-embedding-3-small

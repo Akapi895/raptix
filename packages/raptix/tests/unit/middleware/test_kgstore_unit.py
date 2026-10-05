@@ -15,7 +15,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from raptix.middleware.kg_internal.store import (
+from raptix.knowledge.graph.store import (
     KGStore,
     KGStoreConfig,
     KGStoreConfigError,

@@ -33,7 +33,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from raptix.middleware.kg_internal.store import KGStore
+from raptix.knowledge.graph.store import KGStore
 
 
 @dataclass
