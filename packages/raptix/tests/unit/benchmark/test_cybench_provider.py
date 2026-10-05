@@ -1,4 +1,4 @@
-"""Tests for benchmark.providers.cybench.CybenchProvider.
+"""Tests for benchmarks.providers.cybench.CybenchProvider.
 
 Covers the pure / file-IO surface: task discovery from the upstream
 ``metadata/metadata.json`` layout, the docker-served-only v1 scope
@@ -13,9 +13,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from benchmark.providers.cybench import CybenchProvider
-from benchmark.schemas import Challenge, FilterConfig
-from benchmark.state import BenchmarkRunState, BenchmarkStepResult
+from benchmarks.providers.cybench import CybenchProvider
+from benchmarks.schemas import Challenge, FilterConfig
+from benchmarks.state import BenchmarkRunState, BenchmarkStepResult
 
 
 def _write_task(

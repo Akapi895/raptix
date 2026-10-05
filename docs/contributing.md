@@ -39,13 +39,17 @@ raptix/          # Core Python package (LangGraph agents, middleware, tools)
 
 skills/              # Skill library (SKILL.md files organized by kill chain phase)
 
-clients/
+apps/
 ├── cli/             # TypeScript/Ink terminal UI
-├── web/             # Next.js 16 web dashboard
+├── web/             # web-raptix dashboard (React 19 + Vite + Fastify server)
+├── desktop/         # Electron shell
+├── launcher/        # Go launcher + ops-control daemon
 └── shared/          # Shared streaming utilities (@raptix/streaming)
 
-config/              # LiteLLM proxy config (litellm.yaml)
-containers/          # Dockerfile per service
+infra/
+├── config/          # LiteLLM proxy config (litellm.yaml)
+├── containers/      # Dockerfile per service
+└── telemetry-gateway/
 ```
 
 ---

@@ -5,7 +5,7 @@
   //   * Batch low-risk updates (minor / patch) so dependency PRs stay
   //     reviewable instead of one-per-package.
   //   * Group by ecosystem so a single PR moves a coherent slice of the
-  //     dep graph (Python via uv / pep621, Node in clients/, Go modules,
+  //     dep graph (Python via uv / pep621, Node in apps/, Go modules,
   //     Docker base images, GH Actions versions).
   //   * Match the repo's Conventional Commits style: `chore(deps): ...`,
   //     `chore(ci): ...` for GH Actions.
@@ -63,8 +63,8 @@
   prConcurrentLimit: 10,
   // External benchmark submodules — Renovate must not touch them.
   ignorePaths: [
-    "benchmark/xbow-validation-benchmarks/**",
-    "benchmark/MHBench/**",
+    "benchmarks/xbow-validation-benchmarks/**",
+    "benchmarks/MHBench/**",
   ],
   packageRules: [
     {
@@ -79,7 +79,7 @@
       groupName: "python deps",
     },
     {
-      description: "Node / TypeScript deps under clients/",
+      description: "Node / TypeScript deps under apps/",
       matchManagers: ["npm"],
       groupName: "node deps",
     },

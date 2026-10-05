@@ -25,7 +25,7 @@ from typing import Any
 
 import pytest
 
-_CONFIG_DIR = Path(__file__).resolve().parents[5] / "config"
+_CONFIG_DIR = Path(__file__).resolve().parents[5] / "infra" / "config"
 
 
 # ── litellm stub ────────────────────────────────────────────────────────

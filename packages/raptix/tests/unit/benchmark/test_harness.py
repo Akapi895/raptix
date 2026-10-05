@@ -1,4 +1,4 @@
-"""Tests for benchmark.harness.Harness.
+"""Tests for benchmarks.harness.Harness.
 
 Marked ``slow`` because several tests exercise the harness's wall-clock
 timeout / workspace teardown behavior and individually take ~120s. The
@@ -15,10 +15,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from benchmark.config import BenchmarkConfig
-from benchmark.harness import AgentResponse, Harness, _ActiveRun
-from benchmark.provenance import ProvenanceCaptureError
-from benchmark.schemas import Challenge, ChallengeResult, SetupResult
+from benchmarks.config import BenchmarkConfig
+from benchmarks.harness import AgentResponse, Harness, _ActiveRun
+from benchmarks.provenance import ProvenanceCaptureError
+from benchmarks.schemas import Challenge, ChallengeResult, SetupResult
 
 pytestmark = pytest.mark.slow
 
@@ -42,7 +42,7 @@ def _isolate_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
             return subprocess.CompletedProcess(args, 0, stdout=b"sha256:" + b"f" * 64, stderr=b"")
         return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
 
-    monkeypatch.setattr("benchmark.harness._run_docker", fake_docker)
+    monkeypatch.setattr("benchmarks.harness._run_docker", fake_docker)
 
 
 def _make_challenge(tmp_path: Path) -> Challenge:
@@ -97,7 +97,7 @@ class TestHarness:
                 )
             return subprocess.CompletedProcess(args, 0, stdout=b"", stderr=b"")
 
-        with patch("benchmark.harness._run_docker", side_effect=run_docker):
+        with patch("benchmarks.harness._run_docker", side_effect=run_docker):
             await harness.run_challenge(_make_challenge(tmp_path))
 
         assert harness.container_images == {"XBEN-001-24:container-12": "sha256:" + "a" * 64}
@@ -113,7 +113,7 @@ class TestHarness:
 
         with (
             patch(
-                "benchmark.harness._run_docker",
+                "benchmarks.harness._run_docker",
                 return_value=subprocess.CompletedProcess([], 0, stdout=b"", stderr=b""),
             ),
             pytest.raises(ProvenanceCaptureError, match="running challenge containers"),
@@ -187,7 +187,7 @@ class TestHarness:
         harness._invoke_agent = AsyncMock(side_effect=RuntimeError("boom"))
         challenge = _make_challenge(tmp_path)
 
-        with patch("benchmark.harness.time") as mock_time:
+        with patch("benchmarks.harness.time") as mock_time:
             # call order: run_start, agent_start, now (in except handler)
             mock_time.time.side_effect = [100.0, 100.0, 100.42]
 
@@ -236,7 +236,7 @@ class TestHarness:
         )
         challenge = _make_challenge(tmp_path)
 
-        with patch("benchmark.harness.time") as mock_time:
+        with patch("benchmarks.harness.time") as mock_time:
             # call order: run_start, agent_start, BenchmarkStepResult, now (success path)
             mock_time.time.side_effect = [100.0, 100.0, 101.23, 101.23]
 
@@ -370,7 +370,7 @@ class TestHarness:
             compose_dir=Path("/tmp"),
         )
 
-        with patch("benchmark.harness.httpx.AsyncClient", return_value=_FakeClient()):
+        with patch("benchmarks.harness.httpx.AsyncClient", return_value=_FakeClient()):
             await harness._invoke_agent(
                 challenge,
                 target_url="http://host.docker.internal:33042",

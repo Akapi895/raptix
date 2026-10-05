@@ -14,10 +14,10 @@ def test_release_builds_both_web_images_with_version_stamping() -> None:
     release = yaml.safe_load((ROOT / ".github/workflows/release.yml").read_text())
     matrix = release["jobs"]["docker"]["strategy"]["matrix"]["include"]
     mapping = {entry["image"]: entry["dockerfile"] for entry in matrix}
-    assert mapping["raptix-web-raptix-ui"] == "containers/web-raptix.Dockerfile"
-    assert mapping["raptix-web-raptix-api"] == "containers/web-raptix-server.Dockerfile"
+    assert mapping["raptix-web-raptix-ui"] == "infra/containers/web-raptix.Dockerfile"
+    assert mapping["raptix-web-raptix-api"] == "infra/containers/web-raptix-server.Dockerfile"
     for dockerfile in ("web-raptix.Dockerfile", "web-raptix-server.Dockerfile"):
-        source = (ROOT / "containers" / dockerfile).read_text()
+        source = (ROOT / "infra/containers" / dockerfile).read_text()
         assert "org.opencontainers.image.version" in source
         assert "ARG VERSION" in source
 
@@ -42,7 +42,7 @@ def test_installer_updater_and_checksum_manifest_include_web_compose() -> None:
     for filename in (
         "scripts/install.sh",
         "scripts/install.ps1",
-        "clients/launcher/internal/updater/updater.go",
+        "apps/launcher/internal/updater/updater.go",
     ):
         assert "docker-compose.web-raptix.yml" in (ROOT / filename).read_text()
     release = (ROOT / ".github/workflows/release.yml").read_text()
@@ -50,5 +50,5 @@ def test_installer_updater_and_checksum_manifest_include_web_compose() -> None:
     compose = (ROOT / "docker-compose.web-raptix.yml").read_text()
     for image in WEB_IMAGES:
         assert f"ghcr.io/akapi895/{image}:" in compose
-    launcher_release = yaml.safe_load((ROOT / "clients/launcher/.goreleaser.yml").read_text())
+    launcher_release = yaml.safe_load((ROOT / "apps/launcher/.goreleaser.yml").read_text())
     assert launcher_release["release"]["github"] == {"owner": "Akapi895", "name": "raptix"}

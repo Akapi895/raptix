@@ -50,7 +50,7 @@ from raptix.tools.ops.client import (
 log = logging.getLogger(__name__)
 
 # Workload state strings — must match the daemon's internal
-# ``WorkloadState`` constants (clients/launcher/internal/opscontrol/backend.go).
+# ``WorkloadState`` constants (apps/launcher/internal/opscontrol/backend.go).
 STATE_RUNNING = "running"
 STATE_STARTING = "starting"
 STATE_STOPPED = "stopped"

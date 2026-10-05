@@ -111,7 +111,7 @@ Per-engagement container properties:
 
 ## Implementation sketch
 
-A new Go package under `clients/launcher/internal/sandbox`:
+A new Go package under `apps/launcher/internal/sandbox`:
 
 ```go
 package sandbox
@@ -181,7 +181,7 @@ func (l *Lifecycle) Release(slug string, archive bool) error {
 }
 ```
 
-Wiring: `clients/launcher/cmd/start.go` consults `Lifecycle.Acquire(slug)`
+Wiring: `apps/launcher/cmd/start.go` consults `Lifecycle.Acquire(slug)`
 before issuing `docker compose up`, sets `SANDBOX_URL` and
 `SANDBOX_TOKEN` for the agent containers, and calls
 `Lifecycle.Release(slug, archive=true)` from the engagement-close hook.

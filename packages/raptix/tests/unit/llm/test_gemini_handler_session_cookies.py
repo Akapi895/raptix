@@ -48,14 +48,14 @@ if _ots_existing is None or not getattr(_ots_existing, "__file__", None):
     _fake_httpx = sys.modules.get("httpx")
     if _fake_httpx is not None and not getattr(_fake_httpx, "__file__", None):
         del sys.modules["httpx"]
-    _ots_path = Path(__file__).resolve().parents[5] / "config" / "oauth_token_store.py"
+    _ots_path = Path(__file__).resolve().parents[5] / "infra" / "config" / "oauth_token_store.py"
     _ots_spec = importlib.util.spec_from_file_location("oauth_token_store", _ots_path)
     assert _ots_spec and _ots_spec.loader
     _ots_mod = importlib.util.module_from_spec(_ots_spec)
     sys.modules["oauth_token_store"] = _ots_mod
     _ots_spec.loader.exec_module(_ots_mod)
 
-_MODULE_PATH = Path(__file__).resolve().parents[5] / "config" / "gemini_handler.py"
+_MODULE_PATH = Path(__file__).resolve().parents[5] / "infra" / "config" / "gemini_handler.py"
 
 
 def _load_module():

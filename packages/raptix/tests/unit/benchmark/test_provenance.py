@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from benchmark.config import BenchmarkConfig
-from benchmark.provenance import (
+from benchmarks.config import BenchmarkConfig
+from benchmarks.provenance import (
     ProvenanceCaptureError,
     capture_container_images,
     capture_declared_model_assignments,
     capture_run_provenance,
 )
-from benchmark.reporter import Reporter
-from benchmark.runner import _build_run_provenance
-from benchmark.schemas import BenchmarkReport, Challenge, FilterConfig, RunProvenance
+from benchmarks.reporter import Reporter
+from benchmarks.runner import _build_run_provenance
+from benchmarks.schemas import BenchmarkReport, Challenge, FilterConfig, RunProvenance
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -132,7 +132,7 @@ def test_capture_declared_model_assignments_uses_explicit_priority_and_role_over
         },
     }
     monkeypatch.setattr(
-        "benchmark.provenance.subprocess.run",
+        "benchmarks.provenance.subprocess.run",
         lambda argv, **_kwargs: subprocess.CompletedProcess(
             argv,
             0,
@@ -157,7 +157,7 @@ def test_capture_declared_models_rejects_container_priority_mismatch(monkeypatch
         "assignments": {"decepticon": ["openai/gpt-5.5"]},
     }
     monkeypatch.setattr(
-        "benchmark.provenance.subprocess.run",
+        "benchmarks.provenance.subprocess.run",
         lambda argv, **_kwargs: subprocess.CompletedProcess(
             argv,
             0,
@@ -222,7 +222,7 @@ def test_capture_container_images_prefers_registry_digest_and_keeps_local_image_
             stdout = "[]|sha256:" + "c" * 64
         return subprocess.CompletedProcess(argv, 0, stdout=stdout, stderr="")
 
-    monkeypatch.setattr("benchmark.provenance.subprocess.run", run_docker)
+    monkeypatch.setattr("benchmarks.provenance.subprocess.run", run_docker)
 
     images = capture_container_images(["local/challenge:latest"])
 
@@ -251,7 +251,7 @@ def test_capture_container_images_excludes_unrelated_running_projects(monkeypatc
             stderr="",
         )
 
-    monkeypatch.setattr("benchmark.provenance.subprocess.run", run_docker)
+    monkeypatch.setattr("benchmarks.provenance.subprocess.run", run_docker)
 
     images = capture_container_images([])
 
@@ -308,10 +308,10 @@ def test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record(
 ) -> None:
     prompts = tmp_path / "packages/raptix/raptix/agents/prompts"
     skills = tmp_path / "packages/raptix/raptix/skills"
-    config_dir = tmp_path / "config"
+    config_dir = tmp_path / "infra/config"
     prompts.mkdir(parents=True)
     skills.mkdir(parents=True)
-    config_dir.mkdir()
+    config_dir.mkdir(parents=True)
     (prompts / "decepticon.md").write_text("prompt\n", encoding="utf-8")
     (skills / "SKILL.md").write_text("skill\n", encoding="utf-8")
     challenge_dir = tmp_path / "benchmark/fixture"
@@ -325,7 +325,7 @@ def test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record(
     _git(tmp_path, "add", ".")
     _git(tmp_path, "commit", "-qm", "fixture")
     monkeypatch.setattr(
-        "benchmark.runner.capture_declared_model_assignments",
+        "benchmarks.runner.capture_declared_model_assignments",
         lambda: (
             "max",
             {
@@ -338,7 +338,7 @@ def test_build_run_provenance_wires_runtime_inputs_into_reproducibility_record(
         ),
     )
     monkeypatch.setattr(
-        "benchmark.runner.capture_container_images",
+        "benchmarks.runner.capture_container_images",
         lambda _refs: {"langgraph:stable": "sha256:" + "a" * 64},
     )
 

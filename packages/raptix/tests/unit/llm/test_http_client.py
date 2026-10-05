@@ -20,7 +20,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-_MODULE_PATH = Path(__file__).resolve().parents[5] / "config" / "http_client.py"
+_MODULE_PATH = Path(__file__).resolve().parents[5] / "infra" / "config" / "http_client.py"
 _spec = importlib.util.spec_from_file_location("_http_client_src", _MODULE_PATH)
 assert _spec is not None
 assert _spec.loader is not None

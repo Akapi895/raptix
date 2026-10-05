@@ -1,6 +1,6 @@
 """Render PNG charts for the XBOW benchmark write-ups.
 
-Outputs go to assets/benchmark/. Re-run after updating numbers:
+Outputs go to assets/benchmarks/. Re-run after updating numbers:
     python scripts/render_benchmark_charts.py
 """
 
@@ -15,7 +15,7 @@ import numpy as np
 # Data — keep in one place so the script is the single source of truth.
 # ---------------------------------------------------------------------------
 
-OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "benchmark"
+OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "benchmarks"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Leaderboard — XBOW publishers only.
@@ -274,7 +274,7 @@ def chart_coverage() -> Path:
     fig.text(
         0.01,
         0.01,
-        "Per-level breakdown lives in benchmark/results/README.md (Confirmed Exploit Coverage matrix).",
+        "Per-level breakdown lives in benchmarks/results/README.md (Confirmed Exploit Coverage matrix).",
         fontsize=8,
         style="italic",
         color="#555",

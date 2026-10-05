@@ -303,7 +303,7 @@ _API_METHOD_ENV: dict[AuthMethod, str] = {
     AuthMethod.XIAOMI_MIMO_API: "XIAOMI_MIMO_API_KEY",
     # OpenAI-compatible gateways / aggregators (oh-my-pi parity). Each is
     # detected by the presence of a non-placeholder bearer key. The base
-    # URL is fixed per gateway (see config/litellm.yaml) except Cloudflare,
+    # URL is fixed per gateway (see infra/config/litellm.yaml) except Cloudflare,
     # whose per-account CLOUDFLARE_AI_GATEWAY_API_BASE must also be set —
     # documented in .env.example; a key without the base 404s at call time.
     AuthMethod.OPENCODE_API: "OPENCODE_API_KEY",
@@ -1420,7 +1420,7 @@ def _reraise_with_actionable_message(exc: Exception, model_name: str) -> None:
     if is_bad_request and "invalid model name" in msg_lower:
         raise RuntimeError(
             f"{fatal_prefix}Model '{model_name}' is not available through the LiteLLM "
-            f"proxy. Verify its static route in config/litellm.yaml or dynamic environment "
+            f"proxy. Verify its static route in infra/config/litellm.yaml or dynamic environment "
             f"configuration (RAPTIX_MODEL*, RAPTIX_LITELLM_MODELS, "
             f"CUSTOM_OPENAI_*, or OLLAMA_MODEL). Restart the proxy, inspect its startup "
             f"logs, and query /v1/models for the models available to your key.\n"
@@ -1482,7 +1482,7 @@ def _reraise_with_actionable_message(exc: Exception, model_name: str) -> None:
             f"{fatal_prefix}Model '{model_name}' is not registered in the LiteLLM proxy "
             f"(404). For local Ollama, set OLLAMA_MODEL to something you "
             f"actually pulled ('ollama list'). For cloud providers, check "
-            f"that the model id matches config/litellm.yaml.\n"
+            f"that the model id matches infra/config/litellm.yaml.\n"
             f"Underlying: {safe_msg}"
         ) from exc
 
@@ -1720,7 +1720,7 @@ class LLMFactory:
         unset, so the param still goes on the wire.
 
         The LiteLLM proxy also drops temperature for opus entries via
-        ``additional_drop_params`` (config/litellm.yaml) — that's the
+        ``additional_drop_params`` (infra/config/litellm.yaml) — that's the
         belt-and-suspenders for any future client that bypasses this
         factory.
         """

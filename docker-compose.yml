@@ -16,7 +16,7 @@ services:
     image: ghcr.io/akapi895/raptix-litellm:${RAPTIX_VERSION:-stable}
     build:
       context: .
-      dockerfile: containers/litellm.Dockerfile
+      dockerfile: infra/containers/litellm.Dockerfile
     # #216: parameterize via RAPTIX_STACK_NAME. Unset → ``raptix-litellm``
     # (today's name verbatim). ``RAPTIX_STACK_NAME=stack2`` →
     # ``raptix-stack2-litellm``. The ``${VAR:+-${VAR}}`` form emits the
@@ -27,7 +27,7 @@ services:
     # ``raptix-raptix-litellm`` on every default run.
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-litellm
     volumes:
-      - ./config/litellm.yaml:/app/config.yaml:ro
+      - ./infra/config/litellm.yaml:/app/config.yaml:ro
       - ${CLAUDE_CREDENTIALS_VOLUME:-/dev/null}:/root/.claude/.credentials.json
       - ${CODEX_AUTH_VOLUME:-/dev/null}:/root/.codex/auth.json
     entrypoint: ["python", "/app/litellm_startup.py"]
@@ -96,7 +96,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Auto-create raptix_web DB on first startup (empty volume only).
       # Existing deployments: run the SQL manually or `docker volume rm postgres_data`.
-      - ./containers/postgres-init:/docker-entrypoint-initdb.d:ro
+      - ./infra/containers/postgres-init:/docker-entrypoint-initdb.d:ro
     ports:
       - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     networks:
@@ -201,7 +201,7 @@ services:
     # fallback by adding `platform: linux/amd64` to this service.
     build:
       context: .
-      dockerfile: containers/sandbox.Dockerfile
+      dockerfile: infra/containers/sandbox.Dockerfile
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox
     networks:
       - sandbox-net
@@ -244,7 +244,7 @@ services:
       - no-new-privileges:true
     mem_limit: 4g
     environment:
-      # SANDBOX_DAEMON=1 makes containers/sandbox-entrypoint.sh run the
+      # SANDBOX_DAEMON=1 makes infra/containers/sandbox-entrypoint.sh run the
       # FastAPI daemon on port 9999 instead of the legacy
       # ``tail -f /dev/null`` keep-alive. The entrypoint default is 1
       # since the HTTP-only migration; this stanza pins it explicitly so
@@ -264,7 +264,7 @@ services:
       - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}}:/workspace
       # Skills are no longer baked into this image — they live at
       # ``/app/skills/`` in the LANGGRAPH container (see
-      # ``containers/langgraph.Dockerfile``) and are read in-process by
+      # ``infra/containers/langgraph.Dockerfile``) and are read in-process by
       # ``FilesystemBackend`` via ``CompositeBackend``. The sandbox only
       # owns ``/workspace/`` from here on.
     pids_limit: 4096
@@ -304,7 +304,7 @@ services:
   ghidra-mcp:
     build:
       context: .
-      dockerfile: containers/sandbox.Dockerfile
+      dockerfile: infra/containers/sandbox.Dockerfile
       args:
         INSTALL_REVERSING: "true"
         # SHA-256 pin for the Ghidra 12.1 / 20260513 release. Set this on
@@ -363,7 +363,7 @@ services:
         fi
     build:
       context: .
-      dockerfile: containers/langgraph.Dockerfile
+      dockerfile: infra/containers/langgraph.Dockerfile
       args:
         # Stamps pyproject.toml's version field at build time. Independent
         # of the image tag selector above — VERSION can be unset locally
@@ -379,7 +379,7 @@ services:
       # HTTPSandbox transport target. ``sandbox`` is the compose service
       # name (resolves via the shared ``sandbox-net`` network below). Port
       # 9999 is the FastAPI daemon baked into the sandbox image (see
-      # ``containers/sandbox-entrypoint.sh`` — daemon mode is the default).
+      # ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
       - SANDBOX_URL=http://sandbox:9999
       - RAPTIX_NEO4J_URI=bolt://neo4j:7687
       - RAPTIX_NEO4J_USER=neo4j
@@ -459,7 +459,7 @@ services:
     image: ghcr.io/akapi895/raptix-cli:${RAPTIX_VERSION:-stable}
     build:
       context: .
-      dockerfile: containers/cli.Dockerfile
+      dockerfile: infra/containers/cli.Dockerfile
       args:
         VERSION: ${VERSION:-0.0.0}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-cli
@@ -490,7 +490,7 @@ services:
       - ${RAPTIX_HOME:-~/.raptix}:/raptix-home
     # Do NOT override WORKDIR — the cli image's entrypoint is
     # `node dist/index.js` resolved relative to /app (set by
-    # containers/cli.Dockerfile). The slash command resolves the
+    # infra/containers/cli.Dockerfile). The slash command resolves the
     # compose project via the RAPTIX_COMPOSE_FILE / _ENV_FILE
     # env vars above, so working_dir on this container is irrelevant.
     depends_on:
@@ -515,7 +515,7 @@ services:
     # Multi-arch image — see raptix-sandbox above for the same notes.
     build:
       context: .
-      dockerfile: containers/c2-sliver.Dockerfile
+      dockerfile: infra/containers/c2-sliver.Dockerfile
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-c2-sliver
     networks:
       - sandbox-net
@@ -554,7 +554,7 @@ services:
     image: ghcr.io/akapi895/raptix-skillogy:${RAPTIX_VERSION:-stable}
     build:
       context: .
-      dockerfile: containers/skillogy.Dockerfile
+      dockerfile: infra/containers/skillogy.Dockerfile
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-skillogy
     depends_on:
       neo4j:
@@ -619,7 +619,7 @@ services:
       BHCE_POSTGRES_USER: ${BHCE_POSTGRES_USER:-bloodhound}
       BHCE_POSTGRES_PASSWORD: ${BHCE_POSTGRES_PASSWORD:-bhce-raptix-local}
     volumes:
-      - ./containers/postgres-init/02-bloodhound-db.sh:/raptix/ensure-bloodhound-db.sh:ro
+      - ./infra/containers/postgres-init/02-bloodhound-db.sh:/raptix/ensure-bloodhound-db.sh:ro
     command:
       - bash
       - -c

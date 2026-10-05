@@ -43,7 +43,7 @@ class _StubAuthenticationError(Exception):
 if not hasattr(litellm, "AuthenticationError"):
     litellm.AuthenticationError = _StubAuthenticationError
 
-_CONFIG_DIR = Path(__file__).resolve().parents[5] / "config"
+_CONFIG_DIR = Path(__file__).resolve().parents[5] / "infra" / "config"
 # ``oauth_token_store`` does ``from http_client import post`` by bare name, so
 # ``config/`` must be importable. Insert it here instead of relying on a sibling
 # test module (test_oauth_handlers) having run first — that ordering dependency

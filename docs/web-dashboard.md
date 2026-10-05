@@ -135,13 +135,13 @@ The dashboard uses PostgreSQL (dedicated `raptix_web` database) with Prisma ORM.
 **Migrations** run automatically at API container boot (`prisma migrate deploy`). For local development apply them manually:
 
 ```bash
-cd clients/web-raptix/server && npx prisma migrate dev
+cd apps/web/server && npx prisma migrate dev
 ```
 
-Schema is at `clients/web-raptix/server/prisma/schema.prisma`. Key models: `Engagement`, `Project`, `Run`, `Finding`, `Campaign`, `VaultSecret`.
+Schema is at `apps/web/server/prisma/schema.prisma`. Key models: `Engagement`, `Project`, `Run`, `Finding`, `Campaign`, `VaultSecret`.
 
 ---
 
 ## API Routes
 
-The dashboard exposes the Fastify API under `clients/web-raptix/server/src/http/routes/`, served same-origin through the nginx proxy (`/api/*` + `/projects/*` SPA fallback). These routes are not a public API — the surface area may change between versions.
+The dashboard exposes the Fastify API under `apps/web/server/src/http/routes/`, served same-origin through the nginx proxy (`/api/*` + `/projects/*` SPA fallback). These routes are not a public API — the surface area may change between versions.

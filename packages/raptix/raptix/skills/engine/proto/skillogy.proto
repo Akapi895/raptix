@@ -14,7 +14,7 @@ syntax = "proto3";
 
 package decepticon.skillogy.v1;
 
-option go_package = "github.com/Akapi895/raptix/clients/launcher/internal/skillogy;skillogy";
+option go_package = "github.com/Akapi895/raptix/apps/launcher/internal/skillogy;skillogy";
 
 // A single skill's metadata. Returned by ListSkills; populated from each
 // SKILL.md's YAML frontmatter at ingest time.

@@ -225,7 +225,7 @@ resolve_version() {
 download_files() {
     local install_dir="$1"
     local stage="$install_dir/.config-stage"
-    mkdir -p "$stage/config"
+    mkdir -p "$stage/infra/config"
 
     info "Downloading configuration files..."
 
@@ -259,8 +259,8 @@ download_files() {
     fi
 
     # LiteLLM config
-    mkdir -p "$install_dir/config"
-    curl -fsSL "$RAW_BASE/config/litellm.yaml" -o "$stage/config/litellm.yaml"
+    mkdir -p "$install_dir/infra/config"
+    curl -fsSL "$RAW_BASE/infra/config/litellm.yaml" -o "$stage/infra/config/litellm.yaml"
 
     # Workspace directory (bind-mounted into containers)
     mkdir -p "$install_dir/workspace"
@@ -271,11 +271,11 @@ download_files() {
     # for the same tag. Cross-checking closes the "tampered raw download"
     # vector that previously let an attacker swap docker-compose.yml.
     verify_config_manifest "$stage"
-    for file in docker-compose.yml docker-compose.web-raptix.yml .env.example config/litellm.yaml; do
+    for file in docker-compose.yml docker-compose.web-raptix.yml .env.example infra/config/litellm.yaml; do
         mv "$stage/$file" "$install_dir/$file"
     done
     rm -f "$stage/.config-checksums.txt"
-    rmdir "$stage/config" "$stage"
+    rmdir "$stage/infra/config" "$stage/infra" "$stage"
 
     # Version marker
     echo "$RAPTIX_VERSION" > "$install_dir/.version"
@@ -314,7 +314,7 @@ verify_config_manifest() {
     while IFS=' ' read -r expected _ path; do
         [[ -z "$expected" || -z "$path" ]] && continue
         # path is whatever the release job recorded (e.g. "docker-compose.yml",
-        # "config/litellm.yaml", ".env.example"). Resolve relative to install_dir.
+        # "infra/config/litellm.yaml", ".env.example"). Resolve relative to install_dir.
         local target="$install_dir/$path"
         if [[ ! -f "$target" ]]; then
             # .env.example may be absent if download_files skipped it; for now

@@ -117,17 +117,17 @@ function Main {
     Write-Info "Directory: $installDir"
     Write-Host ''
 
-    New-Item -ItemType Directory -Force -Path $installDir, $binDir, (Join-Path $installDir 'config'), (Join-Path $installDir 'workspace') | Out-Null
+    New-Item -ItemType Directory -Force -Path $installDir, $binDir, (Join-Path $installDir 'infra/config'), (Join-Path $installDir 'workspace') | Out-Null
 
     # ── Config files (pinned to the release tag) ─────────────────────
     $rawBase = "https://raw.githubusercontent.com/$Repo/v$version"
     $stage = Join-Path $installDir '.config-stage'
-    New-Item -ItemType Directory -Force -Path $stage, (Join-Path $stage 'config') | Out-Null
+    New-Item -ItemType Directory -Force -Path $stage, (Join-Path $stage 'infra/config') | Out-Null
     Write-Info 'Downloading configuration files...'
     Invoke-WebRequest -Uri "$rawBase/docker-compose.yml" -OutFile (Join-Path $stage 'docker-compose.yml')
     Invoke-WebRequest -Uri "$rawBase/docker-compose.web-raptix.yml" -OutFile (Join-Path $stage 'docker-compose.web-raptix.yml')
     Invoke-WebRequest -Uri "$rawBase/.env.example"       -OutFile (Join-Path $stage '.env.example')
-    Invoke-WebRequest -Uri "$rawBase/config/litellm.yaml" -OutFile (Join-Path $stage 'config\litellm.yaml')
+    Invoke-WebRequest -Uri "$rawBase/infra/config/litellm.yaml" -OutFile (Join-Path $stage 'infra/config/litellm.yaml')
 
     # Verify config files against the release-pinned manifest.
     if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
@@ -153,7 +153,7 @@ function Main {
         }
         Remove-Item $manifestPath -ErrorAction SilentlyContinue
     }
-    foreach ($file in @('docker-compose.yml', 'docker-compose.web-raptix.yml', '.env.example', 'config\litellm.yaml')) {
+    foreach ($file in @('docker-compose.yml', 'docker-compose.web-raptix.yml', '.env.example', 'infra/config/litellm.yaml')) {
         Move-Item -LiteralPath (Join-Path $stage $file) -Destination (Join-Path $installDir $file) -Force
     }
     Remove-Item -LiteralPath $stage -Recurse -Force

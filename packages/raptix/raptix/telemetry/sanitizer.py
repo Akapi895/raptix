@@ -10,7 +10,7 @@ second). Two jobs:
    client refuses to enqueue anything that still carries a raw IP / cred / host
    (e.g. if a future event payload regresses).
 
-The contract mirrors ``telemetry-gateway/schema.json``; keep them in sync.
+The contract mirrors ``infra/telemetry-gateway/schema.json``; keep them in sync.
 """
 
 from __future__ import annotations
@@ -167,7 +167,7 @@ def event_to_tier_a(record: dict[str, Any]) -> dict[str, Any] | None:
     return ev
 
 
-# ── Tier-C fail-closed scanner (mirrors telemetry-gateway/src/tierc.ts) ───────
+# ── Tier-C fail-closed scanner (mirrors infra/telemetry-gateway/src/tierc.ts) ───────
 
 _PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("private_key", re.compile(r"-----BEGIN (?:[A-Z ]+ )?PRIVATE KEY-----")),

@@ -182,5 +182,5 @@ Failures (offline, gateway down) are silently dropped — telemetry never blocks
 or breaks an engagement. The gateway holds the analytics backend credential, so
 the OSS client only ever knows the public endpoint URL.
 
-See `telemetry-gateway/README.md` for the gateway, and
+See `infra/telemetry-gateway/README.md` for the gateway, and
 `docs/design/2026-06-20-telemetry-data-collection-design.md` for the full design.

@@ -4,12 +4,12 @@ Side-by-side numbers for AI / LLM pentesting agents that have **publicly release
 [XBOW Validation Benchmark](https://github.com/xbow-engineering/validation-benchmarks)** (104 web-app CTF challenges, 3 difficulty tiers).
 
 <div align="center">
-  <img src="../assets/benchmark/leaderboard.png" alt="XBOW leaderboard — Raptix at 98.08 %" width="780">
+  <img src="../assets/benchmarks/leaderboard.png" alt="XBOW leaderboard — Raptix at 98.08 %" width="780">
 </div>
 
 - **Raptix mode** — black-box (no source code, no config, no service internals). The agent receives the per-challenge `benchmark.yaml` metadata as engagement context: the one-line `description`, the `Vulnerability tags:` list (e.g. `idor`, `default_credentials`, `ssti`), and the flag format. The agent discovers endpoints, parameters, sinks, payloads, and gadgets on its own. **Compared to Strix** [^strix-method]: Strix passes the `description` only, not the tags — so this table's two black-box leaders sit at slightly different hint levels (Raptix: description + tags; Strix: description only).
 - **Raptix status** — cycle-4 final · 102 / 104 (98.08 %). L1 complete; L2 50/51 (one outstanding); L3 7/8 (one outstanding).
-- **Per-challenge evidence + LangSmith traces** — [`benchmark/results/README.md`](../benchmark/results/README.md).
+- **Per-challenge evidence + LangSmith traces** — [`benchmarks/results/README.md`](../benchmarks/results/README.md).
 
 ## Leaderboard
 
@@ -35,7 +35,7 @@ Side-by-side numbers for AI / LLM pentesting agents that have **publicly release
 
 ## Per-Difficulty (where published)
 
-![Pass rate by difficulty — Strix · PentestGPT · Raptix](../assets/benchmark/difficulty.png)
+![Pass rate by difficulty — Strix · PentestGPT · Raptix](../assets/benchmarks/difficulty.png)
 
 | System | L1 | L2 | L3 | Total |
 |---|---|---|---|---|
@@ -61,7 +61,7 @@ XBOW commercial does not publish a per-difficulty breakdown for its own agent �
 
 **MAPTA** per-class (overall 76.9 %): SSRF 100 % · Misconfig 100 % · SSTI 85 % · SQLi 83 % · Broken Authz 83 % · Cmd-Inj 75 % · XSS 57 % · Blind SQLi 0 %.
 
-**Raptix** per-class — see [`benchmark/results/README.md`](../benchmark/results/README.md). 23 classes covered; top: XSS (14), Cmd-Inj (8), Default Creds (8), SSTI (7), LFI (6), IDOR (6).
+**Raptix** per-class — see [`benchmarks/results/README.md`](../benchmarks/results/README.md). 23 classes covered; top: XSS (14), Cmd-Inj (8), Default Creds (8), SSTI (7), LFI (6), IDOR (6).
 
 ## Adjacent — Don't Publish XBOW (different benchmark)
 

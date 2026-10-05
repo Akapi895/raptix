@@ -80,9 +80,9 @@ lint = [
 line-length = 100
 target-version = "py313"
 extend-exclude = [
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
-    "benchmark/results",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
+    "benchmarks/results",
 ]
 
 [tool.ruff.lint]
@@ -114,14 +114,14 @@ known-first-party = ["raptix", "raptix_core", "raptix_sdk"]
 
 [tool.ruff.lint.per-file-ignores]
 # Scope banned-api to raptix-core: the framework, SDK, LiteLLM
-# config handlers, benchmark harness, and clients legitimately depend
+# config handlers, benchmark harness, and apps legitimately depend
 # on langchain / langgraph / deepagents / httpx / fastapi.
 "packages/raptix/**" = ["TID251"]
 "packages/raptix-sdk/**" = ["TID251"]
-"benchmark/**" = ["TID251"]
-"clients/**" = ["TID251"]
+"benchmarks/**" = ["TID251"]
+"apps/**" = ["TID251"]
 "scripts/**" = ["TID251"]
-"config/**" = ["TID251"]
+"infra/config/**" = ["TID251"]
 "tests/local/**" = ["TID251"]
 
 [tool.pytest.ini_options]
@@ -185,16 +185,16 @@ include = [
     "packages/raptix/tests",
     "packages/raptix-sdk",
     "packages/raptix-sdk/tests",
-    "benchmark",
+    "benchmarks",
 ]
 exclude = [
     "**/__pycache__",
     "**/node_modules",
     "reference",
     "packages/raptix/raptix/auth/providers",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
-    "benchmark/results",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
+    "benchmarks/results",
 ]
 # Use pyright "standard" semantics rather than the basedpyright "all" default —
 # the existing codebase predates basedpyright's stricter rules. As code is
@@ -242,8 +242,8 @@ reportPrivateImportUsage = "warning"
 [tool.bandit]
 exclude_dirs = [
     "tests",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     "node_modules",
     ".venv",
 ]
@@ -258,8 +258,8 @@ files = [
 ]
 exclude = [
     "tests/",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     "node_modules",
     ".venv",
 ]
@@ -323,8 +323,8 @@ paths = [
 ]
 exclude = [
     "tests/",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     ".venv/",
     "node_modules/",
 ]
@@ -352,8 +352,8 @@ ignore_names = [
 [tool.deptry]
 extend_exclude = [
     "tests",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     "scripts",
     ".venv",
     "node_modules",

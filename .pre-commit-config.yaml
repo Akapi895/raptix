@@ -26,7 +26,7 @@ default_stages: [pre-commit]
 # Grandfather pattern (keep these two hooks in sync):
 #   assets/.*
 #   reference/.*
-#   benchmark/results/.*
+#   benchmarks/results/.*
 #   packages/raptix/raptix/skills/defs/_corpus/.*
 #   .*\.snap
 #   .*\.lock
@@ -40,7 +40,7 @@ repos:
           (?x)^(
             assets/.*|
             reference/.*|
-            benchmark/results/.*|
+            benchmarks/results/.*|
             packages/raptix/raptix/skills/defs/_corpus/.*|
             .*\.snap|
             .*\.lock
@@ -50,11 +50,10 @@ repos:
           (?x)^(
             assets/.*|
             reference/.*|
-            benchmark/results/.*|
+            benchmarks/results/.*|
             packages/raptix/raptix/skills/defs/_corpus/.*|
             .*\.snap|
-            .*\.lock|
-            clients/web/public/.*\.svg
+            .*\.lock
           )$
       - id: check-yaml
       - id: check-toml

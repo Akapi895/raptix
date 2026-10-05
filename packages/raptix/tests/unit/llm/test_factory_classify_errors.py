@@ -128,7 +128,7 @@ class TestActionableMessageFatalLabel:
 
         msg = str(info.value)
         assert "non-retryable provider error" in msg
-        assert "config/litellm.yaml" in msg
+        assert "infra/config/litellm.yaml" in msg
         assert "dynamic environment" in msg
         assert "RAPTIX_MODEL" in msg
         assert "restart" in msg.lower()

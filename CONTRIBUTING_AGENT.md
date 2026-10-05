@@ -171,7 +171,7 @@ should be asking someone else to look.
       `pyproject.toml` / `uv.lock` / `package*.json` / `go.{mod,sum}`,
       plugin contracts under `packages/raptix-core/.../contracts/**`,
       `scripts/install.sh`, `docker-compose.yml`,
-      `containers/*.Dockerfile`, `.semgrep/**`. A mistake here reaches
+      `infra/containers/*.Dockerfile`, `.semgrep/**`. A mistake here reaches
       every OSS user on the next release. **Ask for a review and wait
       for it**, even though you can merge without one.
 
