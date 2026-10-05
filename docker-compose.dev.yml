@@ -11,7 +11,7 @@
 #
 # Skills now ship as package data under `raptix/skills/` and are baked
 # into the LANGGRAPH image via `COPY raptix/` (resolved in-process by
-# `raptix/backends/__init__.py:SKILLS_LOCAL_PATH`). On a repo dev clone
+# `raptix/execution/backends/__init__.py:SKILLS_LOCAL_PATH`). On a repo dev clone
 # (`make dev`) skill edits are hot-reloaded by the `./raptix` sync in
 # `docker-compose.watch.yml` — no dedicated `./skills` bind is needed (the
 # old root `./skills/` directory no longer exists).

@@ -13,8 +13,8 @@ from typing import Callable
 import httpx
 import pytest
 
-from raptix.tools.research import secret_scanner
-from raptix.tools.research.secret_scanner import (
+from raptix.execution.tools.research import secret_scanner
+from raptix.execution.tools.research.secret_scanner import (
     SECRET_PATTERNS,
     scan_secrets,
     validate_credential,

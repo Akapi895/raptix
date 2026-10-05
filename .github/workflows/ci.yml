@@ -124,7 +124,7 @@ jobs:
               # Skills no longer ship in the sandbox image — they live under
               # packages/raptix/src/raptix/skills and are read
               # in-process by the langgraph service (see
-              # packages/raptix/src/raptix/backends/__init__.py).
+              # packages/raptix/src/raptix/execution/backends/__init__.py).
               # Skill changes rebuild langgraph (via the packages/raptix/**
               # filter above), not the sandbox.
               - '.github/workflows/ci.yml'

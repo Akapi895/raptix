@@ -55,13 +55,13 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.tools.bash import BASH_TOOLS
+from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.verification import WORKSPACE_VERIFICATION_TOOLS
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
-from raptix.tools.bash import BASH_TOOLS
-from raptix.tools.bash.bash import set_sandbox
-from raptix.tools.verification import WORKSPACE_VERIFICATION_TOOLS
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 # Graph-backed verification remains deferred with the Neo4j redesign.  The

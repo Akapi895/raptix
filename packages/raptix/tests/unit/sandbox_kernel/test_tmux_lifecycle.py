@@ -18,7 +18,7 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.sandbox_kernel.tmux import (
+from raptix.execution.sandbox.kernel.tmux import (
     MAX_OUTPUT_CHARS,
     PS1_PATTERN,
     TmuxSessionManager,

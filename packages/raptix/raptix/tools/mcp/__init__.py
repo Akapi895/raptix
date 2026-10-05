@@ -1,26 +1,7 @@
-"""MCP (Model Context Protocol) tool-server client integration.
+"""Deprecated import path, kept as a compatibility shim.
 
-Opt-in bridge so Raptix agents can use tools exposed by external
-MCP servers (e.g. Kali MCP server, HexStrike). Activation is purely
-env-driven (``RAPTIX_MCP__SERVERS``) and requires the optional
-``langchain-mcp-adapters`` package to be installed separately —
-nothing in this subpackage is imported at framework start-up.
-
-See ``docs/mcp.md`` for operator-facing configuration notes.
+Ownership moved to ``raptix.execution.tools.mcp`` in W6; this re-export shim is
+retired in W11.
 """
 
-from __future__ import annotations
-
-from raptix.tools.mcp.client import (
-    MCPServerConfig,
-    load_mcp_tools,
-    mcp_servers_configured,
-    parse_mcp_servers_env,
-)
-
-__all__ = [
-    "MCPServerConfig",
-    "load_mcp_tools",
-    "mcp_servers_configured",
-    "parse_mcp_servers_env",
-]
+from raptix.execution.tools.mcp import *  # noqa: F401,F403

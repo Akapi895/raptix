@@ -12,7 +12,7 @@ var healthCmd = &cobra.Command{
 	Short:   "Run LangGraph health diagnostics",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ui.Info("Running LangGraph health diagnostics...")
-		return compose.New().Exec("langgraph", "python", "-m", "raptix.tools.research.health")
+		return compose.New().Exec("langgraph", "python", "-m", "raptix.execution.tools.research.health")
 	},
 }
 

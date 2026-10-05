@@ -5,7 +5,7 @@ This config handles infrastructure settings: proxy connection.
 
 Sandbox transport is HTTP-only and configured via SANDBOX_URL /
 SANDBOX_TOKEN env vars consumed directly by
-``raptix.backends.factory.build_sandbox_backend`` — no schema field needed.
+``raptix.execution.backends.factory.build_sandbox_backend`` — no schema field needed.
 
 Credentials (which provider keys are present, in what priority) are detected
 by ``raptix.llm.factory._resolve_credentials`` directly from environment

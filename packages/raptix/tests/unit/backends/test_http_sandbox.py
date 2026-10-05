@@ -7,8 +7,12 @@ from typing import Any
 import httpx
 import pytest
 
-from raptix.backends.http_sandbox import HTTPSandbox, SandboxError, _retry_on_connection_error
-from raptix.sandbox_kernel import BackgroundJob
+from raptix.execution.backends.http_sandbox import (
+    HTTPSandbox,
+    SandboxError,
+    _retry_on_connection_error,
+)
+from raptix.execution.sandbox.kernel import BackgroundJob
 
 
 def _make_handler(status: int = 200, body: dict[str, Any] | None = None) -> Any:
@@ -81,7 +85,9 @@ def test_close_when_no_client_initialized_does_not_raise() -> None:
 
 def test_retry_succeeds_first_try_no_sleep(monkeypatch: pytest.MonkeyPatch) -> None:
     sleep_calls: list[float] = []
-    monkeypatch.setattr("raptix.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d))
+    monkeypatch.setattr(
+        "raptix.execution.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d)
+    )
     result = _retry_on_connection_error(lambda: "ok")
     assert result == "ok"
     assert sleep_calls == []
@@ -89,7 +95,9 @@ def test_retry_succeeds_first_try_no_sleep(monkeypatch: pytest.MonkeyPatch) -> N
 
 def test_retry_recovers_after_two_transient_connect_errors(monkeypatch: pytest.MonkeyPatch) -> None:
     sleep_calls: list[float] = []
-    monkeypatch.setattr("raptix.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d))
+    monkeypatch.setattr(
+        "raptix.execution.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d)
+    )
     sentinel = object()
     attempts: list[int] = []
 
@@ -105,7 +113,7 @@ def test_retry_recovers_after_two_transient_connect_errors(monkeypatch: pytest.M
 
 
 def test_retry_exhausts_reraises_connect_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr("raptix.backends.http_sandbox.time.sleep", lambda d: None)
+    monkeypatch.setattr("raptix.execution.backends.http_sandbox.time.sleep", lambda d: None)
 
     def always_fail() -> None:
         raise httpx.ConnectTimeout("timeout")
@@ -119,7 +127,9 @@ def test_retry_rides_out_sandbox_boot_window(monkeypatch: pytest.MonkeyPatch) ->
     boots. The retry budget must outlast that window — far more than the old
     3-attempt cap — so the agent's first tool call survives the boot."""
     sleep_calls: list[float] = []
-    monkeypatch.setattr("raptix.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d))
+    monkeypatch.setattr(
+        "raptix.execution.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d)
+    )
     sentinel = object()
     attempts: list[int] = []
 
@@ -141,7 +151,9 @@ def test_retry_budget_is_bounded(monkeypatch: pytest.MonkeyPatch) -> None:
     """A genuinely dead sandbox must still surface within the time budget —
     the cumulative (intended) backoff stays within max_total_delay."""
     sleep_calls: list[float] = []
-    monkeypatch.setattr("raptix.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d))
+    monkeypatch.setattr(
+        "raptix.execution.backends.http_sandbox.time.sleep", lambda d: sleep_calls.append(d)
+    )
 
     def always_fail() -> None:
         raise httpx.ConnectError("refused")

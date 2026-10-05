@@ -17,8 +17,8 @@ from typing import Any
 
 import pytest
 
-from raptix.sandbox_kernel import tmux as tmux_mod
-from raptix.sandbox_kernel.tmux import TmuxSessionManager
+from raptix.execution.sandbox.kernel import tmux as tmux_mod
+from raptix.execution.sandbox.kernel.tmux import TmuxSessionManager
 
 _EXCEPTIONS = [
     OSError("docker exec stalled"),

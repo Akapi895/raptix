@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from raptix.tools.contracts.tools import (
+from raptix.execution.tools.contracts.tools import (
     CONTRACT_TOOLS,
     _json,
     foundry_access_test,
@@ -65,7 +65,7 @@ class TestSolidityScanTools:
 
 class TestSlitherIngestTool:
     # Happy-path and no-detector tests previously monkeypatched
-    # ``raptix.tools.contracts.tools._load`` / ``_save`` to inject
+    # ``raptix.execution.tools.contracts.tools._load`` / ``_save`` to inject
     # a ``KnowledgeGraph``. After ``slither.py`` was rewritten to
     # write directly through ``KGStore.record_observations``, those
     # symbols no longer exist on the module. They are reintroduced in

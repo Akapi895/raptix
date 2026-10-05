@@ -37,8 +37,8 @@ Use this table when deciding which package owns a new feature:
 | Utility used by multiple framework subsystems | `raptix-core/utils/` | Cheap to share if no runtime deps |
 | Agent factory (`create_*_agent`) | `raptix/intelligence/agents/` | Uses langchain, langgraph — framework-only |
 | Middleware implementation | `raptix/middleware/` | Uses langchain — framework-only |
-| Tool implementation (the `@tool`-decorated callable) | `raptix/tools/` | Uses langchain — framework-only |
-| Bash sandbox client logic | `raptix/backends/` or `sandbox_kernel/` | HTTP + framework-internal |
+| Tool implementation (the `@tool`-decorated callable) | `raptix/execution/tools/` | Uses langchain — framework-only |
+| Bash sandbox client logic | `raptix/execution/backends/` or `sandbox_kernel/` | HTTP + framework-internal |
 | Pytest fixture for plugin authors | `raptix-sdk/testing/` | Shipped to plugin authors |
 | Scaffolding template / CLI command | `raptix-sdk/scaffold/` | Author tooling |
 

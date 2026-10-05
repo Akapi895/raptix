@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from raptix.tools.web.oauth import analyze_oauth_callback
-from raptix.tools.web.session import analyze_cookie, shannon_entropy
+from raptix.execution.tools.web.oauth import analyze_oauth_callback
+from raptix.execution.tools.web.session import analyze_cookie, shannon_entropy
 
 
 class TestOAuth:

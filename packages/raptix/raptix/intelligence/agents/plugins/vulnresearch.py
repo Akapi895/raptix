@@ -56,8 +56,8 @@ from typing import Any
 from deepagents.middleware.subagents import CompiledSubAgent
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
 from raptix.core.subagent_streaming import StreamingRunnable
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory

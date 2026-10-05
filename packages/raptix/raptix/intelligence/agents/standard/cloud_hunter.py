@@ -38,20 +38,20 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
-from raptix.intelligence.agents.build import build_middleware, build_tools
-from raptix.intelligence.llm import LLMFactory
-from raptix.intelligence.prompts import load_prompt
-from raptix.tools.bash import BASH_TOOLS
-from raptix.tools.bash.bash import set_sandbox
-from raptix.tools.cloud.tools import CLOUD_TOOLS
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.tools.bash import BASH_TOOLS
+from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.cloud.tools import CLOUD_TOOLS
 
 # cve_lookup is a self-contained NVD/EPSS/CISA-KEV scorer (no KG/Neo4j
 # dependency). The container-cve skill (skills/standard/cloud/container/
 # container-cve) calls it on the runtime version, so it MUST be on this agent's
 # surface. Only the kg_* tools in tools/research stay deferred pending the Neo4j
 # middleware redesign — cve_lookup is not.
-from raptix.tools.research.tools import cve_lookup
+from raptix.execution.tools.research.tools import cve_lookup
+from raptix.intelligence.agents.build import build_middleware, build_tools
+from raptix.intelligence.llm import LLMFactory
+from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 _STANDARD_TOOLS: dict[str, Any] = {

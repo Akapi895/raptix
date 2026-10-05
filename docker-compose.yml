@@ -192,7 +192,7 @@ services:
   # LangGraph reaches sandbox over HTTP at http://sandbox:9999 (FastAPI
   # daemon baked into the image). The previous ``docker exec`` transport
   # via ``/var/run/docker.sock`` was removed in the HTTP-only migration —
-  # see raptix/backends/factory.py for the rationale.
+  # see raptix/execution/backends/factory.py for the rationale.
   sandbox:
     image: ghcr.io/akapi895/raptix-sandbox:${RAPTIX_VERSION:-stable}
     # Multi-arch image — linux/amd64 + linux/arm64. Apple Silicon and
@@ -285,7 +285,7 @@ services:
 
   # Ghidra MCP — optional 245-tool reverse engineering bridge for the
   # Reverser agent. Only built and started when the `reversing` profile is
-  # active. The headless backend in raptix/tools/reversing/ghidra.py
+  # active. The headless backend in raptix/execution/tools/reversing/ghidra.py
   # works inside the sandbox container without this sidecar; the sidecar
   # adds richer real-time queries (xrefs, batch decompile, P-code) via the
   # bethington/ghidra-mcp plugin.
@@ -593,7 +593,7 @@ services:
   # Provides the AD attack-graph layer for the agent.  Replaces the
   # in-house tools/ad/* ingest + ADCS post-process (PR #560..#578),
   # which are deprecated by ADR-0005.  The agent calls BHCE v9.2.2
-  # over its official REST API via raptix.tools.ad.bhce_client.
+  # over its official REST API via raptix.execution.tools.ad.bhce_client.
   #
   # Why a dedicated Neo4j: Neo4j Community Edition only allows one
   # user database per server, and our KGStore already occupies the

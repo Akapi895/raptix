@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.backends import SKILLS_LOCAL_PATH
+from raptix.execution.backends import SKILLS_LOCAL_PATH
 from raptix.intelligence.agents.standard import (
     ad_operator,
     contract_auditor,

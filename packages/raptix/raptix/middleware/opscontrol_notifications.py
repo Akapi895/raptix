@@ -41,7 +41,7 @@ from typing import Any, cast
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from raptix.tools.ops.client import (
+from raptix.execution.tools.ops.client import (
     OpsControlClient,
     OpsControlError,
     OpsControlUnreachableError,

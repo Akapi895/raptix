@@ -116,13 +116,13 @@ to the six tiers but discovered during the audit pass:
    `LITELLM_API_KEY = "sk-raptix-master"` AND faked Neo4j /
    Postgres "ok" without probing them. Now actually probes both;
    refuses LiteLLM check without explicit env.
-4. `packages/raptix/raptix/tools/web/tools.py` initialized
+4. `packages/raptix/raptix/execution/tools/web/tools.py` initialized
    the global HTTP session with `verify=False`. Now defaults to ON;
    CTF runs opt out via `RAPTIX_HTTP_VERIFY_TLS=true`.
 
 ### Tier 4b — Per-engagement Neo4j scoping + Raptix self-threat-model (commit 6)
 
-`raptix.tools.research._engagement_scope`: context-var based
+`raptix.execution.tools.research._engagement_scope`: context-var based
 active-engagement getter/setter. `EngagementContextMiddleware`
 propagates `engagement_name` from `config.configurable` into the
 contextvar during `before_agent`. Neo4j upsert paths

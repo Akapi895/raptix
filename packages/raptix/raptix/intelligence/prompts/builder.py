@@ -187,7 +187,7 @@ def _get_tool_prompt(tool_name: str, role: str | None = None) -> str:
     variations.
     """
     if tool_name == "bash":
-        from raptix.tools.bash.prompt import BASH_PROMPT
+        from raptix.execution.tools.bash.prompt import BASH_PROMPT
 
         return BASH_PROMPT
 

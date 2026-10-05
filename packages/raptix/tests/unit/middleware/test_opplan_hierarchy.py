@@ -7,9 +7,9 @@ from typing import Any
 
 import pytest
 
+from raptix.execution.tools.opplan import build_opplan_tools
 from raptix.intelligence.agents.standard._surface_reexpand import plan_reexpansion
 from raptix.intelligence.agents.standard._surface_registry import build_objective_expand_payload
-from raptix.tools.opplan import build_opplan_tools
 from raptix_core.types.engagement import (
     OPPLAN,
     Objective,

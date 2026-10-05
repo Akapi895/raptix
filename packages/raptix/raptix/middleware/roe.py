@@ -489,7 +489,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
                 return
             self._egress_provisioned.add(workspace)
         try:
-            from raptix.backends.factory import build_sandbox_backend
+            from raptix.execution.backends.factory import build_sandbox_backend
             from raptix.middleware.egress import compile_egress_policy
 
             policy = compile_egress_policy(rules)

@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.tools.reporting.sarif import (
+from raptix.execution.tools.reporting.sarif import (
     SARIF_SCHEMA,
     SARIF_VERSION,
     _partial_fingerprints,
@@ -17,7 +17,7 @@ from raptix.tools.reporting.sarif import (
     _stable_rule_id,
     render_sarif,
 )
-from raptix.tools.reporting.tools import report_sarif
+from raptix.execution.tools.reporting.tools import report_sarif
 from raptix_core.types.kg import KnowledgeGraph, Node, NodeKind
 
 
@@ -203,7 +203,7 @@ class TestReportSarifTool:
     def test_writes_sarif_to_disk_and_reports_metadata(self, tmp_path: Path) -> None:
         out = tmp_path / "out" / "raptix.sarif"
         g = _seeded_graph()
-        with patch("raptix.tools.reporting.tools._load", return_value=(g, None)):
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
             result = asyncio.run(
                 report_sarif.ainvoke({"engagement_id": "eng-X", "output_path": str(out)})
             )
@@ -220,6 +220,6 @@ class TestReportSarifTool:
     def test_creates_parent_directories(self, tmp_path: Path) -> None:
         out = tmp_path / "nested" / "deeper" / "raptix.sarif"
         g = _seeded_graph()
-        with patch("raptix.tools.reporting.tools._load", return_value=(g, None)):
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
             asyncio.run(report_sarif.ainvoke({"engagement_id": "eng-Y", "output_path": str(out)}))
         assert out.exists()

@@ -7,20 +7,20 @@ from types import SimpleNamespace
 
 import pytest
 
-from raptix.tools.references import fetch as fetch_mod
-from raptix.tools.references.catalog import (
+from raptix.execution.tools.references import fetch as fetch_mod
+from raptix.execution.tools.references.catalog import (
     REFERENCES,
     references_by_category,
     references_for_topic,
     suggest_for_finding,
 )
-from raptix.tools.references.fetch import (
+from raptix.execution.tools.references.fetch import (
     cache_path,
     cache_status,
     ensure_cached,
     search_cache,
 )
-from raptix.tools.references.payloads import (
+from raptix.execution.tools.references.payloads import (
     BUNDLED_PAYLOADS,
     payloads_by_class,
     search_payloads,

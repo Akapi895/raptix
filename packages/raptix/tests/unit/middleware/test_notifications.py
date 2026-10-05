@@ -6,10 +6,10 @@ from unittest.mock import MagicMock
 
 from langchain_core.messages import AIMessage, HumanMessage
 
+from raptix.execution.sandbox.kernel import BackgroundJobTracker
 from raptix.middleware.notifications import (
     SandboxNotificationMiddleware,
 )
-from raptix.sandbox_kernel import BackgroundJobTracker
 
 
 def _state(*messages):

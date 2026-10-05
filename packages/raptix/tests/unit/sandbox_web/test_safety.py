@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.sandbox_web import safety
+from raptix.execution.sandbox.web import safety
 
 
 def test_ip_blocked_internal_ranges() -> None:

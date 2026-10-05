@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.tools.reporting.hackerone import HackerOneReport, render_hackerone_markdown
+from raptix.execution.tools.reporting.hackerone import HackerOneReport, render_hackerone_markdown
 from raptix_core.types.kg import Edge, EdgeKind, KnowledgeGraph, Node, NodeKind
 
 

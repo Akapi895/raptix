@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.sandbox_web.providers import (
+from raptix.execution.sandbox.web.providers import (
     DEFAULT_PROVIDER,
     ddg_query_url,
     is_allowed_provider,

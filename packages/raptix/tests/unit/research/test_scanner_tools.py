@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.research import _state as state
-from raptix.tools.research.scanner_tools import (
+from raptix.execution.tools.research import _state as state
+from raptix.execution.tools.research.scanner_tools import (
     kg_add_candidate,
     rank_candidates,
     scan_shard,

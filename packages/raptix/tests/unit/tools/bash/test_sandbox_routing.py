@@ -10,8 +10,8 @@ single-tenant / dev / OSS self-host behavior is unchanged.
 
 from unittest.mock import MagicMock
 
-from raptix.backends import factory
-from raptix.tools.bash.bash import get_sandbox, set_sandbox
+from raptix.execution.backends import factory
+from raptix.execution.tools.bash.bash import get_sandbox, set_sandbox
 
 
 def _cfg(url: str, token: str = "tok") -> dict:
@@ -68,7 +68,7 @@ def test_subagent_override_wins_when_config_lacks_sandbox_url() -> None:
     sandbox as the ``_sandbox_var`` override (which langgraph does NOT touch), so
     get_sandbox honours it before the default and the sub-agent reaches the VM.
     """
-    from raptix.tools.bash.bash import _sandbox_var
+    from raptix.execution.tools.bash.bash import _sandbox_var
 
     override = MagicMock()
     token = set_sandbox(override)

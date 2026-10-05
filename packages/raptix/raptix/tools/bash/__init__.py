@@ -1,18 +1,7 @@
-from raptix.tools.bash.bash import (
-    bash,
-    bash_kill,
-    bash_output,
-    bash_status,
-)
-from raptix.tools.bash.prompt import BASH_PROMPT
+"""Deprecated import path, kept as a compatibility shim.
 
-BASH_TOOLS = [bash, bash_output, bash_kill, bash_status]
+Ownership moved to ``raptix.execution.tools.bash`` in W6; this re-export shim is
+retired in W11.
+"""
 
-__all__ = [
-    "BASH_PROMPT",
-    "BASH_TOOLS",
-    "bash",
-    "bash_kill",
-    "bash_output",
-    "bash_status",
-]
+from raptix.execution.tools.bash import *  # noqa: F401,F403

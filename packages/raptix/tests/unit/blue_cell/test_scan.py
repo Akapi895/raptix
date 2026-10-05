@@ -14,8 +14,8 @@ from pathlib import Path
 import pytest
 
 from raptix.blue_cell.rule_match import DetectionEvent, DetectionRule
-from raptix.tools.defense.blue_cell import _record_hit, _scan_and_record, blue_cell_scan
-from raptix.tools.research import _state as state
+from raptix.execution.tools.defense.blue_cell import _record_hit, _scan_and_record, blue_cell_scan
+from raptix.execution.tools.research import _state as state
 from raptix_core.types.kg import EdgeKind, KnowledgeGraph, Node, NodeKind
 
 _KERBEROAST = "$ GetUserSPNs.py -request -dc-ip 10.0.0.1 corp.local/svc"

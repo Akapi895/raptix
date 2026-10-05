@@ -5,9 +5,9 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.research import _state as state
-from raptix.tools.research import tools as research_tools
-from raptix.tools.research.dedupe import (
+from raptix.execution.tools.research import _state as state
+from raptix.execution.tools.research import tools as research_tools
+from raptix.execution.tools.research.dedupe import (
     DuplicateVerdict,
     find_duplicate,
     prefilter,

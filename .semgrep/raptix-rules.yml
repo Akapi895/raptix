@@ -3,7 +3,7 @@ rules:
   - id: raptix-no-shell-true-outside-sandbox
     severity: ERROR
     message: |
-      subprocess with shell=True outside sandbox_kernel/ is a command-injection
+      subprocess with shell=True outside execution/sandbox/kernel/ is a command-injection
       vector. The sandbox kernel is the only allowlisted home for shell=True;
       every other Python file that wants to invoke a subcommand must build the
       argv list explicitly.
@@ -19,7 +19,7 @@ rules:
           - pattern: os.popen(...)
     paths:
       exclude:
-        - "**/sandbox_kernel/**"
+        - "**/execution/sandbox/kernel/**"
         - "**/tests/**"
 
   # ─── Type-safety escape hatches ──────────────────────────────────────
@@ -70,8 +70,8 @@ rules:
     paths:
       exclude:
         - "**/tests/**"
-        - "**/raptix/tools/web/**"
-        - "**/raptix/tools/proxy/**"
+        - "**/raptix/execution/tools/web/**"
+        - "**/raptix/execution/tools/proxy/**"
 
   # ─── No raw API keys in the repo ─────────────────────────────────────
   - id: raptix-no-hardcoded-default-key
@@ -106,9 +106,9 @@ rules:
     paths:
       include:
         - "**/raptix/middleware/**"
-        - "**/raptix/tools/**"
-        - "**/raptix/sandbox_kernel/**"
-        - "**/raptix/sandbox_server/**"
+        - "**/raptix/execution/tools/**"
+        - "**/raptix/execution/sandbox/kernel/**"
+        - "**/raptix/execution/sandbox/server/**"
         - "**/raptix/runtime/**"
       exclude:
         - "**/tests/**"

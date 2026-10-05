@@ -22,7 +22,7 @@ Port selected Strix v1.5.0 capabilities into Raptix without parallel architectur
 ## §R RESEARCH
 id|topic|finding|src
 R1|Strix v1.5.0|Adds API spec/Postman targets, dependency reachability evidence, impact-calibrated severity, LLM compatibility controls, run labels|https://github.com/usestrix/strix/releases/tag/v1.5.0
-R2|SCA baseline|`cve_enrich_dependencies` parses 4 manifest forms, ranks OSV/NVD/EPSS/KEV results, but lacks manifest provenance + reachability ladder|https://github.com/Akapi895/raptix/blob/main/packages/raptix/raptix/tools/research/tools.py#L558-L684
+R2|SCA baseline|`cve_enrich_dependencies` parses 4 manifest forms, ranks OSV/NVD/EPSS/KEV results, but lacks manifest provenance + reachability ladder|https://github.com/Akapi895/raptix/blob/main/packages/raptix/raptix/execution/tools/research/tools.py#L558-L684
 R3|extension contracts|Plugins, roles, skills, middleware, KG ingesters already first-class; new features ! extend nearest contract|https://github.com/Akapi895/raptix/tree/main/packages/raptix-core/raptix_core
 R4|license|Strix + Raptix Apache-2.0|https://github.com/usestrix/strix/blob/v1.5.0/LICENSE
 

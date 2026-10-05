@@ -1,13 +1,7 @@
-"""Operator-interaction tools — agent-driven CLI prompts.
+"""Deprecated import path, kept as a compatibility shim.
 
-Tools in this package pause graph execution and surface a structured prompt
-to the human operator. The CLI renders an interactive picker and resumes the
-graph with the operator's choice.
+Ownership moved to ``raptix.execution.tools.interaction`` in W6; this re-export shim is
+retired in W11.
 """
 
-from raptix.tools.interaction.ask_user import ask_user_question
-from raptix.tools.interaction.complete_planning import (
-    complete_engagement_planning,
-)
-
-__all__ = ["ask_user_question", "complete_engagement_planning"]
+from raptix.execution.tools.interaction import *  # noqa: F401,F403

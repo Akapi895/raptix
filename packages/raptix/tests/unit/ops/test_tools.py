@@ -13,14 +13,14 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.ops import (
+from raptix.execution.tools.ops import (
     OPS_TOOLS,
     ops_cleanup_engagement,
     ops_start,
     ops_status,
     ops_stop,
 )
-from raptix.tools.ops.client import OpsControlError, OpsControlUnreachableError
+from raptix.execution.tools.ops.client import OpsControlError, OpsControlUnreachableError
 
 
 class _FakeClient:
@@ -70,7 +70,7 @@ def patch_client(monkeypatch):
     def factory(*_args, **_kwargs):
         return fake
 
-    monkeypatch.setattr("raptix.tools.ops.tools.OpsControlClient", factory)
+    monkeypatch.setattr("raptix.execution.tools.ops.tools.OpsControlClient", factory)
     return fake
 
 
@@ -114,7 +114,7 @@ def test_ops_start_unreachable_diagnostic(monkeypatch) -> None:
     # Patch the factory so the tool sees an immediate construction-time
     # error — equivalent to "no socket file at the default path".
     monkeypatch.setattr(
-        "raptix.tools.ops.tools.OpsControlClient",
+        "raptix.execution.tools.ops.tools.OpsControlClient",
         lambda *_a, **_k: type(
             "X",
             (),
@@ -139,7 +139,7 @@ def test_ops_start_http_error_propagates(monkeypatch) -> None:
 
         return C()
 
-    monkeypatch.setattr("raptix.tools.ops.tools.OpsControlClient", factory)
+    monkeypatch.setattr("raptix.execution.tools.ops.tools.OpsControlClient", factory)
     out = ops_start.invoke({"workload": "bogus"})
     data = json.loads(out)
     assert data["error"] == "opscontrol_http_error"

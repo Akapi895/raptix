@@ -378,7 +378,7 @@ logs:
 
 ## Health checks: KG backend + Neo4j + Web (parity with `raptix health`).
 health:
-	@$(COMPOSE) exec -T langgraph python -m raptix.tools.research.health >/dev/null 2>&1 \
+	@$(COMPOSE) exec -T langgraph python -m raptix.execution.tools.research.health >/dev/null 2>&1 \
 		&& echo "kg:    OK" || (echo "kg:    FAIL" && exit 1)
 	@set -a; . ./.env; set +a; \
 	$(COMPOSE) exec -T neo4j cypher-shell -u neo4j -p "$${NEO4J_PASSWORD:-raptix-graph}" "RETURN 1 AS ok;" >/dev/null 2>&1 \

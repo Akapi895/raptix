@@ -8,9 +8,9 @@ from dataclasses import dataclass
 
 import pytest
 
+from raptix.execution.tools.web import search
 from raptix.middleware.roe import GATED_TOOL_NAMES, NETWORK_TARGET_EXTRACTORS
 from raptix.middleware.untrusted_output import UNTRUSTED_TOOL_NAMES
-from raptix.tools.web import search
 
 
 @dataclass
@@ -76,7 +76,7 @@ async def test_web_fetch_ok(monkeypatch: pytest.MonkeyPatch) -> None:
     # Assert the URL as an exact shlex token (== — not a URL substring test).
     cmd = fake.commands[0]
     argv = shlex.split(cmd)
-    assert "raptix.sandbox_web fetch" in cmd
+    assert "raptix.execution.sandbox.web fetch" in cmd
     assert any(a == "https://x.test/a" for a in argv)
     assert "--workspace" in cmd and "/workspace/eng1" in cmd
     assert "--selector" in cmd
@@ -134,7 +134,7 @@ async def test_web_search_hits(monkeypatch: pytest.MonkeyPatch) -> None:
     lines = [ln.strip() for ln in out.splitlines()]
     assert any(ln == "https://a.test" for ln in lines)
     assert any(ln == "https://b.test" for ln in lines)
-    assert "raptix.sandbox_web search" in fake.commands[0]
+    assert "raptix.execution.sandbox.web search" in fake.commands[0]
 
 
 async def test_web_search_provider_error(monkeypatch: pytest.MonkeyPatch) -> None:

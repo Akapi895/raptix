@@ -5,8 +5,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from raptix.sandbox_kernel import BackgroundJobTracker
-from raptix.tools.bash.bash import (
+from raptix.execution.sandbox.kernel import BackgroundJobTracker
+from raptix.execution.tools.bash.bash import (
     _STATUS_PREFIXES,
     INLINE_LIMIT,
     bash,

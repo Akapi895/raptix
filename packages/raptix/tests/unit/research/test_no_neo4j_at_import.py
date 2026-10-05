@@ -9,7 +9,7 @@ def test_research_tools_do_not_import_neo4j_at_module_load():
     # A subprocess gives a clean module table independent of import order.
     code = (
         "import sys; "
-        "import raptix.tools.research.tools; "
+        "import raptix.execution.tools.research.tools; "
         "assert 'neo4j' not in sys.modules, sorted(m for m in sys.modules if 'neo4j' in m)"
     )
     subprocess.run([sys.executable, "-c", code], check=True)

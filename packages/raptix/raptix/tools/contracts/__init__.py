@@ -1,37 +1,7 @@
-"""Smart contract audit package.
+"""Deprecated import path, kept as a compatibility shim.
 
-Offline pattern scanner + Slither JSON ingestion + Foundry harness
-generator for Solidity/EVM targets. Focus on the DeFi bug classes that
-actually win bounties:
-
-- Reentrancy (classic + read-only)
-- Oracle manipulation
-- Flash loan abuse
-- Access control gaps (missing onlyOwner / role checks)
-- Upgradeable-proxy storage clashes
-- Signature replay across chains
-- Integer truncation / math rounding
-
-Everything here runs in pure Python against source strings so tests
-can cover the detection logic without a Foundry toolchain.
+Ownership moved to ``raptix.execution.tools.contracts`` in W6; this re-export shim is
+retired in W11.
 """
 
-from __future__ import annotations
-
-from raptix.tools.contracts.foundry import (
-    FoundryHarness,
-    generate_reentrancy_test,
-)
-from raptix.tools.contracts.patterns import (
-    ContractFinding,
-    scan_solidity_source,
-)
-from raptix.tools.contracts.slither import ingest_slither_json
-
-__all__ = [
-    "ContractFinding",
-    "FoundryHarness",
-    "generate_reentrancy_test",
-    "ingest_slither_json",
-    "scan_solidity_source",
-]
+from raptix.execution.tools.contracts import *  # noqa: F401,F403

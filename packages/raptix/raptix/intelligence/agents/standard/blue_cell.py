@@ -41,13 +41,13 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.tools.defense.blue_cell import blue_cell_scan
+from raptix.execution.tools.defense.brief import defense_brief, export_attack_navigator
+from raptix.execution.tools.research.tools import kg_neighbors, kg_query, kg_stats
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
-from raptix.tools.defense.blue_cell import blue_cell_scan
-from raptix.tools.defense.brief import defense_brief, export_attack_navigator
-from raptix.tools.research.tools import kg_neighbors, kg_query, kg_stats
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 # Name-keyed baseline tools. Read-only by construction: the detection-coverage

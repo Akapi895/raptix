@@ -37,7 +37,7 @@ Default credentials: `neo4j` / `raptix-graph` (set via `NEO4J_PASSWORD`).
 
 ## Research Tools
 
-Agents interact with the graph via tools defined in `raptix/tools/research/tools.py`:
+Agents interact with the graph via tools defined in `raptix/execution/tools/research/tools.py`:
 
 ### Graph Mutations
 
@@ -77,7 +77,7 @@ Agents interact with the graph via tools defined in `raptix/tools/research/tools
 raptix kg-health
 ```
 
-Runs `raptix.tools.research.health:main` and reports:
+Runs `raptix.execution.tools.research.health:main` and reports:
 - Neo4j connectivity status
 - Node and edge counts by type
 - Index health

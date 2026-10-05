@@ -1,12 +1,12 @@
 import time as _t
 from unittest.mock import MagicMock, patch
 
-from raptix.backends.http_sandbox import HTTPSandbox, _mirror_key
+from raptix.execution.backends.http_sandbox import HTTPSandbox, _mirror_key
 
 
 def _make_sandbox():
     sb = HTTPSandbox.__new__(HTTPSandbox)
-    from raptix.sandbox_kernel import BackgroundJobTracker
+    from raptix.execution.sandbox.kernel import BackgroundJobTracker
 
     sb._base_url = "http://localhost:9999"
     sb._token = None

@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.references import hydrate
-from raptix.tools.references.fetch import ReferenceCache
+from raptix.execution.tools.references import hydrate
+from raptix.execution.tools.references.fetch import ReferenceCache
 
 
 @pytest.fixture

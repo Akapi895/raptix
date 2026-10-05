@@ -24,12 +24,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-# Import the module object explicitly. ``raptix.sandbox_server.__init__``
+# Import the module object explicitly. ``raptix.execution.sandbox.server.__init__``
 # binds ``app`` (the FastAPI instance) as a package attribute, so a plain
-# ``import raptix.sandbox_server.app as app_module`` would resolve
+# ``import raptix.execution.sandbox.server.app as app_module`` would resolve
 # ``.app`` to that instance rather than the submodule. ``import_module``
 # always returns the module.
-app_module = importlib.import_module("raptix.sandbox_server.app")
+app_module = importlib.import_module("raptix.execution.sandbox.server.app")
 app = app_module.app
 
 TOKEN = "s3cr3t-token"  # noqa: S105  — test fixture, not a real credential
@@ -455,7 +455,7 @@ _POLICY_WIRE = {
 
 
 def _fake_apply_result(detail: str):
-    from raptix.sandbox_kernel.egress import EgressApplyResult
+    from raptix.execution.sandbox.kernel.egress import EgressApplyResult
 
     return EgressApplyResult(
         applied=False,
@@ -477,7 +477,7 @@ def test_provision_egress_marshals_policy_and_default_on_gate(monkeypatch) -> No
         captured["enabled"] = enabled
         return _fake_apply_result("nft ruleset loaded")
 
-    monkeypatch.setattr("raptix.sandbox_kernel.egress.apply_egress", fake_apply)
+    monkeypatch.setattr("raptix.execution.sandbox.kernel.egress.apply_egress", fake_apply)
     # No env set — egress enforcement is ON by default.
     monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
     with _client(backend) as client:
@@ -500,7 +500,7 @@ def test_provision_egress_opt_out_env_disables_gate(monkeypatch) -> None:
         captured["enabled"] = enabled
         return _fake_apply_result("egress enforcement disabled")
 
-    monkeypatch.setattr("raptix.sandbox_kernel.egress.apply_egress", fake_apply)
+    monkeypatch.setattr("raptix.execution.sandbox.kernel.egress.apply_egress", fake_apply)
     monkeypatch.setenv("RAPTIX_EGRESS_DISABLE", "1")
     with _client(backend) as client:
         resp = client.post("/provision_egress", json={"policy": _POLICY_WIRE})

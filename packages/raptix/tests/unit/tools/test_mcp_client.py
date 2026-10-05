@@ -1,4 +1,4 @@
-"""Tests for ``raptix.tools.mcp.client``.
+"""Tests for ``raptix.execution.tools.mcp.client``.
 
 These tests must never reach the real network and must never require
 ``langchain-mcp-adapters`` to be installed — both are simulated via
@@ -15,7 +15,7 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.mcp.client import (
+from raptix.execution.tools.mcp.client import (
     ENV_SERVERS,
     MCPServerConfig,
     load_mcp_tools,
@@ -79,14 +79,14 @@ def test_parse_default_transport_stdio_when_command_present():
 
 
 def test_parse_malformed_json_returns_empty_and_warns(caplog: pytest.LogCaptureFixture):
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = parse_mcp_servers_env("{not valid json")
     assert result == ()
     assert any("malformed JSON" in rec.message for rec in caplog.records)
 
 
 def test_parse_non_object_top_level_returns_empty(caplog: pytest.LogCaptureFixture):
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = parse_mcp_servers_env(json.dumps(["not", "an", "object"]))
     assert result == ()
     assert any("must be a JSON object" in rec.message for rec in caplog.records)
@@ -99,7 +99,7 @@ def test_parse_unknown_transport_is_skipped(caplog: pytest.LogCaptureFixture):
             "bad": {"url": "http://y/mcp", "transport": "carrier-pigeon"},
         }
     )
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         parsed = parse_mcp_servers_env(raw)
     names = {s.name for s in parsed}
     assert names == {"good"}
@@ -108,7 +108,7 @@ def test_parse_unknown_transport_is_skipped(caplog: pytest.LogCaptureFixture):
 
 def test_parse_bad_entry_shape_is_skipped(caplog: pytest.LogCaptureFixture):
     raw = json.dumps({"weird": "not-an-object"})
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         parsed = parse_mcp_servers_env(raw)
     assert parsed == ()
     assert any("must be a JSON object" in rec.message for rec in caplog.records)
@@ -169,7 +169,7 @@ async def test_load_mcp_tools_malformed_env_returns_empty(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):
     monkeypatch.setenv(ENV_SERVERS, "{bogus")
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = await load_mcp_tools()
     assert result == []
 
@@ -183,7 +183,7 @@ async def test_load_mcp_tools_missing_package_is_graceful(
     monkeypatch.setitem(sys.modules, "langchain_mcp_adapters", None)
     monkeypatch.setitem(sys.modules, "langchain_mcp_adapters.client", None)
     servers = (MCPServerConfig(name="kali", transport="streamable_http", url="http://x/mcp"),)
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = await load_mcp_tools(servers)
     assert result == []
     assert any("langchain-mcp-adapters" in rec.message for rec in caplog.records)
@@ -233,7 +233,7 @@ async def test_load_mcp_tools_retries_transient_failures(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):
     """A server whose get_tools() fails twice then succeeds is retried."""
-    from raptix.tools.mcp import client as mcp_client
+    from raptix.execution.tools.mcp import client as mcp_client
 
     sentinel_tools = [object()]
     attempts: list[int] = []
@@ -263,7 +263,7 @@ async def test_load_mcp_tools_retries_transient_failures(
     monkeypatch.setattr(mcp_client, "_sleep", _no_sleep)
 
     servers = (MCPServerConfig(name="kali", transport="streamable_http", url="http://x/mcp"),)
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = await load_mcp_tools(servers)
     assert result == sentinel_tools
     assert len(attempts) == 3
@@ -275,7 +275,7 @@ async def test_load_mcp_tools_skips_after_all_attempts_exhausted(
     monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
 ):
     """A server that fails every retry is logged+skipped (current end-state)."""
-    from raptix.tools.mcp import client as mcp_client
+    from raptix.execution.tools.mcp import client as mcp_client
 
     attempts: list[int] = []
 
@@ -300,7 +300,7 @@ async def test_load_mcp_tools_skips_after_all_attempts_exhausted(
     monkeypatch.setattr(mcp_client, "_sleep", _no_sleep)
 
     servers = (MCPServerConfig(name="bad", transport="streamable_http", url="http://x/mcp"),)
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = await load_mcp_tools(servers)
     assert result == []
     assert len(attempts) >= 2
@@ -332,7 +332,7 @@ async def test_load_mcp_tools_one_bad_server_does_not_kill_others(
         MCPServerConfig(name="bad", transport="streamable_http", url="http://x/mcp"),
         MCPServerConfig(name="ok", transport="streamable_http", url="http://y/mcp"),
     )
-    with caplog.at_level(logging.WARNING, logger="raptix.tools.mcp"):
+    with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.mcp"):
         result = await load_mcp_tools(servers)
     assert result == [good_tool]
     assert any("unreachable" in rec.message for rec in caplog.records)

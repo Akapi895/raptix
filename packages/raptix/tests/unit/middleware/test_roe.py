@@ -909,7 +909,9 @@ class TestEgressProvisioningHook:
         monkeypatch.delenv("RAPTIX_EGRESS_DISABLE", raising=False)
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         sandbox = _FakeSandbox()
-        monkeypatch.setattr("raptix.backends.factory.build_sandbox_backend", lambda: sandbox)
+        monkeypatch.setattr(
+            "raptix.execution.backends.factory.build_sandbox_backend", lambda: sandbox
+        )
         mw = RoEGuardrailMiddleware()
         state = {"workspace_path": str(tmp_path)}
         mw.before_agent(state, runtime=None)
@@ -925,7 +927,7 @@ class TestEgressProvisioningHook:
         _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
         calls: list = []
         monkeypatch.setattr(
-            "raptix.backends.factory.build_sandbox_backend",
+            "raptix.execution.backends.factory.build_sandbox_backend",
             lambda: calls.append(1),
         )
         mw = RoEGuardrailMiddleware()
@@ -937,7 +939,7 @@ class TestEgressProvisioningHook:
         _write_roe(tmp_path, {"mode": "audit", "in_scope": ["10.0.0.0/24"]})
         calls: list = []
         monkeypatch.setattr(
-            "raptix.backends.factory.build_sandbox_backend",
+            "raptix.execution.backends.factory.build_sandbox_backend",
             lambda: calls.append(1),
         )
         mw = RoEGuardrailMiddleware()
@@ -956,7 +958,9 @@ class TestEgressProvisioningHook:
                     raise RuntimeError("daemon down")
                 return {"applied": True, "detail": "ok"}
 
-        monkeypatch.setattr("raptix.backends.factory.build_sandbox_backend", lambda: _Flaky())
+        monkeypatch.setattr(
+            "raptix.execution.backends.factory.build_sandbox_backend", lambda: _Flaky()
+        )
         mw = RoEGuardrailMiddleware()
         state = {"workspace_path": str(tmp_path)}
         mw.before_agent(state, runtime=None)  # fails, un-marks workspace

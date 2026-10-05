@@ -1,7 +1,7 @@
 """Filesystem backend protocol — matches the deepagents Backend shape.
 
 The Raptix framework composes a ``CompositeBackend`` per agent
-(``raptix.backends.make_agent_backend``) that routes ``/skills/``
+(``raptix.execution.backends.make_agent_backend``) that routes ``/skills/``
 to in-process file reads and everything else to the sandbox transport.
 Plugin authors implementing custom backends conform to this Protocol.
 

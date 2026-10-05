@@ -11,7 +11,7 @@ with the BHCE server-side validator.
 
 from __future__ import annotations
 
-from raptix.tools.ad.bhce_client import (
+from raptix.execution.tools.ad.bhce_client import (
     BHCEClient,
     BHCEConfigError,
     sign_request,

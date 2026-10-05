@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.tools.references.methodology import (
+from raptix.execution.tools.references.methodology import (
     classes_present,
     classify_filename,
     load_chapters,

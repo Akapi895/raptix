@@ -12,17 +12,17 @@ lock in the bounded behavior:
 
 import importlib
 
-from raptix.tools.bash.bash import (
+from raptix.execution.tools.bash.bash import (
     _PASSIVE_MAX_ENTRIES,
     _PASSIVE_TTL_SECONDS,
     _passive_read_state,
     _track_passive_read,
 )
 
-# `from raptix.tools.bash import bash` resolves to the @tool-decorated
+# `from raptix.execution.tools.bash import bash` resolves to the @tool-decorated
 # StructuredTool because the submodule shadows the package attribute. Reach the
 # real module object explicitly so monkeypatch.setattr can target `_passive_clock`.
-bash_mod = importlib.import_module("raptix.tools.bash.bash")
+bash_mod = importlib.import_module("raptix.execution.tools.bash.bash")
 
 
 def setup_function():

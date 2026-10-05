@@ -14,7 +14,7 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from raptix.tools.research.cve import (
+from raptix.execution.tools.research.cve import (
     Exploitability,
     _Cache,
     _parse_epss,
@@ -61,7 +61,7 @@ class TestCacheLRUEviction:
     def test_evicts_oldest_when_over_capacity(self, tmp_path: Path) -> None:
         # Use a tiny cap so we can test eviction quickly
         # Fill past MAX_CACHE_ENTRIES by temporarily patching the module constant
-        with patch("raptix.tools.research.cve.MAX_CACHE_ENTRIES", 3):
+        with patch("raptix.execution.tools.research.cve.MAX_CACHE_ENTRIES", 3):
             small = _Cache(path=tmp_path / "small.json")
             small.set("a", {"v": "a"})
             small.set("b", {"v": "b"})
@@ -72,7 +72,7 @@ class TestCacheLRUEviction:
             assert small.get("d") == {"v": "d"}
 
     def test_get_promotes_to_most_recently_used(self, tmp_path: Path) -> None:
-        with patch("raptix.tools.research.cve.MAX_CACHE_ENTRIES", 3):
+        with patch("raptix.execution.tools.research.cve.MAX_CACHE_ENTRIES", 3):
             cache = _Cache(path=tmp_path / "promote.json")
             cache.set("a", {"v": "a"})
             cache.set("b", {"v": "b"})
@@ -235,8 +235,12 @@ class TestLookupCve:
 
         async def _run() -> Exploitability:
             with (
-                patch("raptix.tools.research.cve._fetch_nvd", new_callable=AsyncMock) as fn,
-                patch("raptix.tools.research.cve._fetch_epss", new_callable=AsyncMock) as fe,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_nvd", new_callable=AsyncMock
+                ) as fn,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_epss", new_callable=AsyncMock
+                ) as fe,
             ):
                 fn.return_value = nvd_data
                 fe.return_value = epss_data
@@ -256,8 +260,12 @@ class TestLookupCve:
 
         async def _run() -> Exploitability:
             with (
-                patch("raptix.tools.research.cve._fetch_nvd", new_callable=AsyncMock) as fn,
-                patch("raptix.tools.research.cve._fetch_epss", new_callable=AsyncMock) as fe,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_nvd", new_callable=AsyncMock
+                ) as fn,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_epss", new_callable=AsyncMock
+                ) as fe,
             ):
                 fn.return_value = nvd_data
                 fe.return_value = epss_data
@@ -272,8 +280,12 @@ class TestLookupCve:
 
         async def _run() -> Exploitability:
             with (
-                patch("raptix.tools.research.cve._fetch_nvd", new_callable=AsyncMock) as fn,
-                patch("raptix.tools.research.cve._fetch_epss", new_callable=AsyncMock) as fe,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_nvd", new_callable=AsyncMock
+                ) as fn,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_epss", new_callable=AsyncMock
+                ) as fe,
             ):
                 fn.return_value = {}
                 fe.return_value = {}
@@ -290,8 +302,12 @@ class TestLookupCve:
 
         async def _run() -> Exploitability:
             with (
-                patch("raptix.tools.research.cve._fetch_nvd", new_callable=AsyncMock) as fn,
-                patch("raptix.tools.research.cve._fetch_epss", new_callable=AsyncMock) as fe,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_nvd", new_callable=AsyncMock
+                ) as fn,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_epss", new_callable=AsyncMock
+                ) as fe,
             ):
                 fn.return_value = nvd_data
                 fe.return_value = epss_data
@@ -307,8 +323,12 @@ class TestLookupCve:
 
         async def _run() -> None:
             with (
-                patch("raptix.tools.research.cve._fetch_nvd", new_callable=AsyncMock) as fn,
-                patch("raptix.tools.research.cve._fetch_epss", new_callable=AsyncMock) as fe,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_nvd", new_callable=AsyncMock
+                ) as fn,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_epss", new_callable=AsyncMock
+                ) as fe,
             ):
                 fn.return_value = nvd_data
                 fe.return_value = epss_data
@@ -329,8 +349,12 @@ class TestLookupCves:
 
         async def _run() -> list[Exploitability]:
             with (
-                patch("raptix.tools.research.cve._fetch_nvd", new_callable=AsyncMock) as fn,
-                patch("raptix.tools.research.cve._fetch_epss", new_callable=AsyncMock) as fe,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_nvd", new_callable=AsyncMock
+                ) as fn,
+                patch(
+                    "raptix.execution.tools.research.cve._fetch_epss", new_callable=AsyncMock
+                ) as fe,
             ):
 
                 def nvd_side(*args: Any, **kwargs: Any) -> dict[str, Any]:
@@ -367,7 +391,9 @@ class TestLookupPackage:
         }
 
         async def _run() -> list[str]:
-            with patch("raptix.tools.research.cve._fetch_osv", new_callable=AsyncMock) as mock_osv:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_osv", new_callable=AsyncMock
+            ) as mock_osv:
                 mock_osv.return_value = osv_response
                 return await lookup_package("requests", "2.31.0", "PyPI")
 
@@ -378,7 +404,9 @@ class TestLookupPackage:
 
     def test_empty_response_returns_empty_list(self) -> None:
         async def _run() -> list[str]:
-            with patch("raptix.tools.research.cve._fetch_osv", new_callable=AsyncMock) as mock_osv:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_osv", new_callable=AsyncMock
+            ) as mock_osv:
                 mock_osv.return_value = {}
                 return await lookup_package("no-vulns", "1.0.0", "PyPI")
 
@@ -394,7 +422,9 @@ class TestLookupPackage:
         }
 
         async def _run() -> list[str]:
-            with patch("raptix.tools.research.cve._fetch_osv", new_callable=AsyncMock) as mock_osv:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_osv", new_callable=AsyncMock
+            ) as mock_osv:
                 mock_osv.return_value = osv_response
                 return await lookup_package("pkg", "1.0.0", "npm")
 
@@ -405,7 +435,9 @@ class TestLookupPackage:
         # _fetch_osv catches HTTPError and returns {} — lookup_package then
         # sees no "vulns" key and returns an empty id list.
         async def _run() -> list[str]:
-            with patch("raptix.tools.research.cve._fetch_osv", new_callable=AsyncMock) as mock_osv:
+            with patch(
+                "raptix.execution.tools.research.cve._fetch_osv", new_callable=AsyncMock
+            ) as mock_osv:
                 mock_osv.return_value = {}  # _fetch_osv error-path return value
                 return await lookup_package("pkg", "1.0.0", "npm")
 

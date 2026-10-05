@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.defense.brief import (
+from raptix.execution.tools.defense.brief import (
     _percentile,
     build_defense_brief,
     build_navigator_layer,
@@ -19,7 +19,7 @@ from raptix.tools.defense.brief import (
     export_attack_navigator,
     render_brief_markdown,
 )
-from raptix.tools.research import _state as state
+from raptix.execution.tools.research import _state as state
 from raptix_core.types.kg import Edge, EdgeKind, KnowledgeGraph, Node, NodeKind
 
 

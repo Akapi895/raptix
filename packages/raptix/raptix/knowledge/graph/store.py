@@ -1,6 +1,6 @@
 """KGStore — engagement-scoped Neo4j wrapper for the KG middleware.
 
-Replaces the broken ``raptix.tools.research._state.graph_transaction``
+Replaces the broken ``raptix.execution.tools.research._state.graph_transaction``
 pattern with per-operation ``session.execute_write`` / ``execute_read``
 calls. Each public method takes ``engagement`` as a mandatory keyword
 so the contextvar-based scoping that the legacy

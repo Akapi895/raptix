@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.tools.research.cve import (
+from raptix.execution.tools.research.cve import (
     Exploitability,
     _parse_epss,
     _parse_nvd,

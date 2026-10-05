@@ -1,4 +1,4 @@
-"""Comprehensive tests for raptix.tools.references.fetch.
+"""Comprehensive tests for raptix.execution.tools.references.fetch.
 
 Covers: _default_cache_root, ReferenceCache.to_dict, _entry, _dir_size,
 _run_git (hardened env), ensure_cached (clone / pull / symlink / URL-mismatch),
@@ -18,8 +18,8 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.tools.references import fetch as fetch_mod
-from raptix.tools.references.fetch import (
+from raptix.execution.tools.references import fetch as fetch_mod
+from raptix.execution.tools.references.fetch import (
     ReferenceCache,
     _default_cache_root,
     _dir_size,

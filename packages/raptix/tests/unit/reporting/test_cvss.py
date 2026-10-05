@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.tools.reporting.cvss import (
+from raptix.execution.tools.reporting.cvss import (
     CVSSError,
     cvss_score_tool,
     parse_vector,

@@ -27,20 +27,20 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
-from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
-from raptix.intelligence.agents.build import build_middleware, build_tools
-from raptix.intelligence.llm import LLMFactory
-from raptix.intelligence.prompts import load_prompt
-from raptix.tools.bash import BASH_TOOLS
-from raptix.tools.bash.bash import set_sandbox
-from raptix.tools.references.tools import methodology_lookup, payload_search
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.tools.bash import BASH_TOOLS
+from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.references.tools import methodology_lookup, payload_search
 
 # cve_lookup is a self-contained NVD/EPSS/CISA-KEV scorer (no KG/Neo4j
 # dependency) — mobile targets ship native libs with version-specific CVEs, so
 # keep it on the surface. Only the kg_* tools in tools/research stay deferred
 # pending the Neo4j middleware redesign.
-from raptix.tools.research.tools import cve_lookup
+from raptix.execution.tools.research.tools import cve_lookup
+from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
+from raptix.intelligence.agents.build import build_middleware, build_tools
+from raptix.intelligence.llm import LLMFactory
+from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 _STANDARD_TOOLS: dict[str, Any] = {

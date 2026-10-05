@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.sandbox_kernel.daemon import DaemonSandbox
+from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
 pytestmark = pytest.mark.skipif(
     os.name == "nt",

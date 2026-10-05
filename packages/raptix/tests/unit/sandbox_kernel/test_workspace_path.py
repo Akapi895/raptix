@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.sandbox_kernel.base import SandboxBase
+from raptix.execution.sandbox.kernel.base import SandboxBase
 
 _norm = SandboxBase._normalize_workspace_path
 

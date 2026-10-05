@@ -12,8 +12,8 @@ import sys
 from unittest.mock import MagicMock
 
 # ── Stub heavy transitive imports ────────────────────────────────────────
-# ``raptix.tools.research.bounty`` transitively pulls in
-# ``raptix.backends.http_sandbox`` which requires ``deepagents``.
+# ``raptix.execution.tools.research.bounty`` transitively pulls in
+# ``raptix.execution.backends.http_sandbox`` which requires ``deepagents``.
 # We stub just enough of the import chain so the pure functions load.
 
 
@@ -46,7 +46,7 @@ def _ensure_stubs() -> None:
 
 _ensure_stubs()
 
-from raptix.tools.research.bounty import (  # noqa: E402
+from raptix.execution.tools.research.bounty import (  # noqa: E402
     _COMMONLY_EXCLUDED,
     BOUNTY_TOOLS,
     _normalize_class,
@@ -128,7 +128,7 @@ class TestFindLinkedVuln:
     """Test _find_linked_vuln with real graph objects."""
 
     def test_finds_via_validates_edge(self) -> None:
-        from raptix.tools.research.bounty import _find_linked_vuln
+        from raptix.execution.tools.research.bounty import _find_linked_vuln
 
         graph = KnowledgeGraph()
         vuln = Node.make(NodeKind.VULNERABILITY, "test vuln", key="v1")
@@ -142,7 +142,7 @@ class TestFindLinkedVuln:
         assert result.id == vuln.id
 
     def test_finds_via_maps_to_edge(self) -> None:
-        from raptix.tools.research.bounty import _find_linked_vuln
+        from raptix.execution.tools.research.bounty import _find_linked_vuln
 
         graph = KnowledgeGraph()
         vuln = Node.make(NodeKind.VULNERABILITY, "test vuln", key="v2")
@@ -156,7 +156,7 @@ class TestFindLinkedVuln:
         assert result.id == vuln.id
 
     def test_returns_none_when_no_link(self) -> None:
-        from raptix.tools.research.bounty import _find_linked_vuln
+        from raptix.execution.tools.research.bounty import _find_linked_vuln
 
         graph = KnowledgeGraph()
         finding = Node.make(NodeKind.FINDING, "orphan", key="f3")

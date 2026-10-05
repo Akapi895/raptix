@@ -6,8 +6,8 @@ import asyncio
 
 import pytest
 
-from raptix.tools.research import poc as poc_mod
-from raptix.tools.research.poc import (
+from raptix.execution.tools.research import poc as poc_mod
+from raptix.execution.tools.research.poc import (
     POC_ERR_SANDBOX,
     POC_ERR_TIMEOUT,
     sandbox_runner,

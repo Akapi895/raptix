@@ -13,14 +13,14 @@ from pathlib import Path
 
 import pytest
 
-import raptix.tools.references.cve_poc_index as cve_poc_index
-import raptix.tools.references.h1_corpus as h1_corpus
-import raptix.tools.references.killchain as killchain_mod
-import raptix.tools.references.methodology as methodology_mod
-import raptix.tools.references.oneliners as oneliners_mod
-import raptix.tools.references.payloads_ingest as payloads_ingest
-from raptix.tools.references import tools as T
-from raptix.tools.references.fetch import cache_path
+import raptix.execution.tools.references.cve_poc_index as cve_poc_index
+import raptix.execution.tools.references.h1_corpus as h1_corpus
+import raptix.execution.tools.references.killchain as killchain_mod
+import raptix.execution.tools.references.methodology as methodology_mod
+import raptix.execution.tools.references.oneliners as oneliners_mod
+import raptix.execution.tools.references.payloads_ingest as payloads_ingest
+from raptix.execution.tools.references import tools as T
+from raptix.execution.tools.references.fetch import cache_path
 
 
 @pytest.fixture(autouse=True)

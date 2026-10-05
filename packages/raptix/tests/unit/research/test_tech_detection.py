@@ -14,8 +14,8 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from raptix.tools.research import tech_detection
-from raptix.tools.research.tech_detection import detect_tech_stack
+from raptix.execution.tools.research import tech_detection
+from raptix.execution.tools.research.tech_detection import detect_tech_stack
 from raptix_core.types.roe import EnforcementMode, MachineEnforcement, ScopeRule
 
 
@@ -301,7 +301,7 @@ async def test_connection_error_is_reported() -> None:
 
 
 def test_tool_registered_in_research_tools() -> None:
-    from raptix.tools.research.tools import RESEARCH_TOOLS
+    from raptix.execution.tools.research.tools import RESEARCH_TOOLS
 
     assert detect_tech_stack in RESEARCH_TOOLS
 

@@ -10,7 +10,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-app_module = importlib.import_module("raptix.sandbox_server.app")
+app_module = importlib.import_module("raptix.execution.sandbox.server.app")
 app = app_module.app
 
 TOKEN = "correct-token-value"

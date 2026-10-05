@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.tools.references.cve_poc_index import (
+from raptix.execution.tools.references.cve_poc_index import (
     PoCIndex,
     build_index,
     load_index,

@@ -8,7 +8,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import httpx
 import pytest
 
-from raptix.tools.web.http import HTTPSession
+from raptix.execution.tools.web.http import HTTPSession
 
 
 class TestHTTPSessionPerRequestTimeout:

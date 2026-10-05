@@ -97,7 +97,7 @@ def test_discover_contracts_loads_only_declared_valid_contracts(tmp_path: Path) 
 
 
 def test_shipped_specialist_contracts_cover_every_supported_lane() -> None:
-    from raptix.backends import SKILLS_LOCAL_PATH
+    from raptix.execution.backends import SKILLS_LOCAL_PATH
 
     contracts, issues = discover_contracts(Path(SKILLS_LOCAL_PATH))
 

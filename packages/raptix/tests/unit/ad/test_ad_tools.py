@@ -7,18 +7,18 @@ Edge.make / upsert_*).
 
 from __future__ import annotations
 
-from raptix.tools.ad.delegation import (
+from raptix.execution.tools.ad.delegation import (
     DelegationFinding,
     _is_dc,
     _spn_targets_dc,
     analyze_delegation,
 )
-from raptix.tools.ad.gpo import (
+from raptix.execution.tools.ad.gpo import (
     GPOFinding,
     _is_sensitive_ou,
     analyze_gpo_abuse,
 )
-from raptix.tools.ad.shadow_creds import (
+from raptix.execution.tools.ad.shadow_creds import (
     ShadowCredsFinding,
     analyze_shadow_credentials,
 )

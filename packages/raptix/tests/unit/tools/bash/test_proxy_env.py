@@ -17,8 +17,8 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.sandbox_kernel import tmux as tmux_module
-from raptix.sandbox_kernel.tmux import (
+from raptix.execution.sandbox.kernel import tmux as tmux_module
+from raptix.execution.sandbox.kernel.tmux import (
     TmuxSessionManager,
     _allowed_passthrough_env,
     _shell_export_command,

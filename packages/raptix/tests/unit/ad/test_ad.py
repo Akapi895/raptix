@@ -11,8 +11,8 @@ see the BloodHound RFC §4.5.
 
 from __future__ import annotations
 
-from raptix.tools.ad.adcs import analyze_adcs_templates
-from raptix.tools.ad.kerberos import classify_hashcat_hash, parse_ticket
+from raptix.execution.tools.ad.adcs import analyze_adcs_templates
+from raptix.execution.tools.ad.kerberos import classify_hashcat_hash, parse_ticket
 
 
 class TestKerberos:

@@ -10,7 +10,7 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.agents.standard.soundwave import _STANDARD_TOOLS
 from raptix.intelligence.llm import LLMFactory

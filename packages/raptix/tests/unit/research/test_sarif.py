@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from raptix.tools.research.sarif import ingest_sarif, ingest_sarif_file
+from raptix.execution.tools.research.sarif import ingest_sarif, ingest_sarif_file
 from raptix_core.types.kg import KnowledgeGraph, NodeKind, Severity
 
 

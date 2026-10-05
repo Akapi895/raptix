@@ -1,7 +1,7 @@
 """Sandbox transport protocol — matches the ``HTTPSandbox`` shape.
 
 The framework's bash execution + filesystem operations all route
-through a sandbox transport (today, ``raptix.backends.HTTPSandbox``
+through a sandbox transport (today, ``raptix.execution.backends.HTTPSandbox``
 talking to the sandbox container's FastAPI daemon). Plugin authors
 implementing alternative transports — local subprocess, remote SSH,
 or a different containerization runtime — conform to this Protocol.

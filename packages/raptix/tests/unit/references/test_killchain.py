@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.tools.references.killchain import (
+from raptix.execution.tools.references.killchain import (
     load_entries,
     lookup,
     normalize_phase,

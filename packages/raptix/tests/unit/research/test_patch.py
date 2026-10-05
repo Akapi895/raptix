@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.research.patch import patch_propose, patch_verify
+from raptix.execution.tools.research.patch import patch_propose, patch_verify
 from raptix_core.types.kg import (
     EdgeKind,
     KnowledgeGraph,
@@ -55,7 +55,7 @@ class _FakeStore:
 
 def _configure_kg(monkeypatch):
     fake = _FakeStore()
-    monkeypatch.setattr("raptix.tools.research._state._store", fake)
+    monkeypatch.setattr("raptix.execution.tools.research._state._store", fake)
     return fake
 
 
@@ -176,7 +176,7 @@ class TestPatchVerify:
         sandbox = FakeSandbox(scripts=[("all good, no sql error", 0)])
         import importlib
 
-        bash_mod = importlib.import_module("raptix.tools.bash.bash")
+        bash_mod = importlib.import_module("raptix.execution.tools.bash.bash")
         bash_mod.set_sandbox(sandbox)
 
         raw = await patch_verify.ainvoke(
@@ -215,7 +215,7 @@ class TestPatchVerify:
         sandbox = FakeSandbox(scripts=[("sql syntax error near quote", 1)])
         import importlib
 
-        bash_mod = importlib.import_module("raptix.tools.bash.bash")
+        bash_mod = importlib.import_module("raptix.execution.tools.bash.bash")
         bash_mod.set_sandbox(sandbox)
 
         raw = await patch_verify.ainvoke(
@@ -250,7 +250,7 @@ class TestPatchVerify:
         sandbox = FakeSandbox(scripts=[("FAILED 3 tests", 1), ("should not run", 0)])
         import importlib
 
-        bash_mod = importlib.import_module("raptix.tools.bash.bash")
+        bash_mod = importlib.import_module("raptix.execution.tools.bash.bash")
         bash_mod.set_sandbox(sandbox)
 
         raw = await patch_verify.ainvoke(

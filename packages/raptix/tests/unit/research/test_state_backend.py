@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.research import _state as state
+from raptix.execution.tools.research import _state as state
 from raptix_core.types.kg import KnowledgeGraph, Node, NodeKind
 
 

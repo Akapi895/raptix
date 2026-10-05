@@ -18,7 +18,7 @@ silently re-introduce the non-greedy ``.+?`` collision footgun.
 
 from __future__ import annotations
 
-from raptix.sandbox_kernel.tmux import PS1_PATTERN, _extract_output
+from raptix.execution.sandbox.kernel.tmux import PS1_PATTERN, _extract_output
 
 
 class TestPS1PatternShape:

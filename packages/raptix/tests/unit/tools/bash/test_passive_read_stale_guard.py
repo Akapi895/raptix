@@ -10,8 +10,8 @@ mechanically enforced rather than left as prompt advice.
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 
-from raptix.sandbox_kernel import BackgroundJobTracker
-from raptix.tools.bash.bash import (
+from raptix.execution.sandbox.kernel import BackgroundJobTracker
+from raptix.execution.tools.bash.bash import (
     _STALE_PASSIVE_READS,
     _passive_read_state,
     _reset_passive_read,

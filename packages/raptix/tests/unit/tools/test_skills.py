@@ -5,8 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from raptix.tools.skills import build_load_skill_tool
-from raptix.tools.skills_registry import SkillRecord
+from raptix.execution.tools.skills import build_load_skill_tool
+from raptix.execution.tools.skills_registry import SkillRecord
 
 
 @dataclass
