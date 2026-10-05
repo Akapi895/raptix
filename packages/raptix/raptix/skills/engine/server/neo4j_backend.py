@@ -288,8 +288,10 @@ class Neo4jBackend:
         ``query`` (free text) drives **ranking** via two legs fused with
         reciprocal-rank fusion:
 
-        - *lexical* — substring match on name / description / when_to_use
-          (the legacy signal; exact for keywords like "kerberoast").
+        - *lexical* — tokenized AND-of-substring match on name /
+          description / when_to_use (``-``/``_``/``.`` are separators, so
+          "engagement startup" matches ``engagement-startup``; a single
+          token keeps the legacy whole-phrase CONTAINS semantics).
         - *semantic* — cosine k-NN over the per-skill embedding vector
           index, so a paraphrase ("steal kerberos tickets") finds the skill
           even with no shared substring.
@@ -361,6 +363,50 @@ class Neo4jBackend:
         "s.description AS description, matched_mitre, matched_tags"
     )
 
+    @staticmethod
+    def _lexical_match_clause(query: str, params: dict[str, Any]) -> str:
+        """Build the free-text WHERE conjunct for the lexical leg.
+
+        Live-run evidence (Silentium lab, 2026-10): the legacy
+        whole-phrase ``CONTAINS`` made almost every natural multi-word
+        ``find_skill`` query miss — "engagement startup" could never match
+        the name ``engagement-startup`` and "port scan service
+        enumeration" matched nothing at all. The clause therefore:
+
+        - treats ``-`` / ``_`` / ``.`` as separators (hyphenated skill
+          names and dotted versions become plain tokens), and
+        - AND-combines per-token CONTAINS across name / description /
+          when_to_use — every token must appear in at least one field,
+          so word order and punctuation no longer matter.
+
+        Single-token (or separator-only) queries keep the legacy
+        whole-string semantics byte-for-byte. The clause is pure string
+        building over ``$qt<i>`` parameters, so it is unit-testable
+        without Neo4j.
+        """
+        normalized = re.sub(r"[-_.]+", " ", query.lower()).strip()
+        tokens = normalized.split()
+        if len(tokens) <= 1:
+            # Legacy whole-string match (falls back to the raw query when
+            # normalization erased everything, e.g. query="---").
+            term = tokens[0] if tokens else query.lower()
+            params["query"] = term
+            return (
+                "(toLower(s.name) CONTAINS $query "
+                "OR toLower(s.description) CONTAINS $query "
+                "OR toLower(s.when_to_use) CONTAINS $query)"
+            )
+        conjuncts: list[str] = []
+        for i, token in enumerate(tokens):
+            key = f"qt{i}"
+            params[key] = token
+            conjuncts.append(
+                f"(toLower(s.name) CONTAINS ${key} "
+                f"OR toLower(s.description) CONTAINS ${key} "
+                f"OR toLower(s.when_to_use) CONTAINS ${key})"
+            )
+        return "(" + " AND ".join(conjuncts) + ")"
+
     def _find_lexical(
         self,
         query: str | None,
@@ -369,17 +415,12 @@ class Neo4jBackend:
         shared: dict[str, Any],
         cand_n: int,
     ) -> list[dict[str, Any]]:
-        """Substring + structured leg. Name-ordered (stable, legacy order)."""
+        """Tokenized free-text + structured leg. Name-ordered (stable, legacy order)."""
         wheres = list(structured)
         params = dict(shared)
         params["cand_n"] = cand_n
         if query:
-            wheres.append(
-                "(toLower(s.name) CONTAINS toLower($query) "
-                "OR toLower(s.description) CONTAINS toLower($query) "
-                "OR toLower(s.when_to_use) CONTAINS toLower($query))"
-            )
-            params["query"] = query
+            wheres.append(self._lexical_match_clause(query, params))
         if acl_clause:
             wheres.append(acl_clause)
         cypher = (
