@@ -53,7 +53,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from raptix.middleware.kg_internal.store import KGStore
+from raptix.knowledge.graph.store import KGStore
 from raptix_core.types.kg import EdgeKind, NodeKind
 
 

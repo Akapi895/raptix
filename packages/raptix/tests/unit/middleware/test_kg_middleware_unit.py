@@ -16,9 +16,9 @@ from unittest.mock import MagicMock
 import pytest
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
+from raptix.knowledge.graph.state import KGState
+from raptix.knowledge.graph.store import KGStore
 from raptix.middleware.kg import KG_SYSTEM_PROMPT, KGMiddleware
-from raptix.middleware.kg_internal.state import KGState
-from raptix.middleware.kg_internal.store import KGStore
 
 # ── KGStore mock ────────────────────────────────────────────────────────
 

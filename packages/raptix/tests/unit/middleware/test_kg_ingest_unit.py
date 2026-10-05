@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`kg_internal.ingest` — driver-free.
+"""Unit tests for :mod:`raptix.knowledge.graph.ingest` — driver-free.
 
 Covers the adapter registry, dispatcher error paths, and each built-in
 adapter's parse-to-observations behaviour via a stub store that
@@ -13,7 +13,7 @@ from typing import Any
 
 import pytest
 
-from raptix.middleware.kg_internal.ingest import (
+from raptix.knowledge.graph.ingest import (
     _REGISTRY,
     ScannerAdapter,
     _adapt_httpx_jsonl,

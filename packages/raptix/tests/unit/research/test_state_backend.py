@@ -132,7 +132,7 @@ def test_kg_degrades_returns_graceful_message_when_store_unavailable() -> None:
     """
     import json
 
-    from raptix.middleware.kg_internal.store import KGStoreConfigError
+    from raptix.knowledge.graph.store import KGStoreConfigError
 
     @state.kg_degrades
     def raises() -> str:

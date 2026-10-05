@@ -6,8 +6,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from raptix.knowledge.graph.store import KGStore, KGStoreConfig
 from raptix.middleware.kg import KGMiddleware
-from raptix.middleware.kg_internal.store import KGStore, KGStoreConfig
 
 
 def test_before_model_detects_external_write_without_local_dirty_marker(

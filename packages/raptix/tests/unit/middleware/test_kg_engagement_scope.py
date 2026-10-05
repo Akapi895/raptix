@@ -21,7 +21,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from raptix.middleware.kg_internal.store import KGStore, KGStoreConfig
+from raptix.knowledge.graph.store import KGStore, KGStoreConfig
 
 
 def _fake_driver() -> MagicMock:

@@ -98,7 +98,7 @@ def _sig(
 
 # Token-boundary product name — keeps ``ray`` from firing inside ``array`` and
 # ``ollama`` from firing inside ``follama``. Mirrors the banner-token rule in
-# ``middleware/kg_internal/ai_surface.py``.
+# ``knowledge/graph/ai_surface.py``.
 def _tok(word: str) -> str:
     return rf"(?<![a-z0-9]){word}(?![a-z0-9])"
 

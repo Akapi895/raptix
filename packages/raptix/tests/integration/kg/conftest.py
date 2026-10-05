@@ -13,7 +13,7 @@ from collections.abc import Iterator
 
 import pytest
 
-from raptix.middleware.kg_internal.store import KGStore, KGStoreConfigError
+from raptix.knowledge.graph.store import KGStore, KGStoreConfigError
 
 _DEFAULT_TEST_URI = "bolt://localhost:7687"
 _DEFAULT_TEST_USER = "neo4j"

@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`kg_internal.tools` — driver-free.
+"""Unit tests for :mod:`raptix.knowledge.graph.tools` — driver-free.
 
 Verifies the factory output, engagement-scope rejection, payload
 parsing, the InjectedState fallback to ``engagement_name``, and the
@@ -13,7 +13,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from raptix.middleware.kg_internal.tools import (
+from raptix.knowledge.graph.tools import (
     DEFAULT_KG_TOOLS,
     SURFACE_INVENTORY_TOOL,
     build_kg_tools,

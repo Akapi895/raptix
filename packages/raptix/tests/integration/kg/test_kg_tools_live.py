@@ -11,8 +11,8 @@ import json
 from pathlib import Path
 from typing import Any
 
-from raptix.middleware.kg_internal.store import KGStore
-from raptix.middleware.kg_internal.tools import build_kg_tools
+from raptix.knowledge.graph.store import KGStore
+from raptix.knowledge.graph.tools import build_kg_tools
 
 
 def _call(tool: Any, args: dict[str, Any], state: dict[str, Any]) -> str:

@@ -80,8 +80,8 @@ def test_factory_default_off_does_not_open_kg(monkeypatch):
 
 def test_factory_flag_on_builds_hook(monkeypatch):
     from raptix.agents.middleware_slots import _make_kg_autoingest
+    from raptix.knowledge.graph.store import KGStore
     from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
-    from raptix.middleware.kg_internal.store import KGStore
 
     store = _Store()
     monkeypatch.setattr(KGStore, "from_env", lambda: store)

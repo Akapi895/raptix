@@ -18,7 +18,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from raptix.middleware.kg_internal.store import (
+from raptix.knowledge.graph.store import (
     KGStore,
     KGStoreConfigError,
     KGStoreUnavailableError,

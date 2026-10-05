@@ -26,7 +26,7 @@ import httpx
 
 log = logging.getLogger(__name__)
 
-# OSS default mirrors the KG layer's default (see kg_internal migration V002:
+# OSS default mirrors the KG layer's default (see KG migration V002:
 # "OpenAI text-embedding-3-small (1536) as the OSS default"). Override with
 # RAPTIX_SKILLOGY_EMBED_MODEL; set the matching dim if the model differs.
 DEFAULT_EMBED_MODEL = "openai/text-embedding-3-small"

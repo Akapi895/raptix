@@ -1,4 +1,4 @@
-"""Unit tests for :mod:`kg_internal.summary` — driver-free.
+"""Unit tests for :mod:`raptix.knowledge.graph.summary` — driver-free.
 
 Covers section rendering, section omission when empty, severity
 ordering, and the public ``build_summary`` integration against a stub
@@ -13,8 +13,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from raptix.middleware.kg_internal.store import KGStore, KGStoreConfig
-from raptix.middleware.kg_internal.summary import (
+from raptix.knowledge.graph.store import KGStore, KGStoreConfig
+from raptix.knowledge.graph.summary import (
     MAX_CROWN_JEWELS,
     MAX_ENTRYPOINTS,
     MAX_VULNS,

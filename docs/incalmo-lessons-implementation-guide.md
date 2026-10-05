@@ -34,7 +34,7 @@
 4. **WP-L2b** (extend parsers) — narrow; only real gaps.
 5. **WP-L9** (structure knob) — lowest; likely defer until an in-scope toggle exists.
 
-Repo anchors: middleware use `wrap_tool_call`/`awrap_tool_call`/`after_model`/`wrap_model_call` hooks (see `middleware/kg.py`, `middleware/event_logging.py`); `KGMiddleware` (`middleware/kg.py`) provides `kg_ingest`, KG-context injection (`_inject_kg_context`), and `KGStore` (`middleware/kg_internal/store.py`). Its scoped scanner adapters live in `middleware/kg_internal/ingest.py` (nmap/httpx/nuclei/SARIF); the broader legacy `kg_ingest_*` tools in `tools/research/tools.py` use a compatibility shim. `MiddlewareSlot` and `SLOTS_PER_ROLE` live in `raptix_core.contracts.slots`, default factories in `agents/middleware_slots.py`, assembled by `agents/build.py::build_middleware`. Scanner files live in the HTTP sandbox, not the LangGraph container.
+Repo anchors: middleware use `wrap_tool_call`/`awrap_tool_call`/`after_model`/`wrap_model_call` hooks (see `middleware/kg.py`, `middleware/event_logging.py`); `KGMiddleware` (`middleware/kg.py`) provides `kg_ingest`, KG-context injection (`_inject_kg_context`), and `KGStore` (`knowledge/graph/store.py`). Its scoped scanner adapters live in `knowledge/graph/ingest.py` (nmap/httpx/nuclei/SARIF); the broader legacy `kg_ingest_*` tools in `tools/research/tools.py` use a compatibility shim. `MiddlewareSlot` and `SLOTS_PER_ROLE` live in `raptix_core.contracts.slots`, default factories in `agents/middleware_slots.py`, assembled by `agents/build.py::build_middleware`. Scanner files live in the HTTP sandbox, not the LangGraph container.
 
 ---
 
@@ -49,7 +49,7 @@ call `kg_ingest`. This makes downstream state trustworthy (kills a class of
 - New middleware `packages/raptix/raptix/middleware/kg_autoingest.py`.
 - Register a new `MiddlewareSlot` member + add it to `SLOTS_PER_ROLE` for network roles only (`recon`, `exploit`, `postexploit`, `ad_operator`, `cloud_hunter`) in `raptix_core.contracts.slots`.
 - Register its default factory in `agents/middleware_slots.py`; `agents/build.py::build_middleware` assembles it without special-case logic.
-- A **curated allowlist** mapping `{tool/command signature → existing scoped adapter}` in `middleware/kg_internal/ingest.py`, without modifying legacy parsers.
+- A **curated allowlist** mapping `{tool/command signature → existing scoped adapter}` in `knowledge/graph/ingest.py`, without modifying legacy parsers.
 
 **Out of scope (do NOT touch)**
 - `tools/bash/*`, sandbox dispatch, any guardrail middleware.
@@ -83,7 +83,7 @@ New file `middleware/kg_autoingest.py` implementing `awrap_tool_call` that runs 
 tool via `handler`, then ingests in a try/except that ALWAYS returns the original
 result unchanged. Register a new `MiddlewareSlot` in `raptix_core.contracts.slots`
 (network roles only) and its factory in `agents/middleware_slots.py`. Reuse existing
-`middleware/kg_internal/ingest.py` adapters; do not modify `tools/bash/*` or guardrails.
+`knowledge/graph/ingest.py` adapters; do not modify `tools/bash/*` or guardrails.
 Gate on `RAPTIX_KG_AUTOINGEST` (default off). Write an ADR (`docs/adr/`) and T0
 unit tests including a fail-safe test (ingester raises → tool result unchanged, no
 exception) + a T1 replay test. One PR ≤400 runtime lines, one concern. Follow

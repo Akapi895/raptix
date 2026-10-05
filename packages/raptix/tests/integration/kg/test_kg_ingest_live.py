@@ -10,8 +10,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from raptix.middleware.kg_internal.ingest import ingest
-from raptix.middleware.kg_internal.store import KGStore
+from raptix.knowledge.graph.ingest import ingest
+from raptix.knowledge.graph.store import KGStore
 
 
 def test_ingest_nmap_xml_creates_host_service_entrypoint(

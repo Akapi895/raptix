@@ -32,11 +32,11 @@ from typing import Any
 
 import pytest
 
-from raptix.middleware.kg_internal.migration_runner import (
+from raptix.knowledge.graph.migration_runner import (
     apply_migrations,
     list_applied,
 )
-from raptix.middleware.kg_internal.store import KGStore
+from raptix.knowledge.graph.store import KGStore
 from raptix.runtime.cart import AttackGraphProtocol, EngagementSnapshot
 
 # ── Migrations ──────────────────────────────────────────────────────────
