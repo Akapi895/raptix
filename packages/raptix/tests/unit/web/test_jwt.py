@@ -3,8 +3,7 @@
 from __future__ import annotations
 
 import pytest
-
-from raptix.execution.tools.web.jwt import (
+from raptix_web.jwt import (
     DEFAULT_WEAK_SECRETS,
     crack_hs_secret,
     forge_token,

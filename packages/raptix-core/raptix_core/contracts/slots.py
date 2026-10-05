@@ -5,7 +5,7 @@ walking ``MiddlewareSlot`` in declaration order; each role declares
 which slots apply via ``SLOTS_PER_ROLE``.
 
 This module is the pure-data half of the original
-``raptix.agents.middleware_slots``. The langchain/deepagents-bound
+``raptix.intelligence.agents.middleware_slots``. The langchain/deepagents-bound
 default factories (``DEFAULT_SLOT_FACTORIES`` and the ``_make_*``
 helpers) stay in the framework — keeping core langchain-free.
 

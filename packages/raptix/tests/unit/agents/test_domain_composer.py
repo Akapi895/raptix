@@ -93,10 +93,8 @@ def test_domain_keeps_role_metadata_and_identity_fragment(
     ) == (role, priority, limit)
     assert hashlib.sha256(_read_fragment(role).encode()).hexdigest() == prompt_hash
     assert list(domain_baseline_tools(plugin.DEFINITION)) == list(plugin.DEFINITION.tool_names)
-    assert (
-        import_module(f"raptix.intelligence.agents.standard.{role}").SUBAGENT_SPEC
-        is plugin.SUBAGENT_SPEC
-    )
+    host = import_module(f"raptix.intelligence.agents.standard.{role}")
+    assert host.graph.name == role
 
 
 @pytest.mark.parametrize(("pack", "role", "priority", "limit", "prompt_hash"), _SNAPSHOTS)

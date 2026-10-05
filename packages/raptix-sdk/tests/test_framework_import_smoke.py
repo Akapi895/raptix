@@ -17,7 +17,7 @@ from __future__ import annotations
 
 def test_all_16_agent_factories_importable() -> None:
     """The 16 agent factories listed in spec §6.2 import cleanly."""
-    from raptix.agents import (
+    from raptix.intelligence.agents import (
         create_ad_operator_agent,
         create_analyst_agent,
         create_cloud_hunter_agent,
@@ -35,7 +35,7 @@ def test_all_16_agent_factories_importable() -> None:
         create_verifier_agent,
         create_vulnresearch_agent,
     )
-    from raptix.agents.build import build_middleware, build_tools
+    from raptix.intelligence.agents.build import build_middleware, build_tools
 
     factories = (
         create_ad_operator_agent,
@@ -63,7 +63,7 @@ def test_all_16_agent_factories_importable() -> None:
 
 def test_framework_backends_importable() -> None:
     """Spec §6.2 backend public API surface."""
-    from raptix.backends import (
+    from raptix.execution.backends import (
         SKILLS_LOCAL_PATH,
         HTTPSandbox,
         build_sandbox_backend,
@@ -96,7 +96,7 @@ def test_framework_middleware_importable() -> None:
 
 def test_framework_llm_importable() -> None:
     """Spec §6.2 LLMFactory + create_llm."""
-    from raptix.llm import LLMFactory, create_llm
+    from raptix.intelligence.llm import LLMFactory, create_llm
 
     assert isinstance(LLMFactory, type)
     assert callable(create_llm)

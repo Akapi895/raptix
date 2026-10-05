@@ -11,7 +11,7 @@ def filesystem_tools_without_execute(tools: Sequence[Any]) -> list[Any]:
 
     Raptix routes command execution through its dedicated bash tools, while
     Deep Agents' filesystem middleware owns file operations. Keeping this
-    selection helper in ``raptix.tools`` makes the public tool surface
+    selection helper in ``raptix.execution.tools`` makes the public tool surface
     explicit and keeps middleware focused on backend scoping.
     """
     return [tool for tool in tools if getattr(tool, "name", None) != "execute"]

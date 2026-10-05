@@ -196,7 +196,7 @@ class PluginBundle:
     ``replaced_tools={"ask_user_question": VendorSlackAskTool}`` which
     combines the two steps. Middleware slot replacement works the same
     way — slot names match the ``MiddlewareSlot`` enum values in
-    ``raptix.agents.middleware_slots``.
+    ``raptix.intelligence.agents.middleware_slots``.
 
     Safety gating
     -------------
@@ -334,7 +334,7 @@ class SubAgentSpec:
         name: subagent identifier exposed to the LLM through ``task()``.
         description: text shown to the LLM in the ``task`` tool schema.
         factory: zero-arg callable returning the compiled subagent (e.g.
-            ``raptix.agents.standard.recon.create_recon_agent``). The
+            ``raptix.intelligence.agents.standard.recon:SUBAGENT_SPEC``). The
             factory is invoked lazily by the main agent at construction
             time.
         parent_agents: tuple of main-agent names this subagent should be

@@ -3,8 +3,7 @@ from __future__ import annotations
 import json
 
 import pytest
-
-from raptix.execution.tools.cloud.k8s import K8sFinding, analyze_k8s_manifest
+from raptix_cloud.k8s import K8sFinding, analyze_k8s_manifest
 
 
 class TestK8sFindingToDict:

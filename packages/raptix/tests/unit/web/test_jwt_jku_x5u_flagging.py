@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from raptix.execution.tools.web.jwt import forge_token, parse_token
+from raptix_web.jwt import forge_token, parse_token
 
 
 def test_https_jku_is_flagged_not_just_non_https():
