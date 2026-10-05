@@ -149,28 +149,28 @@ extend-exclude = [
     "*.snap",
     "assets/**",
     "benchmarks/results/**",
-    "packages/raptix/raptix/skills/defs/_corpus/**",
+    "packages/raptix-skills/raptix_skills/defs/_corpus/**",
     "reference/**",
     # ICS/OT skill bodies are dense with industrial-protocol jargon that
     # typos misreads: "OT" (Operational Technology), "ot" inside
     # "ics ot ..." trigger lists, "BA" (BACnet/Building Automation), etc.
     # Scoped to this directory so the rest of the tree keeps full typo
     # coverage rather than globally allow-listing two-letter tokens.
-    "packages/raptix/raptix/skills/defs/standard/exploit/ics-ot/**",
-    "packages/raptix/raptix/skills/defs/standard/ics/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/exploit/ics-ot/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/ics/**",
     # Sisyphus-added domain skill seeds with industrial / wireless / OT
     # protocol jargon that typos misreads (BACnet, OT tag list, ics, etc.)
-    "packages/raptix/raptix/skills/defs/standard/iot/**",
-    "packages/raptix/raptix/skills/defs/standard/dfir/**",
-    "packages/raptix/raptix/skills/defs/standard/phish/**",
-    "packages/raptix/raptix/skills/defs/standard/supply-chain/**",
-    "packages/raptix/raptix/skills/defs/standard/osint/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/iot/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/dfir/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/phish/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/supply-chain/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/osint/**",
     ".omo/plans/**",
     # Adversary-emulation playbooks + APT/CTI reference cards: dense with
     # threat-intel jargon typos misreads — "OT" (Operational Technology),
     # "HPE" (Hewlett Packard Enterprise), product names like "MOVEit".
     # Scoped to these dirs to match the ics-ot/iot exclusion pattern rather
     # than globally allow-listing two-letter tokens.
-    "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/emulation/**",
-    "packages/raptix/raptix/skills/defs/standard/soundwave/threat-profile/references/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/soundwave/threat-profile/emulation/**",
+    "packages/raptix-skills/raptix_skills/defs/standard/soundwave/threat-profile/references/**",
 ]

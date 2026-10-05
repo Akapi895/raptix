@@ -6,10 +6,12 @@ _REPO_ROOT = Path(__file__).resolve().parents[5]
 _PROMPTS = _REPO_ROOT / "packages/raptix/raptix/intelligence/prompts/standard"
 _REVERSER_AGENT = _REPO_ROOT / "packages/raptix/raptix/intelligence/agents/standard/reverser.py"
 
-_REVERSER_SKILL = _REPO_ROOT / "packages/raptix/raptix/skills/defs/standard/reverser/SKILL.md"
+_REVERSER_SKILL = (
+    _REPO_ROOT / "packages/raptix-skills/raptix_skills/defs/standard/reverser/SKILL.md"
+)
 _VIRTUALIZED_SKILL = (
     _REPO_ROOT
-    / "packages/raptix/raptix/skills/defs/standard/reverser/virtualized-protectors/SKILL.md"
+    / "packages/raptix-skills/raptix_skills/defs/standard/reverser/virtualized-protectors/SKILL.md"
 )
 
 
