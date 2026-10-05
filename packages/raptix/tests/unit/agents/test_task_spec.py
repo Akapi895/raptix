@@ -1,11 +1,11 @@
-"""Tests for ``raptix.agents.task_spec`` — scoped sub-agent handoff."""
+"""Tests for ``raptix.intelligence.agents.task_spec`` — scoped sub-agent handoff."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from raptix.agents.task_spec import (
+from raptix.intelligence.agents.task_spec import (
     SUBAGENT_TASK_SYSTEM_PROMPT,
     SubAgentTaskSpec,
     estimate_token_savings,

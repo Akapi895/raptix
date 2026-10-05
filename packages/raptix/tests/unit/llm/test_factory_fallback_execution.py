@@ -26,7 +26,7 @@ from langchain.agents.middleware.types import ModelRequest
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import AIMessage, HumanMessage
 
-from raptix.llm.factory import LLMFactory
+from raptix.intelligence.llm.factory import LLMFactory
 from raptix_core.types.llm import (
     Credentials,
     LLMModelMapping,

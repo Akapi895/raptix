@@ -39,7 +39,7 @@ func init() {
 // `claude setup-token` (mint a long-lived 1-year OAuth token for headless use).
 const claudeSetupTokenDocsURL = "https://code.claude.com/docs/en/authentication"
 
-// AuthMethod identifiers — must match raptix/llm/models.py::AuthMethod.
+// AuthMethod identifiers — must match raptix/intelligence/llm/models.py::AuthMethod.
 const (
 	methodAnthropicOAuth  = "anthropic_oauth"
 	methodAnthropicAPI    = "anthropic_api"

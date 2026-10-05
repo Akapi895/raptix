@@ -3,16 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from raptix.agents.standard._surface_dispatch import (
+from raptix.intelligence.agents.standard._surface_dispatch import (
     DEFAULT_MAX_IN_FLIGHT,
     SURFACE_EXPLOIT_OUTCOME_STATUS,
     next_surface_exploit_batch,
     next_surface_exploit_dispatch,
 )
-from raptix.agents.standard._surface_registry import build_objective_expand_payload
+from raptix.intelligence.agents.standard._surface_registry import build_objective_expand_payload
 
 _PROMPT = (
-    Path(__file__).resolve().parents[5] / "packages/raptix/raptix/agents/prompts/standard/raptix.md"
+    Path(__file__).resolve().parents[5]
+    / "packages/raptix/raptix/intelligence/prompts/standard/raptix.md"
 )
 
 

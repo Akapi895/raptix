@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.llm.factory import _resolve_disable_streaming, _resolve_extra_headers
+from raptix.intelligence.llm.factory import _resolve_disable_streaming, _resolve_extra_headers
 
 
 def test_extra_headers_accepts_string_map(monkeypatch: pytest.MonkeyPatch) -> None:

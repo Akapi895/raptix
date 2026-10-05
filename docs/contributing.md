@@ -77,8 +77,8 @@ Minimum Python version: **3.13**
 ## Adding an Agent
 
 1. Create the agent module. Pick a bundle:
-   - `raptix/agents/standard/{name}.py` for OSS-blessed agents shipped by default
-   - `raptix/agents/plugins/{name}.py` to demonstrate the community-plugin shape
+   - `raptix/intelligence/agents/standard/{name}.py` for OSS-blessed agents shipped by default
+   - `raptix/intelligence/agents/plugins/{name}.py` to demonstrate the community-plugin shape
    The file exposes a `create_{name}_agent()` factory.
 2. Follow the middleware stack pattern from an existing agent (e.g., `standard/recon.py`)
 3. Define the agent's skill sources in the `SkillsMiddleware` configuration

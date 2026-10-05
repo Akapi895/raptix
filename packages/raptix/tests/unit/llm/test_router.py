@@ -1,8 +1,8 @@
-"""Unit tests for raptix.llm.router — thin wrapper over LLMModelMapping."""
+"""Unit tests for raptix.intelligence.llm.router — thin wrapper over LLMModelMapping."""
 
 import pytest
 
-from raptix.llm.router import ModelRouter
+from raptix.intelligence.llm.router import ModelRouter
 from raptix_core.types.llm import (
     AuthMethod,
     Credentials,

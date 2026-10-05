@@ -17,7 +17,7 @@ from langchain_core.messages import AIMessage
 from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 
-from raptix.llm.factory import _ProxiedChatOpenAI
+from raptix.intelligence.llm.factory import _ProxiedChatOpenAI
 
 
 def _make_proxy() -> _ProxiedChatOpenAI:

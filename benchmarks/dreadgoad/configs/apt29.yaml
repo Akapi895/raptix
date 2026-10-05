@@ -7,7 +7,7 @@ timeout_per_run_seconds: 10800
 langgraph_url: http://localhost:2024
 # Replace ``decepticon`` with the assistant_id of the LangGraph agent
 # you want to drive against the lab. The default points at the OSS
-# main agent registered by ``packages/raptix/raptix/agents/standard/decepticon.py``.
+# main agent registered by ``packages/raptix/raptix/intelligence/agents/standard/decepticon.py``.
 agents: [decepticon]
 # APT29 (Cozy Bear, G0016) persona. Hands over the network range, the
 # scope rules, and the artifact-preservation rule — but not targets,

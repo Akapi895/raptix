@@ -6,12 +6,12 @@ plugin already gets: a SaaS bundle can re-tier a single agent onto a
 different model without editing the OSS tier map or a global env var.
 """
 
-from raptix.agents.build import resolve_role_model
-from raptix.llm.factory import LLMFactory
+from raptix.intelligence.agents.build import resolve_role_model
+from raptix.intelligence.llm.factory import LLMFactory
 from raptix_core.plugin_loader import PluginBundle
 from raptix_core.types.llm import ModelAssignment
 
-_ITER = "raptix.agents.build._iter_override_bundles"
+_ITER = "raptix.intelligence.agents.build._iter_override_bundles"
 
 
 class TestResolveRoleModel:

@@ -1,6 +1,6 @@
 # Claude 4.x compatibility — trigger-term substitution map.
 #
-# Used by raptix.agents.prompts.claude4_compat to reduce refusals
+# Used by raptix.intelligence.prompts.claude4_compat to reduce refusals
 # from Anthropic's post-Opus-4.7 classifier without changing operational
 # intent.
 #

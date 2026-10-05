@@ -47,7 +47,7 @@ def _build_run_provenance(
     config_snapshot["filters"] = filters.model_dump(mode="json")
     config_snapshot["parallel"] = parallel
     artifact_paths = {
-        "agent-prompts": repo_root / "packages/raptix/raptix/agents/prompts",
+        "agent-prompts": repo_root / "packages/raptix/raptix/intelligence/prompts",
         "skill-corpus": repo_root / "packages/raptix/raptix/skills",
         "litellm-config": repo_root / "infra/config/litellm.yaml",
         "compose-config": repo_root / "docker-compose.yml",

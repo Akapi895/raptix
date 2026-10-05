@@ -37,7 +37,7 @@ def _oss_skill_sources_for(role: str) -> tuple[str, ...]:
     """Return the OSS default ``/skills/`` source paths for ``role``.
 
     Mirrors the framework's ``skills_sources_for`` (in
-    ``raptix.agents.middleware_slots``) for the baseline portion
+    ``raptix.intelligence.agents.middleware_slots``) for the baseline portion
     — plugin-contributed paths layer on top at agent-build time. We
     duplicate the baseline here so ``RoleRegistry`` carries the
     audit-time view that matches what the runtime actually loads
@@ -119,7 +119,7 @@ def _push_role_resolutions() -> None:
         plugin-shipped ``PluginBundle`` overrides are tracked through
         ``_resolve_overrides``.
     """
-    from raptix.agents.middleware_slots import skills_sources_for as _osss
+    from raptix.intelligence.agents.middleware_slots import skills_sources_for as _osss
 
     for role, slots in SLOTS_PER_ROLE.items():
         middleware_stack = tuple(

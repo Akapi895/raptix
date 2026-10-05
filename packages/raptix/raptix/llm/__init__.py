@@ -1,24 +1,7 @@
-from raptix.llm.factory import LLMFactory, create_llm
-from raptix.llm.router import ModelRouter
-from raptix_core.types.llm import (
-    AuthMethod,
-    Credentials,
-    LLMModelMapping,
-    ModelAssignment,
-    ModelProfile,
-    ProxyConfig,
-    Tier,
-)
+"""Deprecated import path, kept as a compatibility shim.
 
-__all__ = [
-    "AuthMethod",
-    "Credentials",
-    "LLMFactory",
-    "LLMModelMapping",
-    "ModelAssignment",
-    "ModelProfile",
-    "ModelRouter",
-    "ProxyConfig",
-    "Tier",
-    "create_llm",
-]
+Ownership moved to ``raptix.intelligence.llm`` in W5; this re-export shim is
+retired in W11.
+"""
+
+from raptix.intelligence.llm import *  # noqa: F401,F403

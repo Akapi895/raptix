@@ -81,7 +81,7 @@ class ToggleResponse(BaseModel):
 
 def _path_to_module(spec: str) -> tuple[str, str]:
     """Turn ``"./decepticon/agents/plugins/vulnresearch.py:graph"`` into
-    ``("raptix.agents.plugins.vulnresearch", "graph")``.
+    ``("raptix.intelligence.agents.plugins.vulnresearch", "graph")``.
 
     The graph_registry stores entries in the file-path form LangGraph
     Platform expects in ``langgraph.json``. For runtime registration we

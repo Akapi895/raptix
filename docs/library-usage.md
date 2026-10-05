@@ -21,7 +21,7 @@ The 16 agent factories ship preconfigured. Module-level `graph`
 constants are what LangGraph Platform picks up from `langgraph.json`.
 
 ```python
-from raptix.agents.standard.recon import create_recon_agent, graph
+from raptix.intelligence.agents.standard.recon import create_recon_agent, graph
 
 agent = create_recon_agent()  # default OSS configuration
 # `graph` is the same thing, built once at import time.
@@ -40,7 +40,7 @@ baseline (and apply any plugin overrides discovered via entry-points).
 ```python
 from langchain_core.tools import tool
 
-from raptix.agents.standard.soundwave import create_soundwave_agent
+from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
 
 @tool
 def vendor_slack_ask_user(question: str, header: str = "") -> str:
@@ -87,9 +87,9 @@ from langchain.agents.middleware import ModelFallbackMiddleware
 from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
 
-from raptix.agents.prompts import load_prompt
+from raptix.intelligence.prompts import load_prompt
 from raptix.backends import build_sandbox_backend, make_agent_backend
-from raptix.llm import LLMFactory
+from raptix.intelligence.llm import LLMFactory
 from raptix.middleware import (
     EngagementContextMiddleware,
     FilesystemMiddleware,
@@ -134,10 +134,10 @@ system, safety gate, and plugin-override pipeline, pass an explicit
 ``slots`` set to ``build_middleware``:
 
 ```python
-from raptix.agents.build import build_middleware, build_tools
-from raptix.agents.middleware_slots import MiddlewareSlot
-from raptix.agents.prompts import load_prompt
-from raptix.llm import LLMFactory
+from raptix.intelligence.agents.build import build_middleware, build_tools
+from raptix.intelligence.agents.middleware_slots import MiddlewareSlot
+from raptix.intelligence.prompts import load_prompt
+from raptix.intelligence.llm import LLMFactory
 
 PRO_SLOTS = frozenset({
     MiddlewareSlot.ENGAGEMENT_CONTEXT,
@@ -253,7 +253,7 @@ vendor = "vendor_pkg.skills:skill_sources"
 ```
 
 Plugin paths are appended after the OSS baseline returned by
-`raptix.agents.middleware_slots.skills_sources_for`, so OSS skills
+`raptix.intelligence.agents.middleware_slots.skills_sources_for`, so OSS skills
 keep their priority in the progressive-disclosure budget.
 
 ### Override resolution order
@@ -298,22 +298,22 @@ to honor the original semantics.
 
 | Import | Purpose |
 |--------|---------|
-| `raptix.agents.standard.*`, `raptix.agents.plugins.*` | Pre-built per-role agent factories |
+| `raptix.intelligence.agents.standard.*`, `raptix.intelligence.agents.plugins.*` | Pre-built per-role agent factories |
 | `raptix_core.contracts.slots` | `MiddlewareSlot` enum, `SLOTS_PER_ROLE`, `DEFAULT_SLOT_FACTORIES` |
-| `raptix.agents.build` | `build_middleware`, `build_tools`, `resolve_prompt_overrides`, `SafetyOverrideViolation` |
-| `raptix.agents.prompts` | `load_prompt`, `PromptBuilder` |
+| `raptix.intelligence.agents.build` | `build_middleware`, `build_tools`, `resolve_prompt_overrides`, `SafetyOverrideViolation` |
+| `raptix.intelligence.prompts` | `load_prompt`, `PromptBuilder` |
 | `raptix.middleware` | `SkillsMiddleware`, `FilesystemMiddleware`, `EngagementContextMiddleware`, `OPPLANMiddleware`, `SandboxNotificationMiddleware`, `OpsControlNotificationMiddleware`, `KGMiddleware`, `SkillogyMiddleware`, … |
 | `raptix.tools.bash` | `BASH_TOOLS` (the four bash tools), `set_sandbox` |
 | `raptix.tools.research`, `raptix.tools.references` | KG / CVE / payload tools |
 | `raptix.tools.interaction` | `ask_user_question`, `complete_engagement_planning` |
 | `raptix.tools.ops` | `ops_start`, `ops_stop`, `ops_status` (orchestrator-only, ADR-0006) |
 | `raptix.backends` | `HTTPSandbox`, `build_sandbox_backend`, `make_agent_backend` |
-| `raptix.llm` | `LLMFactory` |
+| `raptix.intelligence.llm` | `LLMFactory` |
 | `raptix_core.types.engagement` | `RoE`, `CONOPS`, `DeconflictionPlan`, `OPPLAN`, `ThreatProfile`, `CleanupPlan`, `AbortPlan`, `ContactPlan`, `DataHandlingPlan` |
 | `raptix_core.types.kg` | `KnowledgeGraph`, `Node`, `Edge`, `EdgeKind` |
 | `raptix_core.plugin_loader` | `PluginBundle`, `SubAgentSpec`, `is_bundle_enabled`, `load_plugin_*` |
 
-The schema / contract types live in **`raptix-core`** (the contracts package); the framework re-exports them via the compat shim in `raptix/__init__.py` for one minor cycle (`raptix.core.schemas`, `raptix.plugin_loader`, `raptix.agents.middleware_slots`). New code should import from `raptix_core.*` directly.
+The schema / contract types live in **`raptix-core`** (the contracts package); the framework re-exports them via the compat shim in `raptix/__init__.py` for one minor cycle (`raptix.core.schemas`, `raptix.plugin_loader`, `raptix.intelligence.agents.middleware_slots`). New code should import from `raptix_core.*` directly.
 
 ---
 
@@ -322,13 +322,13 @@ The schema / contract types live in **`raptix-core`** (the contracts package); t
 ### Add a single vendor tool to the default agent
 
 ```python
-from raptix.agents.standard.recon import create_recon_agent
+from raptix.intelligence.agents.standard.recon import create_recon_agent
 
 # Easiest: ship a PluginBundle (items=(my_tool,)) under raptix.bundles
 # and the default factory picks it up automatically.
 
 # Or pass explicitly — but you have to include the full tool list:
-from raptix.agents.standard.recon import _STANDARD_TOOLS
+from raptix.intelligence.agents.standard.recon import _STANDARD_TOOLS
 all_tools = [*_STANDARD_TOOLS.values(), my_tool]
 agent = create_recon_agent(tools=all_tools)
 ```
@@ -363,8 +363,8 @@ Library path (full control):
 ### Disable a non-critical slot for one agent
 
 ```python
-from raptix.agents.middleware_slots import MiddlewareSlot
-from raptix.agents.standard.soundwave import create_soundwave_agent
+from raptix.intelligence.agents.middleware_slots import MiddlewareSlot
+from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
 
 # Drop AnthropicPromptCachingMiddleware (we have our own cache layer).
 # This is library-style direct call; for plugin-wide disable, use

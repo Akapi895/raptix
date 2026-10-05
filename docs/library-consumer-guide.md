@@ -21,7 +21,7 @@ library consumers can rely on from v1.1.2 onward (the current
 release series — see CHANGELOG):
 
 ```python
-from raptix.agents import (
+from raptix.intelligence.agents import (
     create_raptix_agent,
     create_soundwave_agent,
     create_recon_agent,
@@ -42,7 +42,7 @@ from raptix.middleware import (
     SkillsMiddleware,
     ModelOverrideMiddleware,
 )
-from raptix.llm import LLMFactory, create_llm
+from raptix.intelligence.llm import LLMFactory, create_llm
 ```
 
 Plugin contracts come from `raptix-core` (or via the
@@ -63,7 +63,7 @@ The simplest path — use an OSS factory and pass it your own sandbox:
 
 ```python
 from raptix.backends import build_sandbox_backend, make_agent_backend
-from raptix.agents import create_recon_agent
+from raptix.intelligence.agents import create_recon_agent
 
 sandbox = build_sandbox_backend()
 backend = make_agent_backend(sandbox)

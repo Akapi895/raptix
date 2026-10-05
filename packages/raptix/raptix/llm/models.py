@@ -1,36 +1,9 @@
-"""Compat shim — content moved to ``raptix_core.types.llm``.
+"""Deprecated import path, kept as a compatibility shim.
 
-See ``raptix.core.schemas`` for the rationale and the PEP 562
-per-import DeprecationWarning pattern.
+Ownership moved to ``raptix.intelligence.llm.models`` in W5, which
+forwards to ``raptix_core.types.llm``. The PEP 562 dynamic re-export
+of the moved module is preserved; retired in W11.
 """
 
-from __future__ import annotations
-
-import warnings
-from typing import Any
-
-import raptix_core.types.llm as _target
-
-_LEGACY = "raptix.llm.models"
-_CANONICAL = "raptix_core.types.llm"
-_seen: set[str] = set()
-
-
-def __getattr__(name: str) -> Any:
-    if name.startswith("_"):
-        # Dunder/private lookups (e.g. Pythons own __path__ probe during
-        # `from X import Y`) shouldn't emit deprecation noise.
-        raise AttributeError(name)
-    if name not in _seen:
-        _seen.add(name)
-        warnings.warn(
-            f"{_LEGACY}.{name} is deprecated; import from {_CANONICAL}.{name} instead "
-            f"(legacy path removed at 2.0.0)",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-    return getattr(_target, name)
-
-
-def __dir__() -> list[str]:
-    return dir(_target)
+from raptix.intelligence.llm.models import *  # noqa: F401,F403
+from raptix.intelligence.llm.models import __dir__, __getattr__  # noqa: F401

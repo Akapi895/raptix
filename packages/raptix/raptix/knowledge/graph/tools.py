@@ -25,8 +25,8 @@ from typing import Annotated, Any
 from langchain_core.tools import InjectedToolCallId, tool
 from langgraph.prebuilt import InjectedState
 
-from raptix.agents.standard._surface_reexpand import plan_reexpansion
-from raptix.agents.standard._surface_registry import (
+from raptix.intelligence.agents.standard._surface_reexpand import plan_reexpansion
+from raptix.intelligence.agents.standard._surface_registry import (
     build_coverage_matrix,
     build_objective_expand_payload,
     surfaces_from_kg_inventory,

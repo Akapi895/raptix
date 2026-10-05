@@ -3,22 +3,23 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from raptix.agents.standard._surface_reexpand import (
+from raptix.intelligence.agents.standard._surface_reexpand import (
     DEFAULT_MAX_GENERATIONS,
     DEFAULT_MAX_TOTAL_CELLS,
     plan_reexpansion,
 )
-from raptix.agents.standard._surface_registry import (
+from raptix.intelligence.agents.standard._surface_registry import (
     build_coverage_matrix,
     surfaces_from_kg_inventory,
 )
 
 _PROMPT = (
-    Path(__file__).resolve().parents[5] / "packages/raptix/raptix/agents/prompts/standard/raptix.md"
+    Path(__file__).resolve().parents[5]
+    / "packages/raptix/raptix/intelligence/prompts/standard/raptix.md"
 )
 _SURFACE_EXPLOIT_PROMPT = (
     Path(__file__).resolve().parents[5]
-    / "packages/raptix/raptix/agents/prompts/standard/surface_exploit.md"
+    / "packages/raptix/raptix/intelligence/prompts/standard/surface_exploit.md"
 )
 
 

@@ -51,7 +51,7 @@ def model_request():
 
 
 def test_slot_is_outer_to_roe_and_default_off(monkeypatch):
-    from raptix.agents.middleware_slots import _make_tried_edges
+    from raptix.intelligence.agents.middleware_slots import _make_tried_edges
 
     assert list(MiddlewareSlot).index(MiddlewareSlot.TRIED_EDGES) < list(MiddlewareSlot).index(
         MiddlewareSlot.ROE_GUARDRAIL

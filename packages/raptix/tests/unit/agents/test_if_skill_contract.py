@@ -2,11 +2,11 @@
 
 from pathlib import Path
 
-from raptix.agents.middleware_slots import skills_sources_for
+from raptix.intelligence.agents.middleware_slots import skills_sources_for
 
 _ROOT = Path(__file__).resolve().parents[3] / "raptix"
 _DEFS = _ROOT / "skills" / "defs"
-_PROMPTS = _ROOT / "agents" / "prompts" / "standard"
+_PROMPTS = _ROOT / "intelligence" / "prompts" / "standard"
 
 
 def test_router_and_final_report_resolve_for_orchestrator() -> None:

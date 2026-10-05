@@ -1,8 +1,7 @@
-import os
+"""Deprecated import path, kept as a compatibility shim.
 
+Ownership moved to ``raptix.intelligence.agents._benchmark_mode`` in W5; this re-export shim is
+retired in W11.
+"""
 
-def benchmark_skill_sources() -> list[str]:
-    """Return extra skill source paths when BENCHMARK_MODE is active."""
-    if os.environ.get("BENCHMARK_MODE", "").strip().lower() not in {"", "0", "false", "no", "off"}:
-        return ["/skills/benchmark/"]
-    return []
+from raptix.intelligence.agents._benchmark_mode import *  # noqa: F401,F403

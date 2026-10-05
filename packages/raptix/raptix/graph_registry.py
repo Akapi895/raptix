@@ -33,40 +33,40 @@ from raptix_core.plugin_loader import is_bundle_enabled, load_plugin_agents
 # exact same compiled graph object as ``decepticon``, which stays as the
 # historical alias for existing engagements and health probes.
 STANDARD_GRAPHS: dict[str, str] = {
-    "raptix": "./raptix/agents/standard/decepticon.py:graph",
-    "decepticon": "./raptix/agents/standard/decepticon.py:graph",
-    "recon": "./raptix/agents/standard/recon.py:graph",
-    "autohunt": "./raptix/agents/standard/autohunt.py:graph",
-    "soundwave": "./raptix/agents/standard/soundwave.py:graph",
-    "exploit": "./raptix/agents/standard/exploit.py:graph",
-    "surface_exploit": "./raptix/agents/standard/surface_exploit.py:graph",
-    "postexploit": "./raptix/agents/standard/postexploit.py:graph",
-    "analyst": "./raptix/agents/standard/analyst.py:graph",
-    "reverser": "./raptix/agents/standard/reverser.py:graph",
-    "contract_auditor": "./raptix/agents/standard/contract_auditor.py:graph",
-    "cloud_hunter": "./raptix/agents/standard/cloud_hunter.py:graph",
-    "ad_operator": "./raptix/agents/standard/ad_operator.py:graph",
-    "blue_cell": "./raptix/agents/standard/blue_cell.py:graph",
-    "phisher": "./raptix/agents/standard/phisher.py:graph",
-    "mobile_operator": "./raptix/agents/standard/mobile_operator.py:graph",
-    "wireless_operator": "./raptix/agents/standard/wireless_operator.py:graph",
-    "osint_operator": "./raptix/agents/standard/osint_operator.py:graph",
-    "iot_operator": "./raptix/agents/standard/iot_operator.py:graph",
-    "ics_operator": "./raptix/agents/standard/ics_operator.py:graph",
-    "forensicator": "./raptix/agents/standard/forensicator.py:graph",
-    "supply_chain_operator": "./raptix/agents/standard/supply_chain_operator.py:graph",
+    "raptix": "./raptix/intelligence/agents/standard/decepticon.py:graph",
+    "decepticon": "./raptix/intelligence/agents/standard/decepticon.py:graph",
+    "recon": "./raptix/intelligence/agents/standard/recon.py:graph",
+    "autohunt": "./raptix/intelligence/agents/standard/autohunt.py:graph",
+    "soundwave": "./raptix/intelligence/agents/standard/soundwave.py:graph",
+    "exploit": "./raptix/intelligence/agents/standard/exploit.py:graph",
+    "surface_exploit": "./raptix/intelligence/agents/standard/surface_exploit.py:graph",
+    "postexploit": "./raptix/intelligence/agents/standard/postexploit.py:graph",
+    "analyst": "./raptix/intelligence/agents/standard/analyst.py:graph",
+    "reverser": "./raptix/intelligence/agents/standard/reverser.py:graph",
+    "contract_auditor": "./raptix/intelligence/agents/standard/contract_auditor.py:graph",
+    "cloud_hunter": "./raptix/intelligence/agents/standard/cloud_hunter.py:graph",
+    "ad_operator": "./raptix/intelligence/agents/standard/ad_operator.py:graph",
+    "blue_cell": "./raptix/intelligence/agents/standard/blue_cell.py:graph",
+    "phisher": "./raptix/intelligence/agents/standard/phisher.py:graph",
+    "mobile_operator": "./raptix/intelligence/agents/standard/mobile_operator.py:graph",
+    "wireless_operator": "./raptix/intelligence/agents/standard/wireless_operator.py:graph",
+    "osint_operator": "./raptix/intelligence/agents/standard/osint_operator.py:graph",
+    "iot_operator": "./raptix/intelligence/agents/standard/iot_operator.py:graph",
+    "ics_operator": "./raptix/intelligence/agents/standard/ics_operator.py:graph",
+    "forensicator": "./raptix/intelligence/agents/standard/forensicator.py:graph",
+    "supply_chain_operator": "./raptix/intelligence/agents/standard/supply_chain_operator.py:graph",
 }
 
 # Plugins bundle — vulnresearch family (community-plugin shape demonstrated
 # from inside OSS). Opt-in via ``RAPTIX_PLUGINS=standard,plugins`` or
 # ``[plugins] enabled = ["standard", "plugins"]`` in ``.raptix.toml``.
 PLUGIN_GRAPHS: dict[str, str] = {
-    "vulnresearch": "./raptix/agents/plugins/vulnresearch.py:graph",
-    "scanner": "./raptix/agents/plugins/scanner.py:graph",
-    "detector": "./raptix/agents/plugins/detector.py:graph",
-    "verifier": "./raptix/agents/plugins/verifier.py:graph",
-    "patcher": "./raptix/agents/plugins/patcher.py:graph",
-    "exploiter": "./raptix/agents/plugins/exploiter.py:graph",
+    "vulnresearch": "./raptix/intelligence/agents/plugins/vulnresearch.py:graph",
+    "scanner": "./raptix/intelligence/agents/plugins/scanner.py:graph",
+    "detector": "./raptix/intelligence/agents/plugins/detector.py:graph",
+    "verifier": "./raptix/intelligence/agents/plugins/verifier.py:graph",
+    "patcher": "./raptix/intelligence/agents/plugins/patcher.py:graph",
+    "exploiter": "./raptix/intelligence/agents/plugins/exploiter.py:graph",
 }
 
 # Mapping from bundle name to its graph dict — used by build_langserve_graphs.

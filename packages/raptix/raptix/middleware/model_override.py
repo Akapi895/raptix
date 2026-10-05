@@ -39,7 +39,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import SecretStr
 from typing_extensions import Annotated, NotRequired, override
 
-from raptix.llm.factory import LLMFactory, _model_drops_temperature
+from raptix.intelligence.llm.factory import LLMFactory, _model_drops_temperature
 from raptix.middleware.state_reducers import reduce_converging_value
 from raptix_core.utils.logging import get_logger
 

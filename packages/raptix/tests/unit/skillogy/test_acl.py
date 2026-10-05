@@ -162,7 +162,7 @@ def test_resolver_explicit_skill_sources_wins_over_role_default():
 def test_resolver_role_falls_back_to_skills_sources_for():
     # Compare to the same helper the legacy SkillsMiddleware uses so the
     # two backends share one source-of-truth contract.
-    from raptix.agents.middleware_slots import skills_sources_for
+    from raptix.intelligence.agents.middleware_slots import skills_sources_for
 
     expected = list(skills_sources_for("recon"))
     assert _resolve_allowed_path_prefixes(role="recon", skill_sources=None) == expected
@@ -188,7 +188,7 @@ def test_maybe_install_threads_role_acl_into_middleware(monkeypatch):
     installed = [m for m in out if isinstance(m, SkillogyMiddleware)]
     assert len(installed) == 1
     _tools_by_name(installed[0])["find_skill"].invoke({"subdomain": "any"})
-    from raptix.agents.middleware_slots import skills_sources_for
+    from raptix.intelligence.agents.middleware_slots import skills_sources_for
 
     assert backend.find_calls[0]["allowed_path_prefixes"] == list(skills_sources_for("recon"))
 

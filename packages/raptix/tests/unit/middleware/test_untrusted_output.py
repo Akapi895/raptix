@@ -355,7 +355,7 @@ class TestSlotRegistration:
             )
 
     def test_default_factory_is_registered(self) -> None:
-        from raptix.agents.middleware_slots import DEFAULT_SLOT_FACTORIES
+        from raptix.intelligence.agents.middleware_slots import DEFAULT_SLOT_FACTORIES
         from raptix_core.contracts.slots import MiddlewareSlot
 
         assert MiddlewareSlot.UNTRUSTED_OUTPUT in DEFAULT_SLOT_FACTORIES

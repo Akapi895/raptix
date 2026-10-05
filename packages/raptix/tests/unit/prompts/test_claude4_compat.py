@@ -1,4 +1,4 @@
-"""Tests for raptix.agents.prompts.claude4_compat.
+"""Tests for raptix.intelligence.prompts.claude4_compat.
 
 Loaded via importlib so the test suite does not require the full
 raptix.agents runtime dependency tree (deepagents, langgraph, …).
@@ -13,7 +13,11 @@ from pathlib import Path
 import pytest
 
 _MODULE_PATH = (
-    Path(__file__).resolve().parents[3] / "raptix" / "agents" / "prompts" / "claude4_compat.py"
+    Path(__file__).resolve().parents[3]
+    / "raptix"
+    / "intelligence"
+    / "prompts"
+    / "claude4_compat.py"
 )
 _spec = importlib.util.spec_from_file_location("decepticon_claude4_compat_under_test", _MODULE_PATH)
 assert _spec is not None and _spec.loader is not None

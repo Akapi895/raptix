@@ -296,7 +296,7 @@ def kg_degrades(fn: Callable[..., str]) -> Callable[..., str]:
     """Wrap a ``kg_*`` @tool body so a missing/unreachable KGStore returns a
     graceful message instead of raising.
 
-    The KG middleware *slot* (:func:`raptix.agents.middleware_slots._make_kg`)
+    The KG middleware *slot* (:func:`raptix.intelligence.agents.middleware_slots._make_kg`)
     already degrades when ``RAPTIX_NEO4J_*`` is unset, but agents such as
     ``osint_operator`` import the ``kg_*`` tools DIRECTLY into their tool set,
     bypassing that guard — so a call would raise ``KGStoreConfigError`` from
