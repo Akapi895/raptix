@@ -139,3 +139,8 @@ docs/superpowers/
 clients/web-raptix/test-results-planning/
 clients/web-raptix/test-results-console/
 clients/web-raptix/.figma/
+
+# Local probe/experiment output has one home; harness source is kept visible.
+/tests/local/artifacts/
+/workspace-w14live-*/
+/workspace-w15core-*/

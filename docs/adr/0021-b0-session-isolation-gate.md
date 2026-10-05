@@ -47,7 +47,7 @@ target, and do not automate it as part of the unit suite or regular CI.
    need a full application exercise: it uses two bounded, local shell probes.
 2. Execute the marked `slow` and `manual` integration harness with
    `RAPTIX_B0_LIVE=1` and `SANDBOX_URL` set to that stack's sandbox daemon:
-   `packages/raptix/tests/integration/test_b0_session_isolation_live.py`.
+    `tests/local/manual/test_b0_session_isolation_live.py`.
    It invokes the real `raptix.tools.bash.bash.ainvoke` path twice via
    `asyncio.gather`, using `se-b0-a` and `se-b0-b` against the same real
    sandbox. This is the bash path that specialist `task()` calls use, without
