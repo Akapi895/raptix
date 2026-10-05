@@ -6,16 +6,16 @@ from raptix_contracts import foundry as plugin_foundry
 from raptix_contracts import patterns as plugin_patterns
 from raptix_contracts.tools import get_bundle
 
-from raptix.execution.tools.contracts import foundry, patterns
+import raptix.execution.tools.contracts as contracts_pkg
 from raptix.execution.tools.contracts.tools import CONTRACT_TOOLS
 from raptix.intelligence.agents.build import build_tools
 
 
-def test_legacy_exports_share_plugin_implementation_identity() -> None:
-    assert patterns.ContractFinding is plugin_patterns.ContractFinding
-    assert patterns.scan_solidity_source is plugin_patterns.scan_solidity_source
-    assert foundry.FoundryHarness is plugin_foundry.FoundryHarness
-    assert foundry.generate_reentrancy_test is plugin_foundry.generate_reentrancy_test
+def test_package_exports_share_plugin_implementation_identity() -> None:
+    assert contracts_pkg.ContractFinding is plugin_patterns.ContractFinding
+    assert contracts_pkg.scan_solidity_source is plugin_patterns.scan_solidity_source
+    assert contracts_pkg.FoundryHarness is plugin_foundry.FoundryHarness
+    assert contracts_pkg.generate_reentrancy_test is plugin_foundry.generate_reentrancy_test
 
 
 @pytest.mark.parametrize(

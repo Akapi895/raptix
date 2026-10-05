@@ -12,7 +12,7 @@ Owner of agents, prompts, and LLM access:
 - ``skills/`` runtime layer (loader/registry/selector/engine) forms in
   W8–W9 while the corpus splits out to ``packages/raptix-skills``.
 
-Deprecated re-export shims keep the old ``raptix.agents`` and
-``raptix.llm`` import paths alive until W11 (see
-``raptix-repository-architecture.md`` §9 and §32, waves W3, W5, W8–W9).
+The W5 re-export shims (``raptix.agents``, ``raptix.llm``) were retired
+in W11 (see ``raptix-repository-architecture.md`` §9 and §32, waves W3,
+W5, W8–W9, W11).
 """

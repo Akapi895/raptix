@@ -2,7 +2,7 @@
 
 Plugin authors ship tools either as langchain ``@tool`` callables or
 as classes implementing this Protocol. The framework's tool registry
-(``raptix.agents.build.build_tools``) accepts both shapes; this
+(``raptix.intelligence.agents.build.build_tools``) accepts both shapes; this
 Protocol documents the minimum surface.
 """
 

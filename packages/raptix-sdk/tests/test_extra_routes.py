@@ -14,7 +14,7 @@ generic ``/skills/`` default deterministically.
 
 from __future__ import annotations
 
-from raptix.backends import make_agent_backend
+from raptix.execution.backends import make_agent_backend
 from raptix_sdk.testing import FakeBackend, FakeSandbox
 
 

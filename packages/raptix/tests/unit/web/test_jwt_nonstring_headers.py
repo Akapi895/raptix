@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 import json
 
-from raptix.execution.tools.web.jwt import parse_token
+from raptix_web.jwt import parse_token
 
 
 def _make_token(header: dict, claims: dict | None = None) -> str:

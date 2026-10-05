@@ -80,7 +80,7 @@ def get_agent() -> object:
     """Plugin factory returning a compiled agent (LangGraph CompiledGraph).
 
     Replace this stub with your real agent construction — see
-    ``raptix.agents.standard.recon.create_recon_agent`` for an
+    ``raptix.intelligence.agents.standard.recon:SUBAGENT_SPEC`` for an
     example of the framework's factory pattern.
     """
     raise NotImplementedError(

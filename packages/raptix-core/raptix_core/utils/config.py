@@ -8,7 +8,7 @@ SANDBOX_TOKEN env vars consumed directly by
 ``raptix.execution.backends.factory.build_sandbox_backend`` — no schema field needed.
 
 Credentials (which provider keys are present, in what priority) are detected
-by ``raptix.llm.factory._resolve_credentials`` directly from environment
+by ``raptix.intelligence.llm.factory._resolve_credentials`` directly from environment
 variables (``ANTHROPIC_API_KEY`` etc., ``RAPTIX_PROVIDER_PRIORITY``,
 ``RAPTIX_AUTH_CLAUDE_CODE``) and so don't appear in this schema.
 """

@@ -7,21 +7,22 @@ Edge.make / upsert_*).
 
 from __future__ import annotations
 
-from raptix.execution.tools.ad.delegation import (
+from raptix_active_directory.delegation import (
     DelegationFinding,
     _is_dc,
     _spn_targets_dc,
     analyze_delegation,
 )
-from raptix.execution.tools.ad.gpo import (
+from raptix_active_directory.gpo import (
     GPOFinding,
     _is_sensitive_ou,
     analyze_gpo_abuse,
 )
-from raptix.execution.tools.ad.shadow_creds import (
+from raptix_active_directory.shadow_creds import (
     ShadowCredsFinding,
     analyze_shadow_credentials,
 )
+
 from raptix_core.types.kg import Edge, EdgeKind, KnowledgeGraph, Node, NodeKind
 
 # ── helpers ──────────────────────────────────────────────────────────────

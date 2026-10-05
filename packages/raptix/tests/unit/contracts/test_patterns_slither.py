@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from raptix.execution.tools.contracts.foundry import (
+from raptix_contracts.foundry import (
     generate_access_control_test,
     generate_flashloan_test,
     generate_reentrancy_test,
 )
-from raptix.execution.tools.contracts.patterns import scan_solidity_source
+from raptix_contracts.patterns import scan_solidity_source
+
 from raptix_core.types.kg import Severity
 
 

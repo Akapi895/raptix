@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import json
 
+from raptix_cloud.metadata import METADATA_ENDPOINTS
+
 from raptix.execution.tools.cloud import tools as T
-from raptix.execution.tools.cloud.metadata import METADATA_ENDPOINTS
 
 
 class TestIamPolicyAuditWrapper:

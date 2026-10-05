@@ -1,17 +1,15 @@
-"""Compatibility graph host for the wireless domain plugin (W10)."""
+"""Runtime graph host for the wireless domain plugin.
 
-from raptix_wireless.agent import DEFINITION, SUBAGENT_SPEC
-from raptix_wireless.agent import create_wireless_operator_agent as create_wireless_operator_agent
+The wireless operator definition and factory live in
+``raptix_wireless.agent`` (W10); this module only materializes the
+LangGraph graph for the ``langgraph.json`` runtime entry.
+"""
 
-from raptix.intelligence.agents.domain_composer import domain_baseline_tools
+from raptix_wireless.agent import create_wireless_operator_agent
+
 from raptix_core.plugin_loader import is_bundle_enabled
 
-_ROLE = DEFINITION.role
-_RECURSION_LIMIT = DEFINITION.recursion_limit
-_SKILL_SOURCES = list(DEFINITION.skill_sources or ())
-_STANDARD_TOOLS = domain_baseline_tools(DEFINITION)
-
-__all__ = ["SUBAGENT_SPEC", "create_wireless_operator_agent"]
+__all__ = []
 
 if is_bundle_enabled("standard"):
     graph = create_wireless_operator_agent()

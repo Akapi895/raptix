@@ -55,17 +55,16 @@ Plan invariants (violating these reopens settled design):
   until each move wave lands: `mcp_server/`, `server/`.
 - W4 landed the knowledge subsystem: the engagement-graph implementation
   moved from `middleware/kg_internal` to `knowledge/graph`; middleware
-  keeps only thin adapters (`kg.py`, `kg_autoingest.py`, `tried_edges.py`)
-  plus a deprecated re-export shim at `raptix.middleware.kg_internal`
-  (retired in W11).
+  keeps only thin adapters (`kg.py`, `kg_autoingest.py`, `tried_edges.py`).
+  The `raptix.middleware.kg_internal` re-export shim was retired in W11.
 - W5 landed agent/LLM/prompt ownership: `agents/` → `intelligence/agents`,
   `agents/prompts/` → `intelligence/prompts`, `llm/` → `intelligence/llm`;
-  deprecated re-export shims at `raptix.agents` and `raptix.llm` (retired
-  in W11). The `raptix.agents` entry-point *group name* is unchanged.
+  the `raptix.agents` and `raptix.llm` re-export shims were retired in W11.
+  The `raptix.agents` entry-point *group name* is unchanged.
 - W6 landed execution ownership: `tools/` → `execution/tools`,
   `sandbox_{kernel,server,web}` → `execution/sandbox/{kernel,server,web}`,
-  `backends/` → `execution/backends`; deprecated re-export shims keep the
-  old import paths alive (retired in W11). The `raptix.tools`
+  `backends/` → `execution/backends`; the old `raptix.{tools,backends,
+  sandbox_*}` re-export shims were retired in W11. The `raptix.tools`
   entry-point *group name* is unchanged. Guardrail-relevant path
   allowlists (`.semgrep/raptix-rules.yml`) and the sandbox image
   (`infra/containers/sandbox*.Dockerfile`, `sandbox-entrypoint.sh`)
@@ -82,11 +81,19 @@ Plan invariants (violating these reopens settled design):
   offline domain analyzers are canonical there. Plugins import only
   stdlib + public SDK/core. `raptix_sdk.create_domain_agent` dispatches to
   the runtime's `raptix.agent_composers` provider, which retains model,
-  sandbox, middleware, live transport and KG lifecycle assembly. Runtime
-  graph hosts and analyzer re-exports preserve old imports until W11.
+  sandbox, middleware, live transport and KG lifecycle assembly. The W10
+  analyzer re-export shims were retired in W11; runtime graph hosts under
+  `intelligence/agents/standard/` remain and build their graphs from the
+  plugin factories.
   Prompt resources resolve before shared policy assembly; default bundle
   names, tool sets, priorities and skill paths are preserved. See
   `docs/adr/0038-domain-plugin-composition.md` and `plugins/README.md`.
+- W11 retired the compatibility layer: the W4 (`raptix.middleware.kg_internal`),
+  W5 (`raptix.agents`, `raptix.llm`) and W6 (`raptix.tools`, `raptix.backends`,
+  `raptix.sandbox_{kernel,server,web}`) re-export shims plus the W10 analyzer
+  re-exports under `execution/tools/` are gone. The Phase-1 core/framework/sdk
+  split shims (`raptix.core.*`, `raptix.plugin_loader`) are a separate 2.0.0
+  contract and stay.
 - `langgraph.json` maps graph names to
   `packages/raptix/raptix/intelligence/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.

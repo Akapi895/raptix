@@ -6,11 +6,11 @@ import json
 from pathlib import Path
 
 import pytest
+from raptix_web.jwt import forge_token
 
 from raptix.execution.tools.research import _state as state
 from raptix.execution.tools.research import tools as research_tools
 from raptix.execution.tools.research.cve import Exploitability
-from raptix.execution.tools.web.jwt import forge_token
 from raptix_core.types.kg import KnowledgeGraph, NodeKind
 
 
