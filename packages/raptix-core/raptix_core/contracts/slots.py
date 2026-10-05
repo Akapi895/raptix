@@ -57,6 +57,13 @@ class MiddlewareSlot(StrEnum):
     SUMMARIZATION = "summarization"
     PROMPT_CACHING = "prompt-caching"
     PATCH_TOOL_CALLS = "patch-tool-calls"
+    # Full-fidelity run recording (model requests/responses + tool
+    # calls/results as JSONL). Declared LAST so the recorder sits
+    # innermost — closest to the runtime — and observes the exact
+    # payloads that hit the LLM, including fallback attempts. The
+    # factory returns None unless RAPTIX_RUNTIME__RECORD_PATH is set,
+    # so default runs assemble byte-identical stacks.
+    RECORD = "record"
 
     # ── Compat alias (removed at 2.0.0) ──
     # The slot was renamed ``ROE_ENFORCEMENT`` → ``ROE_GUARDRAIL`` when
@@ -167,6 +174,10 @@ _BASE_SLOTS: frozenset[MiddlewareSlot] = _TAIL_SLOTS | {
     MiddlewareSlot.EVENT_LOG,
     MiddlewareSlot.PROMPT_INJECTION_SHIELD,
     MiddlewareSlot.BUDGET,
+    # Full-fidelity recording for lab/benchmark analysis. Env-gated
+    # (no-op unless RAPTIX_RUNTIME__RECORD_PATH is set) so every
+    # agent gets it without changing default-run behavior.
+    MiddlewareSlot.RECORD,
 }
 
 # Standard bash-executing agents (recon/exploit/postexploit/analyst/

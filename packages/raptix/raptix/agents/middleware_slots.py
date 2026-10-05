@@ -60,6 +60,7 @@ from raptix.middleware.opscontrol_notifications import (
 from raptix.middleware.prompt_injection_shield import PromptInjectionShieldMiddleware
 from raptix.middleware.proxy_key_override import ProxyKeyOverrideMiddleware
 from raptix.middleware.roe import build_default_sink
+from raptix.runtime.recording import RecordingMiddleware
 
 # Slot enum + per-role applicability mapping + safety-critical set
 # all live in the contract layer now (raptix_core.contracts.slots).
@@ -407,6 +408,23 @@ def _make_patch_tool_calls(**_: Any):
     return PatchToolCallsMiddleware()
 
 
+def _make_record(**_: Any):
+    """Full-fidelity run recording — opt-in via ``RAPTIX_RUNTIME__RECORD_PATH``.
+
+    Returns None (slot skipped) unless the env var names a record file, so
+    default engagements assemble byte-identical stacks and pay zero
+    recording cost. When set, every agent appends its model + tool
+    round-trips to the same JSONL (per-instance seq counters; readers
+    must tolerate interleaved lines from concurrent agents). The
+    middleware returns responses unchanged — observability only.
+    """
+    import os
+
+    if not os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "").strip():
+        return None
+    return RecordingMiddleware()
+
+
 def _make_event_log(*, role: str = "", **_: Any):
     # Thread the role in: it is the only reliable source of the agent name
     # (the runtime object has no ``agent_name``), and without it every logged
@@ -482,6 +500,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.SUMMARIZATION: _make_summarization,
     MiddlewareSlot.PROMPT_CACHING: _make_prompt_caching,
     MiddlewareSlot.PATCH_TOOL_CALLS: _make_patch_tool_calls,
+    MiddlewareSlot.RECORD: _make_record,
 }
 """Slot → factory mapping. Plugin overrides shallow-merge into this
 dict at assembly time (without mutating the module-level constant) —
