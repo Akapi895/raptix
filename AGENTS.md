@@ -48,9 +48,13 @@ Plan invariants (violating these reopens settled design):
   `infra/{containers,config,telemetry-gateway}`, `benchmarks/` (Python package
   `benchmarks`, run via `-m benchmarks.runner`). Compose files stay at repo
   root (launcher contract) and mount `./infra/{config,containers}`.
-- Inside `packages/raptix/raptix/` the flat layout is still canonical until
-  W3–W6: `agents/`, `llm/`, `tools/`, `sandbox_{kernel,server,web}/`,
-  `backends/`, `mcp_server/`, `server/`, and `middleware/kg_internal/`.
+- W3 landed the subsystem boundaries inside `packages/raptix/raptix/`:
+  `orchestration/`, `knowledge/`, `intelligence/`, `execution/`,
+  `interfaces/` (docstring-only placeholders — no code moved, no re-export
+  shims needed until W4–W6). The flat content layout is still canonical
+  until each move wave lands: `agents/`, `llm/`, `tools/`,
+  `sandbox_{kernel,server,web}/`, `backends/`, `mcp_server/`, `server/`,
+  and `middleware/kg_internal/`.
 - `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
 - Node workspaces are rooted in `package.json` (`apps/*`, `apps/shared/*`).
