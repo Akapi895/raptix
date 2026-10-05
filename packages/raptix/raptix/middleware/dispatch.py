@@ -1,6 +1,13 @@
 """Persistent task-boundary failure handling; no role-wide retry suppression."""
 
-from __future__ import annotations
+# NOTE: this module must NOT use ``from __future__ import annotations``.
+# The ``task`` tool below declares a bare ``runtime: ToolRuntime`` parameter
+# that langgraph's ToolNode injects at call time. Detection reads
+# ``inspect.signature`` annotations, which are *strings* under the future
+# import — langchain-core then fails to recognise the injected arg, drops it
+# during schema validation, and every dispatch crashes with
+# ``atask() missing 1 required positional argument: 'runtime'``.
+# (deepagents' own task tool works precisely because it has no future import.)
 
 import hashlib
 import json
