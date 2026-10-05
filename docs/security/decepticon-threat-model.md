@@ -70,7 +70,7 @@ Per-asset analysis.
 | Threat | Vector | Mitigation | Status |
 |--------|--------|-----------|--------|
 | **Spoofing** | Shared single-user Cypher creds across sandbox + mgmt | Per-engagement Cypher user (planned, see "Future hardening" below) | Open |
-| **Tampering** | Cypher injection via interpolated label | `_apoc_safety.ensure_safe` + parameter-bound queries | Done ([apoc-safety](../../packages/raptix/raptix/tools/research/_apoc_safety.py)) |
+| **Tampering** | Cypher injection via interpolated label | `_apoc_safety.ensure_safe` + parameter-bound queries | Done ([apoc-safety](../../packages/raptix/raptix/execution/tools/research/_apoc_safety.py)) |
 | **Repudiation** | No audit of Cypher writes per engagement | RoE audit ledger covers tool calls; KG-internal writes not yet logged | Partial |
 | **Information disclosure** | `apoc.cypher.runFile('file:///proc/self/environ')` reads mgmt env | APOC allowlist + file-I/O procedures disabled | Done ([hardening](./neo4j-hardening.md)) |
 | **Information disclosure** | Web `engagements/[id]/graph` route returned full graph | Per-engagement label scoping + Prisma ownership check | Done |
@@ -146,7 +146,7 @@ The chains that matter, ranked by realistic damage:
 
 4. **Plugin entry-point poisoning.** Operator runs `pip install raptix-plugin-foo` from a typosquat. Bundle's `__init__.py` exfiltrates `.env` at agent startup. **Closed** by `RAPTIX_PLUGINS` allowlist; **Open** signed-bundle verification.
 
-5. **Prompt-injection-driven RCE via docker socket.** The old `DockerSandbox` transport mounted `/var/run/docker.sock` into the LangGraph container; any agent-controlled command could escape to the host. **Closed** by the HTTP-only sandbox transport rewrite (predates this PR; see [`backends/factory.py`](../../packages/raptix/raptix/backends/factory.py)).
+5. **Prompt-injection-driven RCE via docker socket.** The old `DockerSandbox` transport mounted `/var/run/docker.sock` into the LangGraph container; any agent-controlled command could escape to the host. **Closed** by the HTTP-only sandbox transport rewrite (predates this PR; see [`backends/factory.py`](../../packages/raptix/raptix/execution/backends/factory.py)).
 
 ## Future hardening
 

@@ -19,9 +19,9 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.research import _state as state
-from raptix.tools.research import tools as research_tools
-from raptix.tools.research.tools import (
+from raptix.execution.tools.research import _state as state
+from raptix.execution.tools.research import tools as research_tools
+from raptix.execution.tools.research.tools import (
     _cookie_finding_severity,
     _is_web_port,
     _iter_cargo_lock,

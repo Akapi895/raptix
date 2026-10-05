@@ -6,8 +6,8 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.research import tools as research_tools
-from raptix.tools.research.cve import Exploitability
+from raptix.execution.tools.research import tools as research_tools
+from raptix.execution.tools.research.cve import Exploitability
 from raptix_core.types.kg import KnowledgeGraph, NodeKind
 
 

@@ -1,4 +1,4 @@
-"""Unit tests for ``raptix.tools.interaction.ask_user_question``."""
+"""Unit tests for ``raptix.execution.tools.interaction.ask_user_question``."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ from unittest.mock import patch
 import pytest
 from pydantic import ValidationError
 
-from raptix.tools.interaction import ask_user_question
+from raptix.execution.tools.interaction import ask_user_question
 
 # Pydantic constraints expressed in the tool signature; mirrored here so the
 # tests document the contract without re-importing private constants.
@@ -60,11 +60,11 @@ def test_emits_custom_event_with_id_and_payload():
 
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=fake_writer,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="Yes",
         ),
     ):
@@ -86,11 +86,11 @@ def test_emits_custom_event_with_id_and_payload():
 def test_returns_interrupt_value_verbatim_for_single_select():
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="No",
         ),
     ):
@@ -101,11 +101,11 @@ def test_returns_list_verbatim_for_multi_select():
     chosen = ["Yes", "No"]
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value=chosen,
         ),
     ):
@@ -116,11 +116,11 @@ def test_returns_free_text_when_allow_other_selected():
     typed = "Custom answer from operator"
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value=typed,
         ),
     ):
@@ -135,11 +135,11 @@ def test_skips_writer_when_outside_graph_context():
 
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             side_effect=raising,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="Yes",
         ),
     ):
@@ -153,11 +153,11 @@ def test_truncates_header_longer_than_max():
 
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda event: captured.append(event),
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="Yes",
         ),
     ):
@@ -172,11 +172,11 @@ def test_coerces_options_json_string_from_local_models():
 
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda event: captured.append(event),
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="External Web (Recommended)",
         ),
     ):
@@ -196,11 +196,11 @@ def test_coerces_options_python_literal_string_from_local_models():
 
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda event: captured.append(event),
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="Recon",
         ),
     ):
@@ -213,7 +213,7 @@ def test_accepts_empty_options():
     """The tool now allows zero options so the operator can answer free-form
     via the Other fallback; a single option is also valid."""
     with patch(
-        "raptix.tools.interaction.ask_user.interrupt",
+        "raptix.execution.tools.interaction.ask_user.interrupt",
         return_value="typed answer",
     ):
         assert _invoke(options=[], allow_other=True) == "typed answer"
@@ -223,7 +223,7 @@ def test_accepts_empty_options():
 def test_rejects_too_many_options():
     too_many = [{"label": f"L{i}", "description": f"D{i}"} for i in range(MAX_OPTIONS + 1)]
     with patch(
-        "raptix.tools.interaction.ask_user.interrupt",
+        "raptix.execution.tools.interaction.ask_user.interrupt",
         return_value="Yes",
     ):
         with pytest.raises(ValidationError):
@@ -235,11 +235,11 @@ def test_accepts_max_option_counts():
     boundary_max = [{"label": f"L{i}", "description": f"D{i}"} for i in range(MAX_OPTIONS)]
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="L0",
         ),
     ):
@@ -248,7 +248,7 @@ def test_accepts_max_option_counts():
 
 def test_rejects_option_without_label_or_description():
     with patch(
-        "raptix.tools.interaction.ask_user.interrupt",
+        "raptix.execution.tools.interaction.ask_user.interrupt",
         return_value="Yes",
     ):
         bad = [
@@ -266,11 +266,11 @@ def test_strips_recommended_suffix_from_single_select_return():
     and locks the Soundwave interview in a loop."""
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value="Internal Network Audit (Recommended)",
         ),
     ):
@@ -282,11 +282,11 @@ def test_strips_recommended_suffix_from_multi_select_return():
     chosen = ["Recon (Recommended)", "Exploitation", "Post-exploit (Recommended)"]
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value=chosen,
         ),
     ):
@@ -299,11 +299,11 @@ def test_preserves_free_text_without_recommended_suffix():
     typed = "Acme Q1-2026 Adversary Sim"
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value=typed,
         ),
     ):
@@ -317,11 +317,11 @@ def test_does_not_strip_recommended_when_not_a_trailing_suffix():
     embedded = "Mode (Recommended) for review"
     with (
         patch(
-            "raptix.tools.interaction.ask_user.get_stream_writer",
+            "raptix.execution.tools.interaction.ask_user.get_stream_writer",
             return_value=lambda _evt: None,
         ),
         patch(
-            "raptix.tools.interaction.ask_user.interrupt",
+            "raptix.execution.tools.interaction.ask_user.interrupt",
             return_value=embedded,
         ),
     ):
@@ -331,7 +331,7 @@ def test_does_not_strip_recommended_when_not_a_trailing_suffix():
 def test_rejects_option_with_extra_fields():
     """extra='forbid' on QuestionOption keeps the schema strict for the LLM."""
     with patch(
-        "raptix.tools.interaction.ask_user.interrupt",
+        "raptix.execution.tools.interaction.ask_user.interrupt",
         return_value="Yes",
     ):
         bad = [

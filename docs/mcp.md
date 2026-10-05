@@ -47,7 +47,7 @@ Malformed JSON, unknown transports, or unreachable servers are
 ## 3. Programmatic use
 
 ```python
-from raptix.tools.mcp import load_mcp_tools, mcp_servers_configured
+from raptix.execution.tools.mcp import load_mcp_tools, mcp_servers_configured
 
 if mcp_servers_configured():
     tools = await load_mcp_tools()

@@ -1,4 +1,4 @@
-"""Unit tests for ``raptix.tools.ops.client``.
+"""Unit tests for ``raptix.execution.tools.ops.client``.
 
 We exercise the client against an :class:`httpx.MockTransport` rather
 than a real UDS so the tests run anywhere — including CI runners
@@ -14,7 +14,7 @@ import json
 import httpx
 import pytest
 
-from raptix.tools.ops.client import (
+from raptix.execution.tools.ops.client import (
     DEFAULT_SOCKET_PATH,
     SOCKET_PATH_ENV,
     OpsControlClient,

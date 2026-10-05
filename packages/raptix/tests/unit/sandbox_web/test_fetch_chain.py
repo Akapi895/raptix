@@ -13,9 +13,9 @@ from urllib.parse import urlsplit
 
 import pytest
 
-from raptix.sandbox_web import fetch_chain
-from raptix.sandbox_web.fetch_chain import fetch
-from raptix.sandbox_web.validators import SMALL_BODY_THRESHOLD, Verdict
+from raptix.execution.sandbox.web import fetch_chain
+from raptix.execution.sandbox.web.fetch_chain import fetch
+from raptix.execution.sandbox.web.validators import SMALL_BODY_THRESHOLD, Verdict
 
 
 @dataclass

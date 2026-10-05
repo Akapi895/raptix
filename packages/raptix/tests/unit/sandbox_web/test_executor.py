@@ -11,9 +11,9 @@ import json
 
 import pytest
 
-from raptix.sandbox_web import executor
-from raptix.sandbox_web.executor import _pick_executor, run_playwright_fallback
-from raptix.sandbox_web.validators import SMALL_BODY_THRESHOLD, Verdict
+from raptix.execution.sandbox.web import executor
+from raptix.execution.sandbox.web.executor import _pick_executor, run_playwright_fallback
+from raptix.execution.sandbox.web.validators import SMALL_BODY_THRESHOLD, Verdict
 
 
 def _envelope(html: str, final_url: str = "https://8.8.8.8/final") -> str:

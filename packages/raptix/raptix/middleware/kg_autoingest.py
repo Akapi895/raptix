@@ -128,7 +128,7 @@ class KGAutoIngestMiddleware(AgentMiddleware):
             sandbox = self._sandbox
             runtime = getattr(request, "runtime", None)
             if runtime is not None and getattr(runtime, "config", None):
-                from raptix.backends.factory import build_sandbox_backend
+                from raptix.execution.backends.factory import build_sandbox_backend
 
                 sandbox = build_sandbox_backend(runtime.config)
             entries = sandbox.ls_info(posixpath.dirname(output_path))

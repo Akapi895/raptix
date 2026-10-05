@@ -25,7 +25,7 @@ missed the target.
 Layering
 --------
 The renderer + applier (``render_nftables``, ``render_dns_allowlist``,
-``apply_egress``) live in ``raptix.sandbox_kernel.egress`` because
+``apply_egress``) live in ``raptix.execution.sandbox.kernel.egress`` because
 they run *inside* the sandbox container — where ``nft`` exists, the
 management subnet is locally discoverable, and the image ships no
 ``raptix_core``. They are re-exported here for convenience. This
@@ -41,7 +41,7 @@ import ipaddress
 import os
 from collections.abc import Iterable
 
-from raptix.sandbox_kernel.egress import (
+from raptix.execution.sandbox.kernel.egress import (
     EgressPolicy,
     render_dns_allowlist,
     render_nftables,
@@ -86,7 +86,7 @@ def _norm(addrs: Iterable[str]) -> tuple[str, ...]:
 # tool layer); without this, an enforce-mode engagement's nftables/DNS allowlist
 # — compiled from in_scope only — would drop the provider connection and
 # web_search would silently fail. Mirrors the provider allowlist in
-# raptix.sandbox_web.providers (kept as a small literal here to avoid the
+# raptix.execution.sandbox.web.providers (kept as a small literal here to avoid the
 # middleware importing the in-sandbox engine). Extend/replace via
 # RAPTIX_OSINT_EGRESS_HOSTS (comma-separated); set it empty to disable.
 _DEFAULT_OSINT_EGRESS_HOSTS = ("duckduckgo.com", "html.duckduckgo.com")

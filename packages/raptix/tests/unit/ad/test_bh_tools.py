@@ -1,6 +1,6 @@
 """Unit tests for the BHCE-backed ``bhce_*`` LangChain tool surface.
 
-The tools wrap :mod:`raptix.tools.ad.bhce_client`; here we stub the
+The tools wrap :mod:`raptix.execution.tools.ad.bhce_client`; here we stub the
 HTTP layer (``httpx.Client``) so we exercise just the tool-side
 behaviour: JSON envelope shape, missing-env diagnostic, the
 file-upload 3-step + poll loop, and error propagation.
@@ -19,7 +19,7 @@ from typing import Any
 import httpx
 import pytest
 
-from raptix.tools.ad.bh_tools import (
+from raptix.execution.tools.ad.bh_tools import (
     bhce_cypher,
     bhce_ingest_zip,
     bhce_status,
@@ -133,7 +133,7 @@ def test_bhce_ingest_zip_runs_three_step_and_polls_until_terminal(
 ) -> None:
     _set_env(monkeypatch)
     zip_path = _make_tiny_zip(tmp_path)
-    monkeypatch.setattr("raptix.tools.ad.bh_tools._UPLOAD_POLL_INTERVAL_SECONDS", 0.01)
+    monkeypatch.setattr("raptix.execution.tools.ad.bh_tools._UPLOAD_POLL_INTERVAL_SECONDS", 0.01)
 
     calls: list[tuple[str, str]] = []
     poll_count = {"n": 0}
@@ -194,7 +194,7 @@ def test_bhce_ingest_zip_propagates_start_error(monkeypatch: pytest.MonkeyPatch,
 
 
 def test_bhce_tools_list_exports_three(monkeypatch: pytest.MonkeyPatch) -> None:
-    from raptix.tools.ad.bh_tools import BHCE_TOOLS
+    from raptix.execution.tools.ad.bh_tools import BHCE_TOOLS
 
     names = sorted(t.name for t in BHCE_TOOLS)
     assert names == ["bhce_cypher", "bhce_ingest_zip", "bhce_status"]

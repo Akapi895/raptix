@@ -1,12 +1,7 @@
-"""Sandbox daemon — the server peer of `HTTPSandbox`.
+"""Deprecated import path, kept as a compatibility shim.
 
-Runs inside the sandbox container, wraps a `LocalShellBackend` (which
-already implements the BaseSandbox semantics for direct-host execution),
-and exposes `execute`, `upload_files`, `download_files` over HTTP.
-
-Entry point: `python -m raptix.sandbox_server`.
+Ownership moved to ``raptix.execution.sandbox.server.__init__`` in W6; this re-export shim is
+retired in W11.
 """
 
-from raptix.sandbox_server.app import app
-
-__all__ = ["app"]
+from raptix.execution.sandbox.server import *  # noqa: F401,F403

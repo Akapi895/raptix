@@ -52,8 +52,7 @@ Plan invariants (violating these reopens settled design):
   `orchestration/`, `knowledge/`, `intelligence/`, `execution/`,
   `interfaces/` (docstring-only placeholders — no code moved, no re-export
   shims needed until W4–W6). The flat content layout is still canonical
-  until each move wave lands: `tools/`,
-  `sandbox_{kernel,server,web}/`, `backends/`, `mcp_server/`, `server/`.
+  until each move wave lands: `mcp_server/`, `server/`.
 - W4 landed the knowledge subsystem: the engagement-graph implementation
   moved from `middleware/kg_internal` to `knowledge/graph`; middleware
   keeps only thin adapters (`kg.py`, `kg_autoingest.py`, `tried_edges.py`)
@@ -63,6 +62,14 @@ Plan invariants (violating these reopens settled design):
   `agents/prompts/` → `intelligence/prompts`, `llm/` → `intelligence/llm`;
   deprecated re-export shims at `raptix.agents` and `raptix.llm` (retired
   in W11). The `raptix.agents` entry-point *group name* is unchanged.
+- W6 landed execution ownership: `tools/` → `execution/tools`,
+  `sandbox_{kernel,server,web}` → `execution/sandbox/{kernel,server,web}`,
+  `backends/` → `execution/backends`; deprecated re-export shims keep the
+  old import paths alive (retired in W11). The `raptix.tools`
+  entry-point *group name* is unchanged. Guardrail-relevant path
+  allowlists (`.semgrep/raptix-rules.yml`) and the sandbox image
+  (`infra/containers/sandbox*.Dockerfile`, `sandbox-entrypoint.sh`)
+  point at the new layout.
 - `langgraph.json` maps graph names to
   `packages/raptix/raptix/intelligence/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.

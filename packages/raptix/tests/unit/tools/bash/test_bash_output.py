@@ -4,8 +4,8 @@ import asyncio
 from dataclasses import dataclass, field
 from unittest.mock import AsyncMock, MagicMock
 
-from raptix.sandbox_kernel import BackgroundJobTracker
-from raptix.tools.bash.bash import (
+from raptix.execution.sandbox.kernel import BackgroundJobTracker
+from raptix.execution.tools.bash.bash import (
     _passive_read_state,
     bash,
     bash_kill,

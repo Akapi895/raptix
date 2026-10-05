@@ -1,4 +1,4 @@
-"""Tests for ``raptix.tools.proxy`` — Caido CLI tool wrappers."""
+"""Tests for ``raptix.execution.tools.proxy`` — Caido CLI tool wrappers."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.tools.proxy import (
+from raptix.execution.tools.proxy import (
     PROXY_TOOLS,
     CaidoClient,
     CaidoConfig,

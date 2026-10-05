@@ -43,8 +43,11 @@ _ensure_stubs()
 
 import pytest  # noqa: E402
 
-from raptix.tools.research import _state as state  # noqa: E402
-from raptix.tools.research.bounty import bounty_scope_check, format_bounty_report  # noqa: E402
+from raptix.execution.tools.research import _state as state  # noqa: E402
+from raptix.execution.tools.research.bounty import (  # noqa: E402
+    bounty_scope_check,
+    format_bounty_report,
+)
 from raptix_core.types.kg import Edge, EdgeKind, KnowledgeGraph, Node, NodeKind  # noqa: E402
 
 # ── Fixtures ──────────────────────────────────────────────────────────────
@@ -296,7 +299,7 @@ class TestFormatBountyReport:
         """Invoke format_bounty_report with the filesystem Path mocked out."""
         from unittest.mock import patch as _patch
 
-        with _patch("raptix.tools.research.bounty.Path") as mock_path_cls:
+        with _patch("raptix.execution.tools.research.bounty.Path") as mock_path_cls:
             mock_report_path = MagicMock()
             mock_path_cls.return_value = mock_report_path
             raw = format_bounty_report.invoke(

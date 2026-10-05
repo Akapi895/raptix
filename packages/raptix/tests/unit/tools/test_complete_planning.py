@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from raptix.tools.interaction.complete_planning import validate_planning_bundle
+from raptix.execution.tools.interaction.complete_planning import validate_planning_bundle
 
 
 def _write_bundle(root: Path, *, target: str = "https://target.example") -> None:

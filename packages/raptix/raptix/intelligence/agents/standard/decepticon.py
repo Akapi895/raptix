@@ -59,8 +59,8 @@ from typing import Any
 from deepagents.middleware.subagents import CompiledSubAgent
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
 from raptix.core.subagent_streaming import StreamingRunnable
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
@@ -168,7 +168,7 @@ def create_decepticon_agent(
         # tools would only let the orchestrator call something that returns
         # ``opscontrol_unreachable``. Gating keeps the toolset honest per
         # topology instead of relying on the model to avoid an unusable tool.
-        from raptix.tools.ops import OPS_TOOLS, ops_available
+        from raptix.execution.tools.ops import OPS_TOOLS, ops_available
 
         standard_tools = {t.name: t for t in OPS_TOOLS} if ops_available() else {}
         tools = build_tools(role=_ROLE, standard_tools=standard_tools)

@@ -1,4 +1,4 @@
-"""Tests for ``raptix.tools.browser`` — Playwright session manager + multiplex tool."""
+"""Tests for ``raptix.execution.tools.browser`` — Playwright session manager + multiplex tool."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from raptix.tools.browser.tools import (
+from raptix.execution.tools.browser.tools import (
     BROWSER_TOOLS,
     BrowserActionError,
     BrowserSessionManager,

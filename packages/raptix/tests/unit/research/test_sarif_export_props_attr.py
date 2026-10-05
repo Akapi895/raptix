@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from raptix.tools.research.sarif_export import (
+from raptix.execution.tools.research.sarif_export import (
     export_findings_to_sarif,
     severity_threshold_breach,
 )

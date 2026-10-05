@@ -15,9 +15,9 @@ from collections.abc import Iterator
 
 import pytest
 
-from raptix.sandbox_kernel import BackgroundJobTracker, TmuxSessionManager
-from raptix.sandbox_kernel.base import SandboxBase
-from raptix.sandbox_kernel.daemon import DaemonSandbox
+from raptix.execution.sandbox.kernel import BackgroundJobTracker, TmuxSessionManager
+from raptix.execution.sandbox.kernel.base import SandboxBase
+from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
 
 @pytest.fixture(autouse=True)

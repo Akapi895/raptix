@@ -1,4 +1,4 @@
-"""Tests for ``raptix.backends.factory.build_sandbox_backend``."""
+"""Tests for ``raptix.execution.backends.factory.build_sandbox_backend``."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ from collections.abc import Iterator
 
 import pytest
 
-from raptix.backends import build_sandbox_backend
-from raptix.backends.factory import _resolve_endpoint, _shared_sandbox
+from raptix.execution.backends import build_sandbox_backend
+from raptix.execution.backends.factory import _resolve_endpoint, _shared_sandbox
 
 
 @pytest.fixture(autouse=True)

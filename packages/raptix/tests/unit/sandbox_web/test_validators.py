@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from raptix.sandbox_web.validators import (
+from raptix.execution.sandbox.web.validators import (
     SMALL_BODY_THRESHOLD,
     ValidationResult,
     Verdict,

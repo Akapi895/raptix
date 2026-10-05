@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.sandbox_kernel.base import _compute_orphan_tmux_sessions
-from raptix.sandbox_kernel.daemon import DaemonSandbox
+from raptix.execution.sandbox.kernel.base import _compute_orphan_tmux_sessions
+from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
 # ── pure decision function ─────────────────────────────────────────────
 
@@ -67,11 +67,11 @@ def test_reap_kills_only_orphans(monkeypatch: pytest.MonkeyPatch) -> None:
     killed: list[str] = []
 
     monkeypatch.setattr(
-        "raptix.sandbox_kernel.base._list_decepticon_tmux_sockets",
+        "raptix.execution.sandbox.kernel.base._list_decepticon_tmux_sockets",
         lambda: list(discovered),
     )
     monkeypatch.setattr(
-        "raptix.sandbox_kernel.base._kill_tmux_socket",
+        "raptix.execution.sandbox.kernel.base._kill_tmux_socket",
         lambda s: killed.append(s),
     )
 
@@ -84,9 +84,11 @@ def test_reap_kills_only_orphans(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_reap_is_a_noop_when_nothing_discovered(monkeypatch: pytest.MonkeyPatch) -> None:
     killed: list[str] = []
 
-    monkeypatch.setattr("raptix.sandbox_kernel.base._list_decepticon_tmux_sockets", lambda: [])
     monkeypatch.setattr(
-        "raptix.sandbox_kernel.base._kill_tmux_socket",
+        "raptix.execution.sandbox.kernel.base._list_decepticon_tmux_sockets", lambda: []
+    )
+    monkeypatch.setattr(
+        "raptix.execution.sandbox.kernel.base._kill_tmux_socket",
         lambda s: killed.append(s),
     )
 
@@ -97,7 +99,7 @@ def test_reap_is_a_noop_when_nothing_discovered(monkeypatch: pytest.MonkeyPatch)
 def test_reap_swallows_kill_failures(monkeypatch: pytest.MonkeyPatch) -> None:
     # One stuck socket must not block the rest from being reaped.
     monkeypatch.setattr(
-        "raptix.sandbox_kernel.base._list_decepticon_tmux_sockets",
+        "raptix.execution.sandbox.kernel.base._list_decepticon_tmux_sockets",
         lambda: ["dcptn_eng-abc_main", "dcptn_eng-abc_recon"],
     )
 
@@ -108,7 +110,7 @@ def test_reap_swallows_kill_failures(monkeypatch: pytest.MonkeyPatch) -> None:
             raise RuntimeError("simulated tmux failure")
         killed.append(session)
 
-    monkeypatch.setattr("raptix.sandbox_kernel.base._kill_tmux_socket", flaky_kill)
+    monkeypatch.setattr("raptix.execution.sandbox.kernel.base._kill_tmux_socket", flaky_kill)
 
     reaped = DaemonSandbox().reap_orphaned_tmux_sessions()
     # The successful kill is counted; the failure is logged + swallowed.

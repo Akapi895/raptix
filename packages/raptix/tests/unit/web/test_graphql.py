@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.tools.web.graphql import GraphQLSchema, introspection_query
+from raptix.execution.tools.web.graphql import GraphQLSchema, introspection_query
 
 
 def _intr(types: list[dict]) -> dict:

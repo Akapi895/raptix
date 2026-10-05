@@ -13,7 +13,7 @@ from deepagents.backends.protocol import (
 )
 from deepagents.middleware.filesystem import FilesystemMiddleware as BaseFilesystemMiddleware
 
-from raptix.backends.http_sandbox import HTTPSandbox
+from raptix.execution.backends.http_sandbox import HTTPSandbox
 from raptix.middleware.filesystem import (
     EngagementFilesystemBackend,
     FilesystemMiddleware,
@@ -654,7 +654,9 @@ def test_rebind_reresolves_bare_http_sandbox_per_run(monkeypatch) -> None:
     by the per-run resolution of ``build_sandbox_backend()`` — which consults
     ``configurable.sandbox_url`` first, env second."""
     per_run = HTTPSandbox("http://per-run-vm:9999", token="t")
-    monkeypatch.setattr("raptix.backends.build_sandbox_backend", lambda config=None: per_run)
+    monkeypatch.setattr(
+        "raptix.execution.backends.build_sandbox_backend", lambda config=None: per_run
+    )
 
     env = HTTPSandbox("http://shared-sidecar:9999")
     assert _rebind_sandbox_per_run(env) is per_run
@@ -667,7 +669,9 @@ def test_rebind_swaps_composite_default_preserving_routes(monkeypatch) -> None:
     ``/skills/`` route and ``artifacts_root`` are preserved, and the cached
     construction-time composite is left untouched."""
     per_run = HTTPSandbox("http://per-run-vm:9999", token="t")
-    monkeypatch.setattr("raptix.backends.build_sandbox_backend", lambda config=None: per_run)
+    monkeypatch.setattr(
+        "raptix.execution.backends.build_sandbox_backend", lambda config=None: per_run
+    )
 
     skills = RecordingBackend()
     env = HTTPSandbox("http://shared-sidecar:9999")
@@ -686,7 +690,7 @@ def test_rebind_leaves_composite_with_non_sandbox_default_untouched(monkeypatch)
     """A composite whose default is NOT a sandbox (e.g. a dev StateBackend) is
     returned unchanged — we never inject a sandbox where there wasn't one."""
     monkeypatch.setattr(
-        "raptix.backends.build_sandbox_backend",
+        "raptix.execution.backends.build_sandbox_backend",
         lambda config=None: (_ for _ in ()).throw(AssertionError("must not be called")),
     )
     state_like = RecordingBackend()
@@ -700,7 +704,9 @@ def test_get_backend_reresolves_sandbox_transport_per_run(monkeypatch) -> None:
     the env sidecar) re-resolves each run's filesystem transport to that run's
     own sandbox before scoping it to the engagement workspace."""
     per_run = HTTPSandbox("http://per-run-vm:9999", token="t")
-    monkeypatch.setattr("raptix.backends.build_sandbox_backend", lambda config=None: per_run)
+    monkeypatch.setattr(
+        "raptix.execution.backends.build_sandbox_backend", lambda config=None: per_run
+    )
 
     env = HTTPSandbox("http://shared-sidecar:9999")
     composite = CompositeBackend(default=env, routes={"/skills/": RecordingBackend()})

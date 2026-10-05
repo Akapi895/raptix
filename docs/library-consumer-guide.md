@@ -29,7 +29,7 @@ from raptix.intelligence.agents import (
     build_middleware,
     build_tools,
 )
-from raptix.backends import (
+from raptix.execution.backends import (
     HTTPSandbox,
     build_sandbox_backend,
     make_agent_backend,
@@ -62,7 +62,7 @@ from raptix_sdk import (
 The simplest path — use an OSS factory and pass it your own sandbox:
 
 ```python
-from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.intelligence.agents import create_recon_agent
 
 sandbox = build_sandbox_backend()
@@ -109,7 +109,7 @@ For multi-tenant or B2B Enterprise deployments, mount your own
 asset trees onto the agent's filesystem:
 
 ```python
-from raptix.backends import make_agent_backend
+from raptix.execution.backends import make_agent_backend
 from deepagents.backends import FilesystemBackend
 
 

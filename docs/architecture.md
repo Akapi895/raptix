@@ -89,7 +89,7 @@ AD attack-graph layer, introduced by [ADR-0005](adr/0005-bloodhound-via-bhce-res
 
 Postgres is reused from the existing `postgres` container — `containers/postgres-init/02-bloodhound-db.sh` pre-creates the `bloodhound` database plus the `pg_trgm` extension so BHCE's goose migrations bootstrap cleanly on first boot.
 
-Agents call BHCE through `raptix.tools.ad.bh_tools.bhce_status` / `bhce_cypher` / `bhce_ingest_zip` and the shared `raptix.tools.ad.bhce_client.BHCEClient` HMAC-3-chain signer. The in-house `bh_ingest_zip` / `adcs_post_process` / `dcsync_check` / `delegation_audit` / `gpo_audit` / `shadow_creds_audit` / `adcs_audit` tools emit `DeprecationWarning` on every call and will move to `decepticon.compat` next minor.
+Agents call BHCE through `raptix.execution.tools.ad.bh_tools.bhce_status` / `bhce_cypher` / `bhce_ingest_zip` and the shared `raptix.execution.tools.ad.bhce_client.BHCEClient` HMAC-3-chain signer. The in-house `bh_ingest_zip` / `adcs_post_process` / `dcsync_check` / `delegation_audit` / `gpo_audit` / `shadow_creds_audit` / `adcs_audit` tools emit `DeprecationWarning` on every call and will move to `decepticon.compat` next minor.
 
 ### Skillogy (`raptix-net`, REST API on host port 9100)
 

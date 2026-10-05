@@ -1,5 +1,5 @@
 """Introspection-parser + query-generator coverage for
-``raptix.tools.web.graphql``.
+``raptix.execution.tools.web.graphql``.
 
 This GraphQL auditor parses an introspection blob and (a) enumerates
 Query/Mutation fields, (b) finds IDOR-candidate fields (those taking an
@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.tools.web.graphql import GraphQLSchema, _unwrap_type
+from raptix.execution.tools.web.graphql import GraphQLSchema, _unwrap_type
 
 
 def _scalar(name: str) -> dict:
@@ -203,7 +203,7 @@ def test_from_introspection_missing_schema_returns_empty_and_warns(
     prev = decep.propagate
     decep.propagate = True
     try:
-        with caplog.at_level(logging.WARNING, logger="raptix.tools.web.graphql"):
+        with caplog.at_level(logging.WARNING, logger="raptix.execution.tools.web.graphql"):
             schema = GraphQLSchema.from_introspection({"foo": 1})
     finally:
         decep.propagate = prev

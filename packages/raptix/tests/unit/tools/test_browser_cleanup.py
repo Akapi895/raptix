@@ -1,4 +1,4 @@
-"""Tests for bounded, logged cleanup in ``raptix.tools.browser.tools``."""
+"""Tests for bounded, logged cleanup in ``raptix.execution.tools.browser.tools``."""
 
 from __future__ import annotations
 
@@ -9,13 +9,13 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from raptix.tools.browser.tools import (
+from raptix.execution.tools.browser.tools import (
     BrowserSessionManager,
     _reset_session_manager_for_tests,
     _safe_close,
 )
 
-_LOGGER_NAME = "raptix.tools.browser.tools"
+_LOGGER_NAME = "raptix.execution.tools.browser.tools"
 
 
 @pytest.fixture(autouse=True)
@@ -110,7 +110,7 @@ async def test_close_continues_when_page_close_raises(
     pw = MagicMock()
     pw.stop = pw_stop
 
-    from raptix.tools.browser.tools import _Tab
+    from raptix.execution.tools.browser.tools import _Tab
 
     mgr._tabs["main"] = _Tab(page=bad_page)
     mgr._active = "main"

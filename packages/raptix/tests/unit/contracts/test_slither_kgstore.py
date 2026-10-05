@@ -16,7 +16,7 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.contracts.slither import ingest_slither_json
+from raptix.execution.tools.contracts.slither import ingest_slither_json
 
 
 class _FakeKGStore:

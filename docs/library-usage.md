@@ -88,7 +88,7 @@ from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
 
 from raptix.intelligence.prompts import load_prompt
-from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.intelligence.llm import LLMFactory
 from raptix.middleware import (
     EngagementContextMiddleware,
@@ -96,9 +96,9 @@ from raptix.middleware import (
     SandboxNotificationMiddleware,
     SkillsMiddleware,
 )
-from raptix.tools.bash import BASH_TOOLS
-from raptix.tools.bash.bash import set_sandbox
-from raptix.tools.research.tools import kg_query, kg_stats
+from raptix.execution.tools.bash import BASH_TOOLS
+from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.research.tools import kg_query, kg_stats
 
 sandbox = build_sandbox_backend()
 set_sandbox(sandbox)
@@ -303,10 +303,10 @@ to honor the original semantics.
 | `raptix.intelligence.agents.build` | `build_middleware`, `build_tools`, `resolve_prompt_overrides`, `SafetyOverrideViolation` |
 | `raptix.intelligence.prompts` | `load_prompt`, `PromptBuilder` |
 | `raptix.middleware` | `SkillsMiddleware`, `FilesystemMiddleware`, `EngagementContextMiddleware`, `OPPLANMiddleware`, `SandboxNotificationMiddleware`, `OpsControlNotificationMiddleware`, `KGMiddleware`, `SkillogyMiddleware`, … |
-| `raptix.tools.bash` | `BASH_TOOLS` (the four bash tools), `set_sandbox` |
-| `raptix.tools.research`, `raptix.tools.references` | KG / CVE / payload tools |
-| `raptix.tools.interaction` | `ask_user_question`, `complete_engagement_planning` |
-| `raptix.tools.ops` | `ops_start`, `ops_stop`, `ops_status` (orchestrator-only, ADR-0006) |
+| `raptix.execution.tools.bash` | `BASH_TOOLS` (the four bash tools), `set_sandbox` |
+| `raptix.execution.tools.research`, `raptix.execution.tools.references` | KG / CVE / payload tools |
+| `raptix.execution.tools.interaction` | `ask_user_question`, `complete_engagement_planning` |
+| `raptix.execution.tools.ops` | `ops_start`, `ops_stop`, `ops_status` (orchestrator-only, ADR-0006) |
 | `raptix.backends` | `HTTPSandbox`, `build_sandbox_backend`, `make_agent_backend` |
 | `raptix.intelligence.llm` | `LLMFactory` |
 | `raptix_core.types.engagement` | `RoE`, `CONOPS`, `DeconflictionPlan`, `OPPLAN`, `ThreatProfile`, `CleanupPlan`, `AbortPlan`, `ContactPlan`, `DataHandlingPlan` |

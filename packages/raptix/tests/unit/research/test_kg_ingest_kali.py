@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import ToolMessage
 
+from raptix.execution.tools.research import tools as research_tools
 from raptix.runtime.recording import RecordingMiddleware, ReplayMiddleware
-from raptix.tools.research import tools as research_tools
 from raptix_core.types.kg import KnowledgeGraph, NodeKind
 
 
@@ -51,7 +51,7 @@ class _FakeStore:
 
 
 def _configure_kg(monkeypatch, tmp_path):
-    from raptix.tools.research import _state as state
+    from raptix.execution.tools.research import _state as state
 
     fake = _FakeStore()
     monkeypatch.setattr(state, "_store", fake)

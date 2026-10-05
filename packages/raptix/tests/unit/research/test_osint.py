@@ -14,8 +14,8 @@ from typing import Any
 import httpx
 import pytest
 
-from raptix.tools.research import osint
-from raptix.tools.research.osint import (
+from raptix.execution.tools.research import osint
+from raptix.execution.tools.research.osint import (
     _is_in_scope,
     _load_mock_catalog,
     _merge_findings,

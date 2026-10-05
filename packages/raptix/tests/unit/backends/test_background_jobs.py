@@ -2,8 +2,8 @@
 
 from unittest.mock import MagicMock, patch
 
-from raptix.sandbox_kernel import BackgroundJobTracker
-from raptix.sandbox_kernel.daemon import DaemonSandbox
+from raptix.execution.sandbox.kernel import BackgroundJobTracker
+from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
 
 def test_register_records_command_and_marker_count():
@@ -175,8 +175,8 @@ def test_auto_background_path_registers_job():
 
     with (
         patch.object(sandbox, "_get_manager") as mock_get,
-        patch("raptix.sandbox_kernel.tmux.AUTO_BACKGROUND_SECONDS", 0.0),
-        patch("raptix.sandbox_kernel.tmux.POLL_INTERVAL", 0.01),
+        patch("raptix.execution.sandbox.kernel.tmux.AUTO_BACKGROUND_SECONDS", 0.0),
+        patch("raptix.execution.sandbox.kernel.tmux.POLL_INTERVAL", 0.01),
     ):
         mgr = MagicMock()
         mgr.session = "long"
@@ -189,7 +189,7 @@ def test_auto_background_path_registers_job():
 
         # Bind the real TmuxSessionManager.execute_async to the mock manager
         # so the auto-background path runs against mocked internals.
-        from raptix.sandbox_kernel import TmuxSessionManager
+        from raptix.execution.sandbox.kernel import TmuxSessionManager
 
         mgr.execute_async = TmuxSessionManager.execute_async.__get__(mgr, TmuxSessionManager)
 

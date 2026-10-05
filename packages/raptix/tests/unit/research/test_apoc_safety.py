@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.tools.research._apoc_safety import (
+from raptix.execution.tools.research._apoc_safety import (
     APOC_PROCEDURE_ALLOWLIST,
     APOC_PROCEDURE_DENYLIST,
     CypherSafetyError,

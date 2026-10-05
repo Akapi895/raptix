@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.sandbox_web.url_transforms import (
+from raptix.execution.sandbox.web.url_transforms import (
     apply_transform,
     iter_transformed,
 )

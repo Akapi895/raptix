@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from raptix.tools.cloud.aws import (
+from raptix.execution.tools.cloud.aws import (
     analyze_iam_policy,
     scan_bucket_names,
     scan_user_data,
 )
-from raptix.tools.cloud.k8s import analyze_k8s_manifest
-from raptix.tools.cloud.metadata import METADATA_ENDPOINTS
-from raptix.tools.cloud.terraform import analyze_tfstate
+from raptix.execution.tools.cloud.k8s import analyze_k8s_manifest
+from raptix.execution.tools.cloud.metadata import METADATA_ENDPOINTS
+from raptix.execution.tools.cloud.terraform import analyze_tfstate
 
 
 class TestIAMPolicy:

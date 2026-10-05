@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.research.fuzz import (
+from raptix.execution.tools.research.fuzz import (
     Crash,
     Engine,
     classify_target,

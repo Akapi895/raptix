@@ -9,7 +9,7 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.research.chain import (
+from raptix.execution.tools.research.chain import (
     _ATTACK_REL_TYPES,
     Chain,
     ChainStep,
@@ -295,7 +295,7 @@ class TestPlanChains:
     def test_happy_path_apoc(self, monkeypatch: pytest.MonkeyPatch) -> None:
         rows = [self._row()]
         fake = _FakeStore(rows=rows)
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chains = plan_chains()
@@ -318,7 +318,7 @@ class TestPlanChains:
                     raise RuntimeError("APOC not available")
                 return rows
 
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", _FailFirstStore())
         chains = plan_chains()
@@ -330,7 +330,7 @@ class TestPlanChains:
             def query_custom(self, cypher: str, params: dict[str, Any]) -> list[dict[str, Any]]:
                 raise RuntimeError("Neo4j down")
 
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", _AlwaysFailStore())
         chains = plan_chains()
@@ -349,7 +349,7 @@ class TestPlanChains:
             ],
         )
         fake = _FakeStore(rows=[row])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chains = plan_chains()
@@ -362,7 +362,7 @@ class TestPlanChains:
 
     def test_entrypoint_ids_filter_passed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         plan_chains(entrypoint_ids=["ep1", "ep2"])
@@ -370,7 +370,7 @@ class TestPlanChains:
 
     def test_crown_jewel_ids_filter_passed(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         plan_chains(crown_jewel_ids=["cj1"])
@@ -379,7 +379,7 @@ class TestPlanChains:
     def test_empty_path_nodes_produces_empty_steps(self, monkeypatch: pytest.MonkeyPatch) -> None:
         row = self._row(path_nodes=[], path_edges=[])
         fake = _FakeStore(rows=[row])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chains = plan_chains()
@@ -394,7 +394,7 @@ class TestPlanChains:
             path_edges=[],  # no edges — should default
         )
         fake = _FakeStore(rows=[row])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chains = plan_chains()
@@ -408,7 +408,7 @@ class TestPlanChains:
 class TestPromoteChain:
     def test_returns_string_node_id(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chain = _make_chain(steps=[])
@@ -418,7 +418,7 @@ class TestPromoteChain:
 
     def test_deterministic_id(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chain = _make_chain(entrypoint_id="ep-A", crown_jewel_id="cj-B", steps=[])
@@ -428,7 +428,7 @@ class TestPromoteChain:
 
     def test_different_chains_different_ids(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chain_a = _make_chain(entrypoint_id="ep1", crown_jewel_id="cj1")
@@ -437,7 +437,7 @@ class TestPromoteChain:
 
     def test_step_queries_issued_per_step(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         steps = [_make_step(node_id=f"s{i}") for i in range(3)]
@@ -448,7 +448,7 @@ class TestPromoteChain:
 
     def test_no_step_queries_for_empty_chain(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chain = _make_chain(steps=[])
@@ -464,7 +464,7 @@ class TestCriticalPathScore:
     def test_no_vuln_steps_uses_only_inv_cost(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Chain with no Vulnerability nodes — worst_sev stays 0.0."""
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chain = _make_chain(total_cost=10.0, steps=[_make_step(node_kind="Host")])
@@ -473,7 +473,7 @@ class TestCriticalPathScore:
         assert score == pytest.approx(expected)
 
     def test_critical_vuln_boosts_score(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         fake = _FakeStore(rows=[{"severity": "critical"}])
         monkeypatch.setattr(state, "_store", fake)
@@ -486,7 +486,7 @@ class TestCriticalPathScore:
 
     def test_query_failure_returns_score_without_sev(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Store failure is swallowed; score based on inv cost alone."""
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         class _FailStore:
             def query_custom(self, cypher: str, params: dict[str, Any]) -> list[Any]:
@@ -499,7 +499,7 @@ class TestCriticalPathScore:
         assert score >= 0.0  # should not raise
 
     def test_unknown_severity_string_skipped(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         fake = _FakeStore(rows=[{"severity": "bogus-sev"}])
         monkeypatch.setattr(state, "_store", fake)
@@ -512,7 +512,7 @@ class TestCriticalPathScore:
     def test_very_small_total_cost_clamped(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """total_cost=0 → max(total_cost, 0.1) prevents ZeroDivisionError."""
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         chain = _make_chain(total_cost=0.0, steps=[])
@@ -530,7 +530,7 @@ class TestImpactAnalysis:
             {"id": "s1", "type": "Service", "label": "svc", "depth": 2},
         ]
         fake = _FakeStore(rows=rows)
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         result = impact_analysis("start-node")
@@ -538,7 +538,7 @@ class TestImpactAnalysis:
         assert result[0]["id"] == "h1"
 
     def test_returns_empty_on_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         class _FailStore:
             def query_custom(self, cypher: str, params: dict[str, Any]) -> list[Any]:
@@ -550,7 +550,7 @@ class TestImpactAnalysis:
 
     def test_node_id_passed_in_params(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         impact_analysis("target-node-99")
@@ -564,7 +564,7 @@ class TestUnexploredSurface:
     def test_returns_rows_on_success(self, monkeypatch: pytest.MonkeyPatch) -> None:
         rows = [{"host_id": "h1", "ip": "10.0.0.2", "hostname": "api", "services": ["80/"]}]
         fake = _FakeStore(rows=rows)
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         result = unexplored_surface()
@@ -572,7 +572,7 @@ class TestUnexploredSurface:
         assert result[0]["ip"] == "10.0.0.2"
 
     def test_returns_empty_on_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         class _FailStore:
             def query_custom(self, cypher: str, params: dict[str, Any]) -> list[Any]:
@@ -597,7 +597,7 @@ class TestCredentialReachability:
             }
         ]
         fake = _FakeStore(rows=rows)
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         result = credential_reachability("cred1")
@@ -605,7 +605,7 @@ class TestCredentialReachability:
         assert result[0]["identity"] == "admin"
 
     def test_returns_empty_on_failure(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         class _FailStore:
             def query_custom(self, cypher: str, params: dict[str, Any]) -> list[Any]:
@@ -617,7 +617,7 @@ class TestCredentialReachability:
 
     def test_cred_id_passed_in_params(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeStore(rows=[])
-        from raptix.tools.research import _state as state
+        from raptix.execution.tools.research import _state as state
 
         monkeypatch.setattr(state, "_store", fake)
         credential_reachability("credential-xyz")

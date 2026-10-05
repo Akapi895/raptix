@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.tools.references.oneliners import load_recipes, search
+from raptix.execution.tools.references.oneliners import load_recipes, search
 
 _README = """# The Book of Secret Knowledge
 

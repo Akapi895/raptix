@@ -1,6 +1,6 @@
 import os
 
-from raptix.backends import SKILLS_LOCAL_PATH
+from raptix.execution.backends import SKILLS_LOCAL_PATH
 
 
 def test_skills_local_path_resolves_into_the_package():

@@ -36,7 +36,7 @@ from collections import OrderedDict
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import HumanMessage
 
-from raptix.backends.http_sandbox import HTTPSandbox
+from raptix.execution.backends.http_sandbox import HTTPSandbox
 
 log = logging.getLogger(__name__)
 

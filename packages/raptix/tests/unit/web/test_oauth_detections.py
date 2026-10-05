@@ -1,4 +1,4 @@
-"""Detection-branch coverage for ``raptix.tools.web.oauth``.
+"""Detection-branch coverage for ``raptix.execution.tools.web.oauth``.
 
 ``analyze_oauth_callback`` is an offline OAuth 2.0 / OIDC flow auditor. Each
 uncovered branch is a *vulnerability detection rule* — a regression there is
@@ -13,7 +13,7 @@ Pure-logic; no network / docker / LLM.
 
 from __future__ import annotations
 
-from raptix.tools.web.oauth import OAuthFinding, analyze_oauth_callback
+from raptix.execution.tools.web.oauth import OAuthFinding, analyze_oauth_callback
 
 # A 48-char hex state: length >= 32 and high entropy, so a callback carrying
 # it produces no state-missing / state-short / low-entropy noise — isolating

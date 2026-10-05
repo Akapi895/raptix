@@ -16,8 +16,8 @@ import asyncio
 
 import pytest
 
-from raptix.sandbox_kernel import tmux as tmux_mod
-from raptix.sandbox_kernel.tmux import TmuxSessionManager, _next_poll_interval
+from raptix.execution.sandbox.kernel import tmux as tmux_mod
+from raptix.execution.sandbox.kernel.tmux import TmuxSessionManager, _next_poll_interval
 
 _BASE = 0.01
 _MARKER_SCREEN = "output line\n[DCPTN:0:/workspace]"

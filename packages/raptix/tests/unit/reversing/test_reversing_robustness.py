@@ -2,9 +2,13 @@ from __future__ import annotations
 
 import json
 
-from raptix.tools.reversing.ghidra import _GHIDRA_FUNC_KEYS, GhidraAnalysis, GhidraFunction
-from raptix.tools.reversing.scripts import ghidra_recon_script, r2_recon_script
-from raptix.tools.reversing.tools import bin_r2_script
+from raptix.execution.tools.reversing.ghidra import (
+    _GHIDRA_FUNC_KEYS,
+    GhidraAnalysis,
+    GhidraFunction,
+)
+from raptix.execution.tools.reversing.scripts import ghidra_recon_script, r2_recon_script
+from raptix.execution.tools.reversing.tools import bin_r2_script
 
 
 class TestGhidraFunctionExtraKeys:

@@ -5,7 +5,7 @@ Per spec §7.3 of
 this module ships the one-release migration shim:
 
   * Legacy import paths (``raptix.core.schemas``,
-    ``raptix.llm.models``, ``raptix.tools.research.graph``,
+    ``raptix.llm.models``, ``raptix.execution.tools.research.graph``,
     ``raptix.plugin_loader``, ``raptix.core.config``,
     ``raptix.core.logging``) keep working via the per-file
     re-export modules in Phase 1.
@@ -29,7 +29,7 @@ _REGISTERED: bool = False
 _LEGACY_PATH_NOTES: tuple[tuple[str, str], ...] = (
     ("raptix.core.schemas", "raptix_core.types.engagement"),
     ("raptix.llm.models", "raptix_core.types.llm"),
-    ("raptix.tools.research.graph", "raptix_core.types.kg"),
+    ("raptix.execution.tools.research.graph", "raptix_core.types.kg"),
     ("raptix.plugin_loader", "raptix_core.plugin_loader"),
     ("raptix.core.config", "raptix_core.utils.config"),
     ("raptix.core.logging", "raptix_core.utils.logging"),

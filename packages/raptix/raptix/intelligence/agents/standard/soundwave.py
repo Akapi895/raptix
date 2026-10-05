@@ -47,11 +47,11 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
+from raptix.execution.tools.interaction import ask_user_question, complete_engagement_planning
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
-from raptix.tools.interaction import ask_user_question, complete_engagement_planning
 from raptix_core.plugin_loader import is_bundle_enabled, load_plugin_callbacks
 
 # Name-keyed registry of the standard tools. Exposed for library

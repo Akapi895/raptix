@@ -18,7 +18,7 @@ prompts or tool output:
 When the tool being invoked is the finding-emitting tool, a
 :attr:`EventType.FINDING_CREATED` event is appended alongside the
 ``TOOL_CALL``. The canonical finding tool is ``validate_finding``
-(:mod:`raptix.tools.research.tools` / ``poc.py``), which materializes a
+(:mod:`raptix.execution.tools.research.tools` / ``poc.py``), which materializes a
 ``NodeKind.FINDING`` node in the knowledge graph. The match is an exact
 name set (:data:`_FINDING_TOOLS`) — substring matching on ``"finding"``
 also caught readers and notifiers, making every finding event a false

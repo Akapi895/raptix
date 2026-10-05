@@ -191,7 +191,7 @@ RoE enforcement is layered (defense-in-depth), and the names reflect it:
 2. **RoE Egress Guardrail** (network) — compiles the *same*
    `machine_enforcement` block into a sandbox nftables connect-allowlist
    + DNS allowlist (`raptix.middleware.egress` →
-   `raptix.sandbox_kernel.egress`). A packet to an out-of-scope host
+   `raptix.execution.sandbox.kernel.egress`). A packet to an out-of-scope host
    cannot leave the sandbox even when the parser missed the target. One
    scope definition, two enforcement points. **On by default** for
    `enforce` mode — no extra config; the operator can opt out with

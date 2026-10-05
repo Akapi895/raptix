@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.sandbox_web import bias_check
+from raptix.execution.sandbox.web import bias_check
 
 
 def test_engine_tree_is_clean() -> None:

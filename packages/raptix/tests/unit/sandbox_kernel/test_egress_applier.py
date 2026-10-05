@@ -10,8 +10,7 @@ from __future__ import annotations
 
 import os
 
-from raptix.middleware.egress import compile_egress_policy
-from raptix.sandbox_kernel.egress import (
+from raptix.execution.sandbox.kernel.egress import (
     EgressPolicy,
     apply_egress,
     discover_management_cidrs,
@@ -19,6 +18,7 @@ from raptix.sandbox_kernel.egress import (
     render_nftables,
     resolve_hosts,
 )
+from raptix.middleware.egress import compile_egress_policy
 from raptix_core.types.roe import MachineEnforcement
 
 # A real ``/proc/net/route`` (little-endian hex): a default route via a

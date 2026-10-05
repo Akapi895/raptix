@@ -7,7 +7,7 @@ from unittest.mock import AsyncMock, patch
 import httpx
 import pytest
 
-from raptix.tools.web.http import (
+from raptix.execution.tools.web.http import (
     HTTPHistory,
     HTTPRequest,
     HTTPResponse,
@@ -416,7 +416,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession(base_url="https://api.test")
             try:
                 resp = await session.request("get", "/users", tag="enum")
@@ -448,7 +448,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession(base_url="https://api.test")
             try:
                 await session.request("GET", "https://other.test/x")
@@ -471,7 +471,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession()
             try:
                 await session.request("POST", "https://x.test/ep", json_body={"a": 1})
@@ -492,7 +492,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession()
             try:
                 await session.request("POST", "https://x.test/ep", body="raw")
@@ -512,7 +512,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession()
             try:
                 await session.request("POST", "https://x.test/ep", body=b"\x00\x01")
@@ -532,7 +532,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession()
             try:
                 await session.request("POST", "https://x.test/ep", body=bytearray(b"xy"))
@@ -552,7 +552,7 @@ class TestHTTPSessionRequest:
             kwargs["transport"] = transport
             return real_async_client(*args, **kwargs)
 
-        with patch("raptix.tools.web.http.httpx.AsyncClient", side_effect=patched):
+        with patch("raptix.execution.tools.web.http.httpx.AsyncClient", side_effect=patched):
             session = HTTPSession()
             try:
                 await session.request("GET", "https://x.test/ep")

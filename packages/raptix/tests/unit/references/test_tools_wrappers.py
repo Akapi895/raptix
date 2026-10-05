@@ -6,10 +6,10 @@ from typing import Any, cast
 
 import pytest
 
-from raptix.tools.references import tools as T
-from raptix.tools.references.catalog import REFERENCES, references_by_category
-from raptix.tools.references.hydrate import HydrationResult
-from raptix.tools.references.payloads import PayloadBundle
+from raptix.execution.tools.references import tools as T
+from raptix.execution.tools.references.catalog import REFERENCES, references_by_category
+from raptix.execution.tools.references.hydrate import HydrationResult
+from raptix.execution.tools.references.payloads import PayloadBundle
 
 _ref_list = cast(Any, T.ref_list)
 _ref_suggest = cast(Any, T.ref_suggest)
@@ -260,7 +260,7 @@ class TestH1SearchTitleSanitization:
     def test_control_char_in_title_stripped_in_envelope(
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from raptix.tools.references.h1_corpus import BugReport
+        from raptix.execution.tools.references.h1_corpus import BugReport
 
         fake_report = BugReport(title="evil\x07title", bounty=100.0)
         monkeypatch.setattr(T, "h1_search_corpus", lambda **kw: [fake_report])

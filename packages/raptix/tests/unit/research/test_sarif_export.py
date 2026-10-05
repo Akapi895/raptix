@@ -1,11 +1,11 @@
-"""Tests for raptix.tools.research.sarif_export."""
+"""Tests for raptix.execution.tools.research.sarif_export."""
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-from raptix.tools.research.sarif_export import (
+from raptix.execution.tools.research.sarif_export import (
     export_findings_to_sarif,
     severity_threshold_breach,
     write_sarif,

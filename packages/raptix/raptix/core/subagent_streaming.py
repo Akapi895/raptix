@@ -84,8 +84,8 @@ def _bind_per_run_sandbox():
         cfg = get_config()
         sandbox_url = ((cfg or {}).get("configurable", {}) or {}).get("sandbox_url")
         if sandbox_url:
-            from raptix.backends import build_sandbox_backend
-            from raptix.tools.bash.bash import _sandbox_var, set_sandbox
+            from raptix.execution.backends import build_sandbox_backend
+            from raptix.execution.tools.bash.bash import _sandbox_var, set_sandbox
 
             var = _sandbox_var
             token = set_sandbox(build_sandbox_backend(cfg))

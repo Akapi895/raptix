@@ -20,7 +20,7 @@ from typing import Any
 
 import pytest
 
-from raptix.tools.ad.bloodhound import (
+from raptix.execution.tools.ad.bloodhound import (
     ImportStats,
     ingest_bloodhound_zip,
     merge_bloodhound_json,
@@ -444,7 +444,7 @@ class TestZipIngest:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         # Cap to 100 bytes so the test entry trips it.
-        import raptix.tools.ad.bloodhound as bh_mod
+        import raptix.execution.tools.ad.bloodhound as bh_mod
 
         monkeypatch.setattr(bh_mod, "_MAX_ENTRY_SIZE", 100)
         oversized = b'{"meta":{"type":"users"},"data":[]}' + b"x" * 200

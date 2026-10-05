@@ -94,7 +94,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
 # per-session RSS by ~60% vs the previous 50K.
 RUN echo "set-option -g history-limit 20000" > /root/.tmux.conf
 
-# Optional HTTP sandbox daemon — see raptix/sandbox_server/.
+# Optional HTTP sandbox daemon — see raptix/execution/sandbox/server/.
 #
 # The daemon is OFF by default. The existing dev / local-docker / GCE
 # Spot deployments use this image as before (host docker daemon
@@ -114,7 +114,7 @@ RUN pip3 install --break-system-packages --no-cache-dir \
     "deepagents>=0.5.0"
 
 # ── Open-web acquisition engine (insane-search port, ADR-0010) ───────
-# raptix/sandbox_web runs HERE, inside the sandbox, so all open-web
+# raptix/execution/sandbox/web runs HERE, inside the sandbox, so all open-web
 # egress stays in sandbox-net behind the nftables allowlist. Python deps:
 #   * curl_cffi>=0.15 — TLS-impersonation fetch tier. 0.15 is REQUIRED by the
 #                    engine: it ships the current Chrome (146+) JA3/JA4
@@ -136,7 +136,7 @@ RUN pip3 install --break-system-packages --no-cache-dir \
 
 # Playwright browser tier — the engine's last escalation rung for JS/WAF
 # challenges (Cloudflare Turnstile, Akamai, DataDome) that the curl_cffi grid
-# can't clear. The node templates in `raptix/sandbox_web/templates/` launch
+# can't clear. The node templates in `raptix/execution/sandbox/web/templates/` launch
 # Chromium with the puppeteer-extra stealth stack; their npm deps are installed
 # LOCALLY in that dir AFTER the package is COPYed in (see below) — a global
 # install does not resolve the stealth plugin's nested evasion deps. node/npm
@@ -203,13 +203,13 @@ ENV GHIDRA_INSTALL_DIR=/opt/ghidra \
 
 # Ship only the modules the daemon actually imports:
 #   - raptix/__init__.py     — package marker (light-weight, just reads __version__)
-#   - raptix/sandbox_kernel/ — shared sandbox primitives: TmuxSessionManager,
+#   - raptix/execution/sandbox/kernel/ — shared sandbox primitives: TmuxSessionManager,
 #                                  BackgroundJobTracker, SandboxBase, and DaemonSandbox.
 #                                  The daemon instantiates `DaemonSandbox` (exec_prefix=[],
 #                                  pathlib upload/download) — no `docker exec`, no
 #                                  agent-side transport, so the sandbox image stays
 #                                  free of the `backends/` package on purpose.
-#   - raptix/sandbox_server/ — the FastAPI app + uvicorn entry point.
+#   - raptix/execution/sandbox/server/ — the FastAPI app + uvicorn entry point.
 # `backends/` (DockerSandbox + HTTPSandbox + factory) is deliberately
 # absent — that's agent-side code, lives in the langgraph image. Other
 # subtrees (agents / llm / middleware / tools / core) are left out too
@@ -217,16 +217,18 @@ ENV GHIDRA_INSTALL_DIR=/opt/ghidra \
 # enable the daemon and so the dependency surface stays minimal.
 # Phase 0 of the core/framework/sdk split relocated the framework
 # source tree to packages/raptix/raptix/. The sandbox
-# image stays an exec-only daemon — it only needs ``sandbox_kernel``
-# + ``sandbox_server`` + the bare ``__init__.py`` so they can be
+# image stays an exec-only daemon — it only needs ``execution/sandbox/kernel``
+# + ``execution/sandbox/server`` + the bare ``__init__.py`` so they can be
 # imported as a Python package under PYTHONPATH=/opt.
 COPY packages/raptix/raptix/__init__.py /opt/raptix/__init__.py
-COPY packages/raptix/raptix/sandbox_kernel /opt/raptix/sandbox_kernel
-COPY packages/raptix/raptix/sandbox_server /opt/raptix/sandbox_server
+COPY packages/raptix/raptix/execution/__init__.py /opt/raptix/execution/__init__.py
+COPY packages/raptix/raptix/execution/sandbox/__init__.py /opt/raptix/execution/sandbox/__init__.py
+COPY packages/raptix/raptix/execution/sandbox/kernel /opt/raptix/execution/sandbox/kernel
+COPY packages/raptix/raptix/execution/sandbox/server /opt/raptix/execution/sandbox/server
 # Open-web engine (ADR-0010) + the pure contract layer it uses for the
 # per-hop RoE scope_check. raptix-core imports only pydantic + stdlib
 # (never langchain/langgraph), so it is safe to ship to the lean sandbox.
-COPY packages/raptix/raptix/sandbox_web /opt/raptix/sandbox_web
+COPY packages/raptix/raptix/execution/sandbox/web /opt/raptix/execution/sandbox/web
 COPY packages/raptix-core/raptix_core /opt/raptix_core
 ENV PYTHONPATH=/opt
 
@@ -235,7 +237,7 @@ ENV PYTHONPATH=/opt
 # a global install + NODE_PATH does not. The executor shells `node` here, so node
 # resolves require() from templates/node_modules. Done after the COPY because the
 # templates' package.json ships inside sandbox_web.
-RUN cd /opt/raptix/sandbox_web/templates \
+RUN cd /opt/raptix/execution/sandbox/web/templates \
     && npm install --no-fund --no-audit --omit=optional \
     && npm cache clean --force
 
@@ -243,7 +245,7 @@ RUN cd /opt/raptix/sandbox_web/templates \
 # ships only sandbox_kernel + sandbox_server, NOT raptix-core or
 # the rest of the framework. ``raptix/__init__.py`` checks this
 # env var and short-circuits the RoleRegistry + PluginRegistry setup
-# so the sandbox process can ``python -m raptix.sandbox_server``
+# so the sandbox process can ``python -m raptix.execution.sandbox.server``
 # without importing raptix-core (which isn't installed here).
 ENV RAPTIX_SKIP_BOOT=1
 
@@ -257,7 +259,7 @@ WORKDIR /workspace
 # langgraph container (see ``infra/containers/langgraph.Dockerfile``), where
 # they are read in-process by ``FilesystemBackend`` via the
 # ``CompositeBackend`` route declared in
-# ``raptix/backends/__init__.py:make_agent_backend``. Skills are
+# ``raptix/execution/backends/__init__.py:make_agent_backend``. Skills are
 # read-only knowledge — they don't need the sandbox's isolated
 # execution environment, and avoiding the HTTP round-trip per skill
 # read saves agent-init latency.

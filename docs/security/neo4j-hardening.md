@@ -84,7 +84,7 @@ patterns.
 ### What's still allowed
 
 Each entry in the allowlist below was kept because it's used by at
-least one tool in `packages/raptix/raptix/tools/research/`:
+least one tool in `packages/raptix/raptix/execution/tools/research/`:
 
 | Procedure family | Why we keep it |
 |------------------|----------------|
@@ -115,7 +115,7 @@ least one tool in `packages/raptix/raptix/tools/research/`:
    - `apoc.spatial.geocode` (HTTP egress)
    - `apoc.metrics.*` (host-info disclosure)
 4. Update the client-side allowlist in
-   `packages/raptix/raptix/tools/research/_apoc_safety.py` to
+   `packages/raptix/raptix/execution/tools/research/_apoc_safety.py` to
    match - the safety check rejects any procedure not in **both**
    server config and client allowlist.
 5. Extend the test in
@@ -133,7 +133,7 @@ useful message) instead of silent (driver error deep inside Neo4j).
 Two functions:
 
 ```python
-from raptix.tools.research._apoc_safety import (
+from raptix.execution.tools.research._apoc_safety import (
     find_violations,
     ensure_safe,
     CypherSafetyError,
@@ -169,7 +169,7 @@ Plan:
   with write access to only that engagement's nodes (via label predicate
   or - on Enterprise - a dedicated database).
 - The `Neo4jConfig.from_env()` factory at
-  `packages/raptix/raptix/tools/research/neo4j_store.py` already
+  `packages/raptix/raptix/execution/tools/research/neo4j_store.py` already
   takes a configurable user, so the wiring is in place.
 - Rotate the sandbox token on engagement close.
 

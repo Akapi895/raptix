@@ -1,4 +1,4 @@
-"""Tests for raptix.tools.defense."""
+"""Tests for raptix.execution.tools.defense."""
 
 from __future__ import annotations
 
@@ -8,17 +8,17 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from raptix.tools.defense import conops as conops_mod
-from raptix.tools.defense.edr import _extract_yara_metadata, push_defender_xdr_detection
-from raptix.tools.defense.elastic import (
+from raptix.execution.tools.defense import conops as conops_mod
+from raptix.execution.tools.defense.edr import _extract_yara_metadata, push_defender_xdr_detection
+from raptix.execution.tools.defense.elastic import (
     SigmaToElasticError,
     sigma_to_lucene,
 )
-from raptix.tools.defense.sentinel import (
+from raptix.execution.tools.defense.sentinel import (
     SigmaToKqlError,
     sigma_to_kql,
 )
-from raptix.tools.defense.splunk import (
+from raptix.execution.tools.defense.splunk import (
     SigmaConversionError,
     sigma_to_spl,
 )

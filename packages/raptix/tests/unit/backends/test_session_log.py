@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 from deepagents.backends.protocol import FileDownloadResponse
 
-from raptix.sandbox_kernel import BackgroundJobTracker, TmuxSessionManager
-from raptix.sandbox_kernel.daemon import DaemonSandbox
+from raptix.execution.sandbox.kernel import BackgroundJobTracker, TmuxSessionManager
+from raptix.execution.sandbox.kernel.daemon import DaemonSandbox
 
 
 def test_initialize_does_not_create_root_workspace_sessions_log():
@@ -18,7 +18,7 @@ def test_initialize_does_not_create_root_workspace_sessions_log():
 
     with (
         patch.object(mgr, "_tmux") as mock_tmux,
-        patch("raptix.sandbox_kernel.base.subprocess.run") as mock_run,
+        patch("raptix.execution.sandbox.kernel.base.subprocess.run") as mock_run,
         patch("time.sleep"),
     ):
         mock_tmux.side_effect = [
@@ -50,7 +50,7 @@ def test_initialize_pipes_pane_to_engagement_scoped_sessions_log():
 
     with (
         patch.object(mgr, "_tmux") as mock_tmux,
-        patch("raptix.sandbox_kernel.base.subprocess.run") as mock_run,
+        patch("raptix.execution.sandbox.kernel.base.subprocess.run") as mock_run,
         patch("time.sleep"),
     ):
         mock_tmux.side_effect = [
@@ -88,7 +88,7 @@ def test_initialize_creates_sessions_directory_inside_engagement_workspace():
 
     with (
         patch.object(mgr, "_tmux") as mock_tmux,
-        patch("raptix.sandbox_kernel.base.subprocess.run") as mock_run,
+        patch("raptix.execution.sandbox.kernel.base.subprocess.run") as mock_run,
         patch("time.sleep"),
     ):
         mock_tmux.side_effect = [
@@ -131,7 +131,7 @@ def test_initialize_warns_when_mkdir_fails(caplog):
     try:
         with (
             patch.object(mgr, "_tmux") as mock_tmux,
-            patch("raptix.sandbox_kernel.base.subprocess.run") as mock_run,
+            patch("raptix.execution.sandbox.kernel.base.subprocess.run") as mock_run,
             patch("time.sleep"),
         ):
             mock_tmux.side_effect = [
@@ -467,7 +467,7 @@ def test_execute_async_poll_loop_capture_timeout_continues():
         patch.object(mgr, "_capture", side_effect=fake_capture),
         patch.object(mgr, "_send", return_value=None),
         patch.object(mgr, "initialize", return_value=None),
-        patch("raptix.sandbox_kernel.tmux.POLL_INTERVAL", 0.01),
+        patch("raptix.execution.sandbox.kernel.tmux.POLL_INTERVAL", 0.01),
     ):
         result = asyncio.run(mgr.execute_async(command="ls", is_input=False, timeout=1))
 
@@ -505,8 +505,8 @@ def test_poll_loop_capture_errors_dont_falsely_trigger_stall_detection():
         patch.object(mgr, "_send", return_value=None),
         patch.object(mgr, "_clear_screen", return_value=None),
         patch.object(mgr, "initialize", return_value=None),
-        patch("raptix.sandbox_kernel.tmux.POLL_INTERVAL", 0.01),
-        patch("raptix.sandbox_kernel.tmux.STALL_SECONDS", 0.05),
+        patch("raptix.execution.sandbox.kernel.tmux.POLL_INTERVAL", 0.01),
+        patch("raptix.execution.sandbox.kernel.tmux.STALL_SECONDS", 0.05),
     ):
         result = asyncio.run(mgr.execute_async(command="ls", is_input=False, timeout=2))
 
@@ -524,7 +524,7 @@ def test_initialize_recreates_stale_cached_pane_without_error_string_matching():
 
     with (
         patch.object(mgr, "_tmux") as mock_tmux,
-        patch("raptix.sandbox_kernel.base.subprocess.run") as mock_run,
+        patch("raptix.execution.sandbox.kernel.base.subprocess.run") as mock_run,
         patch("time.sleep"),
     ):
         mock_tmux.side_effect = [

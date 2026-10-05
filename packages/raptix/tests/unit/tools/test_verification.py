@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from raptix.tools.verification import validate_workspace_finding
+from raptix.execution.tools.verification import validate_workspace_finding
 
 
 class _Sandbox:
@@ -18,7 +18,7 @@ class _Sandbox:
 
 @pytest.mark.asyncio
 async def test_workspace_verifier_requires_and_records_negative_control(monkeypatch) -> None:
-    monkeypatch.setattr("raptix.tools.verification.get_sandbox", _Sandbox)
+    monkeypatch.setattr("raptix.execution.tools.verification.get_sandbox", _Sandbox)
     raw = await validate_workspace_finding.ainvoke(
         {
             "finding_id": "FIND-001",
@@ -39,7 +39,7 @@ async def test_workspace_verifier_requires_and_records_negative_control(monkeypa
 @pytest.mark.asyncio
 async def test_workspace_verifier_rejects_missing_control_before_execution(monkeypatch) -> None:
     monkeypatch.setattr(
-        "raptix.tools.verification.get_sandbox",
+        "raptix.execution.tools.verification.get_sandbox",
         lambda: (_ for _ in ()).throw(AssertionError("sandbox must not run")),
     )
 

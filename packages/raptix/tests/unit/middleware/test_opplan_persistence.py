@@ -21,10 +21,7 @@ import pytest
 from deepagents.backends.filesystem import FilesystemBackend
 from langchain_core.messages import AIMessage, ToolMessage
 
-from raptix.middleware import opplan as opplan_mod
-from raptix.middleware.filesystem import EngagementFilesystemBackend
-from raptix.middleware.opplan import OPPLANMiddleware
-from raptix.tools.opplan import (
+from raptix.execution.tools.opplan import (
     OPPLAN_FILE_SCHEMA_VERSION,
     OPPLAN_TOOL_NAMES,
     OPPLAN_VIRTUAL_PATH,
@@ -32,6 +29,9 @@ from raptix.tools.opplan import (
     _format_opplan_for_agent,
     _persist_opplan_to_backend,
 )
+from raptix.middleware import opplan as opplan_mod
+from raptix.middleware.filesystem import EngagementFilesystemBackend
+from raptix.middleware.opplan import OPPLANMiddleware
 from raptix_core.types.engagement import OPPLAN, Objective, ObjectivePhase
 
 

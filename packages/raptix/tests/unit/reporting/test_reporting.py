@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from raptix.tools.reporting.bugcrowd import render_bugcrowd_csv
-from raptix.tools.reporting.executive import render_executive_summary
-from raptix.tools.reporting.hackerone import HackerOneReport, render_hackerone_markdown
-from raptix.tools.reporting.timeline import extract_timeline
+from raptix.execution.tools.reporting.bugcrowd import render_bugcrowd_csv
+from raptix.execution.tools.reporting.executive import render_executive_summary
+from raptix.execution.tools.reporting.hackerone import HackerOneReport, render_hackerone_markdown
+from raptix.execution.tools.reporting.timeline import extract_timeline
 from raptix_core.types.kg import KnowledgeGraph, Node, NodeKind
 
 

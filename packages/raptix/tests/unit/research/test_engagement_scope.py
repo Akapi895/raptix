@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.tools.research import _engagement_scope as _scope
-from raptix.tools.research._engagement_scope import (
+from raptix.execution.tools.research import _engagement_scope as _scope
+from raptix.execution.tools.research._engagement_scope import (
     _LEGACY_ENGAGEMENT_LABEL,
     get_active_engagement,
     is_valid_engagement_label,

@@ -430,7 +430,7 @@ def _write_partial_executive(state: LangGraphState, workspace: Path) -> bool:
     body: str
     if graph is not None:
         try:
-            from raptix.tools.reporting.executive import render_executive_summary
+            from raptix.execution.tools.reporting.executive import render_executive_summary
 
             body = render_executive_summary(graph, engagement_name=engagement)
         except Exception as exc:  # noqa: BLE001

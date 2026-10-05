@@ -346,7 +346,7 @@ def _write_sarif_and_gate(
             )
         return EXIT_OK
 
-    from raptix.tools.research.sarif_export import (  # noqa: PLC0415
+    from raptix.execution.tools.research.sarif_export import (  # noqa: PLC0415
         export_findings_to_sarif,
         severity_threshold_breach,
     )

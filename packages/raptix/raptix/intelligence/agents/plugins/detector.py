@@ -54,16 +54,16 @@ from typing import Any
 
 from langchain.agents import create_agent
 
-from raptix.backends import build_sandbox_backend, make_agent_backend
-from raptix.intelligence.agents.build import build_middleware, build_tools
-from raptix.intelligence.llm import LLMFactory
-from raptix.intelligence.prompts import load_prompt
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 
 # cve_lookup / cve_by_package are self-contained NVD/EPSS/KEV + OSV lookups (no
 # KG/Neo4j dependency) — exactly the dependency-correlation surface this agent
 # needs per its docstring. Only the kg_* tools in tools/research stay deferred
 # pending the Neo4j middleware redesign.
-from raptix.tools.research.tools import cve_by_package, cve_lookup
+from raptix.execution.tools.research.tools import cve_by_package, cve_lookup
+from raptix.intelligence.agents.build import build_middleware, build_tools
+from raptix.intelligence.llm import LLMFactory
+from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 _STANDARD_TOOLS: dict[str, Any] = {

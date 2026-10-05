@@ -18,7 +18,7 @@ class TestSolidityScantool:
     """solidity_scan @tool — JSON output shape."""
 
     def test_happy_path_returns_json_list(self) -> None:
-        from raptix.tools.contracts.tools import solidity_scan
+        from raptix.execution.tools.contracts.tools import solidity_scan
 
         result = solidity_scan.invoke(
             {"source": "function auth() public { require(tx.origin == owner); }"}
@@ -35,14 +35,14 @@ class TestSolidityScantool:
         assert "snippet" in first
 
     def test_clean_source_returns_empty_list(self) -> None:
-        from raptix.tools.contracts.tools import solidity_scan
+        from raptix.execution.tools.contracts.tools import solidity_scan
 
         result = solidity_scan.invoke({"source": "// solidity comment only"})
         data = json.loads(result)
         assert data == []
 
     def test_multiple_findings_ordered_by_line(self) -> None:
-        from raptix.tools.contracts.tools import solidity_scan
+        from raptix.execution.tools.contracts.tools import solidity_scan
 
         src = (
             "// line 1\n"
@@ -59,7 +59,7 @@ class TestSolidityScantoolFile:
     """solidity_scan_file @tool — reads file and returns JSON dict with 'findings' key."""
 
     def test_reads_file_and_returns_findings(self, tmp_path: Path) -> None:
-        from raptix.tools.contracts.tools import solidity_scan_file
+        from raptix.execution.tools.contracts.tools import solidity_scan_file
 
         sol = tmp_path / "contract.sol"
         sol.write_text("function f() public { require(tx.origin == owner); }", encoding="utf-8")
@@ -72,14 +72,14 @@ class TestSolidityScantoolFile:
         assert data["count"] >= 1
 
     def test_missing_file_returns_error_key(self, tmp_path: Path) -> None:
-        from raptix.tools.contracts.tools import solidity_scan_file
+        from raptix.execution.tools.contracts.tools import solidity_scan_file
 
         result = solidity_scan_file.invoke({"path": str(tmp_path / "nonexistent.sol")})
         data = json.loads(result)
         assert "error" in data
 
     def test_clean_sol_file_count_zero(self, tmp_path: Path) -> None:
-        from raptix.tools.contracts.tools import solidity_scan_file
+        from raptix.execution.tools.contracts.tools import solidity_scan_file
 
         sol = tmp_path / "clean.sol"
         sol.write_text("// pragma solidity ^0.8.0;\n", encoding="utf-8")
@@ -93,7 +93,7 @@ class TestSlitherIngestTool:
     """slither_ingest @tool — reads file and ingests into KG."""
 
     def test_missing_file_returns_error(self, tmp_path: Path) -> None:
-        from raptix.tools.contracts.tools import slither_ingest
+        from raptix.execution.tools.contracts.tools import slither_ingest
 
         result = slither_ingest.invoke({"path": str(tmp_path / "missing.json")})
         data = json.loads(result)
@@ -101,7 +101,7 @@ class TestSlitherIngestTool:
 
     # ``test_valid_slither_json_returns_ingested_and_stats`` /
     # ``test_empty_detectors_returns_zero`` previously patched
-    # ``raptix.tools.contracts.tools._load`` / ``_save`` to inject
+    # ``raptix.execution.tools.contracts.tools._load`` / ``_save`` to inject
     # a ``KnowledgeGraph``. After ``slither.py`` was rewritten to write
     # directly through ``KGStore.record_observations``, those symbols
     # no longer exist on the module. They are reintroduced in a
@@ -112,7 +112,7 @@ class TestFoundryToolWrappers:
     """foundry_reentrancy_test, foundry_access_test, foundry_flashloan_test."""
 
     def test_reentrancy_tool_returns_path_and_source(self) -> None:
-        from raptix.tools.contracts.tools import foundry_reentrancy_test
+        from raptix.execution.tools.contracts.tools import foundry_reentrancy_test
 
         result = foundry_reentrancy_test.invoke(
             {"target": "Vault", "function": "withdraw", "target_path": "src/Vault.sol"}
@@ -124,7 +124,7 @@ class TestFoundryToolWrappers:
         assert "withdraw" in data["source"]
 
     def test_access_test_tool_returns_path_and_source(self) -> None:
-        from raptix.tools.contracts.tools import foundry_access_test
+        from raptix.execution.tools.contracts.tools import foundry_access_test
 
         result = foundry_access_test.invoke({"target": "Token", "function": "mint"})
         data = json.loads(result)
@@ -133,7 +133,7 @@ class TestFoundryToolWrappers:
         assert "mint" in data["source"]
 
     def test_flashloan_test_tool_returns_path_and_source(self) -> None:
-        from raptix.tools.contracts.tools import foundry_flashloan_test
+        from raptix.execution.tools.contracts.tools import foundry_flashloan_test
 
         result = foundry_flashloan_test.invoke({"target": "Pool"})
         data = json.loads(result)
@@ -142,7 +142,7 @@ class TestFoundryToolWrappers:
         assert "executeOperation" in data["source"]
 
     def test_contract_tools_list_has_six_items(self) -> None:
-        from raptix.tools.contracts.tools import CONTRACT_TOOLS
+        from raptix.execution.tools.contracts.tools import CONTRACT_TOOLS
 
         assert len(CONTRACT_TOOLS) == 6
 
@@ -154,7 +154,7 @@ class TestExportSessionAsciicastTool:
     """export_session_asciicast @tool output shapes."""
 
     def test_successful_export_returns_status_exported(self, tmp_path: Path) -> None:
-        from raptix.tools.evidence.tools import export_session_asciicast
+        from raptix.execution.tools.evidence.tools import export_session_asciicast
 
         log = tmp_path / ".tmux-logs" / "mysession.log"
         log.parent.mkdir(parents=True)
@@ -163,7 +163,7 @@ class TestExportSessionAsciicastTool:
         evidence_dir = tmp_path / "evidence" / "recordings"
         evidence_dir.mkdir(parents=True)
 
-        with patch("raptix.tools.evidence.tools._workspace", return_value=tmp_path):
+        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
             result = export_session_asciicast.invoke(
                 {
                     "session_name": "mysession",
@@ -177,14 +177,14 @@ class TestExportSessionAsciicastTool:
         assert "session_name" in data
 
     def test_explicit_log_path_used_when_provided(self, tmp_path: Path) -> None:
-        from raptix.tools.evidence.tools import export_session_asciicast
+        from raptix.execution.tools.evidence.tools import export_session_asciicast
 
         log = tmp_path / "custom.log"
         log.write_text("output line\n", encoding="utf-8")
         evidence_dir = tmp_path / "evidence" / "recordings"
         evidence_dir.mkdir(parents=True)
 
-        with patch("raptix.tools.evidence.tools._workspace", return_value=tmp_path):
+        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
             result = export_session_asciicast.invoke(
                 {
                     "session_name": "s1",
@@ -197,12 +197,12 @@ class TestExportSessionAsciicastTool:
         assert data["status"] == "exported"
 
     def test_missing_log_returns_error_key(self, tmp_path: Path) -> None:
-        from raptix.tools.evidence.tools import export_session_asciicast
+        from raptix.execution.tools.evidence.tools import export_session_asciicast
 
         evidence_dir = tmp_path / "evidence" / "recordings"
         evidence_dir.mkdir(parents=True)
 
-        with patch("raptix.tools.evidence.tools._workspace", return_value=tmp_path):
+        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
             result = export_session_asciicast.invoke(
                 {
                     "session_name": "nope",
@@ -219,12 +219,12 @@ class TestListSessionRecordingsTool:
     """list_session_recordings @tool output shapes."""
 
     def test_empty_dir_returns_count_zero(self, tmp_path: Path) -> None:
-        from raptix.tools.evidence.tools import list_session_recordings
+        from raptix.execution.tools.evidence.tools import list_session_recordings
 
         recordings_dir = tmp_path / "evidence" / "recordings"
         recordings_dir.mkdir(parents=True)
 
-        with patch("raptix.tools.evidence.tools._workspace", return_value=tmp_path):
+        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
             result = list_session_recordings.invoke({})
 
         data = json.loads(result)
@@ -232,7 +232,7 @@ class TestListSessionRecordingsTool:
         assert data["recordings"] == []
 
     def test_lists_manifests_correctly(self, tmp_path: Path) -> None:
-        from raptix.tools.evidence.tools import list_session_recordings
+        from raptix.execution.tools.evidence.tools import list_session_recordings
 
         recordings_dir = tmp_path / "evidence" / "recordings"
         recordings_dir.mkdir(parents=True)
@@ -245,7 +245,7 @@ class TestListSessionRecordingsTool:
             encoding="utf-8",
         )
 
-        with patch("raptix.tools.evidence.tools._workspace", return_value=tmp_path):
+        with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
             result = list_session_recordings.invoke({})
 
         data = json.loads(result)
@@ -254,7 +254,7 @@ class TestListSessionRecordingsTool:
         assert names == ["a", "b"]
 
     def test_evidence_tools_list_has_four_items(self) -> None:
-        from raptix.tools.evidence.tools import EVIDENCE_TOOLS
+        from raptix.execution.tools.evidence.tools import EVIDENCE_TOOLS
 
         assert len(EVIDENCE_TOOLS) == 4
 
@@ -266,7 +266,7 @@ class TestIAMPolicyAuditTool:
     """iam_policy_audit @tool — JSON output shape."""
 
     def test_wildcard_returns_json_list_with_critical(self) -> None:
-        from raptix.tools.cloud.tools import iam_policy_audit
+        from raptix.execution.tools.cloud.tools import iam_policy_audit
 
         policy = json.dumps({"Statement": [{"Effect": "Allow", "Action": "*", "Resource": "*"}]})
         result = iam_policy_audit.invoke({"policy_json": policy})
@@ -280,7 +280,7 @@ class TestIAMPolicyAuditTool:
             assert "severity" in f
 
     def test_clean_policy_returns_empty_list(self) -> None:
-        from raptix.tools.cloud.tools import iam_policy_audit
+        from raptix.execution.tools.cloud.tools import iam_policy_audit
 
         policy = json.dumps(
             {
@@ -300,7 +300,7 @@ class TestIAMPolicyAuditTool:
         assert len(data) == 0
 
     def test_invalid_json_policy_returns_parse_error(self) -> None:
-        from raptix.tools.cloud.tools import iam_policy_audit
+        from raptix.execution.tools.cloud.tools import iam_policy_audit
 
         result = iam_policy_audit.invoke({"policy_json": "{not json"})
         data = json.loads(result)
@@ -312,7 +312,7 @@ class TestS3BucketsFromTextTool:
     """s3_buckets_from_text @tool — JSON output shape."""
 
     def test_extracts_s3_scheme_bucket(self) -> None:
-        from raptix.tools.cloud.tools import s3_buckets_from_text
+        from raptix.execution.tools.cloud.tools import s3_buckets_from_text
 
         result = s3_buckets_from_text.invoke({"text": "Copy from s3://my-data-bucket/key.csv"})
         data = json.loads(result)
@@ -322,7 +322,7 @@ class TestS3BucketsFromTextTool:
         assert data["count"] == len(data["buckets"])
 
     def test_no_buckets_returns_empty_list(self) -> None:
-        from raptix.tools.cloud.tools import s3_buckets_from_text
+        from raptix.execution.tools.cloud.tools import s3_buckets_from_text
 
         result = s3_buckets_from_text.invoke({"text": "echo hello world"})
         data = json.loads(result)
@@ -330,7 +330,7 @@ class TestS3BucketsFromTextTool:
         assert data["buckets"] == []
 
     def test_multiple_bucket_references(self) -> None:
-        from raptix.tools.cloud.tools import s3_buckets_from_text
+        from raptix.execution.tools.cloud.tools import s3_buckets_from_text
 
         text = "s3://bucket-a/x and prod-data.s3.amazonaws.com/y"
         result = s3_buckets_from_text.invoke({"text": text})
@@ -342,7 +342,7 @@ class TestUserDataSecretsTool:
     """user_data_secrets @tool — JSON output shape."""
 
     def test_aws_key_in_output(self) -> None:
-        from raptix.tools.cloud.tools import user_data_secrets
+        from raptix.execution.tools.cloud.tools import user_data_secrets
 
         text = "export AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE"
         result = user_data_secrets.invoke({"text": text})
@@ -355,7 +355,7 @@ class TestUserDataSecretsTool:
         assert "snippet" in hit
 
     def test_clean_userdata_returns_empty(self) -> None:
-        from raptix.tools.cloud.tools import user_data_secrets
+        from raptix.execution.tools.cloud.tools import user_data_secrets
 
         result = user_data_secrets.invoke({"text": "#!/bin/bash\napt-get update\n"})
         data = json.loads(result)
@@ -367,7 +367,7 @@ class TestK8sAuditTool:
     """k8s_audit @tool — JSON output shape."""
 
     def test_privileged_pod_returns_critical(self) -> None:
-        from raptix.tools.cloud.tools import k8s_audit
+        from raptix.execution.tools.cloud.tools import k8s_audit
 
         manifest = json.dumps(
             {
@@ -387,7 +387,7 @@ class TestK8sAuditTool:
             assert "title" in f
 
     def test_clean_manifest_returns_empty(self) -> None:
-        from raptix.tools.cloud.tools import k8s_audit
+        from raptix.execution.tools.cloud.tools import k8s_audit
 
         manifest = json.dumps(
             {
@@ -403,7 +403,7 @@ class TestK8sAuditTool:
         assert len(data) == 0
 
     def test_invalid_json_returns_parse_error(self) -> None:
-        from raptix.tools.cloud.tools import k8s_audit
+        from raptix.execution.tools.cloud.tools import k8s_audit
 
         result = k8s_audit.invoke({"manifest_json": "not json"})
         data = json.loads(result)
@@ -414,7 +414,7 @@ class TestTfstateAuditTool:
     """tfstate_audit @tool — JSON output shape."""
 
     def test_sensitive_output_flagged(self) -> None:
-        from raptix.tools.cloud.tools import tfstate_audit
+        from raptix.execution.tools.cloud.tools import tfstate_audit
 
         tfstate = json.dumps(
             {
@@ -432,14 +432,14 @@ class TestTfstateAuditTool:
         assert "findings" in data
 
     def test_bad_json_returns_parse_error_in_findings(self) -> None:
-        from raptix.tools.cloud.tools import tfstate_audit
+        from raptix.execution.tools.cloud.tools import tfstate_audit
 
         result = tfstate_audit.invoke({"tfstate_json": "not json"})
         data = json.loads(result)
         assert any(f["kind"] == "parse-error" for f in data["findings"])
 
     def test_resource_with_plaintext_password(self) -> None:
-        from raptix.tools.cloud.tools import tfstate_audit
+        from raptix.execution.tools.cloud.tools import tfstate_audit
 
         tfstate = json.dumps(
             {
@@ -464,7 +464,7 @@ class TestMetadataEndpointsTool:
     """metadata_endpoints @tool — JSON output shape."""
 
     def test_no_filter_returns_all(self) -> None:
-        from raptix.tools.cloud.tools import metadata_endpoints
+        from raptix.execution.tools.cloud.tools import metadata_endpoints
 
         result = metadata_endpoints.invoke({"provider": ""})
         data = json.loads(result)
@@ -478,7 +478,7 @@ class TestMetadataEndpointsTool:
         assert "method" in ep
 
     def test_aws_filter_narrows_results(self) -> None:
-        from raptix.tools.cloud.tools import metadata_endpoints
+        from raptix.execution.tools.cloud.tools import metadata_endpoints
 
         result = metadata_endpoints.invoke({"provider": "aws"})
         data = json.loads(result)
@@ -486,7 +486,7 @@ class TestMetadataEndpointsTool:
         assert all(ep["provider"] == "aws" for ep in data["endpoints"])
 
     def test_unknown_provider_returns_empty(self) -> None:
-        from raptix.tools.cloud.tools import metadata_endpoints
+        from raptix.execution.tools.cloud.tools import metadata_endpoints
 
         result = metadata_endpoints.invoke({"provider": "nonexistent_cloud"})
         data = json.loads(result)
@@ -494,6 +494,6 @@ class TestMetadataEndpointsTool:
         assert data["endpoints"] == []
 
     def test_cloud_tools_list_has_six_items(self) -> None:
-        from raptix.tools.cloud.tools import CLOUD_TOOLS
+        from raptix.execution.tools.cloud.tools import CLOUD_TOOLS
 
         assert len(CLOUD_TOOLS) == 6

@@ -23,9 +23,9 @@ from typing import Any
 
 import pytest
 
+from raptix.execution.tools.reporting.tools import REPORTING_TOOLS
 from raptix.intelligence.agents.standard import analyst
 from raptix.intelligence.prompts import load_prompt
-from raptix.tools.reporting.tools import REPORTING_TOOLS
 
 _REPORTING_NAMES = frozenset(t.name for t in REPORTING_TOOLS)
 

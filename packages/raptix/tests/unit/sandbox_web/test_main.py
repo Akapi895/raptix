@@ -7,9 +7,9 @@ from pathlib import Path
 
 import pytest
 
-from raptix.sandbox_web import __main__ as cli
-from raptix.sandbox_web.fetch_chain import FetchResult
-from raptix.sandbox_web.validators import Verdict
+from raptix.execution.sandbox.web import __main__ as cli
+from raptix.execution.sandbox.web.fetch_chain import FetchResult
+from raptix.execution.sandbox.web.validators import Verdict
 
 
 def _write_roe(tmp_path: Path, machine_enforcement: dict) -> Path:

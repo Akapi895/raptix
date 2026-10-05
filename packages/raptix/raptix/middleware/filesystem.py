@@ -21,8 +21,8 @@ from deepagents.backends.protocol import (
 from deepagents.backends.utils import validate_path
 from deepagents.middleware.filesystem import FilesystemMiddleware as BaseFilesystemMiddleware
 
-from raptix.sandbox_kernel.base import SandboxBase
-from raptix.tools.filesystem import filesystem_tools_without_execute
+from raptix.execution.sandbox.kernel.base import SandboxBase
+from raptix.execution.tools.filesystem import filesystem_tools_without_execute
 
 WORKSPACE = "/workspace"
 NO_WORKSPACE_ERROR = (
@@ -318,8 +318,8 @@ def _rebind_sandbox_per_run(backend: BackendProtocol, runtime: Any = None) -> Ba
     # the backends package, and keep the env-resolution call out of import time.
     from deepagents.backends import CompositeBackend
 
-    from raptix.backends import build_sandbox_backend
-    from raptix.backends.http_sandbox import HTTPSandbox
+    from raptix.execution.backends import build_sandbox_backend
+    from raptix.execution.backends.http_sandbox import HTTPSandbox
 
     config = getattr(runtime, "config", None)
     if isinstance(backend, HTTPSandbox):

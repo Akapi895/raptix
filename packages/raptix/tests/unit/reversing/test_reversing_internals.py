@@ -24,16 +24,20 @@ from pathlib import Path
 
 import pytest
 
-from raptix.tools.reversing.binary import BinaryInfo, _detect_format, identify_binary
-from raptix.tools.reversing.packer import PackerVerdict, detect_packer, shannon_entropy
-from raptix.tools.reversing.rop import RopGadget, filter_gadgets_by_pattern, find_rop_gadgets
-from raptix.tools.reversing.scripts import ghidra_recon_script, r2_recon_script
-from raptix.tools.reversing.strings import (
+from raptix.execution.tools.reversing.binary import BinaryInfo, _detect_format, identify_binary
+from raptix.execution.tools.reversing.packer import PackerVerdict, detect_packer, shannon_entropy
+from raptix.execution.tools.reversing.rop import (
+    RopGadget,
+    filter_gadgets_by_pattern,
+    find_rop_gadgets,
+)
+from raptix.execution.tools.reversing.scripts import ghidra_recon_script, r2_recon_script
+from raptix.execution.tools.reversing.strings import (
     ExtractedString,
     extract_strings,
     group_by_category,
 )
-from raptix.tools.reversing.symbols import summarize_symbols
+from raptix.execution.tools.reversing.symbols import summarize_symbols
 
 # ── helpers ─────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 """OPPLANMiddleware — domain-specific objective tracking for red team engagements.
 
 This middleware injects OPPLAN instructions and live objective status into the
-model prompt, registers OPPLAN tools from ``raptix.tools.opplan``, and
+model prompt, registers OPPLAN tools from ``raptix.execution.tools.opplan``, and
 enforces one OPPLAN tool call per model step.
 
 OPPLAN persistence uses the same configured backend as the engagement
@@ -38,7 +38,7 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain.agents.middleware.types import OmitFromInput
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
-from raptix.tools.opplan import OPPLAN_TOOL_NAMES, build_opplan_tools
+from raptix.execution.tools.opplan import OPPLAN_TOOL_NAMES, build_opplan_tools
 
 
 def _reduce_engagement_name(current: str | None, update: str | None) -> str | None:

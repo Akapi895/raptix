@@ -37,9 +37,9 @@ from langgraph.config import get_config
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix.execution.tools.bash.bash import bash_workspace
 from raptix.middleware.opplan import _reduce_engagement_name, _reduce_workspace_path
 from raptix.middleware.state_reducers import reduce_converging_value
-from raptix.tools.bash.bash import bash_workspace
 from raptix_core.utils.engagement_scope import set_active_engagement
 
 

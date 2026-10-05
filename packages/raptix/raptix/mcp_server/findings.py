@@ -91,7 +91,7 @@ def summarize_findings(
             level_counts={},
             sarif=None,
         )
-    from raptix.tools.research.sarif_export import export_findings_to_sarif
+    from raptix.execution.tools.research.sarif_export import export_findings_to_sarif
 
     doc = export_findings_to_sarif(graph, engagement_name=engagement_name)
     runs = doc.get("runs") or [{}]
