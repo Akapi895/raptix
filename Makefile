@@ -299,7 +299,7 @@ quality-cli: node-install
 	npm run test --workspace=@raptix/cli
 
 ## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest + CLI + web-raptix).
-## Use before opening a PR; passing this guarantees CI will pass.
+## Use before opening a PR; security/release/remote-run checks are separate gates.
 quality: ci-lint ci-test quality-cli webraptix-quality
 	@echo ""
 	@echo "OK — PR gates passed (mirrors CI PR lane)"
