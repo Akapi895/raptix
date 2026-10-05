@@ -382,7 +382,7 @@ contract the orchestrator re-reads before **every** `task()` dispatch.
 ## 9. Final report generation
 
 At engagement close, the orchestrator runs the final-report sequence
-(`raptix.md` → `/skills/standard/decepticon/final-report/SKILL.md`):
+(`raptix.md` → `/skills/standard/raptix/final-report/SKILL.md`):
 
 1. `load_skill("/skills/standard/raptix/final-report/SKILL.md")`.
 2. Generate `report/executive-summary.md` (C-level, no tool names/jargon).

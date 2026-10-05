@@ -12,9 +12,9 @@ _PROMPTS = _ROOT / "agents" / "prompts" / "standard"
 def test_router_and_final_report_resolve_for_orchestrator() -> None:
     sources = skills_sources_for("raptix")
     assert "/skills/standard/exploit/" in sources
-    assert "/skills/standard/decepticon/" in sources
+    assert "/skills/standard/raptix/" in sources
     prompt = (_PROMPTS / "raptix.md").read_text(encoding="utf-8")
-    assert "/skills/standard/decepticon/final-report/SKILL.md" in prompt
+    assert "/skills/standard/raptix/final-report/SKILL.md" in prompt
     for source in sources:
         assert (_DEFS / source.removeprefix("/skills/")).is_dir()
 
