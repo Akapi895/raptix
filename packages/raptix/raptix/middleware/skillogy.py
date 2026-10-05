@@ -85,7 +85,10 @@ Three tools:
         tag       → TAGGED          e.g. 'kerberoasting'
         mitre_id  → IMPLEMENTS to Technique.id (T1xxx or T1xxx.yyy)
         tactic_id → IMPLEMENTS → HAS_TECHNIQUE to Tactic.id (TAxxxx)
-        query     → substring on name / description / when_to_use
+        query     → AND-of-tokens substring on name / description /
+                    when_to_use (hyphens/underscores ≡ spaces, word order
+                    irrelevant: "engagement startup" finds
+                    engagement-startup)
       Returns name, path, subdomain, description, matched_mitre, matched_tags.
   • load_skill(name_or_path)
       Fetch one SKILL.md's body (the content only — metadata like subdomain /
@@ -190,9 +193,34 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
     _acl_kwargs: dict[str, Any] = (
         {"allowed_path_prefixes": allowed_path_prefixes} if allowed_path_prefixes else {}
     )
+    # Per-middleware-instance (== per agent instance) record of skills whose
+    # body was already returned in this conversation, keyed by both the raw
+    # argument and the resolved canonical path. A repeat load gets a short
+    # pointer instead of the full body — live-run evidence (Silentium lab,
+    # 2026-10) showed identical SKILL.md bodies being re-fetched up to 11
+    # times across turns of the same agent, paying the full token cost each
+    # time for content already in context. A fresh agent instance starts
+    # with an empty set, so each dispatch generation still receives the
+    # body it needs. ``force=True`` re-fetches after a context compaction
+    # dropped the earlier body.
+    loaded_keys: set[str] = set()
+
+    def _already_loaded_payload(key: str) -> str:
+        return json.dumps(
+            {
+                "already_loaded": key,
+                "note": (
+                    "This skill's body was already returned earlier in this "
+                    "conversation — it is in your context above; do not re-read it. "
+                    "Call load_skill again with force=true only if the body is no "
+                    "longer visible (e.g. after context compaction)."
+                ),
+            },
+            ensure_ascii=False,
+        )
 
     @tool
-    def load_skill(name_or_path: str) -> str:
+    def load_skill(name_or_path: str, force: bool = False) -> str:
         """Fetch one SKILL.md's body from the skillogy graph.
 
         Accepts either a unique frontmatter ``name`` (e.g. 'kerberoasting')
@@ -203,8 +231,15 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
         needs the content, so they are omitted to keep the reading context
         lean. Mirrors the filesystem ``load_skill`` (which strips frontmatter
         and returns the body) so both backends read identically.
+
+        Re-loading a skill already fetched in this conversation returns a
+        short pointer instead of the body (the content is already in your
+        context). Pass ``force=true`` to re-fetch the body after a context
+        compaction dropped it.
         """
         try:
+            if not force and name_or_path in loaded_keys:
+                return _already_loaded_payload(name_or_path)
             if name_or_path.startswith("/skills/"):
                 props = backend.load_skill(name_or_path, **_acl_kwargs)
             else:
@@ -220,11 +255,14 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
                 props = backend.load_skill(exact[0]["path"], **_acl_kwargs)
             if props is None:
                 return json.dumps({"error": f"no Skill at path {name_or_path!r}"})
+            path = str(props.get("path") or name_or_path)
+            if not force and path in loaded_keys:
+                return _already_loaded_payload(path)
+            loaded_keys.update((name_or_path, path))
             # Body only (+ minimal header). Metadata props are search-side
             # (find_skill); dumping them into the agent's context on every load
             # is noise. Header mirrors the filesystem load_skill's format.
             body = str(props.get("body") or "")
-            path = str(props.get("path") or name_or_path)
             base_dir = path.rsplit("/", 1)[0] if "/" in path else "/"
             name = str(props.get("name") or "")
             description = str(props.get("description") or "").strip()

@@ -93,6 +93,58 @@ def test_middleware_load_skill_tool_returns_error_on_exception():
     assert "network down" in payload["error"]
 
 
+def test_load_skill_repeat_returns_pointer_without_backend_call():
+    """Second load of the same path in one agent instance returns a short
+    pointer (the body is already in context) — the backend is hit once."""
+    backend = _FakeBackend()
+    mw = SkillogyMiddleware(backend=backend, append_policy_to_system=False)
+    tool = _tools_by_name(mw)["load_skill"]
+    first = tool.invoke({"name_or_path": "/skills/ad/k"})
+    assert "# Body of /skills/ad/k" in first
+    second = tool.invoke({"name_or_path": "/skills/ad/k"})
+    payload = json.loads(second)
+    assert payload["already_loaded"] == "/skills/ad/k"
+    assert "force=true" in payload["note"]
+    assert backend.load_calls == ["/skills/ad/k"]
+
+
+def test_load_skill_force_refetches_body():
+    backend = _FakeBackend()
+    mw = SkillogyMiddleware(backend=backend, append_policy_to_system=False)
+    tool = _tools_by_name(mw)["load_skill"]
+    tool.invoke({"name_or_path": "/skills/ad/k"})
+    again = tool.invoke({"name_or_path": "/skills/ad/k", "force": True})
+    assert "# Body of /skills/ad/k" in again
+    assert backend.load_calls == ["/skills/ad/k", "/skills/ad/k"]
+
+
+def test_load_skill_dedupe_keys_on_resolved_path():
+    """Loading by name twice also dedupes — the first call records both the
+    raw argument and the resolved canonical path, so the second hit is a
+    pointer (resolved paths keep working if the agent switches notation)."""
+    backend = _FakeBackend()
+    mw = SkillogyMiddleware(backend=backend, append_policy_to_system=False)
+    tool = _tools_by_name(mw)["load_skill"]
+    tool.invoke({"name_or_path": "t1"})
+    second = json.loads(tool.invoke({"name_or_path": "t1"}))
+    assert second["already_loaded"] == "t1"
+    third = json.loads(tool.invoke({"name_or_path": "/skills/t1"}))
+    assert third["already_loaded"] == "/skills/t1"
+
+
+def test_load_skill_fresh_instance_returns_body_again():
+    """A new agent instance (new middleware) always gets the full body —
+    per-dispatch dedupe only, never cross-generation suppression."""
+    tool = _tools_by_name(
+        SkillogyMiddleware(backend=_FakeBackend(), append_policy_to_system=False)
+    )["load_skill"]
+    assert "# Body of /skills/ad/k" in tool.invoke({"name_or_path": "/skills/ad/k"})
+    tool2 = _tools_by_name(
+        SkillogyMiddleware(backend=_FakeBackend(), append_policy_to_system=False)
+    )["load_skill"]
+    assert "# Body of /skills/ad/k" in tool2.invoke({"name_or_path": "/skills/ad/k"})
+
+
 def test_env_flag_recognizes_truthy_values(monkeypatch):
     for v in ("1", "true", "TRUE", "yes", "on"):
         monkeypatch.setenv("RAPTIX_USE_SKILLOGY", v)
