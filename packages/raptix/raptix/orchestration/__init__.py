@@ -1,13 +1,13 @@
-"""Orchestration subsystem boundary (W3).
+"""Orchestration subsystem (W3 boundary, populated in W7).
 
-Future owner of mission context, planning, UKC phase state, and dispatch:
+Owner of mission context, planning, UKC phase state, and dispatch:
 
-- ``orchestration/phases/`` lands in W7 (three UKC macro-phases as runtime
-  state — never agent or skill folders),
-- ``mission/``, ``planning/`` and ``dispatch/`` ownership migrates in later
-  waves once ``intelligence/`` and ``execution/`` boundaries are populated.
+- ``phases/`` landed in W7: the three UKC macro-phases as runtime state
+  with a shadow-mode state machine — never agent or skill folders,
+- ``mission/``, ``planning/`` and ``dispatch/`` ownership migrates in
+  later waves once ``intelligence/`` and ``execution/`` boundaries are
+  populated.
 
-Nothing is imported here yet. Compatibility re-export shims are added
-wave by wave as ownership moves (see ``raptix-repository-architecture.md``
-§7 and §32, waves W3–W7).
+Nothing else is imported here yet (see
+``raptix-repository-architecture.md`` §7 and §32, waves W3–W7).
 """

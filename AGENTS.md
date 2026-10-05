@@ -70,6 +70,12 @@ Plan invariants (violating these reopens settled design):
   allowlists (`.semgrep/raptix-rules.yml`) and the sandbox image
   (`infra/containers/sandbox*.Dockerfile`, `sandbox-entrypoint.sh`)
   point at the new layout.
+- W7 introduced the UKC orchestration structure: `orchestration/phases/`
+  defines the three canonical macro-phases (`initial_foothold`,
+  `network_propagation`, `action_on_objectives`) as runtime state with a
+  shadow-mode state machine — nothing in the runtime gates on it yet.
+  Phases are never a source-tree layout; skills carry `ukc_phases`
+  metadata (W8). See `docs/adr/0037-ukc-phase-is-runtime-state.md`.
 - `langgraph.json` maps graph names to
   `packages/raptix/raptix/intelligence/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
