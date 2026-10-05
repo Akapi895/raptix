@@ -450,7 +450,7 @@ The host-mounted workspace tree is what the clients render.
   (`.md` / `.json` / plaintext), with per-domain icons. `plan/` is excluded
   from Documents — it has its own Plan page. The Findings viewer parses
   `findings/FIND-NNN.md` directly.
-- **CLI** (`clients/cli`): no dedicated file browser; sub-agent tool calls
+- **CLI** (`apps/cli`): no dedicated file browser; sub-agent tool calls
   and results stream through `StreamingRunnable` (LangGraph SDK), so findings
   appear inline in the event flow as they are written.
 

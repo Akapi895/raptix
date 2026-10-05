@@ -70,7 +70,7 @@ node_modules/
 # etc
 sliver-py/
 /src/
-config/*.local.*
+infra/config/*.local.*
 reference/
 demo.tape
 
@@ -101,7 +101,7 @@ skills/_corpus/
 # Project-specific Claude Code instructions (private)
 CLAUDE.md
 references/octogent
-clients/launcher/raptix
+apps/launcher/raptix
 
 # basedpyright JSON output from `make ci-lint` (CI uploads as artifact on failure)
 bp.json
@@ -110,29 +110,29 @@ bp.json
 # Per-run artefacts (timestamped batch + evidence/ + reports/) are local-only.
 # Curated per-challenge results (XBEN-*-24/) and the LEVEL3 index are committed.
 # LangSmith trace dumps live as public share URLs in READMEs — never committed.
-benchmark/results/*
-!benchmark/results/.gitkeep
-!benchmark/results/XBEN-*-24/
-!benchmark/results/README.md
-!benchmark/results/cve-bench/
-!benchmark/results/cve-bench/**
-benchmark/results/XBEN-*-24/evidence/langsmith_trace.json
-benchmark/results/XBEN-*-24/evidence/iter14_pass.json
-benchmark/results/XBEN-*-24/evidence/*_iter*.json
+benchmarks/results/*
+!benchmarks/results/.gitkeep
+!benchmarks/results/XBEN-*-24/
+!benchmarks/results/README.md
+!benchmarks/results/cve-bench/
+!benchmarks/results/cve-bench/**
+benchmarks/results/XBEN-*-24/evidence/langsmith_trace.json
+benchmarks/results/XBEN-*-24/evidence/iter14_pass.json
+benchmarks/results/XBEN-*-24/evidence/*_iter*.json
 # Per-run timestamped subdirs inside XBEN-*-24/ are local dev artefacts.
 # The flat root (report.json / report.md / evidence/summary.{json,md}) is the
-# committed PASS record — see benchmark/results/README.md for the policy.
-benchmark/results/XBEN-*-24/2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*/
-benchmark/workspaces/
+# committed PASS record — see benchmarks/results/README.md for the policy.
+benchmarks/results/XBEN-*-24/2[0-9][0-9][0-9][0-9][0-9][0-9][0-9]_*/
+benchmarks/workspaces/
 # Operator-cloned upstream benchmark suites (see README-cybench.md /
 # README-cybergym.md). Cloned locally, never vendored into this repo.
-benchmark/cybench/
-benchmark/cybergym/
+benchmarks/cybench/
+benchmarks/cybergym/
 
 # Codex / OMX runtime artefacts (never committed)
 .omx/
 .env.bak.*
-benchmark/results/XBEN-*-24/run-loop*.log
+benchmarks/results/XBEN-*-24/run-loop*.log
 
 # Git worktrees
 .worktrees/
@@ -140,7 +140,7 @@ benchmark/results/XBEN-*-24/run-loop*.log
 # Internal design docs (specs/plans) — local only, not part of OSS distribution
 docs/superpowers/
 
-clients/web-raptix/.figma/
+apps/web/.figma/
 
 # Local probe/experiment output has one home; harness source is kept visible.
 /tests/local/artifacts/

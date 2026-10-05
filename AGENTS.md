@@ -44,18 +44,20 @@ Plan invariants (violating these reopens settled design):
   agents, middleware, tools and runtime; `packages/raptix-sdk` exposes the
   plugin-author API. Do not import upward from core or reach into framework
   internals from SDK plugins.
-- Until a wave migrates it, the flat layout is canonical: `clients/*` (not
-  `apps/*`), `benchmark/` (not `benchmarks/`), root `containers/`, `config/`,
-  `telemetry-gateway/`, and inside `packages/raptix/raptix/` the flat
-  `agents/`, `llm/`, `tools/`, `sandbox_{kernel,server,web}/`, `backends/`,
-  `mcp_server/`, `server/`, and `middleware/kg_internal/`.
+- W2 landed the top-level layout: `apps/{cli,web,desktop,launcher,shared}`,
+  `infra/{containers,config,telemetry-gateway}`, `benchmarks/` (Python package
+  `benchmarks`, run via `-m benchmarks.runner`). Compose files stay at repo
+  root (launcher contract) and mount `./infra/{config,containers}`.
+- Inside `packages/raptix/raptix/` the flat layout is still canonical until
+  W3–W6: `agents/`, `llm/`, `tools/`, `sandbox_{kernel,server,web}/`,
+  `backends/`, `mcp_server/`, `server/`, and `middleware/kg_internal/`.
 - `langgraph.json` maps graph names to `packages/raptix/raptix/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
-- Node workspaces are rooted in `package.json` (`clients/*`, `clients/shared/*`).
-  Build `@raptix/streaming` before CLI typecheck/build or web-raptix build;
-  both consume its `dist/`. For web-raptix edits follow
-  `clients/web-raptix/AGENTS.md`; the legacy `clients/web` Next app is
-  reference-only (retired from active lanes in W20).
+- Node workspaces are rooted in `package.json` (`apps/*`, `apps/shared/*`).
+  Build `@raptix/streaming` and `@raptix/web-contracts` before CLI
+  typecheck/build or web-raptix build; both consume their `dist/`. For
+  apps/web edits follow `apps/web/AGENTS.md`; the legacy `clients/web` Next
+  app was removed in W2 (history preserved on the pre-restructure branch).
 
 ## Run from repo root
 

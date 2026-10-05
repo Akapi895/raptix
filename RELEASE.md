@@ -8,8 +8,8 @@ Raptix follows [Semantic Versioning](https://semver.org/). Releases are
 tagged `vMAJOR.MINOR.PATCH` (e.g. `v1.1.1`); pre-releases use a suffix
 (e.g. `v1.2.0-rc.1`).
 
-The `version` field in `pyproject.toml`, `clients/cli/package.json`, and
-`clients/web/package.json` is a permanent `0.0.0` **sentinel**. The real
+The `version` field in `pyproject.toml`, `apps/cli/package.json`, and
+`apps/web/package.json` is a permanent `0.0.0` **sentinel**. The real
 version is stamped from the git tag at build time — `release.yml` rewrites the
 sentinel for the PyPI build and passes `--build-arg VERSION=<tag>` into the
 Docker images. There is no version-bump commit to make before tagging.

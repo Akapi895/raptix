@@ -31,10 +31,10 @@ WEB_RAPTIX_DB      := raptix_web_raptix
 # Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
 # and stand up the stack without touching the user's real ~/.raptix. The
 # launcher resolves all relative paths against the compose file's directory,
-# so docker-compose.yml + config/ + containers/ + .env.example are symlinked
+# so docker-compose.yml + infra/config/ + infra/containers/ + .env.example are symlinked
 # back to the repo. workspace/ stays a real directory (engagement bind mount).
 DOGFOOD_HOME  := $(CURDIR)/.dogfood
-LAUNCHER_BIN  := clients/launcher/bin/raptix
+LAUNCHER_BIN  := apps/launcher/bin/raptix
 
 # Match the launcher's explicit Compose project without interpolating the
 # environment-controlled stack/project name into Make's shell source.
@@ -126,8 +126,8 @@ dogfood: launcher
 	@$(COMPOSE) $(PROFILES_ALL) down --remove-orphans 2>/dev/null; true
 	@mkdir -p $(DOGFOOD_HOME)/workspace
 	@ln -sfn $(CURDIR)/docker-compose.yml $(DOGFOOD_HOME)/docker-compose.yml
-	@ln -sfn $(CURDIR)/config              $(DOGFOOD_HOME)/config
-	@ln -sfn $(CURDIR)/containers          $(DOGFOOD_HOME)/containers
+	@ln -sfn $(CURDIR)/infra/config              $(DOGFOOD_HOME)/config
+	@ln -sfn $(CURDIR)/infra/containers          $(DOGFOOD_HOME)/containers
 	@ln -sfn $(CURDIR)/.env.example        $(DOGFOOD_HOME)/.env.example
 	@echo ""
 	@echo "[dogfood] Building images from local code (tag :dev)..."
@@ -139,8 +139,8 @@ dogfood: launcher
 
 ## Build the Go launcher binary (version=dev, gates auto-update + config sync).
 launcher:
-	cd clients/launcher && go build \
-		-ldflags '-X github.com/Akapi895/raptix/clients/launcher/cmd.version=dev' \
+	cd apps/launcher && go build \
+		-ldflags '-X github.com/Akapi895/raptix/apps/launcher/cmd.version=dev' \
 		-o bin/raptix
 
 ## Compose-only smoke (no launcher, no onboard wizard) — fastest possible
@@ -191,10 +191,10 @@ dev:
 cli-dev: infra
 	@$(COMPOSE_WATCH) watch --no-up --quiet langgraph &
 	npm run build --workspace=@raptix/streaming
-	cd clients/cli && npm run build
-	cd clients/cli && npm run dev & TSC_PID=$$!; \
+	cd apps/cli && npm run build
+	cd apps/cli && npm run dev & TSC_PID=$$!; \
 	  trap "kill $$TSC_PID 2>/dev/null" EXIT INT TERM; \
-	  cd clients/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:2024} node --watch dist/index.js
+	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:2024} node --watch dist/index.js
 
 ## New-stack web dashboard dev server (W20 replaces the retired legacy
 ## web-dev): build shared workspaces then run UI + API locally.
@@ -202,7 +202,7 @@ webraptix-dev: node-install
 	npm run build --workspace=@raptix/streaming
 	npm run build --workspace=@raptix/web-contracts
 	@echo "[webraptix-dev] UI on http://localhost:5173 (proxies /api to :5280); start the API with: npm run dev:api"
-	cd clients/web-raptix && npm run dev
+	cd apps/web && npm run dev
 
 # Internal: bring up backend infra (built from local code).
 # Chains the dev override so local-dev workflows (cli-dev, webraptix-dev) pick up
@@ -420,10 +420,10 @@ recreate-litellm:
 
 ## Run benchmark suite (usage: make benchmark ARGS="--level 1")
 benchmark:
-	uv run python -m benchmark.runner $(ARGS)
+	uv run python -m benchmarks.runner $(ARGS)
 
 ## CVE-Bench offline dry run (mocked LLM + sandbox, 3 fixtures, seed=0).
 ## Output: benchmark/results/cve-bench/dry-run-<YYYY-MM-DD>.jsonl
 cve-bench-dry:
 	CVE_BENCH_DRY_RUN_SEED=0 PYTHONHASHSEED=0 \
-		uv run python -m benchmark.cve_bench.dry_run $(ARGS)
+		uv run python -m benchmarks.cve_bench.dry_run $(ARGS)

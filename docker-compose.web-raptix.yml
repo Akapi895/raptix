@@ -12,7 +12,7 @@ services:
     image: ghcr.io/akapi895/raptix-web-raptix-api:${RAPTIX_VERSION:-stable}
     build:
       context: .
-      dockerfile: containers/web-raptix-server.Dockerfile
+      dockerfile: infra/containers/web-raptix-server.Dockerfile
       args:
         VERSION: ${VERSION:-0.0.0}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-api
@@ -44,7 +44,7 @@ services:
     image: ghcr.io/akapi895/raptix-web-raptix-ui:${RAPTIX_VERSION:-stable}
     build:
       context: .
-      dockerfile: containers/web-raptix.Dockerfile
+      dockerfile: infra/containers/web-raptix.Dockerfile
       args:
         VERSION: ${VERSION:-0.0.0}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-ui

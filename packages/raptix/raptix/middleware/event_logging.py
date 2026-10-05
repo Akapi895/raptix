@@ -204,7 +204,7 @@ def _reasoning_text(response: Any) -> str:
     """The model's chain-of-thought, wherever the provider parked it.
 
     Reasoning never arrives as plain ``text``: Anthropic extended thinking (on by
-    default, see ``config/claude_code_handler.py``) returns ``thinking`` content
+    default, see ``infra/config/claude_code_handler.py``) returns ``thinking`` content
     blocks, LangChain's standard shape uses ``reasoning`` blocks, and
     OpenAI-compatible proxies (LiteLLM, DeepSeek) put it in
     ``additional_kwargs["reasoning_content"]``. Reading only ``text`` — as this

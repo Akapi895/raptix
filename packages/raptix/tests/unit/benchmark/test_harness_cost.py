@@ -12,10 +12,10 @@ from unittest.mock import patch
 import httpx
 import pytest
 
-from benchmark.config import BenchmarkConfig
-from benchmark.harness import Harness
-from benchmark.providers.base import BaseBenchmarkProvider
-from benchmark.schemas import Challenge, FilterConfig
+from benchmarks.config import BenchmarkConfig
+from benchmarks.harness import Harness
+from benchmarks.providers.base import BaseBenchmarkProvider
+from benchmarks.schemas import Challenge, FilterConfig
 
 
 class _StubProvider(BaseBenchmarkProvider):
@@ -57,8 +57,8 @@ def _harness_with_mock(rows: Any, status: int = 200) -> Harness:
         kwargs["transport"] = transport
         return real_async_client(*args, **kwargs)
 
-    # patch httpx.AsyncClient inside benchmark.harness module
-    patcher = patch("benchmark.harness.httpx.AsyncClient", side_effect=patched)
+    # patch httpx.AsyncClient inside benchmarks.harness module
+    patcher = patch("benchmarks.harness.httpx.AsyncClient", side_effect=patched)
     patcher.start()
     h._test_patcher = patcher  # type: ignore[attr-defined]
     return h

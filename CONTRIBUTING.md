@@ -69,15 +69,15 @@ Use the [Feature Request](https://github.com/Akapi895/raptix/issues/new?template
 - **Imports**: Absolute imports, public API re-exported through `__init__.py`
 - **Logging**: `from raptix.core.logging import get_logger; log = get_logger("module.sub")`
 - **Skills**: Markdown files in `raptix/skills/` with YAML frontmatter
-- **CLI (TypeScript)**: Ink.js components in `clients/cli/src/`
+- **CLI (TypeScript)**: Ink.js components in `apps/cli/src/`
 
 ## Project Structure
 
 ```
 raptix/          Python agents, core logic, backends
-clients/cli/         Ink.js terminal UI (TypeScript)
+apps/cli/         Ink.js terminal UI (TypeScript)
 raptix/skills/   Markdown knowledge base for agents
-containers/          Dockerfiles
+infra/containers/          Dockerfiles
 config/              Runtime configuration
 scripts/             Installer and utilities
 docs/                Documentation

@@ -14,7 +14,7 @@ The primary purpose of this Makefile. Run these before tagging a release.
 |--------|-------------|
 | `make dogfood` | Full OSS UX on local code: builds the Go launcher + every service image (`:dev` tag), wires up an isolated `$RAPTIX_HOME` under `.dogfood/`, then runs the launcher. The onboard wizard, engagement picker, `compose up`, health checks, and CLI all execute exactly as a `curl \| bash` install. |
 | `make smoke` | Compose-only smoke (no launcher, no onboard wizard) — fastest possible release-shape check. Replicates only the launcher's `compose up` step: clean → build images locally → `up -d --no-build --wait` → health checks. Use when you only changed the compose stack. |
-| `make launcher` | Build the Go launcher binary at `clients/launcher/bin/raptix`. Embedded version is `dev`, which skips release update notices and versioned config sync inside the launcher. Invoked automatically by `make dogfood`. |
+| `make launcher` | Build the Go launcher binary at `apps/launcher/bin/raptix`. Embedded version is `dev`, which skips release update notices and versioned config sync inside the launcher. Invoked automatically by `make dogfood`. |
 
 `make dogfood` runs against an isolated `.dogfood/` directory so the user's real `~/.raptix` is never touched. `make clean` purges both the compose volumes and `.dogfood/` when you want a fresh onboard.
 
@@ -104,7 +104,7 @@ checkout as reference-only.
 
 ## Versioning (no manual step)
 
-There is no `make sync-version` or pre-tag commit. Source-tree version fields carry a `"0.0.0"` sentinel in `pyproject.toml` and `clients/cli/package.json`. The release workflow stamps the real tag into the images at Docker build time via `--build-arg VERSION=<tag>`. The Go launcher is similarly stamped via GoReleaser ldflags.
+There is no `make sync-version` or pre-tag commit. Source-tree version fields carry a `"0.0.0"` sentinel in `pyproject.toml` and `apps/cli/package.json`. The release workflow stamps the real tag into the images at Docker build time via `--build-arg VERSION=<tag>`. The Go launcher is similarly stamped via GoReleaser ldflags.
 
 Release channel policy (see [update-channels.md](./update-channels.md) for the user-facing view):
 

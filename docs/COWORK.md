@@ -127,7 +127,7 @@ Review is therefore a convention, not a branch rule. Ask for one when
 the change is one you would want a second pair of eyes on — and
 supply-chain surfaces are still where that pays off most:
 `.github/workflows/**`, `scripts/install.sh`, `docker-compose.yml` and
-`containers/*.Dockerfile`, package manifests and lockfiles, and the
+`infra/containers/*.Dockerfile`, package manifests and lockfiles, and the
 plugin contracts under `packages/raptix-core/raptix_core/`. The
 *Blast radius* section of the PR template exists to make you name which
 of those you are touching.

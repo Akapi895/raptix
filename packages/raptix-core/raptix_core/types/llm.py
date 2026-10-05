@@ -441,7 +441,7 @@ METHOD_MODELS: dict[AuthMethod, dict[Tier, str]] = {
     # catalog (packages/ai/src/models.json) as of 2026-06. Each route is
     # rewritten to ``openai/<slug>`` + the gateway's api_base by
     # ``litellm_dynamic_config.build_model_entry`` and mirrored as a
-    # static entry in ``config/litellm.yaml``.
+    # static entry in ``infra/config/litellm.yaml``.
     AuthMethod.OPENCODE_API: {
         # OpenCode Zen — https://opencode.ai/zen/v1. Catalog spans Claude,
         # GPT-5.x, GLM, Kimi. LOW uses the free GLM tier.

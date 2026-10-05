@@ -151,7 +151,7 @@ changes," "obvious refactors," "docs-only" touching runtime code, or
   actual runtime path and watching it load.
 - Adding a new CLI command, HTTP route, agent prompt, or skill
   without invoking it once.
-- Touching `docker-compose.yml`, `containers/*.Dockerfile`, or
+- Touching `docker-compose.yml`, `infra/containers/*.Dockerfile`, or
   `config/litellm.yaml` without bringing the stack up locally and
   watching it pass healthchecks.
 - Saying "should work," "should be fine," "I think this is right," or
@@ -259,7 +259,7 @@ log = get_logger("agents.recon.scanner")
 log.info("recon scan complete", extra={"host_count": len(hosts)})
 ```
 
-`print` is for `clients/cli` and `scripts/` only. Everywhere else,
+`print` is for `apps/cli` and `scripts/` only. Everywhere else,
 use the project logger so output is structured and routable.
 
 ### Suppressed return values

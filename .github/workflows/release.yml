@@ -89,11 +89,11 @@ jobs:
         with:
           # Read the toolchain from go.mod (single source of truth) so the
           # release build never drifts from the launcher's declared version.
-          go-version-file: clients/launcher/go.mod
-          cache-dependency-path: clients/launcher/go.sum
+          go-version-file: apps/launcher/go.mod
+          cache-dependency-path: apps/launcher/go.sum
 
       - name: Run tests
-        working-directory: clients/launcher
+        working-directory: apps/launcher
         run: go test ./...
 
       - name: Run GoReleaser
@@ -101,7 +101,7 @@ jobs:
         with:
           version: "~> v2"
           args: release --clean
-          workdir: clients/launcher
+          workdir: apps/launcher
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -116,7 +116,7 @@ jobs:
       - name: Generate config manifest
         run: |
           set -euo pipefail
-          sha256sum docker-compose.yml docker-compose.web-raptix.yml config/litellm.yaml .env.example > config-checksums.txt
+          sha256sum docker-compose.yml docker-compose.web-raptix.yml infra/config/litellm.yaml .env.example > config-checksums.txt
           cat config-checksums.txt
 
       - name: Upload config manifest to draft release
@@ -143,13 +143,13 @@ jobs:
       matrix:
         include:
           - image: raptix-litellm
-            dockerfile: containers/litellm.Dockerfile
+            dockerfile: infra/containers/litellm.Dockerfile
             platforms: linux/amd64,linux/arm64
           - image: raptix-langgraph
-            dockerfile: containers/langgraph.Dockerfile
+            dockerfile: infra/containers/langgraph.Dockerfile
             platforms: linux/amd64,linux/arm64
           - image: raptix-cli
-            dockerfile: containers/cli.Dockerfile
+            dockerfile: infra/containers/cli.Dockerfile
             platforms: linux/amd64,linux/arm64
           # Skillogy server: lean python:3.13-slim (no Kali/heavy apt layers),
           # so multi-arch under QEMU is cheap like cli/langgraph. The compose
@@ -157,13 +157,13 @@ jobs:
           # `raptix start` — it MUST be published or every start fails to
           # pull ghcr.io/akapi895/raptix-skillogy:<version>.
           - image: raptix-skillogy
-            dockerfile: containers/skillogy.Dockerfile
+            dockerfile: infra/containers/skillogy.Dockerfile
             platforms: linux/amd64,linux/arm64
           - image: raptix-web-raptix-ui
-            dockerfile: containers/web-raptix.Dockerfile
+            dockerfile: infra/containers/web-raptix.Dockerfile
             platforms: linux/amd64,linux/arm64
           - image: raptix-web-raptix-api
-            dockerfile: containers/web-raptix-server.Dockerfile
+            dockerfile: infra/containers/web-raptix-server.Dockerfile
             platforms: linux/amd64,linux/arm64
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -298,19 +298,19 @@ jobs:
       matrix:
         include:
           - image: raptix-sandbox
-            dockerfile: containers/sandbox.Dockerfile
+            dockerfile: infra/containers/sandbox.Dockerfile
             platform: amd64
             runs-on: ubuntu-latest
           - image: raptix-sandbox
-            dockerfile: containers/sandbox.Dockerfile
+            dockerfile: infra/containers/sandbox.Dockerfile
             platform: arm64
             runs-on: ubuntu-24.04-arm
           - image: raptix-c2-sliver
-            dockerfile: containers/c2-sliver.Dockerfile
+            dockerfile: infra/containers/c2-sliver.Dockerfile
             platform: amd64
             runs-on: ubuntu-latest
           - image: raptix-c2-sliver
-            dockerfile: containers/c2-sliver.Dockerfile
+            dockerfile: infra/containers/c2-sliver.Dockerfile
             platform: arm64
             runs-on: ubuntu-24.04-arm
     runs-on: ${{ matrix.runs-on }}

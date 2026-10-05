@@ -2,11 +2,11 @@
   "name": "raptix",
   "private": true,
   "workspaces": [
-    "clients/cli",
-    "clients/desktop",
-    "clients/web-raptix",
-    "clients/web-raptix/server",
-    "clients/shared/*"
+    "apps/cli",
+    "apps/desktop",
+    "apps/web",
+    "apps/web/server",
+    "apps/shared/*"
   ],
   "scripts": {
     "dev": "npm run dev --workspace=@raptix/web-raptix",

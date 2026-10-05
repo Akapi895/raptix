@@ -1,4 +1,4 @@
-"""Tests for benchmark.providers.cybergym.CyberGymProvider.
+"""Tests for benchmarks.providers.cybergym.CyberGymProvider.
 
 Covers spec parsing, challenge loading from a YAML spec, and the
 server-verified ``evaluate`` scoring (crash reproduction via
@@ -12,11 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from benchmark.harness import _build_kickoff_prompt
-from benchmark.providers import cybergym as cg
-from benchmark.providers.cybergym import CyberGymProvider
-from benchmark.schemas import Challenge, FilterConfig
-from benchmark.state import BenchmarkRunState
+from benchmarks.harness import _build_kickoff_prompt
+from benchmarks.providers import cybergym as cg
+from benchmarks.providers.cybergym import CyberGymProvider
+from benchmarks.schemas import Challenge, FilterConfig
+from benchmarks.state import BenchmarkRunState
 
 
 def _write_spec(tmp_path: Path) -> Path:

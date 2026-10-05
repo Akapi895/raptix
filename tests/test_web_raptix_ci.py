@@ -28,7 +28,7 @@ def test_web_filter_output_is_exported_and_every_quality_step_consumes_it() -> N
     for script in ("typecheck", "lint", "build", "test"):
         assert f"npm run {script} --workspace=@raptix/web-raptix-server" in commands
         assert f"npm run {script} --workspace=@raptix/web-raptix" in commands
-    assert "node clients/web-raptix/tools/verify-docker-real-mode.mjs" in commands
+    assert "node apps/web/tools/verify-docker-real-mode.mjs" in commands
     assert "VITE_DATA_MODE=real" not in commands  # Docker default must be exercised.
 
 
@@ -61,19 +61,19 @@ def test_owned_prisma_client_is_generated_before_clean_server_typecheck() -> Non
 @pytest.mark.parametrize(
     ("changed_path", "should_run"),
     [
-        ("clients/web-raptix/src/App.tsx", True),
-        ("clients/web-raptix/server/src/main.ts", True),
-        ("clients/shared/web-contracts/src/projects.ts", True),
-        ("clients/shared/streaming/src/index.ts", True),
-        ("containers/web-raptix.Dockerfile", True),
-        ("containers/web-raptix-server.Dockerfile", True),
-        ("containers/web-raptix-proxy.conf", True),
+        ("apps/web/src/App.tsx", True),
+        ("apps/web/server/src/main.ts", True),
+        ("apps/shared/web-contracts/src/projects.ts", True),
+        ("apps/shared/streaming/src/index.ts", True),
+        ("infra/containers/web-raptix.Dockerfile", True),
+        ("infra/containers/web-raptix-server.Dockerfile", True),
+        ("infra/containers/web-raptix-proxy.conf", True),
         ("docker-compose.web-raptix.yml", True),
         ("package-lock.json", True),
         (".github/workflows/ci.yml", True),
         ("docs/QUALITY_BAR.md", False),
         ("clients/web/src/app/page.tsx", False),
-        ("clients/launcher/main.go", False),
+        ("apps/launcher/main.go", False),
     ],
 )
 def test_actual_web_filter_routes_source_contracts_and_deployment_changes(

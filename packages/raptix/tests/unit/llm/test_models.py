@@ -19,7 +19,7 @@ from raptix_core.types.llm import (
     resolve_chain,
 )
 
-_LITELLM_CONFIG = Path(__file__).resolve().parents[5] / "config" / "litellm.yaml"
+_LITELLM_CONFIG = Path(__file__).resolve().parents[5] / "infra" / "config" / "litellm.yaml"
 
 # ── Enum sanity ─────────────────────────────────────────────────────────
 

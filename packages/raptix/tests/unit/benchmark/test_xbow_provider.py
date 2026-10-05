@@ -1,4 +1,4 @@
-"""Tests for benchmark.providers.xbow.XBOWProvider."""
+"""Tests for benchmarks.providers.xbow.XBOWProvider."""
 
 from __future__ import annotations
 
@@ -6,9 +6,9 @@ import hashlib
 import json
 from pathlib import Path
 
-from benchmark.providers.xbow import XBOWProvider
-from benchmark.schemas import Challenge, FilterConfig
-from benchmark.state import BenchmarkRunState, BenchmarkStepResult
+from benchmarks.providers.xbow import XBOWProvider
+from benchmarks.schemas import Challenge, FilterConfig
+from benchmarks.state import BenchmarkRunState, BenchmarkStepResult
 
 
 def _create_mock_benchmarks(tmp_path: Path) -> Path:

@@ -1,4 +1,4 @@
-"""Tests for benchmark.providers.mhbench.MHBenchProvider.
+"""Tests for benchmarks.providers.mhbench.MHBenchProvider.
 
 These tests cover every pure / file-IO surface of the MHBench provider:
 
@@ -32,8 +32,8 @@ from pathlib import Path
 
 import pytest
 
-from benchmark.providers import mhbench as mhb
-from benchmark.providers.mhbench import (
+from benchmarks.providers import mhbench as mhb
+from benchmarks.providers.mhbench import (
     ExternalTopology,
     HostInfo,
     MHBenchProvider,
@@ -44,8 +44,8 @@ from benchmark.providers.mhbench import (
     _resolve_ssh_key_path,
     _select_flag_target,
 )
-from benchmark.schemas import Challenge, FilterConfig
-from benchmark.state import BenchmarkRunState, BenchmarkStepResult
+from benchmarks.schemas import Challenge, FilterConfig
+from benchmarks.state import BenchmarkRunState, BenchmarkStepResult
 
 
 def _write_config(

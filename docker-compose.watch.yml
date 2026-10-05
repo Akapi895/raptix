@@ -39,7 +39,7 @@ services:
         - action: rebuild
           path: ./packages/raptix-core/pyproject.toml
         - action: rebuild
-          path: ./containers/langgraph.Dockerfile
+          path: ./infra/containers/langgraph.Dockerfile
 
   # web service: retired with W20 — the web-raptix stack has its own
   # Vite dev server (make webraptix-dev) outside compose watch.
@@ -48,9 +48,9 @@ services:
     develop:
       watch:
         - action: sync
-          path: ./clients/cli/src
+          path: ./apps/cli/src
           target: /app/src
         - action: rebuild
-          path: ./clients/cli/package.json
+          path: ./apps/cli/package.json
         - action: rebuild
-          path: ./containers/cli.Dockerfile
+          path: ./infra/containers/cli.Dockerfile

@@ -1,6 +1,6 @@
 """Raptix Python CLI surface — invoked as ``python -m raptix.cli``.
 
-The CLI lives here (rather than in ``clients/launcher/``) for two reasons:
+The CLI lives here (rather than in ``apps/launcher/``) for two reasons:
 
 1. The Go launcher is for the interactive desktop experience; the CLI in
    this module is the headless / CI / scripted entry. CI environments

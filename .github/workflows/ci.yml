@@ -75,28 +75,28 @@ jobs:
               - 'docker-compose.yml'
               - '.github/workflows/ci.yml'
             cli:
-              - 'clients/cli/**'
-              - 'clients/shared/**'
+              - 'apps/cli/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             web-raptix:
-              - 'clients/web-raptix/**'
-              - 'clients/shared/**'
-              - 'containers/web-raptix.Dockerfile'
-              - 'containers/web-raptix-server.Dockerfile'
-              - 'containers/web-raptix-proxy.conf'
+              - 'apps/web/**'
+              - 'apps/shared/**'
+              - 'infra/containers/web-raptix.Dockerfile'
+              - 'infra/containers/web-raptix-server.Dockerfile'
+              - 'infra/containers/web-raptix-proxy.conf'
               - 'docker-compose.web-raptix.yml'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             desktop:
-              - 'clients/desktop/**'
+              - 'apps/desktop/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             launcher:
-              - 'clients/launcher/**'
+              - 'apps/launcher/**'
               - '.github/workflows/ci.yml'
             compose:
               - 'docker-compose*.yml'
@@ -108,7 +108,7 @@ jobs:
         with:
           filters: |
             langgraph:
-              - 'containers/langgraph.Dockerfile'
+              - 'infra/containers/langgraph.Dockerfile'
               - 'packages/raptix/**'
               - 'packages/raptix-core/**'
               - 'packages/raptix-sdk/**'
@@ -116,11 +116,11 @@ jobs:
               - 'uv.lock'
               - '.github/workflows/ci.yml'
             litellm:
-              - 'containers/litellm.Dockerfile'
-              - 'config/litellm.yaml'
+              - 'infra/containers/litellm.Dockerfile'
+              - 'infra/config/litellm.yaml'
               - '.github/workflows/ci.yml'
             sandbox:
-              - 'containers/sandbox.Dockerfile'
+              - 'infra/containers/sandbox.Dockerfile'
               # Skills no longer ship in the sandbox image — they live under
               # packages/raptix/src/raptix/skills and are read
               # in-process by the langgraph service (see
@@ -129,29 +129,29 @@ jobs:
               # filter above), not the sandbox.
               - '.github/workflows/ci.yml'
             cli:
-              - 'containers/cli.Dockerfile'
-              - 'clients/cli/**'
-              - 'clients/shared/**'
+              - 'infra/containers/cli.Dockerfile'
+              - 'apps/cli/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             web-raptix:
-              - 'containers/web-raptix.Dockerfile'
-              - 'containers/web-raptix-proxy.conf'
-              - 'clients/web-raptix/**'
-              - 'clients/shared/**'
+              - 'infra/containers/web-raptix.Dockerfile'
+              - 'infra/containers/web-raptix-proxy.conf'
+              - 'apps/web/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             web-raptix-server:
-              - 'containers/web-raptix-server.Dockerfile'
-              - 'clients/web-raptix/**'
-              - 'clients/shared/**'
+              - 'infra/containers/web-raptix-server.Dockerfile'
+              - 'apps/web/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             c2-sliver:
-              - 'containers/c2-sliver.Dockerfile'
+              - 'infra/containers/c2-sliver.Dockerfile'
               - '.github/workflows/ci.yml'
 
   # ── Compose validation guardrail ─────────────────────────────────
@@ -432,10 +432,10 @@ jobs:
         if: needs.changes.outputs.cli == 'true'
         run: npm run build --workspace=@raptix/streaming
       - if: needs.changes.outputs.cli == 'true'
-        run: cd clients/cli && npm run typecheck
+        run: cd apps/cli && npm run typecheck
       - name: Run CLI tests
         if: needs.changes.outputs.cli == 'true'
-        run: cd clients/cli && npm test --if-present
+        run: cd apps/cli && npm test --if-present
 
   # Electron desktop shell: pure unit tests (config/platform/ui) exercise
   # Windows / macOS / Linux path, menu, and Docker-spawn differences. The
@@ -471,18 +471,18 @@ jobs:
       - name: Syntax-check desktop sources
         if: needs.changes.outputs.desktop == 'true'
         run: |
-          node --check clients/desktop/src/config.mjs
-          node --check clients/desktop/src/platform.mjs
-          node --check clients/desktop/src/ui.mjs
-          node --check clients/desktop/src/main.mjs
-          node --check clients/desktop/src/preload.cjs
+          node --check apps/desktop/src/config.mjs
+          node --check apps/desktop/src/platform.mjs
+          node --check apps/desktop/src/ui.mjs
+          node --check apps/desktop/src/main.mjs
+          node --check apps/desktop/src/preload.cjs
       - name: Run desktop unit tests
         if: needs.changes.outputs.desktop == 'true'
         run: npm run desktop:test
 
   # New-stack (W16 cutover) lane: web-raptix UI + API quality gates. The
   # legacy `web` (Next.js) job was retired with W20 (guide §14.5): the
-  # clients/web folder is reference-only and no CI/Makefile lane runs it.
+  # clients/web folder itself was removed in the W2 repo restructure.
   web-raptix:
     name: Web raptix (lint + test + build)
     needs: changes
@@ -523,22 +523,22 @@ jobs:
           npm run test --workspace=@raptix/web-raptix
       - name: Install Chromium for Docker mode smoke
         if: needs.changes.outputs['web-raptix'] == 'true'
-        working-directory: clients/web-raptix
+        working-directory: apps/web
         run: npx playwright install --with-deps chromium
       - name: Build Docker UI and bootstrap API images
         if: needs.changes.outputs['web-raptix'] == 'true'
         run: |
-          docker build -f containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
-          docker build -f containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
+          docker build -f infra/containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
+          docker build -f infra/containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
       - name: Docker default real-mode smoke (bootstrap API, no DB or LLM)
         if: needs.changes.outputs['web-raptix'] == 'true'
-        run: node clients/web-raptix/tools/verify-docker-real-mode.mjs
+        run: node apps/web/tools/verify-docker-real-mode.mjs
       - name: Upload Docker mode smoke evidence
         if: always() && needs.changes.outputs['web-raptix'] == 'true'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: web-raptix-docker-mode-smoke
-          path: clients/web-raptix/test-results-deployed/iw05/
+          path: apps/web/test-results-deployed/iw05/
           if-no-files-found: ignore
           retention-days: 7
 
@@ -575,15 +575,15 @@ jobs:
           # Read the toolchain from go.mod so CI never drifts from the
           # launcher's declared version (go.mod is the single source of
           # truth; a hardcoded version here masked a 1.24/1.25 mismatch).
-          go-version-file: clients/launcher/go.mod
-          cache-dependency-path: clients/launcher/go.sum
+          go-version-file: apps/launcher/go.mod
+          cache-dependency-path: apps/launcher/go.sum
       - name: go vet
         if: needs.changes.outputs.launcher == 'true'
-        working-directory: clients/launcher
+        working-directory: apps/launcher
         run: go vet ./...
       - name: go test
         if: needs.changes.outputs.launcher == 'true'
-        working-directory: clients/launcher
+        working-directory: apps/launcher
         run: go test ./...
 
   docker-build:
@@ -602,7 +602,7 @@ jobs:
       - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
-          file: containers/${{ matrix.image }}.Dockerfile
+          file: infra/containers/${{ matrix.image }}.Dockerfile
           push: false
           load: true
           tags: raptix-${{ matrix.image }}:ci
@@ -662,7 +662,7 @@ jobs:
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
-          file: containers/${{ matrix.image }}.Dockerfile
+          file: infra/containers/${{ matrix.image }}.Dockerfile
           push: false
           # `load: false` with --platform linux/arm64 keeps the image in
           # the buildx cache without trying to load a foreign-arch image

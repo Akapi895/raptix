@@ -6,7 +6,7 @@ import types
 from pathlib import Path
 from typing import Any
 
-_MODULE_PATH = Path(__file__).resolve().parents[5] / "config" / "claude_code_handler.py"
+_MODULE_PATH = Path(__file__).resolve().parents[5] / "infra" / "config" / "claude_code_handler.py"
 _spec = importlib.util.spec_from_file_location("_claude_code_handler_src", _MODULE_PATH)
 assert _spec is not None
 assert _spec.loader is not None
