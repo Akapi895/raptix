@@ -100,7 +100,7 @@ def _push_role_resolutions() -> None:
 
     Fields populated:
       * ``middleware_stack`` — every slot in ``SLOTS_PER_ROLE[role]``,
-        attributed to ``decepticon`` as owner (plugin overrides change
+        attributed to ``raptix`` as owner (plugin overrides change
         attribution; not modelled here yet).
       * ``skill_sources`` — the OSS baseline paths (mirrors
         ``RoleRegistry``). Plugin contributions append at runtime via
@@ -123,7 +123,7 @@ def _push_role_resolutions() -> None:
 
     for role, slots in SLOTS_PER_ROLE.items():
         middleware_stack = tuple(
-            MiddlewareInfo(slot=slot.value, name=slot.value, owner="decepticon")
+            MiddlewareInfo(slot=slot.value, name=slot.value, owner="raptix")
             for slot in MiddlewareSlot
             if slot in slots
         )
@@ -152,7 +152,7 @@ def run() -> None:
     PluginRegistry.load()
     _push_role_resolutions()
     logger.debug(
-        "decepticon framework boot complete (%d OSS + N plugin roles registered, %d resolutions)",
+        "raptix framework boot complete (%d OSS + N plugin roles registered, %d resolutions)",
         len(SLOTS_PER_ROLE),
         len(SLOTS_PER_ROLE),
     )

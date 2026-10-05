@@ -382,13 +382,13 @@ class ReplayRunner:
             }
 
         # Live mode: hand the orchestrator one SubAgentTaskSpec per selected
-        # objective. agent_name is the orchestrator role ("decepticon"); it
+        # objective. agent_name is the orchestrator role ("raptix"); it
         # re-dispatches the appropriate specialists per objective at runtime.
         event = plan.triggered_by_event
         technique_tags = tuple(event.technique_tags)
         specs: list[SubAgentTaskSpec] = [
             SubAgentTaskSpec(
-                agent_name="decepticon",
+                agent_name="raptix",
                 prompt=(
                     f"CART replay: re-execute objective {oid} after change {event.resource_id}"
                 ),
@@ -404,7 +404,7 @@ class ReplayRunner:
             # chain via a single orchestrator-level dispatch.
             specs.append(
                 SubAgentTaskSpec(
-                    agent_name="decepticon",
+                    agent_name="raptix",
                     prompt=(
                         f"CART replay: re-execute recorded chain after change {event.resource_id}"
                     ),

@@ -56,7 +56,7 @@ _SAMPLE_EVENTS = [
     {
         "type": "opplan.update",
         "ts": 1.0,
-        "agent": "decepticon",
+        "agent": "raptix",
         "payload": {"phase": "recon", "status": "pending"},
     },
     {

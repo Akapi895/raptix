@@ -7,11 +7,11 @@ from deepagents.backends import CompositeBackend, FilesystemBackend
 from .factory import build_sandbox_backend
 from .http_sandbox import HTTPSandbox
 
-# Skills ship as package data under ``decepticon/skills/`` and are read
+# Skills ship as package data under ``raptix/skills/`` and are read
 # in-process by a local ``FilesystemBackend`` (not the sandbox container).
 # Resolving via ``importlib.resources`` yields the correct on-disk location
 # for every install shape — wheel (site-packages), editable (repo checkout),
-# and the langgraph Docker image (``/app/decepticon/skills``) — so no
+# and the langgraph Docker image (``/app/raptix/skills``) — so no
 # container-specific path is hardcoded.
 SKILLS_LOCAL_PATH = str(importlib.resources.files("raptix") / "skills" / "defs")
 
@@ -64,13 +64,13 @@ def make_agent_backend(
     """Compose the runtime backend for a Raptix agent.
 
     Routes ``/skills/`` to a local ``FilesystemBackend`` reading the
-    package's ``decepticon/skills`` tree in-process, and routes everything
+    package's ``raptix/skills`` tree in-process, and routes everything
     else (notably ``/workspace/``) through the sandbox transport
     (``HTTPSandbox``). Returning a ``CompositeBackend`` lets
     ``SkillsMiddleware`` and ``FilesystemMiddleware`` share the same
     backend object while reading from different physical storage:
 
-      /skills/...   ->  decepticon/skills/... read in-process (~5ms)
+      /skills/...   ->  raptix/skills/... read in-process (~5ms)
       /workspace/.. ->  sandbox container via HTTP (isolated, persistent)
 
     Args:

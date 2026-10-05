@@ -194,7 +194,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "findings survive across iterations."
     ),
     factory=create_analyst_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=30,
 )

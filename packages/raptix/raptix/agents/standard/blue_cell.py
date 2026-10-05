@@ -166,7 +166,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "Read-only (no bash)."
     ),
     factory=create_blue_cell_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=90,
 )

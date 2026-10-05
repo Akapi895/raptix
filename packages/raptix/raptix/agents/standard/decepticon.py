@@ -70,7 +70,7 @@ from raptix_core.plugin_loader import (
     load_subagents_for_parent,
 )
 
-_ROLE = "decepticon"
+_ROLE = "raptix"
 _RECURSION_LIMIT = 400
 
 
@@ -94,9 +94,9 @@ def create_decepticon_agent(
         backend: deepagents-style filesystem backend. Defaults to
             ``make_agent_backend(build_sandbox_backend())``.
         llm: bound chat model. Defaults to
-            ``LLMFactory().get_model("decepticon")``.
+            ``LLMFactory().get_model("raptix")``.
         fallback_models: passed to ``ModelFallbackMiddleware``. Defaults
-            to ``LLMFactory().get_fallback_models("decepticon")``.
+            to ``LLMFactory().get_fallback_models("raptix")``.
         subagents: explicit sub-agent list. When ``None`` (default),
             sub-agents are discovered via ``load_subagents_for_parent``
             and each wrapped in ``StreamingRunnable``.
@@ -133,7 +133,7 @@ def create_decepticon_agent(
     # Build sub-agents via plugin-loader discovery. Each subagent declares
     # itself as a ``SUBAGENT_SPEC`` module constant registered under the
     # ``raptix.subagents`` entry-point group; this main agent picks
-    # up every spec whose ``parent_agents`` includes ``"decepticon"``.
+    # up every spec whose ``parent_agents`` includes ``"raptix"``.
     # Community or downstream plugin packages can extend this roster without
     # modifying OSS — see ``decepticon/plugin_loader.py`` for the loader
     # contract and ``pyproject.toml`` for the registered specs.

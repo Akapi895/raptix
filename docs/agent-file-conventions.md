@@ -269,7 +269,7 @@ undocumented success attempt.
 ## 6. The orchestrator read protocol
 
 After **every** recon `task()` returns, the orchestrator (raptix)
-executes a fixed decision tree (in `decepticon.md`):
+executes a fixed decision tree (in `raptix.md`):
 
 1. `read_file("recon/SUMMARY.md")`. If missing/empty → treat as crash.
 2. Grep for the terminal token.
@@ -296,7 +296,7 @@ classification is the cycle's #1 failure mode.
 
 ### Sub-agent failure modes
 
-The orchestrator distinguishes three fault classes (`decepticon.md`):
+The orchestrator distinguishes three fault classes (`raptix.md`):
 
 | Fault | Signal | Response |
 |-------|--------|----------|
@@ -382,7 +382,7 @@ contract the orchestrator re-reads before **every** `task()` dispatch.
 ## 9. Final report generation
 
 At engagement close, the orchestrator runs the final-report sequence
-(`decepticon.md` → `/skills/standard/raptix/final-report/SKILL.md`):
+(`raptix.md` → `/skills/standard/decepticon/final-report/SKILL.md`):
 
 1. `load_skill("/skills/standard/raptix/final-report/SKILL.md")`.
 2. Generate `report/executive-summary.md` (C-level, no tool names/jargon).

@@ -103,9 +103,16 @@ def skills_sources_for(role: str) -> list[str]:
     have to repeat ``[f"/skills/standard/{_ROLE}/", "/skills/shared/"]``
     each.
     """
-    directory = {"postexploit": "post-exploit", "cloud_hunter": "cloud"}.get(role, role)
+    # Skill node paths are a separate namespace from role keys: the
+    # orchestrator's skill tree stays under the historical
+    # ``standard/decepticon/`` directory.
+    directory = {
+        "postexploit": "post-exploit",
+        "cloud_hunter": "cloud",
+        "raptix": "decepticon",
+    }.get(role, role)
     standard = [] if role == "blue_cell" else [f"/skills/standard/{directory}/"]
-    routers = ["/skills/standard/exploit/"] if role == "decepticon" else []
+    routers = ["/skills/standard/exploit/"] if role == "raptix" else []
     base = [*standard, "/skills/shared/", *benchmark_skill_sources(), *routers]
     return [*base, *load_plugin_skill_sources(role)]
 
@@ -231,14 +238,14 @@ def _make_kg(*, role: str, **_: Any):
     )
 
     try:
-        enabled_tools = {"kg_surface_inventory"} if role == "decepticon" else None
+        enabled_tools = {"kg_surface_inventory"} if role == "raptix" else None
         experimental = os.environ.get("RAPTIX_KG_OPERATIONAL_SHADOW", "0").lower() in {
             "1",
             "true",
             "yes",
         }
         return KGMiddleware(
-            enabled_tools=enabled_tools, operational_shadow=role == "decepticon" and experimental
+            enabled_tools=enabled_tools, operational_shadow=role == "raptix" and experimental
         )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         # ImportError covers the case where the optional ``neo4j``

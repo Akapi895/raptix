@@ -12,7 +12,7 @@ Resolution order, in priority:
   2. ``request.state["model_override"]`` (set by input state field)
 
 When neither is set, the wrapped handler is called with the original
-LLM untouched (the ``factory.get_model("decepticon")`` baked in at
+LLM untouched (the ``factory.get_model("raptix")`` baked in at
 agent construction).
 
 The override value can be:

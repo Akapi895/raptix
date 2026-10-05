@@ -135,7 +135,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "skills/standard/ics/."
     ),
     factory=create_ics_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=92,
 )

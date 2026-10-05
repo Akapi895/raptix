@@ -12,8 +12,7 @@ from raptix.agents.standard._surface_dispatch import (
 from raptix.agents.standard._surface_registry import build_objective_expand_payload
 
 _PROMPT = (
-    Path(__file__).resolve().parents[5]
-    / "packages/raptix/raptix/agents/prompts/standard/decepticon.md"
+    Path(__file__).resolve().parents[5] / "packages/raptix/raptix/agents/prompts/standard/raptix.md"
 )
 
 

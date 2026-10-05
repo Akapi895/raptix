@@ -24,7 +24,7 @@ do NOT ask the operator for it.
 
 All other CRITICAL_RULES remain active. Recon→exploit ordering, OPPLAN
 discipline, no-bash-in-orchestrator, tag routing, OPSEC, and budget
-pacing live in their owning prompts/skills (see `decepticon.md` Rules
+pacing live in their owning prompts/skills (see `raptix.md` Rules
 20/22, the recon/exploit agent prompts, and `/skills/standard/exploit/web/SKILL.md`
 for vuln routing).
 
@@ -74,11 +74,11 @@ Benchmark mode pre-declares `Vulnerability tags:` in the engagement context, lea
 challenge's intended attack class. **In real engagements no such metadata exists** — agents
 discover the class through the domain router skill applied to recon's raw observations.
 This table is the canonical fast-path for the benchmark shortcut and the **only** place
-this mapping lives. Generic agent prompts (`recon.md`, `exploit.md`, `decepticon.md`)
+this mapping lives. Generic agent prompts (`recon.md`, `exploit.md`, `raptix.md`)
 intentionally do not encode it — they route via the domain router skills
 (`/skills/standard/exploit/<domain>/SKILL.md`) on observation evidence.
 
-**Consumer**: the orchestrator (`decepticon.md`). When dispatching exploit, the orchestrator
+**Consumer**: the orchestrator (`raptix.md`). When dispatching exploit, the orchestrator
 may consult this table to pick the matching sub-skill directly from the pre-declared tags,
 skipping the observation-based router classification. **Recon does NOT consume this table**
 — recon's role is observation, not classification or skill recommendation.

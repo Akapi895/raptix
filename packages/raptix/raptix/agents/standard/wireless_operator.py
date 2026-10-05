@@ -143,7 +143,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "an SSH dropbox - see prompts/workflows/wireless_operator.md."
     ),
     factory=create_wireless_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=85,
 )

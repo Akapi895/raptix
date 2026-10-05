@@ -132,7 +132,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "skills/standard/mobile/."
     ),
     factory=create_mobile_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=55,
 )

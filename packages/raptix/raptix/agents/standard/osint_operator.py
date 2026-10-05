@@ -141,7 +141,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "skills/standard/osint/."
     ),
     factory=create_osint_operator_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=12,
 )

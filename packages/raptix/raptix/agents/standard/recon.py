@@ -177,7 +177,7 @@ SUBAGENT_SPEC = SubAgentSpec(
         "Saves results under the active engagement workspace's recon/ directory."
     ),
     factory=create_recon_agent,
-    parent_agents=("decepticon",),
+    parent_agents=("raptix", "decepticon"),
     bundle="standard",
     priority=10,
 )

@@ -113,8 +113,8 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p.add_argument(
         "--assistant",
-        default="decepticon",
-        help="LangGraph assistant graph name (default: decepticon).",
+        default="raptix",
+        help="LangGraph assistant graph name (default: raptix).",
     )
     p.add_argument(
         "--engagement-name",
