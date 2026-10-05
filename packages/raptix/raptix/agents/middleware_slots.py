@@ -104,16 +104,16 @@ def skills_sources_for(role: str) -> list[str]:
     have to repeat ``[f"/skills/standard/{_ROLE}/", "/skills/shared/"]``
     each.
     """
-    # Skill node paths are a separate namespace from role keys: the
-    # orchestrator's skill tree stays under the historical
-    # ``standard/decepticon/`` directory.
+    # Skill node paths are a separate namespace from role keys. The
+    # orchestrator's skill tree lives under ``standard/raptix/``; the
+    # legacy ``decepticon`` role name maps to it until 2.0.0.
     directory = {
         "postexploit": "post-exploit",
         "cloud_hunter": "cloud",
-        "raptix": "decepticon",
+        "decepticon": "raptix",
     }.get(role, role)
     standard = [] if role == "blue_cell" else [f"/skills/standard/{directory}/"]
-    routers = ["/skills/standard/exploit/"] if role == "raptix" else []
+    routers = ["/skills/standard/exploit/"] if role in {"raptix", "decepticon"} else []
     base = [*standard, "/skills/shared/", *benchmark_skill_sources(), *routers]
     return [*base, *load_plugin_skill_sources(role)]
 
