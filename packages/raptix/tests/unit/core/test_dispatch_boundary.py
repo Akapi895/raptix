@@ -181,3 +181,17 @@ def test_failure_kind_is_diagnostic_not_role_policy() -> None:
     assert classify_dispatch_failure(ValueError("bad state")) == FailureKind.STATE
     assert classify_dispatch_failure(PermissionError("denied")) == FailureKind.TOOL
     assert classify_dispatch_failure(RuntimeError("runtime")) == FailureKind.EXECUTION
+
+
+def test_task_tool_runtime_param_survives_schema_validation(task: tuple) -> None:
+    """The ``runtime`` param must be recognised as framework-injected.
+
+    langgraph's ToolNode injects ``runtime`` by analysing
+    ``inspect.signature`` annotations. Under
+    ``from __future__ import annotations`` those are strings, langchain-core
+    drops the arg during schema validation, and every real dispatch dies
+    with ``atask() missing 1 required positional argument: 'runtime'``
+    while direct ``tool.func(...)`` calls (as above) keep passing.
+    """
+    tool, _ = task
+    assert "runtime" in tool._injected_args_keys
