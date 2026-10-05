@@ -37,6 +37,7 @@ from functools import lru_cache
 from pathlib import Path
 
 from raptix.intelligence.prompts.registry import build_language_policy
+from raptix.intelligence.prompts.resources import read_domain_prompt
 
 log = logging.getLogger(__name__)
 
@@ -125,6 +126,9 @@ def _read_fragment(name: str) -> str:
         path = base / f"{name}.md"
         if path.exists():
             return path.read_text(encoding="utf-8")
+    domain_prompt = read_domain_prompt(name)
+    if domain_prompt is not None:
+        return domain_prompt
     searched = ", ".join(str(p / f"{name}.md") for p in _PROMPT_SEARCH_PATHS)
     msg = f"Prompt fragment not found: {name}.md (searched: {searched})"
     raise FileNotFoundError(msg)
@@ -161,7 +165,10 @@ def _read_workflow_for_role(role: str) -> str | None:
     """
     path = _WORKFLOWS_DIR / f"{role}.md"
     if not path.exists():
-        return None
+        domain_workflow = read_domain_prompt(role, workflow=True)
+        if domain_workflow is None:
+            return None
+        return domain_workflow.strip() or None
     body = path.read_text(encoding="utf-8").strip()
     return body or None
 

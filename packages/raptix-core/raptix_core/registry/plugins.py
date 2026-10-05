@@ -51,7 +51,7 @@ class PluginInfo:
     groups: tuple[str, ...] = field(default_factory=tuple)
 
 
-# The eight entry-point groups the framework consumes. Keep in lockstep
+# Entry-point groups consumed by the framework and public SDK. Keep in lockstep
 # with ``raptix_core.plugin_loader``'s *_GROUP constants — the
 # registry walk is the audit-time mirror of the framework's actual
 # discovery pipeline.
@@ -65,6 +65,9 @@ _PLUGIN_GROUPS: tuple[str, ...] = (
     "raptix.bundles",
     "raptix.roles",
     "raptix.prompts",
+    "raptix.domains",
+    "raptix.prompt_resources",
+    "raptix.agent_composers",
 )
 
 

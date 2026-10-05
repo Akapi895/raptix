@@ -20,20 +20,20 @@ COPY --from=ghcr.io/astral-sh/uv:0.8.15 /uv /usr/local/bin/uv
 # 2026-05-23-core-framework-sdk-split-design.md) relocates the source
 # tree from raptix/ at the repo root to packages/raptix/raptix/.
 # COPY pulls the whole packages/ tree so the workspace resolver finds
-# all three members (raptix-core, raptix, raptix-sdk).
+# runtime/core/SDK/skills members and domain-pack dependency closure.
 COPY pyproject.toml langgraph.json README.md uv.lock ./
 COPY packages/ packages/
+COPY plugins/ plugins/
 
 # Stamp the package version from the git tag at build time. Source-tree
 # pyprojects carry a "0.0.0" sentinel; release.yml passes the real
 # version via --build-arg so the installed package metadata matches the
-# tag in lockstep across all three wheels.
+# tag in lockstep across workspace wheels.
 ARG VERSION=0.0.0
 RUN sed -i 's/^version = "[^"]*"/version = "'"$VERSION"'"/' \
         pyproject.toml \
-        packages/raptix-core/pyproject.toml \
-        packages/raptix/pyproject.toml \
-        packages/raptix-sdk/pyproject.toml
+        packages/*/pyproject.toml \
+        plugins/*/pyproject.toml
 
 # Install the workspace via uv sync. --frozen pins to uv.lock; --no-dev
 # drops dev tooling (pytest, ruff, basedpyright); --extra neo4j adds the

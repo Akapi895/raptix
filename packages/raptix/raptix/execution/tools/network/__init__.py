@@ -14,6 +14,12 @@ All network operations are designed to be:
 - Scope-restricted to authorized targets only
 """
 
+from raptix_network.vulnerability import (
+    cve_scan,
+    security_misconfiguration_scan,
+    vulnerability_assessment,
+)
+
 from raptix.execution.tools.network.protocols import (
     dns_recon,
     ftp_recon,
@@ -30,11 +36,6 @@ from raptix.execution.tools.network.scanners import (
     os_fingerprint_scan,
     port_scan,
     service_version_scan,
-)
-from raptix.execution.tools.network.vulnerability import (
-    cve_scan,
-    security_misconfiguration_scan,
-    vulnerability_assessment,
 )
 
 __all__ = [

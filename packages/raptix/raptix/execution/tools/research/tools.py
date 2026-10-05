@@ -26,8 +26,15 @@ from urllib.parse import urljoin, urlparse
 
 import defusedxml.ElementTree as ET
 from langchain_core.tools import tool
+from raptix_contracts.patterns import scan_solidity_source
+from raptix_reversing.binary import identify_binary
+from raptix_reversing.packer import detect_packer
+from raptix_reversing.strings import extract_strings, group_by_category
+from raptix_reversing.symbols import summarize_symbols
+from raptix_web.jwt import parse_token
+from raptix_web.oauth import analyze_oauth_callback
+from raptix_web.session import analyze_cookie
 
-from raptix.execution.tools.contracts.patterns import scan_solidity_source
 from raptix.execution.tools.contracts.slither import ingest_slither_file
 from raptix.execution.tools.research import cve as cve_mod
 from raptix.execution.tools.research import fuzz as fuzz_mod
@@ -40,13 +47,6 @@ from raptix.execution.tools.research.sarif import ingest_sarif_file
 from raptix.execution.tools.research.scanner_tools import SCANNER_TOOLS
 from raptix.execution.tools.research.secret_scanner import scan_secrets
 from raptix.execution.tools.research.tech_detection import detect_tech_stack
-from raptix.execution.tools.reversing.binary import identify_binary
-from raptix.execution.tools.reversing.packer import detect_packer
-from raptix.execution.tools.reversing.strings import extract_strings, group_by_category
-from raptix.execution.tools.reversing.symbols import summarize_symbols
-from raptix.execution.tools.web.jwt import parse_token
-from raptix.execution.tools.web.oauth import analyze_oauth_callback
-from raptix.execution.tools.web.session import analyze_cookie
 from raptix_core.types.kg import (
     SEVERITY_SCORE,
     Edge,

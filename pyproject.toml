@@ -29,13 +29,25 @@ runtime-persistence = ["raptix[runtime-persistence]"]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["packages/*", "plugins/*"]
+exclude = ["plugins/tests"]
 
 [tool.uv.sources]
 raptix = { workspace = true }
 raptix-skills = { workspace = true }
 raptix-core = { workspace = true }
 raptix-sdk = { workspace = true }
+raptix-contracts = { workspace = true }
+raptix-reversing = { workspace = true }
+raptix-mobile = { workspace = true }
+raptix-iot = { workspace = true }
+raptix-ics = { workspace = true }
+raptix-wireless = { workspace = true }
+raptix-cloud = { workspace = true }
+raptix-phishing = { workspace = true }
+raptix-active-directory = { workspace = true }
+raptix-web = { workspace = true }
+raptix-network = { workspace = true }
 
 # Project-level plugin activation, read by ``raptix.plugin_loader``
 # from the CWD's pyproject.toml. Kept at the workspace root so the
@@ -144,6 +156,7 @@ testpaths = [
     "packages/raptix-core/tests",
     "packages/raptix/tests",
     "packages/raptix-sdk/tests",
+    "plugins",
 ]
 markers = [
     "asyncio: mark test as async (pytest-asyncio)",
@@ -188,6 +201,7 @@ include = [
     "packages/raptix-sdk",
     "packages/raptix-sdk/tests",
     "benchmarks",
+    "plugins",
 ]
 exclude = [
     "**/__pycache__",

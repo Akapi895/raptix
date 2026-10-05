@@ -25,7 +25,7 @@ instruction, the engagement is over - it has the tools to execute the
 attacker's wishes and the credentials to carry them out.
 
 The repository already ships an offensive
-[`prompt-injection` skill](../../packages/raptix/raptix/skills/standard/analyst/prompt-injection/SKILL.md)
+[`prompt-injection` skill](../../packages/raptix-skills/raptix_skills/defs/standard/analyst/prompt-injection/SKILL.md)
 that teaches the agent to attack *other* products' LLMs. That
 familiarity is also the threat model: the same payloads catalogued in
 the offensive skill ride on every untrusted byte the defensive side
@@ -207,7 +207,7 @@ cat /workspace/audit/quarantine.jsonl
 - [OWASP LLM Top 10 - LLM01: Prompt Injection](https://owasp.org/www-project-top-10-for-large-language-model-applications/)
 - [MITRE ATLAS - T0051: LLM Prompt Injection](https://atlas.mitre.org/techniques/AML.T0051/)
 - Repository offensive playbook:
-  [`skills/standard/analyst/prompt-injection/SKILL.md`](../../packages/raptix/raptix/skills/standard/analyst/prompt-injection/SKILL.md)
+  [`skills/standard/analyst/prompt-injection/SKILL.md`](../../packages/raptix-skills/raptix_skills/defs/standard/analyst/prompt-injection/SKILL.md)
 - [`docs/security/neo4j-hardening.md`](./neo4j-hardening.md) - the
   paired defense for the one path where attacker bytes could land in
   Cypher.

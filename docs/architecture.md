@@ -99,7 +99,7 @@ Standalone skill catalog service introduced by [ADR-0008](adr/0008-skillogy-hard
 - A dedicated Neo4j graph (separate from the engagement KG above) holding `:Skill` nodes with edges derived from skill frontmatter (`BUILDS_ON`, `CHAINS_TO`, `MITRE_RELATED`, …).
 - Three REST endpoints (`POST /v1/skills:find`, `POST /v1/skills:load`, `POST /v1/skills:traverse`) plus health (`GET /v1/health`) and a manager-of-coverage helper (`POST /v1/skills:moc`).
 
-The graph is rebuilt from disk at container start. Skill source remains the `packages/raptix/raptix/skills/` directory tree (`standard/`, `shared/`, plus `plugins/` from third-party bundles). Adding a skill is a new `SKILL.md` file plus a graph rebuild — no schema migration.
+The graph is rebuilt from disk at container start. Skill source remains the `packages/raptix-skills/raptix_skills/defs/` directory tree (`standard/`, `shared/`, plus `plugins/` from third-party bundles). Adding a skill is a new `SKILL.md` file plus a graph rebuild — no schema migration.
 
 Agents reach Skillogy through `SkillogyMiddleware`, which is a thin REST client. The middleware projects three agent-facing tools onto each role:
 

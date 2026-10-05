@@ -54,7 +54,8 @@ without review, regardless of how green CI is.
    mega-PRs.
 5. **You do not weaken the offensive-security guard rails by accident.**
    Specifically:
-   - You did not remove or soften wording in `packages/raptix/raptix/skills/shared/opsec/**`,
+   - You did not remove or soften wording in
+     `packages/raptix-skills/raptix_skills/defs/shared/opsec/**`,
      RoE enforcement, `SafeCommand`, `EngagementContext`, or any
      `raptix-no-*` Semgrep rule under `.semgrep/` without an
      accompanying ADR and an explicit threat-model paragraph in the

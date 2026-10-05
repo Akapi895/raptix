@@ -15,11 +15,12 @@ existing stack (httpx, pydantic). Tools are exposed through
 
 from __future__ import annotations
 
+from raptix_web.jwt import JWTClaims, JWTHeader, JWTToken, forge_token, parse_token
+from raptix_web.oauth import OAuthFinding, analyze_oauth_callback
+from raptix_web.session import CookieAnalysis, analyze_cookie
+
 from raptix.execution.tools.web.graphql import GraphQLSchema, introspection_query
 from raptix.execution.tools.web.http import HTTPHistory, HTTPRequest, HTTPResponse, HTTPSession
-from raptix.execution.tools.web.jwt import JWTClaims, JWTHeader, JWTToken, forge_token, parse_token
-from raptix.execution.tools.web.oauth import OAuthFinding, analyze_oauth_callback
-from raptix.execution.tools.web.session import CookieAnalysis, analyze_cookie
 from raptix.execution.tools.web.tools import http_history, http_request, web_fetch, web_search
 
 __all__ = [

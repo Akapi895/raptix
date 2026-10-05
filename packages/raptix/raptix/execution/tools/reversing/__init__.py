@@ -16,7 +16,13 @@ ghidra_headless, objdump) — this package is the fast first pass.
 
 from __future__ import annotations
 
-from raptix.execution.tools.reversing.binary import BinaryInfo, identify_binary
+from raptix_reversing.binary import BinaryInfo, identify_binary
+from raptix_reversing.packer import PackerVerdict, detect_packer
+from raptix_reversing.rop import RopGadget, find_rop_gadgets
+from raptix_reversing.scripts import ghidra_recon_script, r2_recon_script
+from raptix_reversing.strings import ExtractedString, extract_strings
+from raptix_reversing.symbols import SymbolReport, summarize_symbols
+
 from raptix.execution.tools.reversing.ghidra import (
     GhidraAnalysis,
     GhidraDecompilation,
@@ -27,11 +33,6 @@ from raptix.execution.tools.reversing.ghidra import (
     ghidra_decompile_function,
     ghidra_get_xrefs,
 )
-from raptix.execution.tools.reversing.packer import PackerVerdict, detect_packer
-from raptix.execution.tools.reversing.rop import RopGadget, find_rop_gadgets
-from raptix.execution.tools.reversing.scripts import ghidra_recon_script, r2_recon_script
-from raptix.execution.tools.reversing.strings import ExtractedString, extract_strings
-from raptix.execution.tools.reversing.symbols import SymbolReport, summarize_symbols
 
 __all__ = [
     "BinaryInfo",

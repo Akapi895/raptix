@@ -21,15 +21,15 @@ use) stays in the bash lane — this package flags *what* to test, not
 
 from __future__ import annotations
 
-from raptix.execution.tools.cloud.aws import (
+from raptix_cloud.aws import (
     IAMFinding,
     analyze_iam_policy,
     scan_bucket_names,
     scan_user_data,
 )
-from raptix.execution.tools.cloud.k8s import K8sFinding, analyze_k8s_manifest
-from raptix.execution.tools.cloud.metadata import METADATA_ENDPOINTS, MetadataEndpoint
-from raptix.execution.tools.cloud.terraform import analyze_tfstate
+from raptix_cloud.k8s import K8sFinding, analyze_k8s_manifest
+from raptix_cloud.metadata import METADATA_ENDPOINTS, MetadataEndpoint
+from raptix_cloud.terraform import analyze_tfstate
 
 __all__ = [
     "IAMFinding",

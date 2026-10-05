@@ -18,14 +18,15 @@ can cover the detection logic without a Foundry toolchain.
 
 from __future__ import annotations
 
-from raptix.execution.tools.contracts.foundry import (
+from raptix_contracts.foundry import (
     FoundryHarness,
     generate_reentrancy_test,
 )
-from raptix.execution.tools.contracts.patterns import (
+from raptix_contracts.patterns import (
     ContractFinding,
     scan_solidity_source,
 )
+
 from raptix.execution.tools.contracts.slither import ingest_slither_json
 
 __all__ = [

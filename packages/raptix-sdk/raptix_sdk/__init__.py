@@ -41,6 +41,12 @@ from raptix_core.contracts.contributions import (
     SubAgentContribution,
     ToolContribution,
 )
+from raptix_core.contracts.domains import (
+    DomainAgentDefinition,
+    DomainCompositionError,
+    DomainPack,
+    PromptResource,
+)
 from raptix_core.contracts.slots import (
     SAFETY_CRITICAL_SLOTS,
     SLOTS_PER_ROLE,
@@ -70,6 +76,7 @@ from raptix_core.registry import (
     SafetyRegistry,
     SkillSourceRegistry,
 )
+from raptix_sdk.domains import create_domain_agent, domain_subagent, installed_domain_packs
 
 # Read the installed distribution version — release.yml stamps the git
 # tag into wheel metadata at build time; local checkouts read 0.0.0.
@@ -80,6 +87,13 @@ except PackageNotFoundError:
     __version__ = "0.0.0"
 
 __all__ = [
+    "DomainAgentDefinition",
+    "DomainCompositionError",
+    "DomainPack",
+    "PromptResource",
+    "create_domain_agent",
+    "domain_subagent",
+    "installed_domain_packs",
     # Protocols (raptix_core.protocols)
     "AgentProtocol",
     "BackendProtocol",

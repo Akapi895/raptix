@@ -21,8 +21,13 @@ from typing import Any
 from zipfile import BadZipFile
 
 from langchain_core.tools import tool
+from raptix_active_directory.adcs import analyze_adcs_templates
+from raptix_active_directory.dcsync import dcsync_candidates
+from raptix_active_directory.delegation import analyze_delegation
+from raptix_active_directory.gpo import analyze_gpo_abuse
+from raptix_active_directory.kerberos import classify_hashcat_hash, parse_ticket
+from raptix_active_directory.shadow_creds import analyze_shadow_credentials
 
-from raptix.execution.tools.ad.adcs import analyze_adcs_templates
 from raptix.execution.tools.ad.adcs_post import synthesise_adcs_post as _synthesise_adcs_post
 from raptix.execution.tools.ad.bh_tools import BHCE_TOOLS
 from raptix.execution.tools.ad.bloodhound import (
@@ -31,11 +36,6 @@ from raptix.execution.tools.ad.bloodhound import (
 from raptix.execution.tools.ad.bloodhound import (
     merge_bloodhound_json as _merge_bloodhound_json_impl,
 )
-from raptix.execution.tools.ad.dcsync import dcsync_candidates
-from raptix.execution.tools.ad.delegation import analyze_delegation
-from raptix.execution.tools.ad.gpo import analyze_gpo_abuse
-from raptix.execution.tools.ad.kerberos import classify_hashcat_hash, parse_ticket
-from raptix.execution.tools.ad.shadow_creds import analyze_shadow_credentials
 from raptix.execution.tools.research._engagement_scope import _LEGACY_ENGAGEMENT_LABEL
 from raptix.execution.tools.research._state import _load, _save
 from raptix_core.utils.engagement_scope import get_active_engagement
