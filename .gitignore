@@ -78,8 +78,12 @@ demo.tape
 .raptix/
 .dogfood/
 workspace/
-!clients/web/src/app/api/workspace/
 .bg-shell/
+# Root-level runtime outputs (W1: never source-of-truth, never committed)
+/run/
+/telemetry/
+test-results*/
+generated/
 
 # Local reference corpus — dev-only, ~34 MB (PayloadsAllTheThings + OWASP WSTG).
 # Runtime corpora are fetched into ~/.raptix/references/ by
@@ -136,8 +140,6 @@ benchmark/results/XBEN-*-24/run-loop*.log
 # Internal design docs (specs/plans) — local only, not part of OSS distribution
 docs/superpowers/
 
-clients/web-raptix/test-results-planning/
-clients/web-raptix/test-results-console/
 clients/web-raptix/.figma/
 
 # Local probe/experiment output has one home; harness source is kept visible.
