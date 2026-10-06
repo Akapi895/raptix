@@ -13,6 +13,7 @@ members = [
     "raptix-cloud",
     "raptix-contracts",
     "raptix-core",
+    "raptix-defense",
     "raptix-ics",
     "raptix-iot",
     "raptix-mobile",
@@ -2063,6 +2064,7 @@ dependencies = [
     { name = "raptix-cloud" },
     { name = "raptix-contracts" },
     { name = "raptix-core" },
+    { name = "raptix-defense" },
     { name = "raptix-ics" },
     { name = "raptix-iot" },
     { name = "raptix-mobile" },
@@ -2135,6 +2137,7 @@ requires-dist = [
     { name = "raptix-cloud", editable = "plugins/cloud" },
     { name = "raptix-contracts", editable = "plugins/contracts" },
     { name = "raptix-core", editable = "packages/raptix-core" },
+    { name = "raptix-defense", editable = "plugins/defense" },
     { name = "raptix-ics", editable = "plugins/ics" },
     { name = "raptix-iot", editable = "plugins/iot" },
     { name = "raptix-mobile", editable = "plugins/mobile" },
@@ -2156,11 +2159,15 @@ name = "raptix-active-directory"
 version = "0.0.0"
 source = { editable = "plugins/active-directory" }
 dependencies = [
+    { name = "httpx" },
     { name = "raptix-sdk" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "raptix-sdk", editable = "packages/raptix-sdk" }]
+requires-dist = [
+    { name = "httpx" },
+    { name = "raptix-sdk", editable = "packages/raptix-sdk" },
+]
 
 [[package]]
 name = "raptix-cloud"
@@ -2200,6 +2207,17 @@ requires-dist = [
     { name = "pydantic-settings", specifier = ">=2.0.0" },
     { name = "typing-extensions", specifier = ">=4.0.0" },
 ]
+
+[[package]]
+name = "raptix-defense"
+version = "0.0.0"
+source = { editable = "plugins/defense" }
+dependencies = [
+    { name = "raptix-sdk" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "raptix-sdk", editable = "packages/raptix-sdk" }]
 
 [[package]]
 name = "raptix-ics"

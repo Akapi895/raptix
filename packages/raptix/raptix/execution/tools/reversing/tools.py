@@ -8,18 +8,17 @@ from typing import Any
 
 from langchain_core.tools import tool
 from raptix_reversing.binary import identify_binary
-from raptix_reversing.packer import detect_packer
-from raptix_reversing.rop import filter_gadgets_by_pattern, find_rop_gadgets
-from raptix_reversing.scripts import ghidra_recon_script, r2_recon_script
-from raptix_reversing.strings import extract_strings, group_by_category
-from raptix_reversing.symbols import summarize_symbols
-
-from raptix.execution.tools.reversing.ghidra import (
+from raptix_reversing.ghidra import (
     ghidra_analyze_binary,
     ghidra_available,
     ghidra_decompile_function,
     ghidra_get_xrefs,
 )
+from raptix_reversing.packer import detect_packer
+from raptix_reversing.rop import filter_gadgets_by_pattern, find_rop_gadgets
+from raptix_reversing.scripts import ghidra_recon_script, r2_recon_script
+from raptix_reversing.strings import extract_strings, group_by_category
+from raptix_reversing.symbols import summarize_symbols
 
 
 def _json(data: Any) -> str:
@@ -77,7 +76,7 @@ def bin_packer(path: str) -> str:
 def bin_rop(path: str, max_length: int = 10, limit: int = 200, pattern_hex: str = "") -> str:
     """Scan for ROP gadgets (bytes ending in a RET opcode).
 
-    Not a disassembler — returns raw byte sequences for the agent to
+    Not a disassembler â€” returns raw byte sequences for the agent to
     feed into Ropper / ROPgadget. ``pattern_hex`` filters to gadgets
     containing the given hex substring.
     """
@@ -122,7 +121,7 @@ def bin_r2_script(binary: str) -> str:
 
 @tool
 def ghidra_analyze(binary: str) -> str:
-    """Run full Ghidra analysis on a binary — functions, imports, exports.
+    """Run full Ghidra analysis on a binary â€” functions, imports, exports.
 
     Auto-selects backend: Ghidra MCP if a server is running, headless
     ``analyzeHeadless`` otherwise.  Returns structured JSON with up to
@@ -157,7 +156,7 @@ def ghidra_xrefs(binary: str, address: str) -> str:
 
 @tool
 def ghidra_status() -> str:
-    """Check Ghidra availability — headless install and MCP server."""
+    """Check Ghidra availability â€” headless install and MCP server."""
     return _json(ghidra_available())
 
 

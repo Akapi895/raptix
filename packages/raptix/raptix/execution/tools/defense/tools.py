@@ -2,8 +2,8 @@
 
 Each tool follows the Raptix convention: returns a JSON string so the
 agent can parse it deterministically. Sigma input is accepted both as a
-parsed dict (recommended — Detector emits dicts) and as a YAML string
-(convenience — operator-supplied rules from disk).
+parsed dict (recommended â€” Detector emits dicts) and as a YAML string
+(convenience â€” operator-supplied rules from disk).
 """
 
 from __future__ import annotations
@@ -12,9 +12,8 @@ import json
 from typing import Any
 
 from langchain_core.tools import tool
-
-from raptix.execution.tools.defense import conops as conops_mod
-from raptix.execution.tools.defense import edr, elastic, sentinel, splunk
+from raptix_defense import conops as conops_mod
+from raptix_defense import edr, elastic, sentinel, splunk
 
 
 def _coerce_sigma(rule: dict[str, Any] | str) -> dict[str, Any]:
@@ -42,7 +41,7 @@ def list_siem_targets() -> str:
 
     Returns a JSON list of target names (``splunk``, ``sentinel``, ``elastic``,
     ``defender``, ``crowdstrike``). Use this before calling a push tool to
-    confirm the target is wired — the push tools return a structured error
+    confirm the target is wired â€” the push tools return a structured error
     when the target is undeclared, but checking first avoids a round-trip.
     """
     return _json({"targets": conops_mod.list_targets()})
@@ -69,7 +68,7 @@ def sigma_to_splunk_savedsearch(
     try:
         spl = splunk.sigma_to_spl(rule_dict)
     except splunk.SigmaConversionError as exc:
-        return _json({"error": f"sigma→SPL conversion failed: {exc}"})
+        return _json({"error": f"sigmaâ†’SPL conversion failed: {exc}"})
     result = splunk.push_savedsearch(
         title=title,
         spl_query=spl,
@@ -102,7 +101,7 @@ def sigma_to_sentinel_analyticrule(
     try:
         kql = sentinel.sigma_to_kql(rule_dict)
     except sentinel.SigmaToKqlError as exc:
-        return _json({"error": f"sigma→KQL conversion failed: {exc}"})
+        return _json({"error": f"sigmaâ†’KQL conversion failed: {exc}"})
     result = sentinel.push_analytic_rule(
         rule_id=rule_id,
         display_name=display_name,
@@ -137,7 +136,7 @@ def sigma_to_elastic_detection_rule(
     try:
         lucene = elastic.sigma_to_lucene(rule_dict)
     except elastic.SigmaToElasticError as exc:
-        return _json({"error": f"sigma→Lucene conversion failed: {exc}"})
+        return _json({"error": f"sigmaâ†’Lucene conversion failed: {exc}"})
     result = elastic.push_detection_rule(
         rule_id=rule_id,
         name=name,
@@ -185,7 +184,7 @@ def yara_to_crowdstrike_ioa(
 
     The YARA rule must declare ``indicator_type`` (sha256/sha1/md5/ipv4/ipv6/
     domain/filename) and ``indicator_value`` in its ``meta`` block. Pure
-    byte-pattern YARA rules can't be expressed as IOAs — the tool returns
+    byte-pattern YARA rules can't be expressed as IOAs â€” the tool returns
     a structured error in that case so the agent can pick a different target.
     """
     return _json(

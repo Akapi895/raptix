@@ -39,6 +39,7 @@ raptix-core = { workspace = true }
 raptix-sdk = { workspace = true }
 raptix-contracts = { workspace = true }
 raptix-reversing = { workspace = true }
+raptix-defense = { workspace = true }
 raptix-mobile = { workspace = true }
 raptix-iot = { workspace = true }
 raptix-ics = { workspace = true }
@@ -128,8 +129,8 @@ known-first-party = ["raptix", "raptix_core", "raptix_sdk"]
 
 [tool.ruff.lint.per-file-ignores]
 # Scope banned-api to raptix-core: the framework, SDK, LiteLLM
-# config handlers, benchmark harness, and apps legitimately depend
-# on langchain / langgraph / deepagents / httpx / fastapi.
+# config handlers, benchmark harness, plugin packs, and apps
+# legitimately depend on langchain / langgraph / deepagents / httpx / fastapi.
 "packages/raptix/**" = ["TID251"]
 "packages/raptix-sdk/**" = ["TID251"]
 "benchmarks/**" = ["TID251"]
@@ -137,6 +138,7 @@ known-first-party = ["raptix", "raptix_core", "raptix_sdk"]
 "scripts/**" = ["TID251"]
 "infra/config/**" = ["TID251"]
 "tests/local/**" = ["TID251"]
+"plugins/**" = ["TID251"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

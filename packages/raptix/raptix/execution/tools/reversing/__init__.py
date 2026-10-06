@@ -2,28 +2,22 @@
 
 Pure-Python implementations that run without Ghidra / radare2 installed:
 
-- ``binary``  — ELF / PE / Mach-O header parser with architecture, segment, section, and protection flag extraction
-- ``strings`` — classified string extraction with URL/IP/crypto constant/version heuristics
-- ``packer``  — entropy-based packer detection (UPX, ASPack, Themida hints)
-- ``rop``     — ROP gadget finder operating on raw bytes via a tiny x86 disassembler
-- ``symbols`` — import/export table walker + sanitizer-symbol detection
-- ``scripts`` — Ghidra + r2 script generators the agent can drop on disk and run
-- ``ghidra``  — Ghidra headless + MCP bridge integration (decompile, xrefs, analysis)
+- ``binary``  â€” ELF / PE / Mach-O header parser with architecture, segment, section, and protection flag extraction
+- ``strings`` â€” classified string extraction with URL/IP/crypto constant/version heuristics
+- ``packer``  â€” entropy-based packer detection (UPX, ASPack, Themida hints)
+- ``rop``     â€” ROP gadget finder operating on raw bytes via a tiny x86 disassembler
+- ``symbols`` â€” import/export table walker + sanitizer-symbol detection
+- ``scripts`` â€” Ghidra + r2 script generators the agent can drop on disk and run
+- ``ghidra``  â€” Ghidra headless + MCP bridge integration (decompile, xrefs, analysis)
 
 The agent can escalate to a real disassembler via bash (radare2,
-ghidra_headless, objdump) — this package is the fast first pass.
+ghidra_headless, objdump) â€” this package is the fast first pass.
 """
 
 from __future__ import annotations
 
 from raptix_reversing.binary import BinaryInfo, identify_binary
-from raptix_reversing.packer import PackerVerdict, detect_packer
-from raptix_reversing.rop import RopGadget, find_rop_gadgets
-from raptix_reversing.scripts import ghidra_recon_script, r2_recon_script
-from raptix_reversing.strings import ExtractedString, extract_strings
-from raptix_reversing.symbols import SymbolReport, summarize_symbols
-
-from raptix.execution.tools.reversing.ghidra import (
+from raptix_reversing.ghidra import (
     GhidraAnalysis,
     GhidraDecompilation,
     GhidraFunction,
@@ -33,6 +27,11 @@ from raptix.execution.tools.reversing.ghidra import (
     ghidra_decompile_function,
     ghidra_get_xrefs,
 )
+from raptix_reversing.packer import PackerVerdict, detect_packer
+from raptix_reversing.rop import RopGadget, find_rop_gadgets
+from raptix_reversing.scripts import ghidra_recon_script, r2_recon_script
+from raptix_reversing.strings import ExtractedString, extract_strings
+from raptix_reversing.symbols import SymbolReport, summarize_symbols
 
 __all__ = [
     "BinaryInfo",
