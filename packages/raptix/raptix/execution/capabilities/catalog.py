@@ -21,6 +21,13 @@ Two manifest families:
   ``profile="base"``, and an ``adapter_id`` matching a
   :mod:`raptix.execution.adapters` class. T8 adds profiles for
   binaries the base image does not ship yet.
+* **T10 — the bounded-worker capability** (``exploit.unknown_service``,
+  the plan's T10 example). No ``ADAPTER`` implementation: its single
+  ``WORKER`` implementation resolves ``worker_id`` only through T10's
+  :class:`raptix.execution.workers.WorkerRegistry`, so the capability
+  aggregates UNAVAILABLE until an ``exploit_worker`` ``WorkerSpec``
+  with an explicit primitive allowlist is registered — honest by
+  design, never an unscoped toolset.
 
 Deliberately NOT in the catalog:
 
@@ -43,6 +50,7 @@ from __future__ import annotations
 from raptix_core.types.capability import (
     CapabilityId,
     CapabilityManifest,
+    CompletionSpec,
     ImplementationKind,
     ImplementationSpec,
     RequirementKind,
@@ -426,6 +434,35 @@ def build_catalog() -> tuple[CapabilityManifest, ...]:
                 _binary("network.capture_ntlm.responder", "ad.responder", "responder"),
             ),
             outputs=("responder_log",),
+            risk_class=RiskClass.HIGH,
+            parallel_safe=False,
+        ),
+        # ── T10: the bounded-worker capability (the plan's example) ──
+        CapabilityManifest(
+            id=CapabilityId("exploit.unknown_service"),
+            schema_version=1,
+            description=(
+                "Exploit a service whose execution path cannot be "
+                "predetermined: a bounded worker attacks it through the "
+                "explicit primitive allowlist of its WorkerSpec until the "
+                "CompletionSpec observes success or exhausts its step "
+                "budget."
+            ),
+            phase_affinity=("initial_foothold", "network_propagation"),
+            allowed_roles=(RoleId("exploit"),),
+            implementations=(
+                ImplementationSpec(
+                    id="exploit.unknown_service.bounded_worker",
+                    kind=ImplementationKind.WORKER,
+                    worker_id="exploit_worker",
+                ),
+            ),
+            completion=CompletionSpec(
+                success_observations=("authentication.success",),
+                failure_conditions=(),
+                max_steps=10,
+            ),
+            outputs=("authentication.success",),
             risk_class=RiskClass.HIGH,
             parallel_safe=False,
         ),

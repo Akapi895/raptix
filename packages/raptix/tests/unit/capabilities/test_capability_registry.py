@@ -60,9 +60,13 @@ class TestCatalog:
         "network.capture_ntlm",
     }
 
+    T10_CAPABILITIES = {
+        "exploit.unknown_service",
+    }
+
     def test_covers_every_t1_semantic_capability_plus_t7_binaries(self) -> None:
         ids = {str(m.id) for m in build_catalog()}
-        assert ids == self.T1_CAPABILITIES | self.T7_CAPABILITIES
+        assert ids == self.T1_CAPABILITIES | self.T7_CAPABILITIES | self.T10_CAPABILITIES
 
     def test_ids_are_unique_and_schema_versioned(self) -> None:
         manifests = build_catalog()
@@ -70,12 +74,21 @@ class TestCatalog:
         assert len(ids) == len(set(ids))
         assert all(m.schema_version == 1 for m in manifests)
 
-    def test_worker_implementations_absent_so_no_completion_needed(self) -> None:
-        # The initial catalog declares only in-process ADAPTER carriers;
-        # none of them may accidentally carry a WORKER impl without a
-        # CompletionSpec (contract would have raised).
+    def test_worker_implementation_pins_a_bounded_completion(self) -> None:
+        """The catalog's one WORKER-kind capability (T10's plan example)
+        declares its bounded termination; everything else stays
+        ADAPTER-carried. A WORKER impl without a CompletionSpec raises
+        in the frozen T2 contract, so only the shape needs pinning."""
         for manifest in build_catalog():
-            assert all(impl.kind is ImplementationKind.ADAPTER for impl in manifest.implementations)
+            worker_impls = [
+                impl for impl in manifest.implementations if impl.kind is ImplementationKind.WORKER
+            ]
+            if str(manifest.id) in self.T10_CAPABILITIES:
+                assert worker_impls, manifest.id
+                assert manifest.completion is not None, manifest.id
+                assert manifest.completion.max_steps >= 1, manifest.id
+            else:
+                assert not worker_impls, manifest.id
 
     def test_phase_affinity_is_soft_and_allowed_phases_unused(self) -> None:
         # allowed_phases (hard) is used sparingly — the initial catalog
@@ -125,7 +138,8 @@ class TestRegistry:
         registry = CapabilityRegistry()
         assert "research.web_search" in registry
         assert "network.scan" in registry
-        assert len(registry) == 20
+        assert "exploit.unknown_service" in registry
+        assert len(registry) == 21
 
     def test_for_role_unrestricted_means_every_role(self) -> None:
         registry = CapabilityRegistry()
@@ -155,14 +169,32 @@ class TestRegistry:
 
     def test_startup_health_check_with_probes_injected(self) -> None:
         # The real catalog probes PATH (sandbox binaries may legitimately
-        # be absent on a dev host — PARTIAL passes, UNAVAILABLE fails),
-        # so the gate mechanics are asserted with an injected probe.
-        evaluator = AvailabilityEvaluator(executable_probe=lambda _exe: True)
+        # be absent on a dev host — PARTIAL passes, UNAVAILABLE fails)
+        # and resolves worker ids through T10's WorkerRegistry — without
+        # one, the catalog's WORKER capability is honestly UNAVAILABLE.
+        from raptix.execution.workers import WorkerRegistry, WorkerSpec
+
+        evaluator = AvailabilityEvaluator(
+            executable_probe=lambda _exe: True,
+            worker_registry=WorkerRegistry(
+                [WorkerSpec(worker_id="exploit_worker", allowed_primitives=("bash",))]
+            ).resolves,
+        )
         assert health_check(CapabilityRegistry(availability=evaluator)) is True
 
     def test_startup_health_check_fails_when_probe_finds_nothing(self) -> None:
         evaluator = AvailabilityEvaluator(executable_probe=lambda _exe: False)
         assert health_check(CapabilityRegistry(availability=evaluator)) is False
+
+    def test_startup_gate_requires_a_worker_registry_for_worker_health(self) -> None:
+        # The frozen T2/T6 invariant: with no worker registry wired, the
+        # catalog's WORKER capability is honestly UNAVAILABLE and the
+        # default startup gate rejects.
+        registry = CapabilityRegistry(
+            availability=AvailabilityEvaluator(executable_probe=lambda _exe: True)
+        )
+        assert registry.health_snapshot()["exploit.unknown_service"]["status"] == "unavailable"
+        assert health_check(registry) is False
 
 
 class TestAvailabilityEvaluator:
