@@ -1517,7 +1517,7 @@ the two evidence reports (`benchmarks/results/tool-eval/report-2026-10-07-{dev,h
 
 ---
 
-### Wave T12 — Enable dynamic exposure
+### Wave T12 — Enable dynamic exposure ✅ DONE
 
 **Goal:** Switch from shadow mode to active dynamic exposure, gated on
 T11 non-regression results.
@@ -1539,6 +1539,65 @@ Steps:
 - T0 baseline metrics maintained or improved per role
 - Monitoring in place for ongoing regression detection
 - Feature flag allows instant rollback to shadow mode
+
+**Outcome: a three-mode flag (`RAPTIX_DYNAMIC_TOOL_EXPOSURE=shadow|active|off`,
+default `off`) with a stage-gated role rollout in
+`raptix/intelligence/tooling/exposure.py` + the `build_tools()` hook in
+`raptix/intelligence/agents/build.py`.** Default behavior is unchanged:
+`off` does nothing at all — no logging, no filtering — so the previous
+zero-cost property holds.
+
+- **Mode resolution** — `resolve_exposure_mode(role)` returns
+  `ExposureMode(mode, role_active)`: `off` (default, and the fail-safe
+  for ANY unrecognized value), `shadow` (log-only — the T9 behavior and
+  the rollback target), `active` (serve the filtered set, but ONLY for
+  roles inside the rollout stage). The T9 legacy
+  `RAPTIX_EXPOSURE_SHADOW=1` keeps working as an alias for `shadow`.
+- **Rollout** — `ROLLOUT_ORDER = (recon, exploit, postexploit,
+  ad_operator, analyst)` per the plan, gated by
+  `RAPTIX_EXPOSURE_ROLLOUT_STAGE` (default 0 = no roles; stage N serves
+  the first N; non-integer/negative fails safe to 0). `ad_operator` is
+  served through the plugin path today, so its entry stays inert until
+  that path adopts the flag — the order still encodes the plan's
+  sequence, and analyst is last (largest surface).
+- **`active_exposure_tools(role, tools)`** — never raises and never
+  returns an empty toolset: any resolution failure or empty proposal
+  falls back to the caller's list unchanged. Dynamic exposure remains a
+  UX optimization, never a security control; recovery-surface and
+  no-exclusion guarantees come from the T9 resolver unchanged.
+- **Monitoring stays on** — `record_exposure_shadow` now logs in every
+  non-`off` mode (either env var enables it), so active mode keeps
+  producing the T11 diff record; in active mode the served set IS the
+  record's proposed set.
+- **Rollback** — `active → shadow` is exactly one env-var value change,
+  pinned by a test that flips the flag mid-flight and re-builds.
+- **Held-out re-run (step 5):** the harness's config-B rows ARE the
+  active-mode computation (the same `resolve_active_tools` the runtime
+  calls) — the regenerated
+  `benchmarks/results/tool-eval/report-2026-10-07-held-out.json` shows
+  non-regression holding (recall(B) = recall(A) = 1.000, forbidden = 0,
+  success proxy = 1.000) with the one pre-registered miss still open:
+  `DISCOVERY_LATENCY_MAX = 5` fails at 6 for unrestricted capabilities
+  that carry no `phase_affinity` (T11's documented finding — threshold
+  left frozen, ranking improvement deferred to the live-tier work).
+- **Deliberate scope line:** activation here means the runtime MECHANISM
+  exists and is flag-gated; no deployment in this repo flips it on by
+  default. Staged enablement (raising `ROLLOUT_STAGE` per environment)
+  is an operator decision informed by the T11 evidence, not a code
+  change.
+
+Test surface: `tests/unit/tooling/test_exposure.py` extended to 42
+deterministic tests — mode resolution (default/invalid/legacy-alias/
+stage matrix incl. negative and non-integer stages), `active_exposure_tools`
+(filter path, never-empty fallback, resolution-failure fallback), and
+the `build_tools` integration against the REAL catalog (off serves
+static, pre-stage serves static, in-stage serves filtered with the
+real `blue_cell_scan` capability removed for exploit, recovery surface
+survives, shadow logging persists alongside active, rollback flips
+back, and the new var alone enables the monitoring record). The
+T0/agents suites re-ran green (93/93 across `test_build`,
+`test_tool_exposure`, `test_exposure`). ruff clean; basedpyright
+0 errors / 0 warnings / 0 notes on both touched modules.
 
 ---
 

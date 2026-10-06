@@ -15,6 +15,7 @@ import logging
 import sys
 import types
 from types import SimpleNamespace
+from typing import Any
 from unittest.mock import patch
 
 import pytest
@@ -22,9 +23,12 @@ import pytest
 from raptix.execution.capabilities import AvailabilityEvaluator, CapabilityRegistry
 from raptix.intelligence.tooling.exposure import (
     RECOVERY_TOOL_NAMES,
+    ROLLOUT_ORDER,
     GraphSnapshot,
+    active_exposure_tools,
     record_exposure_shadow,
     resolve_active_tools,
+    resolve_exposure_mode,
     summarize_exposure_result,
 )
 from raptix_core.types.capability import (
@@ -381,3 +385,222 @@ def test_build_tools_serves_static_list_with_shadow_enabled(
                 with_shadow = build_module.build_tools(role="soundwave", standard_tools=baseline)
     assert with_shadow == without == [baseline["a"], baseline["b"]]
     assert any("exposure_shadow" in r.getMessage() for r in caplog.records)
+
+
+# ───────────────────── Wave T12 — active mode ─────────────────────
+
+
+class TestResolveExposureMode:
+    def test_default_is_off(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", raising=False)
+        monkeypatch.delenv("RAPTIX_EXPOSURE_SHADOW", raising=False)
+        mode = resolve_exposure_mode("recon")
+        assert mode.mode == "off"
+        assert mode.role_active is False
+
+    def test_unrecognized_value_fails_safe_to_off(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "enforce")
+        assert resolve_exposure_mode("recon").mode == "off"
+
+    def test_shadow_and_legacy_alias(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "shadow")
+        assert resolve_exposure_mode("recon").mode == "shadow"
+        monkeypatch.delenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_SHADOW", "1")
+        assert resolve_exposure_mode("recon").mode == "shadow"
+
+    def test_active_requires_a_rollout_stage(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.delenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", raising=False)
+        stage_zero = resolve_exposure_mode("recon")
+        assert stage_zero.mode == "active"
+        assert stage_zero.role_active is False
+
+    @pytest.mark.parametrize(
+        ("stage", "role", "active"),
+        [
+            ("1", "recon", True),
+            ("1", "exploit", False),
+            ("2", "exploit", True),
+            ("3", "postexploit", True),
+            ("4", "ad_operator", True),
+            ("5", "analyst", True),
+            ("4", "analyst", False),
+            ("99", "analyst", True),
+            ("0", "recon", False),
+            ("-1", "recon", False),
+            ("not-a-number", "recon", False),
+            ("", "recon", False),
+        ],
+    )
+    def test_rollout_stage_gates_roles(
+        self, monkeypatch: pytest.MonkeyPatch, stage: str, role: str, active: bool
+    ) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", stage)
+        assert resolve_exposure_mode(role).role_active is active
+
+    def test_rollout_order_matches_the_plan(self) -> None:
+        assert ROLLOUT_ORDER == ("recon", "exploit", "postexploit", "ad_operator", "analyst")
+
+
+class TestActiveExposureTools:
+    def test_filters_ineligible_capability_tools(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        scan = _tool("scan_target")
+        module_name = _fake_tools_module(monkeypatch, "_t12_active_tools", scan_target=scan)
+        manifest = _manifest(
+            "recon.scan",
+            impls=(_carrier_impl("i1", module_name, "scan_target"),),
+            allowed_roles=("recon",),
+        )
+        registry = CapabilityRegistry(manifests=(manifest,))
+        with patch(
+            "raptix.intelligence.tooling.exposure.CapabilityRegistry",
+            return_value=registry,
+        ):
+            served = active_exposure_tools(
+                "exploit", [scan, _tool("bash"), _tool("search_knowledge")]
+            )
+        names = [getattr(tool, "name", None) for tool in served]
+        assert "scan_target" not in names
+        assert {"bash", "search_knowledge"} <= set(names)
+
+    def test_never_serves_an_empty_toolset(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        scan = _tool("scan_target")
+        module_name = _fake_tools_module(monkeypatch, "_t12_empty_tools", scan_target=scan)
+        manifest = _manifest(
+            "recon.scan",
+            impls=(_carrier_impl("i1", module_name, "scan_target"),),
+            allowed_roles=("recon",),
+        )
+        registry = CapabilityRegistry(manifests=(manifest,))
+        with patch(
+            "raptix.intelligence.tooling.exposure.CapabilityRegistry",
+            return_value=registry,
+        ):
+            served = active_exposure_tools("exploit", [scan])
+        assert served == [scan]
+
+    def test_resolution_failure_falls_back_to_static(self) -> None:
+        served = active_exposure_tools("recon", [_ExplodingTool(), _tool("bash")])
+        assert len(served) == 2
+        assert served[1].name == "bash"
+
+
+class TestBuildToolsActiveMode:
+    """The T12 integration: build_tools serves the filtered set only for
+    active-mode roles inside the rollout stage, using the REAL catalog."""
+
+    @pytest.fixture()
+    def baseline(self) -> dict[str, Any]:
+        from raptix.execution.tools.defense.blue_cell import blue_cell_scan
+
+        return {
+            "blue_cell_scan": blue_cell_scan,
+            "bash": _tool("bash"),
+            "search_knowledge": _tool("search_knowledge"),
+        }
+
+    def _build(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        baseline: dict[str, Any],
+        role: str,
+    ) -> list[Any]:
+        from raptix.intelligence.agents import build as build_module
+        from raptix_core import plugin_loader
+
+        with (
+            patch.object(build_module, "entry_points", return_value=[]),
+            patch.object(plugin_loader, "entry_points", return_value=[]),
+        ):
+            return build_module.build_tools(role=role, standard_tools=baseline)
+
+    def test_off_by_default_serves_static(
+        self, monkeypatch: pytest.MonkeyPatch, baseline: dict[str, Any]
+    ) -> None:
+        monkeypatch.delenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", raising=False)
+        served = self._build(monkeypatch, baseline, "exploit")
+        assert [getattr(tool, "name", None) for tool in served] == [
+            "blue_cell_scan",
+            "bash",
+            "search_knowledge",
+        ]
+
+    def test_active_before_rollout_stage_serves_static(
+        self, monkeypatch: pytest.MonkeyPatch, baseline: dict[str, Any]
+    ) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", "1")
+        served = self._build(monkeypatch, baseline, "exploit")
+        assert [getattr(tool, "name", None) for tool in served] == [
+            "blue_cell_scan",
+            "bash",
+            "search_knowledge",
+        ]
+
+    def test_active_inside_rollout_stage_serves_filtered(
+        self, monkeypatch: pytest.MonkeyPatch, baseline: dict[str, Any]
+    ) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", "2")
+        served = self._build(monkeypatch, baseline, "exploit")
+        names = [getattr(tool, "name", None) for tool in served]
+        assert "blue_cell_scan" not in names
+        assert {"bash", "search_knowledge"} <= set(names)
+
+    def test_recovery_surface_survives_active_filtering(
+        self, monkeypatch: pytest.MonkeyPatch, baseline: dict[str, Any]
+    ) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", "5")
+        served = self._build(monkeypatch, baseline, "analyst")
+        names = [getattr(tool, "name", None) for tool in served]
+        assert "search_knowledge" in names
+
+    def test_rollback_is_a_flag_flip_to_shadow(
+        self, monkeypatch: pytest.MonkeyPatch, baseline: dict[str, Any]
+    ) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", "2")
+        active = self._build(monkeypatch, baseline, "exploit")
+        assert "blue_cell_scan" not in [getattr(tool, "name", None) for tool in active]
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "shadow")
+        rolled_back = self._build(monkeypatch, baseline, "exploit")
+        assert [getattr(tool, "name", None) for tool in rolled_back] == [
+            "blue_cell_scan",
+            "bash",
+            "search_knowledge",
+        ]
+
+    def test_shadow_logging_stays_on_alongside_active(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        baseline: dict[str, Any],
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "active")
+        monkeypatch.setenv("RAPTIX_EXPOSURE_ROLLOUT_STAGE", "2")
+        monkeypatch.setattr(logging.getLogger("raptix"), "propagate", True)
+        with caplog.at_level(logging.INFO, logger="raptix.tools.exposure"):
+            self._build(monkeypatch, baseline, "exploit")
+        records = [r for r in caplog.records if "exposure_shadow" in r.getMessage()]
+        assert len(records) == 1
+        payload = json.loads(records[0].getMessage().split(" ", 1)[1])
+        assert "blue_cell_scan" in payload["current_tool_names"]
+        assert "blue_cell_scan" not in payload["proposed_tool_names"]
+
+    def test_shadow_mode_alone_enables_logging(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+        baseline: dict[str, Any],
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """The T9 legacy env var is no longer the only logging switch:
+        the new mode var enables the monitoring record by itself."""
+        monkeypatch.setenv("RAPTIX_DYNAMIC_TOOL_EXPOSURE", "shadow")
+        monkeypatch.delenv("RAPTIX_EXPOSURE_SHADOW", raising=False)
+        monkeypatch.setattr(logging.getLogger("raptix"), "propagate", True)
+        with caplog.at_level(logging.INFO, logger="raptix.tools.exposure"):
+            self._build(monkeypatch, baseline, "soundwave")
+        assert any("exposure_shadow" in r.getMessage() for r in caplog.records)
