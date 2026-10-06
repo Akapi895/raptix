@@ -13,9 +13,8 @@ DEFINITION = DomainAgentDefinition(
         "handshake with the blue team via plan/roe.json before sending."
     ),
     tool_names=(
-        "payload_search",
-        "methodology_lookup",
-        "killchain_lookup",
+        "lookup_payload",
+        "search_security_references",
         "web_search",
         "web_fetch",
         "bash",

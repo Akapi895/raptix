@@ -764,7 +764,7 @@ pass across those nine files.
 
 ---
 
-### Wave T5 — Reference + Reporting + Evidence cleanup
+### Wave T5 — Reference + Reporting + Evidence cleanup ✅ DONE
 
 **Goal:** Consolidate references (15 → 3), reporting (6 → 0–1),
 and evidence (4 → 0 for attack agents, 1 inspection tool for verifiers).
@@ -803,6 +803,71 @@ Surface by role:
 - 15 → 3 reference tools; 6 → 0–1 reporting; 4 → 0–1 evidence
 - All existing data reachable through new surfaces
 - Role-appropriate exposure (attack workers never see reporting)
+
+**Outcome: references 15 → 3, reporting 6 → 1, evidence 4 → 1; 24
+functions demoted to internal services.** The agent-facing reference
+surface is now `research_cve(query)` (every CVE id in the query is
+resolved against the local PoC index), `search_security_references(
+query, kinds=[], limit=5)` (one call fans out across the HackerOne /
+one-liner / methodology / kill-chain corpora — the agent never picks
+the corpus; external sections keep the `wrap_corpus` trust envelope),
+and `lookup_payload(query, vuln_class="", limit=25)` (bundled + ingested
+payload fan-out). Reporting collapsed into `generate_report(format,
+...)` with formats `hackerone | bugcrowd_csv | executive | timeline |
+sarif | bounty` — `format_bounty_report` was absorbed as the `bounty`
+format per the T1 note that both renderers should merge. Evidence
+became `inspect_evidence(finding_id)` (finding node + 1-hop linked
+nodes + chain-of-custody verification + asciicast recordings), with
+`_verify_manifest` extracted as the shared internal used by both the
+plain `verify_evidence` service and the tool.
+
+Demoted to plain functions (importable, no `@tool`, never-delete rule):
+13 references services (`ref_list/suggest/topic/fetch/status/grep`,
+`payload_search`, `payload_classes`, `cve_poc_lookup`, `h1_search`,
+`oneliner_search`, `killchain_lookup`, `methodology_lookup`,
+`references_hydrate`), the 5 `report_*` renderers, all 4 evidence
+services (`seal_evidence`, `verify_evidence`, `export_session_asciicast`,
+`list_session_recordings`), and `format_bounty_report`. The corpus
+trust helpers moved to `references/corpus.py` (shared by the semantic
+fan-out and the demoted services — no circular import).
+
+Scope decisions worth remembering:
+
+- `killchain_suggest` keeps its `@tool` — T1 pins it as a planner
+  control-plane tool, not a reference lookup — but is deliberately OUT
+  of `REFERENCES_TOOLS` (no agent carried it before the change either;
+  planner wiring lands with the capability catalog, T6+).
+- `UNTRUSTED_TOOL_NAMES` unchanged: the reference corpus tools were
+  never quarantine-listed; they carry their own explicit
+  `untrusted-external-corpus` envelope (now via `corpus.wrap_corpus`).
+- `bounty_scope_check` stays `@tool` in `BOUNTY_TOOLS` (control-plane,
+  per T1); `EVIDENCE_TOOLS = [inspect_evidence]` is wired to the
+  verifier plugin and the analyst (operator lane); `REPORTING_TOOLS =
+  [generate_report]` stays analyst-only — attack workers never see
+  reporting or evidence surfaces.
+- Role remap applied across 8 standard agents + the exploiter plugin
+  (`cve_poc_lookup`→`research_cve`, `payload_search`→`lookup_payload`,
+  `methodology_lookup`/`oneliner_search`/`killchain_lookup`→
+  `search_security_references`) and 6 plugin bundles' `tool_names`
+  (wireless, ics, phishing, active-directory, mobile, iot); phishing's
+  `killchain_lookup` collapsed into the `killchain` section of
+  `search_security_references`.
+- Prompts updated in place: `analyst.md` (generate_report / semantic
+  references / inspect_evidence), `exploit.md` CVE-research checklist,
+  `raptix.md` skill tool-chain citation. Skills corpus references are
+  deferred to the single T9 skills pass, same as T4.
+
+Test surface: new `test_semantic_references.py` (fan-out, aliasing,
+envelope trust, clamps); `test_tools_wrappers.py` /
+`test_tools_new.py` converted to direct service calls;
+`test_reporting_tools_and_executive.py` + `test_sarif.py` converted
+plus a new `generate_report` dispatch matrix; `test_evidence_tools.py`
+converted plus `inspect_evidence` projection/custody tests;
+`test_reporting_tools_wired.py` re-pinned to the `generate_report`
+contract; `test_bounty*.py` re-pinned to the 1-tool `BOUNTY_TOOLS`.
+2,757 tests pass across the focused suites (references + reporting +
+evidence + bounty 425, agents 192, tools 510, research + middleware
+1,600). basedpyright 0 errors / 727 warnings (T4 baseline held).
 
 ---
 

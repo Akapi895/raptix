@@ -7,16 +7,13 @@ Analyst reads source, builds a persistent knowledge graph, and reasons
 about multi-hop paths from entrypoints to crown jewels.
 
 Tool surface (in addition to bash):
-    REPORTING_TOOLS, REFERENCES_TOOLS, plus ``kg_record`` and
-    ``kg_ingest`` supplied by the KG middleware slot
+    REPORTING_TOOLS (``generate_report``), REFERENCES_TOOLS (the three
+    Wave-T5 semantic fan-out lookups), EVIDENCE_TOOLS
+    (``inspect_evidence``), plus ``kg_record`` and ``kg_ingest``
+    supplied by the KG middleware slot
     (``SLOTS_PER_ROLE["analyst"]`` includes ``MiddlewareSlot.KG``;
     ``KGMiddleware`` constructs from ``RAPTIX_NEO4J_*`` env at agent
     build time and exposes its two tools via ``self.tools``).
-
-REPORTING_TOOLS currently routes through the legacy
-``raptix.execution.tools.research._state`` shim; that retirement is PR-D
-scope and tracked in
-docs/design/2026-06-03-kg-middleware-redesign.md § 6.2.
 
 Middleware stack — mirrors exploit.py. The analyst runs fewer shell
 commands in favour of first-class research tools (semgrep, bandit,
@@ -66,6 +63,7 @@ from langchain.agents import create_agent
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.evidence import EVIDENCE_TOOLS
 from raptix.execution.tools.references.tools import REFERENCES_TOOLS
 from raptix.execution.tools.reporting.tools import REPORTING_TOOLS
 from raptix.execution.tools.web.search import web_fetch, web_search
@@ -78,14 +76,20 @@ _STANDARD_TOOLS: dict[str, Any] = {
     # KG surface arrives via the MiddlewareSlot.KG slot — KGMiddleware
     # exposes ``kg_record`` and ``kg_ingest`` through its ``self.tools``
     # attribute, merged into the agent's tool list at create_agent time.
-    # REPORTING_TOOLS still routes through the legacy
-    # ``raptix.execution.tools.research._state`` shim until PR-D extracts the
-    # reporting tools; tracked in
-    # docs/design/2026-06-03-kg-middleware-redesign.md § 6.2.
+    # Wave T5: REPORTING_TOOLS is the single ``generate_report(format)``
+    # tool, REFERENCES_TOOLS the three semantic fan-out lookups, and
+    # EVIDENCE_TOOLS the read-only ``inspect_evidence`` (operator lane).
     t.name: t
     # Open-web acquisition (ADR-0010): advisory / CVE / write-up research for
     # the high-value discovery lane.
-    for t in [web_search, web_fetch, *REPORTING_TOOLS, *REFERENCES_TOOLS, *BASH_TOOLS]
+    for t in [
+        web_search,
+        web_fetch,
+        *REPORTING_TOOLS,
+        *REFERENCES_TOOLS,
+        *EVIDENCE_TOOLS,
+        *BASH_TOOLS,
+    ]
 }
 
 

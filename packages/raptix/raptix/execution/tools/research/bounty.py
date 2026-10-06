@@ -203,7 +203,6 @@ def _severity_label(score: float) -> str:
     return "Informational"
 
 
-@tool
 def format_bounty_report(
     finding_id: str,
     platform: str = "hackerone",
@@ -212,24 +211,8 @@ def format_bounty_report(
 ) -> str:
     """Generate a bug bounty report from a validated FINDING node.
 
-    WHEN TO USE: After ``validate_finding`` confirms a vulnerability is real
-    and ``bounty_scope_check`` confirms it's in scope. Generates a
-    platform-ready report at ``workspace/findings/BOUNTY-{id}.md``.
-
-    The report follows the title convention: ``Component: VulnClass via Mechanism``
-    and includes full CVSS vector, PoC, and remediation — optimized for
-    acceptance rate, not word count.
-
-    Args:
-        finding_id: The FINDING node id from the knowledge graph (returned
-            by ``validate_finding``).
-        platform: Target platform — ``hackerone``, ``bugcrowd``, ``immunefi``,
-            or ``github``.
-        program_name: Name of the bounty program (informational).
-        component_name: Name of the affected component/package for the title.
-
-    Returns:
-        JSON with the report file path and a preview of the title + severity.
+    Wave T5: internal service — the agent-facing surface is
+    ``generate_report("bounty", finding_id=..., ...)`` (reporting/tools.py).
     """
     graph, kg_path = _load()
 
@@ -354,4 +337,4 @@ def format_bounty_report(
     )
 
 
-BOUNTY_TOOLS = [bounty_scope_check, format_bounty_report]
+BOUNTY_TOOLS = [bounty_scope_check]

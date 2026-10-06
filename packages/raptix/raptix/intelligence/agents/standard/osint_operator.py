@@ -30,7 +30,7 @@ from langchain.agents import create_agent
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
-from raptix.execution.tools.references.tools import methodology_lookup, payload_search
+from raptix.execution.tools.references.tools import lookup_payload, search_security_references
 from raptix.execution.tools.research.semantic import inspect_asset, search_knowledge
 from raptix.execution.tools.research.tools import cve_lookup
 from raptix.execution.tools.web.search import web_fetch, web_search
@@ -46,8 +46,8 @@ _STANDARD_TOOLS: dict[str, Any] = {
         search_knowledge,
         inspect_asset,
         cve_lookup,
-        payload_search,
-        methodology_lookup,
+        lookup_payload,
+        search_security_references,
         # Open-web acquisition (ADR-0010): keyword search + RoE-gated fetch
         web_search,
         web_fetch,

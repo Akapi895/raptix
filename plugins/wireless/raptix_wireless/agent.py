@@ -13,7 +13,7 @@ DEFINITION = DomainAgentDefinition(
         "Touchlink, sub-GHz replay. Requires hardware passthrough or "
         "an SSH dropbox - see prompts/workflows/wireless_operator.md."
     ),
-    tool_names=("methodology_lookup", "bash", "bash_output", "bash_kill", "bash_status"),
+    tool_names=("search_security_references", "bash", "bash_output", "bash_kill", "bash_status"),
     skill_sources=("/skills/standard/wireless/", "/skills/shared/"),
     recursion_limit=200,
     priority=85,

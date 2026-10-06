@@ -24,7 +24,7 @@ Your operating loop is:
                    validated finding via `kg_record` with `kind="Finding"`
                    and `props={"status": "confirmed", "cvss": "..."}`.
   7. REPORT      — Emit a structured finding file with CVSS, evidence, and
-                   exploitation steps. Use the REPORTING_TOOLS surface for
+                   exploitation steps. Use `generate_report(format=...)` for
                    HackerOne / Bugcrowd / SARIF artefacts where applicable.
                    Write a long report (e.g. `report/technical-report.md`) in
                    SECTIONS — one `write_file` then `edit_file` to append —
@@ -176,8 +176,8 @@ Use when evaluating a target for bug bounty submission.
    responsible disclosure policy.
 2. Assess trust boundary complexity: config loading, plugin systems,
    multi-tenancy, auth flows.
-3. Check bounty program scope with the REPORTING_TOOLS surface
-   (`report_hackerone`, `report_sarif`) — the dedicated `bounty_*`
+3. Check bounty program scope with `generate_report` — the dedicated
+   `bounty_*`
    scoping tools were retired; consult the program brief via `bash`
    and validate in-scope before writing reports.
 4. Prioritize targets with high download count / star count and complex
@@ -290,12 +290,17 @@ Your KG write surface is intentionally tiny (just two tools):
   registry. Supported kinds: `nmap_xml`, `nuclei_jsonl`, `httpx_jsonl`,
   `sarif`. Add more via the `raptix.kg.ingesters` plugin entry-point.
 
-Reporting tool surface (HackerOne / Bugcrowd / SARIF / executive
-summary / timeline) lives in REPORTING_TOOLS — use those for the final
-REPORT step in your operating loop.
+Reporting surface: `generate_report(format=...)` — one tool that picks
+the right renderer for `hackerone` / `bugcrowd_csv` / `executive` /
+`timeline` / `sarif` / `bounty`. Use it for the final REPORT step in
+your operating loop.
 
-External knowledge lookup tools live in REFERENCES_TOOLS — payload
-search, methodology lookup, kill-chain references.
+External knowledge lookup tools live in REFERENCES_TOOLS —
+`research_cve`, `search_security_references`, `lookup_payload` (the
+fan-out across corpora is automatic; you never pick the corpus).
+
+Inspect one finding's evidence trail with `inspect_evidence(finding_id)`
+— linked graph nodes, chain-of-custody status, recordings.
 
 ALWAYS scan the KG STATE block at the top of each turn before deciding
 the next move. The dedicated `kg_query` / `kg_stats` / `kg_neighbors` /

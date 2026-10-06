@@ -167,10 +167,12 @@ class TestFindLinkedVuln:
 
 
 class TestBountyToolsExport:
-    def test_bounty_tools_has_two_entries(self) -> None:
-        assert len(BOUNTY_TOOLS) == 2
+    def test_bounty_tools_has_one_entry(self) -> None:
+        # Wave T5: format_bounty_report is an internal service reached
+        # through generate_report("bounty", ...); only the control-plane
+        # scope check remains agent-facing.
+        assert len(BOUNTY_TOOLS) == 1
 
     def test_tool_names(self) -> None:
         names = {t.name for t in BOUNTY_TOOLS}
-        assert "bounty_scope_check" in names
-        assert "format_bounty_report" in names
+        assert names == {"bounty_scope_check"}

@@ -55,6 +55,7 @@ from langchain.agents import create_agent
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.evidence import EVIDENCE_TOOLS
 from raptix.execution.tools.verification import WORKSPACE_VERIFICATION_TOOLS
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
@@ -64,10 +65,12 @@ from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plug
 # Graph-backed verification remains deferred with the Neo4j redesign.  The
 # workspace verifier is graph-independent and enforces positive + negative
 # controls, so the specialist can produce promotable evidence today.
+# ``inspect_evidence`` (Wave T5) is the verifier's read-only evidence trail.
 _STANDARD_TOOLS: dict[str, Any] = {
     t.name: t
     for t in [
         *WORKSPACE_VERIFICATION_TOOLS,
+        *EVIDENCE_TOOLS,
         *BASH_TOOLS,
     ]
 }

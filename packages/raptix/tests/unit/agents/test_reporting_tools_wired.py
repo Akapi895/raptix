@@ -7,14 +7,12 @@ call ``report_hackerone`` — a tool the agent did not actually have, so
 the model would emit a tool call that always fails. These tests pin the
 wiring AND the prompt<->tool contract so the regression cannot return.
 
-Current state (post-KG-narrow, refactor/kg-narrow-and-research-prep):
-``contract_auditor`` no longer wires ``report_hackerone`` (the tool
-routes through the broken ``graph_transaction`` shim and the narrow
-prunes it pending the KG middleware redesign). ``contract_auditor.md``
-step 6 now emits a HackerOne-style ``findings/FIND-NNN.md`` directly
-instead. ``analyst`` remains the sole carrier of the full
-``REPORTING_TOOLS`` suite and is the only agent the prompt<->tool
-contract check still applies to.
+Current state (post Wave T5): ``REPORTING_TOOLS`` is the single
+``generate_report(format)`` tool; the per-format renderers are plain
+internal services. ``analyst`` remains the sole carrier of the
+reporting surface (plus the three semantic reference lookups and
+``inspect_evidence``) and is the only agent the prompt<->tool contract
+check still applies to.
 """
 
 from __future__ import annotations
@@ -32,11 +30,11 @@ _REPORTING_NAMES = frozenset(t.name for t in REPORTING_TOOLS)
 
 def test_reporting_suite_is_nonempty() -> None:
     # Guards against the bundle being emptied out from under the wiring tests.
-    assert {"report_hackerone", "report_sarif", "report_executive"} <= _REPORTING_NAMES
+    assert {"generate_report"} <= _REPORTING_NAMES
 
 
 def test_analyst_exposes_full_reporting_suite() -> None:
-    """The Analyst is the engagement reporting specialist — it gets every report_* tool."""
+    """The Analyst is the engagement reporting specialist — it gets generate_report."""
     missing = _REPORTING_NAMES - frozenset(analyst._STANDARD_TOOLS)
     assert not missing, f"analyst is missing reporting tools: {sorted(missing)}"
 
@@ -48,16 +46,16 @@ def test_analyst_exposes_full_reporting_suite() -> None:
     ],
 )
 def test_prompt_referenced_reporting_tools_are_wired(module: Any, role: str) -> None:
-    """Any report_* tool a prompt tells the model to call MUST be in its toolset.
+    """Any reporting tool a prompt tells the model to call MUST be in its toolset.
 
     A prompt that references a tool the agent cannot see makes the model
     emit a tool call that can never resolve — the exact bug this fixes.
 
     Only the analyst is checked: it is the sole agent that carries the
-    full REPORTING_TOOLS bundle post-narrow. Other roles that previously
-    referenced specific report_* tools (e.g. contract_auditor invoking
-    report_hackerone in its prompt) have had those references rewritten
-    to file-based equivalents.
+    reporting bundle. Other roles that previously referenced specific
+    report_* tools (e.g. contract_auditor invoking report_hackerone in
+    its prompt) have had those references rewritten to file-based
+    equivalents.
     """
     prompt = load_prompt(role, shared=["bash"])
     toolset = frozenset(module._STANDARD_TOOLS)

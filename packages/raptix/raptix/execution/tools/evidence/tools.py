@@ -1,4 +1,10 @@
-"""LangChain ``@tool`` wrappers for the evidence package."""
+"""Evidence services (plain functions) + the verifier-facing ``inspect_evidence`` tool.
+
+Wave T5: sealing / verification / recording become internal pipeline
+steps (automatic in the ArtifactStore pipeline once it lands), and the
+single agent-facing surface is ``inspect_evidence(finding_id)`` for the
+verifier and operator roles.
+"""
 
 from __future__ import annotations
 
@@ -71,7 +77,6 @@ def _evidence_files(evidence_root: Path, manifest_path: Path) -> list[Path]:
     return found
 
 
-@tool
 def export_session_asciicast(
     session_name: str,
     pipe_pane_log_path: str = "",
@@ -83,13 +88,6 @@ def export_session_asciicast(
     ``.cast.manifest.json`` sidecar. The asciicast file can be played back
     in any browser with asciinema-player and bundled into the engagement
     out-brief for client visibility into agent actions.
-
-    Args:
-        session_name: tmux session identifier used in the output filename.
-        pipe_pane_log_path: explicit path to the pipe-pane log. When empty,
-            falls back to ``<workspace>/.tmux-logs/<session_name>.log`` (the
-            default location used by the sandbox FastAPI daemon).
-        title: optional asciicast title; defaults to ``"Raptix session <name>"``.
     """
     log_path = (
         Path(pipe_pane_log_path)
@@ -110,30 +108,16 @@ def export_session_asciicast(
     return _json({"status": "exported", **manifest})
 
 
-@tool
 def list_session_recordings() -> str:
-    """List all asciicast recordings captured for the current engagement.
-
-    Reads ``<workspace>/evidence/recordings/*.cast.manifest.json`` and
-    returns the parsed manifests. Use this before generating the
-    engagement out-brief to know which recordings are available for embedding.
-    """
+    """List all asciicast recordings captured for the current engagement."""
     manifests = list_recordings(_evidence_dir())
     return _json({"count": len(manifests), "recordings": manifests})
 
 
-@tool(
-    description=(
-        "Seal every file under <workspace>/evidence/ into an append-only "
-        "chain-of-custody manifest. Computes SHA-256 + byte size for each "
-        "artifact and appends one HMAC-chained record per file to "
-        "evidence/chain-of-custody.jsonl so later tampering is detectable. "
-        "Pass workspace_path to override the engagement workspace root; "
-        "leave it empty to use the active engagement. Run before out-brief "
-        "to lock evidence integrity."
-    )
-)
 def seal_evidence(workspace_path: str = "") -> str:
+    """Seal every file under ``<workspace>/evidence/`` into the
+    append-only chain-of-custody manifest (SHA-256 + size per file,
+    one HMAC-chained record each)."""
     evidence_root = _evidence_root(workspace_path)
     if not evidence_root.is_dir():
         return _json({"error": f"evidence directory not found: {evidence_root}"})
@@ -180,21 +164,15 @@ def seal_evidence(workspace_path: str = "") -> str:
     )
 
 
-@tool(
-    description=(
-        "Verify the evidence chain-of-custody manifest. Re-hashes every file "
-        "recorded in evidence/chain-of-custody.jsonl, recomputes the HMAC "
-        "chain, and reports drift (changed SHA-256/size), missing files, and "
-        "any broken chain links. Pass workspace_path to override the "
-        "engagement workspace root. Returns ok=true only when every record "
-        "still matches the file on disk."
-    )
-)
-def verify_evidence(workspace_path: str = "") -> str:
-    evidence_root = _evidence_root(workspace_path)
+def _verify_manifest(evidence_root: Path) -> dict[str, Any]:
+    """Re-hash + re-chain every record in the custody manifest.
+
+    Shared by ``verify_evidence`` (internal service) and
+    ``inspect_evidence`` (agent-facing projection).
+    """
     manifest_path = evidence_root / _MANIFEST_NAME
     if not manifest_path.exists():
-        return _json({"error": f"manifest not found: {manifest_path}"})
+        return {"error": f"manifest not found: {manifest_path}"}
     key = _hmac_key()
     prev_hash = _GENESIS_PREV_HASH
     checked = 0
@@ -236,21 +214,83 @@ def verify_evidence(workspace_path: str = "") -> str:
                         "actual_size": size,
                     }
                 )
-    ok = not drift and not missing and not chain_errors
+    return {
+        "manifest": str(manifest_path),
+        "ok": not drift and not missing and not chain_errors,
+        "records_checked": checked,
+        "drift": drift,
+        "missing": missing,
+        "chain_errors": chain_errors,
+    }
+
+
+def verify_evidence(workspace_path: str = "") -> str:
+    """Verify the evidence chain-of-custody manifest (drift, missing
+    files, broken chain links)."""
+    return _json(_verify_manifest(_evidence_root(workspace_path)))
+
+
+@tool
+def inspect_evidence(finding_id: str) -> str:
+    """Inspect the evidence trail for one finding.
+
+    Verifier/operator surface. Returns the finding node from the
+    engagement KG, every node linked to it (1-hop, both directions),
+    the tamper-evidence status of the workspace chain-of-custody
+    manifest, and the asciicast recordings captured for the engagement.
+
+    Args:
+        finding_id: FINDING (or vulnerability) node id — from
+            ``search_knowledge`` results or the ``validate_finding``
+            return value.
+
+    Returns:
+        JSON {finding, linked, custody, recordings}.
+    """
+    from raptix.execution.tools.reporting.kg_adapter import load_engagement_graph
+    from raptix_core.types.kg import KnowledgeGraph
+    from raptix_core.utils.engagement_scope import get_active_engagement
+
+    engagement = get_active_engagement()
+    graph: KnowledgeGraph = load_engagement_graph(engagement) if engagement else KnowledgeGraph()
+    node = graph.nodes.get(finding_id)
+    if node is None:
+        return _json({"error": f"no node {finding_id} in graph"})
+
+    linked: list[dict[str, Any]] = []
+    for edge in graph.edges.values():
+        if edge.src == finding_id:
+            other = graph.nodes.get(edge.dst)
+        elif edge.dst == finding_id:
+            other = graph.nodes.get(edge.src)
+        else:
+            continue
+        if other is None:
+            continue
+        linked.append(
+            {
+                "edge": edge.kind.value if hasattr(edge.kind, "value") else str(edge.kind),
+                "direction": "out" if edge.src == finding_id else "in",
+                "node": {"id": other.id, "kind": other.kind.value, "label": other.label},
+            }
+        )
+
+    evidence_root = _evidence_root("")
+    custody = _verify_manifest(evidence_root)
+    recordings = list_recordings(_evidence_dir())
     return _json(
         {
-            "ok": ok,
-            "records_checked": checked,
-            "drift": drift,
-            "missing": missing,
-            "chain_errors": chain_errors,
+            "finding": {
+                "id": node.id,
+                "kind": node.kind.value,
+                "label": node.label,
+                "props": node.props,
+            },
+            "linked": linked,
+            "custody": custody,
+            "recordings": recordings,
         }
     )
 
 
-EVIDENCE_TOOLS = [
-    export_session_asciicast,
-    list_session_recordings,
-    seal_evidence,
-    verify_evidence,
-]
+EVIDENCE_TOOLS = [inspect_evidence]
