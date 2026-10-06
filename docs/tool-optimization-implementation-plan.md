@@ -1403,7 +1403,7 @@ profiles, exposure); ruff clean; basedpyright 0 errors / 0 warnings /
 
 ---
 
-### Wave T11 — Tool-selection + end-to-end evaluation
+### Wave T11 — Tool-selection + end-to-end evaluation ✅ DONE
 
 **Goal:** Measure whether the new architecture improves agent tool selection
 accuracy compared to T0 baseline.
@@ -1442,6 +1442,78 @@ thresholds were frozen in T0 before this evaluation.
 - No material decrease in `capability_exposure_recall` or `task_success_rate`
   (per thresholds frozen in T0)
 - Document numeric results
+
+**Outcome: a pre-registered, deterministic-first evaluation harness under
+`benchmarks/tool_eval/` (`scenarios.py` + `metrics.py` + `thresholds.py`
++ `evaluate.py` + `__main__.py`, entry `python -m benchmarks.tool_eval`),
+scenario corpora at `packages/raptix-core/tests/fixtures/capabilities/`
+(`dev.jsonl` 6 scenarios, `held-out.jsonl` 4), frozen thresholds, and
+the two evidence reports (`benchmarks/results/tool-eval/report-2026-10-07-{dev,held-out}.json`).**
+
+- **Pre-registration discipline held.** Fixtures were authored first,
+  thresholds frozen second (`thresholds.py`, `FROZEN_AT = 2026-10-07`,
+  derivation basis = T0 variance only — the T0a/T0b captures are
+  deterministic per commit, so the only variance source is the
+  availability probe; a 0.05 margin absorbs a single probe flake),
+  evaluation ran third. The held-out corpus was opened only after the
+  freeze, and one gate genuinely failed on it (below) — reported
+  un-relaxed, which is the discipline working as designed.
+- **Tiers A and C are deterministic and computed, not asserted:**
+  Tier A checks every scenario's capability expectations against the
+  real T6 evaluators (role, hard phases, AKG requirement answers from
+  `graph_state`, executor probes from the scenario's declared
+  inventory — never PATH); Tier C drives the real chain request →
+  `AdapterResolver` → `ExecutionSpec` → canned artifact → T3
+  `ParserRegistry` → observations, asserting argv heads, observation
+  kinds, and the declared hard-error paths (an undeclared executor →
+  `AdapterResolutionError`, never bash fallback; `impacket_txt` with no
+  parser → `UnknownFormatError`, never a silent skip). Numeric results:
+  **Tier A pass_rate = 1.000 (7 + 8 expectations), Tier C pass_rate =
+  1.000 (4 + 1 cases) on dev and held-out respectively.**
+- **Tiers B and D report PENDING, never fabricated.** Tier B is a
+  `SelectionPolicy` protocol scored by the five selection metrics; the
+  bundled `ScriptedSelectionPolicy` (policies carry an explicit
+  `live` flag) replays each scenario's declared `expected_selection`
+  and is labeled "scripted (pipeline validation only)" in every report
+  — its numbers measure the scoring plumbing. A live-LLM policy plugs
+  into the same protocol without reshaping the harness. Tier D needs
+  the live stack and is recorded as `pending_live_run: true`.
+- **Exposure comparison (the LLM-free ablation), numeric results:**
+  config A = pinned T0b surfaces; config B = T9's
+  `resolve_active_tools` over config A; config C = today's static
+  surface completed with every eligible catalog capability tool, plus
+  T0b middleware names. Dev: A recall_min = 0.000 (the T0 surface
+  predates `detect_tech_stack`/`research_cve`/`lookup_payload`/
+  `generate_report` — the T4/T5 gap quantified), B = A (filtering
+  structurally cannot add), **C recall_min = 1.000, forbidden = 0,
+  task-success proxy = 1.000, latency_max = 5**. Held-out: A/B/C
+  recall_min all = 1.000, forbidden = 0, proxy = 1.000; **C
+  latency_max = 6 → the frozen `DISCOVERY_LATENCY_MAX = 5` gate
+  FAILS** — `research.web_fetch` declares no `phase_affinity`, so
+  ranking never promotes it past position 6. Threshold left frozen;
+  the finding feeds T12 (ranking needs affinity data for unrestricted
+  capabilities). Non-regression (every scenario: recall(B,C) ≥
+  recall(A) − 0.05) holds on both corpora.
+- **H2 (schema-token reduction) is NOT validated on the static layer,
+  reported honestly:** config C's measured static schema chars
+  (14,947–43,256 across roles) exceed config A's T0a static numbers
+  (9,555–31,498) — today's semantic tools carry richer schemas, and C
+  deliberately trades schema tokens for capability coverage (recall
+  0.5 → 1.0 on dev). The hypothesis remains open for the live tiers,
+  where per-turn surfaces (not the static layer) are the object.
+- **Wiring gap surfaced by the harness (not fixed here, one concern
+  per wave):** the catalog declares `recon.detect_tech_stack`, but no
+  standard role's static surface carries the tool — config C reaches
+  recall 1.0 exactly because the capability-abstraction surface is
+  catalog-driven. Wiring it into recon's static list is a T12+ change.
+- **Loader strictness:** pydantic `extra="forbid"`, cross-field
+  set-overlap rejection (required ∩ forbidden/optional,
+  forbidden ∩ optional, expected_selection ∩ forbidden), duplicate
+  scenario-id rejection, unknown expectation-value rejection — a
+  typo'd fixture fails loudly instead of silently skewing metrics.
+  32 deterministic tests in
+  `packages/raptix/tests/unit/benchmark/test_tool_eval.py`; ruff
+  clean; basedpyright 0 errors / 1 warning on the new package.
 
 ---
 

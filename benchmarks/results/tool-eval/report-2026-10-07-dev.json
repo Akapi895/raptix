@@ -1,0 +1,526 @@
+{
+  "fixtures": "D:\\.VTNet\\phase-2\\raptix\\packages\\raptix-core\\tests\\fixtures\\capabilities\\dev.jsonl",
+  "generated_at": "2026-10-06T19:37:10+00:00",
+  "thresholds_frozen_at": "2026-10-07",
+  "scenario_count": 6,
+  "tiers": {
+    "A": {
+      "tier": "A",
+      "kind": "registry correctness",
+      "llm_required": false,
+      "cases": [
+        {
+          "scenario_id": "recon-web-recon",
+          "capability_id": "access.move_laterally",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'recon' not allowed (allowed: ['exploit'])"
+        },
+        {
+          "scenario_id": "recon-web-recon",
+          "capability_id": "network.discover_subdomains",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "recon-web-recon",
+          "capability_id": "network.scan",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "recon-web-recon",
+          "capability_id": "recon.detect_tech_stack",
+          "expectation": "eligible",
+          "passed": true,
+          "detail": "eligible"
+        },
+        {
+          "scenario_id": "recon-web-recon",
+          "capability_id": "research.web_fetch",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "recon-web-recon",
+          "capability_id": "research.web_search",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "recon-tech-stack",
+          "capability_id": "recon.detect_tech_stack",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "exploit-research",
+          "capability_id": "access.credential_dump",
+          "expectation": "unavailable",
+          "passed": true,
+          "detail": "status=unavailable"
+        },
+        {
+          "scenario_id": "exploit-research",
+          "capability_id": "analyst.fuzz_target",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'exploit' not allowed (allowed: ['analyst'])"
+        },
+        {
+          "scenario_id": "exploit-lateral-move",
+          "capability_id": "access.credential_dump",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "exploit-lateral-move",
+          "capability_id": "access.move_laterally",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "exploit-lateral-move",
+          "capability_id": "network.capture_ntlm",
+          "expectation": "unavailable",
+          "passed": true,
+          "detail": "status=unavailable"
+        },
+        {
+          "scenario_id": "bluecell-detection-loop",
+          "capability_id": "defense.export_navigator",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "bluecell-detection-loop",
+          "capability_id": "defense.generate_brief",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "bluecell-detection-loop",
+          "capability_id": "defense.scan_coverage",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "bluecell-detection-loop",
+          "capability_id": "osint.enrich_domain",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'blue_cell' not allowed (allowed: ['osint_operator'])"
+        },
+        {
+          "scenario_id": "analyst-reporting",
+          "capability_id": "analyst.propose_patch",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "analyst-reporting",
+          "capability_id": "analyst.verify_patch",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "analyst-reporting",
+          "capability_id": "defense.scan_coverage",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'analyst' not allowed (allowed: ['blue_cell'])"
+        }
+      ],
+      "pass_rate": 1.0,
+      "meets_threshold": true
+    },
+    "B": {
+      "tier": "B",
+      "kind": "tool-selection",
+      "llm_required": true,
+      "policy": "scripted",
+      "mode": "scripted (pipeline validation only)",
+      "cases": [
+        {
+          "scenario_id": "recon-web-recon",
+          "selected": [
+            "web_search",
+            "web_fetch"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 0.0,
+          "task_success": true
+        },
+        {
+          "scenario_id": "recon-tech-stack",
+          "selected": [],
+          "selection_precision": null,
+          "invalid_selection_rate": null,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": null,
+          "task_success": false
+        },
+        {
+          "scenario_id": "exploit-research",
+          "selected": [],
+          "selection_precision": null,
+          "invalid_selection_rate": null,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": null,
+          "task_success": false
+        },
+        {
+          "scenario_id": "exploit-lateral-move",
+          "selected": [
+            "bash"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 1.0,
+          "task_success": true
+        },
+        {
+          "scenario_id": "bluecell-detection-loop",
+          "selected": [
+            "blue_cell_scan",
+            "defense_brief",
+            "export_attack_navigator"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 0.0,
+          "task_success": true
+        },
+        {
+          "scenario_id": "analyst-reporting",
+          "selected": [
+            "web_fetch",
+            "web_search"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 0.0,
+          "task_success": false
+        }
+      ],
+      "selection_precision": 1.0,
+      "invalid_selection_rate": 0.0,
+      "task_success_rate": 0.5,
+      "pending_live_run": true,
+      "meets_threshold": null
+    },
+    "C": {
+      "tier": "C",
+      "kind": "executor chain",
+      "llm_required": false,
+      "cases": [
+        {
+          "scenario_id": "recon-web-recon",
+          "case_id": "nmap-subnet",
+          "capability_id": "network.scan",
+          "passed": true,
+          "detail": "ok"
+        },
+        {
+          "scenario_id": "recon-web-recon",
+          "case_id": "gobuster-dir",
+          "capability_id": "web.fuzz_paths",
+          "passed": true,
+          "detail": "ok"
+        },
+        {
+          "scenario_id": "exploit-lateral-move",
+          "case_id": "psexec-whoami",
+          "capability_id": "access.move_laterally",
+          "passed": true,
+          "detail": "ok"
+        },
+        {
+          "scenario_id": "exploit-lateral-move",
+          "case_id": "responder-not-declared",
+          "capability_id": "network.capture_ntlm",
+          "passed": true,
+          "detail": "resolution: network.capture_ntlm: capability is unavailable (no healthy implementation \u2014 bash is not a fallback)"
+        }
+      ],
+      "pass_rate": 1.0,
+      "meets_threshold": true
+    },
+    "D": {
+      "tier": "D",
+      "kind": "end-to-end",
+      "llm_required": true,
+      "pending_live_run": true,
+      "note": "requires the live stack (mission \u2192 planner \u2192 worker \u2192 executor \u2192 AKG)"
+    }
+  },
+  "exposure_comparison": [
+    {
+      "scenario_id": "recon-web-recon",
+      "role": "recon",
+      "config": "A",
+      "surface_size": 19,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 16,
+      "task_success_proxy": true,
+      "schema_chars": 19882
+    },
+    {
+      "scenario_id": "recon-web-recon",
+      "role": "recon",
+      "config": "B",
+      "surface_size": 19,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 16,
+      "task_success_proxy": true,
+      "schema_chars": 19882
+    },
+    {
+      "scenario_id": "recon-web-recon",
+      "role": "recon",
+      "config": "C",
+      "surface_size": 21,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 2,
+      "task_success_proxy": true,
+      "schema_chars": 22142
+    },
+    {
+      "scenario_id": "recon-tech-stack",
+      "role": "recon",
+      "config": "A",
+      "surface_size": 19,
+      "capability_exposure_recall": 0.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": null,
+      "task_success_proxy": false,
+      "schema_chars": 19882
+    },
+    {
+      "scenario_id": "recon-tech-stack",
+      "role": "recon",
+      "config": "B",
+      "surface_size": 19,
+      "capability_exposure_recall": 0.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": null,
+      "task_success_proxy": false,
+      "schema_chars": 19882
+    },
+    {
+      "scenario_id": "recon-tech-stack",
+      "role": "recon",
+      "config": "C",
+      "surface_size": 21,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 22142
+    },
+    {
+      "scenario_id": "exploit-research",
+      "role": "exploit",
+      "config": "A",
+      "surface_size": 17,
+      "capability_exposure_recall": 0.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": null,
+      "task_success_proxy": false,
+      "schema_chars": 16251
+    },
+    {
+      "scenario_id": "exploit-research",
+      "role": "exploit",
+      "config": "B",
+      "surface_size": 17,
+      "capability_exposure_recall": 0.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": null,
+      "task_success_proxy": false,
+      "schema_chars": 16251
+    },
+    {
+      "scenario_id": "exploit-research",
+      "role": "exploit",
+      "config": "C",
+      "surface_size": 23,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 1,
+      "task_success_proxy": true,
+      "schema_chars": 26606
+    },
+    {
+      "scenario_id": "exploit-lateral-move",
+      "role": "exploit",
+      "config": "A",
+      "surface_size": 17,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 16251
+    },
+    {
+      "scenario_id": "exploit-lateral-move",
+      "role": "exploit",
+      "config": "B",
+      "surface_size": 17,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 16251
+    },
+    {
+      "scenario_id": "exploit-lateral-move",
+      "role": "exploit",
+      "config": "C",
+      "surface_size": 23,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 4,
+      "task_success_proxy": true,
+      "schema_chars": 26606
+    },
+    {
+      "scenario_id": "bluecell-detection-loop",
+      "role": "blue_cell",
+      "config": "A",
+      "surface_size": 15,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 9555
+    },
+    {
+      "scenario_id": "bluecell-detection-loop",
+      "role": "blue_cell",
+      "config": "B",
+      "surface_size": 15,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 9555
+    },
+    {
+      "scenario_id": "bluecell-detection-loop",
+      "role": "blue_cell",
+      "config": "C",
+      "surface_size": 19,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 14947
+    },
+    {
+      "scenario_id": "analyst-reporting",
+      "role": "analyst",
+      "config": "A",
+      "surface_size": 37,
+      "capability_exposure_recall": 0.6666666666666666,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 34,
+      "task_success_proxy": false,
+      "schema_chars": 31498
+    },
+    {
+      "scenario_id": "analyst-reporting",
+      "role": "analyst",
+      "config": "B",
+      "surface_size": 37,
+      "capability_exposure_recall": 0.6666666666666666,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 34,
+      "task_success_proxy": false,
+      "schema_chars": 31498
+    },
+    {
+      "scenario_id": "analyst-reporting",
+      "role": "analyst",
+      "config": "C",
+      "surface_size": 51,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 5,
+      "task_success_proxy": true,
+      "schema_chars": 43256
+    }
+  ],
+  "per_config": {
+    "A": {
+      "surface_size_max": 37,
+      "capability_exposure_recall_min": 0.0,
+      "forbidden_exposure_rate_max": 0.0,
+      "task_success_proxy": 0.5,
+      "discovery_latency_max": 34,
+      "schema_chars_min": 9555,
+      "schema_chars_max": 31498
+    },
+    "B": {
+      "surface_size_max": 37,
+      "capability_exposure_recall_min": 0.0,
+      "forbidden_exposure_rate_max": 0.0,
+      "task_success_proxy": 0.5,
+      "discovery_latency_max": 34,
+      "schema_chars_min": 9555,
+      "schema_chars_max": 31498
+    },
+    "C": {
+      "surface_size_max": 51,
+      "capability_exposure_recall_min": 1.0,
+      "forbidden_exposure_rate_max": 0.0,
+      "task_success_proxy": 1.0,
+      "discovery_latency_max": 5,
+      "schema_chars_min": 14947,
+      "schema_chars_max": 43256
+    }
+  },
+  "gates": {
+    "non_regression": {
+      "failures": [],
+      "ok": true,
+      "rule": "recall(config) >= recall(A) - 0.05 for every scenario"
+    },
+    "config_B": {
+      "capability_exposure_recall_min": 0.0,
+      "recall_ok": null,
+      "forbidden_ok": true,
+      "success_proxy_ok": null,
+      "latency_ok": null,
+      "note": "B filters A's pinned surface; recall/success/latency floors are inherited from A and gated via non_regression instead"
+    },
+    "config_C": {
+      "capability_exposure_recall_min": 1.0,
+      "recall_ok": true,
+      "forbidden_ok": true,
+      "success_proxy_ok": true,
+      "latency_ok": true
+    },
+    "ok": true
+  }
+}

@@ -116,6 +116,9 @@ benchmarks/results/*
 !benchmarks/results/README.md
 !benchmarks/results/cve-bench/
 !benchmarks/results/cve-bench/**
+# T11 tool-eval evidence reports (pre-registered thresholds + numeric results).
+!benchmarks/results/tool-eval/
+!benchmarks/results/tool-eval/**
 benchmarks/results/XBEN-*-24/evidence/langsmith_trace.json
 benchmarks/results/XBEN-*-24/evidence/iter14_pass.json
 benchmarks/results/XBEN-*-24/evidence/*_iter*.json
