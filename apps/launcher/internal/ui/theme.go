@@ -91,11 +91,11 @@ func RenderBanner() string {
 	// Medium terminal — braille logo + text name below
 	if cols >= bannerLogoWidth {
 		return BannerStyle.Render(bannerLogo) + "\n" +
-			BannerBold.Render("       D E C E P T I C O N")
+			BannerBold.Render("       R A P T I X")
 	}
 
 	// Narrow terminal — text only
-	return BannerBold.Render("D E C E P T I C O N")
+	return BannerBold.Render("R A P T I X")
 }
 
 func termWidth() int {
