@@ -34,22 +34,35 @@ from raptix_core.types.capability import (
 
 
 class TestCatalog:
-    def test_covers_every_t1_semantic_capability(self) -> None:
-        expected = {
-            "defense.scan_coverage",
-            "defense.generate_brief",
-            "defense.export_navigator",
-            "osint.enrich_domain",
-            "analyst.propose_patch",
-            "analyst.verify_patch",
-            "analyst.run_scan_shard",
-            "web.scan_secrets",
-            "recon.detect_tech_stack",
-            "analyst.fuzz_target",
-            "research.web_fetch",
-            "research.web_search",
-        }
-        assert {str(m.id) for m in build_catalog()} == expected
+    T1_CAPABILITIES = {
+        "defense.scan_coverage",
+        "defense.generate_brief",
+        "defense.export_navigator",
+        "osint.enrich_domain",
+        "analyst.propose_patch",
+        "analyst.verify_patch",
+        "analyst.run_scan_shard",
+        "web.scan_secrets",
+        "recon.detect_tech_stack",
+        "analyst.fuzz_target",
+        "research.web_fetch",
+        "research.web_search",
+    }
+
+    T7_CAPABILITIES = {
+        "network.scan",
+        "network.discover_subdomains",
+        "web.test_injection",
+        "web.fuzz_paths",
+        "web.scan_web",
+        "access.move_laterally",
+        "access.credential_dump",
+        "network.capture_ntlm",
+    }
+
+    def test_covers_every_t1_semantic_capability_plus_t7_binaries(self) -> None:
+        ids = {str(m.id) for m in build_catalog()}
+        assert ids == self.T1_CAPABILITIES | self.T7_CAPABILITIES
 
     def test_ids_are_unique_and_schema_versioned(self) -> None:
         manifests = build_catalog()
@@ -73,10 +86,21 @@ class TestCatalog:
     def test_in_process_carriers_import_cleanly(self) -> None:
         evaluator = AvailabilityEvaluator()
         for manifest in build_catalog():
+            if not all(":" in (impl.executable or "") for impl in manifest.implementations):
+                continue  # T7 binary-backed impls probe PATH, not imports
             availability = evaluator.evaluate(manifest)
             assert availability.status is CapabilityStatus.AVAILABLE, (
                 f"{manifest.id}: {availability.healthy_implementations}"
             )
+
+    def test_t7_implementations_declare_base_profile(self) -> None:
+        for manifest in build_catalog():
+            if str(manifest.id) not in self.T7_CAPABILITIES:
+                continue
+            for impl in manifest.implementations:
+                assert impl.profile == "base", manifest.id
+                assert impl.adapter_id, manifest.id
+                assert ":" not in (impl.executable or ""), manifest.id
 
     def test_fuzz_target_declares_two_implementations(self) -> None:
         manifest = next(m for m in build_catalog() if str(m.id) == "analyst.fuzz_target")
@@ -92,14 +116,16 @@ class TestRegistry:
         registry = CapabilityRegistry()
         manifest = registry.get("research.web_search")
         assert str(manifest.id) == "research.web_search"
+        manifest = registry.get("network.scan")  # T7 binary-backed capability
+        assert str(manifest.id) == "network.scan"
         with pytest.raises(UnknownCapabilityError):
-            registry.get("network.scan")  # T7 capability — not catalogued yet
+            registry.get("network.nonexistent")
 
     def test_contains_and_len(self) -> None:
         registry = CapabilityRegistry()
         assert "research.web_search" in registry
-        assert "network.scan" not in registry
-        assert len(registry) == 12
+        assert "network.scan" in registry
+        assert len(registry) == 20
 
     def test_for_role_unrestricted_means_every_role(self) -> None:
         registry = CapabilityRegistry()
@@ -127,8 +153,16 @@ class TestRegistry:
             assert entry["status"] in {"available", "partial", "unavailable"}
             assert isinstance(entry["healthy_implementations"], list)
 
-    def test_startup_health_check_passes_on_full_catalog(self) -> None:
-        assert health_check(CapabilityRegistry()) is True
+    def test_startup_health_check_with_probes_injected(self) -> None:
+        # The real catalog probes PATH (sandbox binaries may legitimately
+        # be absent on a dev host — PARTIAL passes, UNAVAILABLE fails),
+        # so the gate mechanics are asserted with an injected probe.
+        evaluator = AvailabilityEvaluator(executable_probe=lambda _exe: True)
+        assert health_check(CapabilityRegistry(availability=evaluator)) is True
+
+    def test_startup_health_check_fails_when_probe_finds_nothing(self) -> None:
+        evaluator = AvailabilityEvaluator(executable_probe=lambda _exe: False)
+        assert health_check(CapabilityRegistry(availability=evaluator)) is False
 
 
 class TestAvailabilityEvaluator:

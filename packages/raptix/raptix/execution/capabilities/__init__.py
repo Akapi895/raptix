@@ -1,15 +1,16 @@
-"""Capability catalog + evaluators (Wave T6).
+"""Capability catalog + evaluators (Waves T6 + T7).
 
 Runtime instantiation of the frozen ``raptix_core.types.capability``
-contracts: the initial manifest catalog for the T1-classified semantic
-capabilities, a queryable registry, and the three-way separation the
-plan mandates — availability (executor presence) and eligibility
-(role/phase/requirements) are evaluated by separate components and
-exposed as separate result types. Authorization remains the
-invocation-time guard and lives elsewhere by design.
+contracts: the manifest catalog for the T1-classified semantic
+capabilities plus the T7 binary-backed ones, a queryable registry, and
+the three-way separation the plan mandates — availability (executor
+presence) and eligibility (role/phase/requirements) are evaluated by
+separate components and exposed as separate result types.
+Authorization remains the invocation-time guard and lives elsewhere by
+design.
 
-Adapters for real executors land in T7 (``execution/adapters/``);
-bounded workers in T10; this package only declares and evaluates.
+Real executors live in ``execution/adapters/`` (T7); bounded workers
+in T10; this package only declares and evaluates.
 """
 
 from raptix.execution.capabilities.availability import (

@@ -954,7 +954,7 @@ held).
 
 ---
 
-### Wave T7 — Adapter layer for EXISTING executors
+### Wave T7 — Adapter layer for EXISTING executors ✅ DONE
 
 **Goal:** Create thin adapters for security binaries already installed in
 the sandbox image. Prove the adapter architecture works before adding
@@ -994,6 +994,69 @@ class ToolAdapter(Protocol):
 - End-to-end: capability request → adapter → executor → artifact → parser → observation
 - Resolver does NOT implicitly fall back to bash when no adapter matches;
   capability is UNAVAILABLE if no declared implementation exists
+
+**Outcome: 8 binary-backed capabilities + 8 adapters + a no-fallback
+resolver under `raptix/execution/adapters/`.** The plan's sketch
+predates the T2 contract freeze — the shipped `ToolAdapter` protocol
+takes `is_available() -> bool` and
+`build_execution(request, *, implementation_id)` (there is no
+`ExecutionContext` in the frozen contracts; the request carries its own
+`context` mapping). All 7 binaries verified present in
+`infra/containers/sandbox.Dockerfile` (nmap, subfinder, sqlmap, gobuster,
+nikto, responder, python3-impacket).
+
+- `base.py` — `ToolAdapter` protocol (class-level identity metadata) +
+  `CommandAdapter` base: `payload = {"argv": [...]}` handed to the
+  executor as a list, never a shell string; strict param validators
+  (`str/int/bool/list/url/domain/artifact-name`) with
+  `AdapterParameterError`; **unknown request parameters are ignored** —
+  there is no raw-args escape hatch, a planner cannot smuggle flags.
+- 7 adapter modules, one capability each (impacket module serves two):
+  `network.scan`→nmap (fixed `-sT/-sS/-sU` mapping, port-list charset,
+  `-oX` artifact), `network.discover_subdomains`→subfinder (`-json -o`
+  JSONL), `web.test_injection`→sqlmap (`--batch` always on, level/risk
+  bounds, technique charset), `web.fuzz_paths`→gobuster (`dir` mode,
+  wordlist param defaulting to the dirb common list), `web.scan_web`→
+  nikto (`-Format txt` pinned), `access.move_laterally`→impacket
+  psexec/wmiexec/atexec (principal built from validated parts; all
+  wrappers ship in one apt package so probing one probes the package),
+  `access.credential_dump`→impacket-secretsdump, and
+  `network.capture_ntlm`→responder (analyze mode `-A` by default,
+  poisoning only on explicit `poison=True`).
+- `resolver.py` — `AdapterResolver`: registry lookup → availability →
+  first healthy implementation with a registered adapter, copying the
+  resolved `ImplementationSpec.id` into `ExecutionSpec.implementation_id`
+  (frozen T2 contract). Unknown id → registry's
+  `UnknownCapabilityError`; unavailable or no registered adapter →
+  `AdapterResolutionError` — **no bash fallback anywhere**; a test
+  asserts bash appears in no adapter id/executable and the resolver
+  never fabricates a spec.
+- `catalog.py` — the 8 T7 manifests join the 12 T6 ones (registry is
+  now 20): one `ADAPTER` impl each, bare binary name (PATH probe),
+  `profile="base"`, `adapter_id` matching the adapter class. Risk
+  honesty: `web.test_injection`/`access.move_laterally`/
+  `network.capture_ntlm` HIGH, `access.credential_dump` CRITICAL;
+  impacket capabilities declare the `credential.available` AKG
+  requirement (unmet until the runtime evaluator is wired — the
+  conservative T2 default).
+- Expected artifact formats pin the T3 parser ids where parsers exist
+  (`nmap_xml`, `subfinder`, `gobuster`); formats without parsers yet
+  (`sqlmap_log`, `nikto_txt`, `impacket_txt`, `responder_log`) are
+  declared anyway so parsing surfaces a hard `UnknownFormatError`
+  naming the missing parser — never a silent skip (T8 closes the gap).
+
+Test surface: new `tests/unit/adapters/test_adapters.py` — 40
+deterministic tests (protocol conformance + adapter-id↔catalog match,
+per-adapter argv matrices incl. rejection paths, no-passthrough
+smuggling, resolver dispatch/PARTIAL selection/hard errors, binary
+missing/present snapshot honesty, no-bash-fallback, and the
+request → spec → fake executor → artifact → `ParserRegistry` →
+observation end-to-end). `test_capability_registry.py` re-pinned to
+the 20-manifest catalog (T1 set ∪ T7 set, base-profile declaration,
+import-probe restricted to `module:attr` carriers, health gate with
+injected probes). 82/82 tests pass. ruff clean; basedpyright 0 errors
+/ 727 warnings (baseline held, zero new warnings in the adapter
+package).
 
 ---
 
