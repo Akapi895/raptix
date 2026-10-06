@@ -43,7 +43,11 @@ from raptix.intelligence.agents.middleware_slots import (
     MiddlewareSlot,
 )
 from raptix.intelligence.agents.tool_exposure import record_tool_exposure
-from raptix.intelligence.tooling.exposure import record_exposure_shadow
+from raptix.intelligence.tooling.exposure import (
+    active_exposure_tools,
+    record_exposure_shadow,
+    resolve_exposure_mode,
+)
 from raptix.middleware.skillogy import maybe_install_skillogy
 from raptix_core.plugin_loader import (
     PluginBundle,
@@ -513,10 +517,16 @@ def build_tools(
     # T0 baseline telemetry (docs/tool-optimization-implementation-plan.md):
     # logging-only, gated by RAPTIX_TOOL_TELEMETRY, never mutates ``result``.
     record_tool_exposure(role, result)
-    # T9 shadow-mode dynamic exposure (same plan): computes what a
-    # dynamically filtered surface WOULD look like and logs the diff —
-    # gated by RAPTIX_EXPOSURE_SHADOW, never enforces, never mutates.
-    record_exposure_shadow(role, result)
+    # T9 shadow + T12 active dynamic exposure: shadow logs the diff;
+    # active serves the filtered set for roles inside the rollout stage
+    # (recon → exploit → postexploit → ad_operator → analyst). Rollback
+    # is a flag flip back to shadow/off — no code revert. ``off`` (the
+    # default) does nothing at all.
+    exposure_mode = resolve_exposure_mode(role)
+    if exposure_mode.mode != "off":
+        record_exposure_shadow(role, result)
+        if exposure_mode.role_active:
+            result = active_exposure_tools(role, result)
     return result
 
 

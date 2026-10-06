@@ -1,9 +1,18 @@
-"""Shadow-mode dynamic tool exposure — Wave T9.
+"""Dynamic tool exposure — Waves T9 (shadow) + T12 (active, role-by-role).
 
-Computes what a *dynamically filtered* tool surface WOULD look like for a
-role and logs the diff, but never enforces it: callers keep serving their
-static tool list. Enforcement stays off until T12 validates
-non-regression against the T0/T11 baselines.
+Computes what a *dynamically filtered* tool surface WOULD look like for
+a role. Three modes via ``RAPTIX_DYNAMIC_TOOL_EXPOSURE``:
+
+* ``off`` (default) — static surfaces only, nothing logged.
+* ``shadow`` — logs the diff, callers keep serving their static tool
+  list. The T9 behavior; also the rollback target for ``active``
+  (flag flip, no code revert).
+* ``active`` — serves the filtered set, but ONLY for roles inside the
+  current rollout stage (``RAPTIX_EXPOSURE_ROLLOUT_STAGE``, default 0
+  = no roles): recon → exploit → postexploit → ad_operator → analyst
+  (last — largest surface, biggest behavior change, per the plan).
+  Shadow logging stays on in every non-``off`` mode for ongoing
+  regression monitoring.
 
 Exposure logic (docs/tool-optimization-implementation-plan.md, T9):
 
@@ -17,13 +26,15 @@ Exposure logic (docs/tool-optimization-implementation-plan.md, T9):
 
 ``phase_affinity`` only re-ranks the proposed order — it never excludes a
 tool. The recovery surface (``RECOVERY_TOOL_NAMES``) is always included in
-the proposed set regardless of any eligibility/availability verdict.
+the proposed set regardless of any eligibility/availability verdict, and
+active mode never serves an empty toolset or raises — dynamic exposure is
+a UX optimization, never a security control.
 
-Shadow mode is opt-in via ``RAPTIX_EXPOSURE_SHADOW=1`` (zero cost off;
-mirrors the T0 ``RAPTIX_TOOL_TELEMETRY`` pattern). The log record is the
-T11 diff data: current vs proposed names, what would be filtered, and
-why — tool names and static evaluator reasons only, never parameter
-values.
+The legacy T9 opt-in ``RAPTIX_EXPOSURE_SHADOW=1`` keeps working as an
+alias for ``shadow``. An unrecognized mode value fails safe to ``off``.
+The log record is the T11 diff data: current vs proposed names, what
+would be filtered, and why — tool names and static evaluator reasons
+only, never parameter values.
 
 Deviations from the plan's sketch, kept deliberately:
 
@@ -59,6 +70,16 @@ from raptix_core.types.capability import CapabilityStatus, ImplementationKind, R
 logger = logging.getLogger("raptix.tools.exposure")
 
 SHADOW_ENV_VAR = "RAPTIX_EXPOSURE_SHADOW"
+EXPOSURE_MODE_ENV_VAR = "RAPTIX_DYNAMIC_TOOL_EXPOSURE"
+ROLLOUT_STAGE_ENV_VAR = "RAPTIX_EXPOSURE_ROLLOUT_STAGE"
+
+# The plan's T12 rollout order: recon → exploit → postexploit →
+# AD specialists → analyst (last). ``ad_operator`` is served through the
+# plugin path today, so its entry stays inert until that path adopts the
+# flag — the order still encodes the plan's sequence. Stage N serves the
+# first N roles; stage 0 (default) serves none; a stage beyond the tuple
+# serves all of it.
+ROLLOUT_ORDER: tuple[str, ...] = ("recon", "exploit", "postexploit", "ad_operator", "analyst")
 
 # The plan's recovery surface, always included in the proposed set
 # regardless of filtering, plus the runtime spellings the sketch
@@ -284,18 +305,82 @@ def summarize_exposure_result(
     }
 
 
-def _shadow_enabled() -> bool:
-    return os.environ.get(SHADOW_ENV_VAR, "").strip().lower() in {"1", "true", "yes"}
+@dataclass(frozen=True)
+class ExposureMode:
+    """The resolved T12 exposure posture for one role.
+
+    ``mode`` — ``off`` | ``shadow`` | ``active`` (unrecognized values
+    fail safe to ``off``).
+    ``role_active`` — ``mode == "active"`` AND the role is inside the
+    current rollout stage; only then may the caller serve the filtered
+    set.
+    """
+
+    mode: str
+    role_active: bool
+
+
+def _env_flag(name: str) -> bool:
+    return os.environ.get(name, "").strip().lower() in {"1", "true", "yes"}
+
+
+def _rollout_stage() -> int:
+    raw = os.environ.get(ROLLOUT_STAGE_ENV_VAR, "").strip()
+    try:
+        stage = int(raw) if raw else 0
+    except ValueError:
+        return 0
+    return max(0, stage)
+
+
+def resolve_exposure_mode(role: str) -> ExposureMode:
+    """Resolve the exposure mode + rollout gate for ``role``.
+
+    Never raises, never falls outside the three named modes; anything
+    unrecognized (or an unusable stage) fails safe to ``off`` / stage 0.
+    """
+    raw = os.environ.get(EXPOSURE_MODE_ENV_VAR, "").strip().lower()
+    if raw in ("shadow", "active"):
+        mode = raw
+    elif _env_flag(SHADOW_ENV_VAR):
+        mode = "shadow"
+    else:
+        mode = "off"
+    role_active = mode == "active" and role in ROLLOUT_ORDER[: _rollout_stage()]
+    return ExposureMode(mode=mode, role_active=role_active)
+
+
+def active_exposure_tools(role: str, tools: list[Any]) -> list[Any]:
+    """Serve the dynamically filtered surface for an active-mode role.
+
+    Never raises and never returns an empty list: any resolution failure
+    or empty proposal falls back to the caller's list unchanged — agent
+    construction must never break on a UX optimization, and a specialist
+    is never left toolless.
+    """
+    try:
+        result = resolve_active_tools(role=role, current_tools=tools)
+        proposed = list(result.proposed_tools)
+        return proposed if proposed else list(tools)
+    except Exception:  # noqa: BLE001 — active exposure must never break agent construction
+        logger.debug("active_exposure: resolve failed; serving static", exc_info=True)
+        return list(tools)
+
+
+def _shadow_enabled(role: str) -> bool:
+    return _env_flag(SHADOW_ENV_VAR) or resolve_exposure_mode(role).mode != "off"
 
 
 def record_exposure_shadow(role: str, tools: list[Any]) -> None:
     """Log what dynamic exposure WOULD change for ``role`` — never enforce.
 
-    No-op unless ``RAPTIX_EXPOSURE_SHADOW=1``. The caller keeps serving
-    its static tool list; shadow mode only produces the T11 diff record.
-    Never raises, never mutates ``tools``.
+    Logs in every non-``off`` exposure mode (the T9
+    ``RAPTIX_EXPOSURE_SHADOW=1`` alias keeps working): shadow mode and
+    active mode both need the diff record for ongoing regression
+    monitoring. In active mode the served set IS the proposed set of
+    this record. Never raises, never mutates ``tools``.
     """
-    if not _shadow_enabled():
+    if not _shadow_enabled(role):
         return
     try:
         result = resolve_active_tools(role=role, current_tools=tools)
