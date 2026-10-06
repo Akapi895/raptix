@@ -14,8 +14,8 @@ DEFINITION = DomainAgentDefinition(
         "skills/standard/mobile/."
     ),
     tool_names=(
-        "payload_search",
-        "methodology_lookup",
+        "lookup_payload",
+        "search_security_references",
         "cve_lookup",
         "bash",
         "bash_output",

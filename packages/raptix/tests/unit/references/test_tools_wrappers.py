@@ -2,25 +2,19 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, cast
+from typing import Any
 
 import pytest
 
 from raptix.execution.tools.references import tools as T
 from raptix.execution.tools.references.catalog import REFERENCES, references_by_category
+from raptix.execution.tools.references.corpus import (
+    UNTRUSTED_HEADER,
+    sanitize_corpus_text,
+    wrap_corpus,
+)
 from raptix.execution.tools.references.hydrate import HydrationResult
 from raptix.execution.tools.references.payloads import PayloadBundle
-
-_ref_list = cast(Any, T.ref_list)
-_ref_suggest = cast(Any, T.ref_suggest)
-_ref_topic = cast(Any, T.ref_topic)
-_ref_fetch = cast(Any, T.ref_fetch)
-_ref_status = cast(Any, T.ref_status)
-_ref_grep = cast(Any, T.ref_grep)
-_payload_search = cast(Any, T.payload_search)
-_payload_classes = cast(Any, T.payload_classes)
-_references_hydrate = cast(Any, T.references_hydrate)
-_h1_search = cast(Any, T.h1_search)
 
 
 def _load(result: str) -> Any:
@@ -32,30 +26,30 @@ def _load(result: str) -> Any:
 
 class TestSanitizeCorpusText:
     def test_empty_string_returns_empty_immediately(self) -> None:
-        assert T._sanitize_corpus_text("") == ""
+        assert sanitize_corpus_text("") == ""
 
     def test_control_chars_stripped_but_whitespace_kept(self) -> None:
-        result = T._sanitize_corpus_text("a\x00b\x07c\tdone\n")
+        result = sanitize_corpus_text("a\x00b\x07c\tdone\n")
         assert result == "abc\tdone\n"
 
     def test_truncation_branch_appends_suffix(self) -> None:
-        result = T._sanitize_corpus_text("x" * 50, limit=10)
+        result = sanitize_corpus_text("x" * 50, limit=10)
         assert result.startswith("x" * 10)
         assert result.endswith("…[truncated by corpus sanitiser]")
 
 
 class TestWrapCorpus:
     def test_envelope_shape_and_values(self) -> None:
-        result = T._wrap_corpus("src", {"k": 1})
+        result = wrap_corpus("src", {"k": 1})
         assert result["source"] == "src"
         assert result["trust"] == "untrusted-external-corpus"
-        assert result["notice"] == T._UNTRUSTED_HEADER
+        assert result["notice"] == UNTRUSTED_HEADER
         assert result["data"] == {"k": 1}
 
 
 class TestRefList:
     def test_all_branch_returns_full_catalog(self) -> None:
-        data = json.loads(_ref_list.invoke({}))
+        data = json.loads(T.ref_list())
         assert data["count"] == len(REFERENCES)
         assert data["count"] == len(data["references"])
         slugs = {r["slug"] for r in data["references"]}
@@ -64,34 +58,34 @@ class TestRefList:
     def test_category_filter_branch_returns_subset(self) -> None:
         category = "report-corpus"
         expected = references_by_category(category)
-        data = json.loads(_ref_list.invoke({"category": category}))
+        data = json.loads(T.ref_list(category))
         assert data["count"] == len(expected)
         assert all(r["category"] == category for r in data["references"])
 
     def test_nonexistent_category_returns_empty(self) -> None:
-        data = json.loads(_ref_list.invoke({"category": "nonexistent-cat"}))
+        data = json.loads(T.ref_list("nonexistent-cat"))
         assert data["count"] == 0
         assert data["references"] == []
 
 
 class TestRefSuggest:
     def test_vuln_class_branch_returns_results(self) -> None:
-        data = json.loads(_ref_suggest.invoke({"vuln_class": "ssrf"}))
+        data = json.loads(T.ref_suggest(vuln_class="ssrf"))
         assert data["count"] > 0
 
     def test_goal_branch_returns_results(self) -> None:
-        data = json.loads(_ref_suggest.invoke({"goal": "recon"}))
+        data = json.loads(T.ref_suggest(goal="recon"))
         assert data["count"] > 0
 
 
 class TestRefTopic:
     def test_known_topic_returns_matching_entries(self) -> None:
-        data = json.loads(_ref_topic.invoke({"topic": "ssrf"}))
+        data = json.loads(T.ref_topic("ssrf"))
         assert data["topic"] == "ssrf"
         assert data["count"] >= 0
 
     def test_unknown_topic_returns_zero_count(self) -> None:
-        data = json.loads(_ref_topic.invoke({"topic": "nonexistent-topic-xyz999"}))
+        data = json.loads(T.ref_topic("nonexistent-topic-xyz999"))
         assert data["count"] == 0
         assert data["references"] == []
 
@@ -110,7 +104,7 @@ class TestRefFetch:
     def test_success_branch_returns_status_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _FakeCacheStatus(slug="hackerone-reports", present=True, size_bytes=123)
         monkeypatch.setattr(T, "ensure_cached", lambda slug: fake)
-        data = json.loads(_ref_fetch.invoke({"slug": "hackerone-reports"}))
+        data = json.loads(T.ref_fetch("hackerone-reports"))
         assert "error" not in data
         assert data["slug"] == "hackerone-reports"
         assert data["present"] is True
@@ -120,7 +114,7 @@ class TestRefFetch:
             raise KeyError("unknown reference slug: bogus")
 
         monkeypatch.setattr(T, "ensure_cached", _raise)
-        data = json.loads(_ref_fetch.invoke({"slug": "bogus"}))
+        data = json.loads(T.ref_fetch("bogus"))
         assert "error" in data
         assert "unknown reference slug" in data["error"]
 
@@ -132,7 +126,7 @@ class TestRefStatus:
         monkeypatch.setenv("RAPTIX_REFERENCES_ROOT", str(tmp_path))
         fake = _FakeCacheStatus(slug="hackerone-reports", present=False, size_bytes=0)
         monkeypatch.setattr(T, "cache_status", lambda slug: fake)
-        data = json.loads(_ref_status.invoke({"slug": "hackerone-reports"}))
+        data = json.loads(T.ref_status("hackerone-reports"))
         assert "error" not in data
         assert data["slug"] == "hackerone-reports"
         assert data["present"] is False
@@ -142,7 +136,7 @@ class TestRefStatus:
             raise KeyError("unknown reference slug: bogus")
 
         monkeypatch.setattr(T, "cache_status", _raise)
-        data = json.loads(_ref_status.invoke({"slug": "bogus"}))
+        data = json.loads(T.ref_status("bogus"))
         assert "error" in data
 
     def test_full_map_branch_returns_all_slugs(self, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -153,7 +147,7 @@ class TestRefStatus:
             return _FakeCacheStatus(slug=slug, present=False, size_bytes=0)
 
         monkeypatch.setattr(T, "cache_status", _fake_cache_status)
-        data = json.loads(_ref_status.invoke({}))
+        data = json.loads(T.ref_status())
         assert data["count"] == len(REFERENCES)
         assert all("slug" in row for row in data["cache"])
         assert len(call_count) == len(REFERENCES)
@@ -161,7 +155,7 @@ class TestRefStatus:
 
 class TestRefGrep:
     def test_pattern_too_long_returns_error(self) -> None:
-        data = json.loads(_ref_grep.invoke({"slug": "hackerone-reports", "pattern": "a" * 201}))
+        data = json.loads(T.ref_grep("hackerone-reports", "a" * 201))
         assert data["ok"] is False
         assert data["error"] == "pattern too long (>200 chars)"
 
@@ -170,7 +164,7 @@ class TestRefGrep:
             raise KeyError("unknown reference slug: bogus")
 
         monkeypatch.setattr(T, "search_cache", _raise)
-        data = json.loads(_ref_grep.invoke({"slug": "bogus", "pattern": "x"}))
+        data = json.loads(T.ref_grep("bogus", "x"))
         assert data["ok"] is False
         assert "unknown reference slug" in data["error"]
 
@@ -181,7 +175,7 @@ class TestRefGrep:
         monkeypatch.setattr(
             T, "search_cache", lambda slug, pattern, **kw: [("file.md", 7, raw_snip)]
         )
-        outer = json.loads(_ref_grep.invoke({"slug": "hackerone-reports", "pattern": "hit"}))
+        outer = json.loads(T.ref_grep("hackerone-reports", "hit"))
         assert outer["trust"] == "untrusted-external-corpus"
         assert outer["source"] == "hackerone-reports"
         data = outer["data"]
@@ -204,7 +198,7 @@ class TestPayloadSearchFallback:
         )
         monkeypatch.setattr(T, "search_merged", lambda **kw: [])
         monkeypatch.setattr(T, "search_payloads", lambda **kw: [fake_payload])
-        data = json.loads(_payload_search.invoke({"vuln_class": "ssrf"}))
+        data = json.loads(T.payload_search(vuln_class="ssrf"))
         assert data["count"] == 1
         assert data["payloads"][0]["vuln_class"] == "ssrf"
 
@@ -225,7 +219,7 @@ class TestPayloadSearchFallback:
 
         monkeypatch.setattr(T, "search_merged", lambda **kw: [fake_payload])
         monkeypatch.setattr(T, "search_payloads", _guard)
-        data = json.loads(_payload_search.invoke({"keyword": "imds"}))
+        data = json.loads(T.payload_search(keyword="imds"))
         assert data["count"] == 1
         assert not sentinel_called
 
@@ -235,7 +229,7 @@ class TestPayloadClassesBundledFallback:
         self, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(T, "merged_payloads", lambda: [])
-        data = json.loads(_payload_classes.invoke({}))
+        data = json.loads(T.payload_classes())
         assert data["count"] > 0
         classes = {c["vuln_class"] for c in data["classes"]}
         assert "ssrf" in classes
@@ -250,7 +244,7 @@ class TestReferencesHydrate:
         )
         monkeypatch.setattr(T, "hydrate_all", lambda: [fake_result])
         monkeypatch.setattr(T, "format_report", lambda results: "REPORT")
-        data = json.loads(_references_hydrate.invoke({}))
+        data = json.loads(T.references_hydrate())
         assert data["report"] == "REPORT"
         assert len(data["results"]) == 1
         assert data["results"][0]["slug"] == "hackerone-reports"
@@ -264,6 +258,6 @@ class TestH1SearchTitleSanitization:
 
         fake_report = BugReport(title="evil\x07title", bounty=100.0)
         monkeypatch.setattr(T, "h1_search_corpus", lambda **kw: [fake_report])
-        outer = json.loads(_h1_search.invoke({"keyword": "x"}))
+        outer = json.loads(T.h1_search(keyword="x"))
         data = outer["data"]
         assert data["reports"][0]["title"] == "eviltitle"

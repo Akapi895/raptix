@@ -1,9 +1,10 @@
-"""Smoke tests for the new Tier-1 @tool wrappers in references/tools.py.
+"""Smoke tests for the references services and the remaining planner tool.
 
-We invoke each @tool through its ``.invoke`` hook (LangChain tool
-interface) and parse the JSON it returns. Cache is pointed at
-``tmp_path`` via the ``RAPTIX_REFERENCES_ROOT`` env var so no real
-filesystem state is touched.
+Wave T5 demoted the corpus wrappers to plain functions — they are now
+called directly. ``killchain_suggest`` keeps its ``@tool`` (planner
+control-plane surface) and is still exercised through ``.invoke``.
+Cache is pointed at ``tmp_path`` via the ``RAPTIX_REFERENCES_ROOT``
+env var so no real filesystem state is touched.
 """
 
 from __future__ import annotations
@@ -56,27 +57,27 @@ def _load(result: str) -> dict:
     return data
 
 
-class TestPayloadSearchTool:
+class TestPayloadSearchService:
     def test_default_returns_bundled(self) -> None:
-        data = _load(T.payload_search.invoke({}))
+        data = _load(T.payload_search())
         assert data["count"] > 0
         assert any(p["vuln_class"] == "ssrf" for p in data["payloads"])
 
     def test_filter_by_class(self) -> None:
-        data = _load(T.payload_search.invoke({"vuln_class": "sqli"}))
+        data = _load(T.payload_search(vuln_class="sqli"))
         assert data["count"] > 0
         assert all(p["vuln_class"] == "sqli" for p in data["payloads"])
 
     def test_class_listing(self) -> None:
-        data = _load(T.payload_classes.invoke({}))
+        data = _load(T.payload_classes())
         classes = {c["vuln_class"] for c in data["classes"]}
         assert "ssrf" in classes
         assert "jwt" in classes
 
 
-class TestCvePocLookupTool:
+class TestCvePocLookupService:
     def test_empty_cache_returns_empty(self) -> None:
-        data = _load(T.cve_poc_lookup.invoke({"cve_id": "CVE-2099-0001"}))
+        data = _load(T.cve_poc_lookup("CVE-2099-0001"))
         assert data["count"] == 0
         assert data["poc_urls"] == []
 
@@ -87,14 +88,14 @@ class TestCvePocLookupTool:
             "PoC: https://github.com/alice/poc-cve-2024-0001\n",
             encoding="utf-8",
         )
-        data = _load(T.cve_poc_lookup.invoke({"cve_id": "CVE-2024-0001"}))
+        data = _load(T.cve_poc_lookup("CVE-2024-0001"))
         assert data["count"] >= 1
         assert any("alice/poc" in u for u in data["poc_urls"])
 
 
-class TestH1SearchTool:
+class TestH1SearchService:
     def test_empty_cache(self) -> None:
-        data = _load(T.h1_search.invoke({"cwe": "CWE-918"}))
+        data = _load(T.h1_search(cwe="CWE-918"))
         assert data["count"] == 0
 
     def test_populated_cache(self, tmp_path: Path) -> None:
@@ -106,14 +107,14 @@ class TestH1SearchTool:
             "| [SSRF report](https://hackerone.com/reports/1) | Ex | $9000 | high | CWE-918 |\n",
             encoding="utf-8",
         )
-        data = _load(T.h1_search.invoke({"cwe": "CWE-918"}))
+        data = _load(T.h1_search(cwe="CWE-918"))
         assert data["count"] == 1
         assert data["reports"][0]["bounty"] == 9000.0
 
 
-class TestOnelinerSearchTool:
+class TestOnelinerSearchService:
     def test_empty_cache(self) -> None:
-        data = _load(T.oneliner_search.invoke({"topic": "tcpdump"}))
+        data = _load(T.oneliner_search("tcpdump"))
         assert data["count"] == 0
 
     def test_populated_cache(self, tmp_path: Path) -> None:
@@ -123,13 +124,13 @@ class TestOnelinerSearchTool:
             "# Book\n\n## tcpdump usage\n\nCapture:\n\n```\ntcpdump -i eth0 port 53\n```\n",
             encoding="utf-8",
         )
-        data = _load(T.oneliner_search.invoke({"topic": "tcpdump"}))
+        data = _load(T.oneliner_search("tcpdump"))
         assert data["count"] >= 1
 
 
 class TestKillchainTools:
     def test_lookup_uses_fallback(self) -> None:
-        data = _load(T.killchain_lookup.invoke({"phase": "recon"}))
+        data = _load(T.killchain_lookup("recon"))
         assert data["count"] > 0
         names = {t["name"] for t in data["tools"]}
         assert "nmap" in names
@@ -139,15 +140,15 @@ class TestKillchainTools:
         assert data["count"] > 0
 
 
-class TestMethodologyTool:
+class TestMethodologyService:
     def test_empty_cache(self) -> None:
-        data = _load(T.methodology_lookup.invoke({"vuln_class": "ssrf"}))
+        data = _load(T.methodology_lookup("ssrf"))
         assert data["count"] == 0
 
     def test_populated(self, tmp_path: Path) -> None:
         repo = tmp_path / "all-about-bug-bounty"
         repo.mkdir(parents=True)
         (repo / "SSRF.md").write_text("# SSRF\n\nProbe metadata endpoints.\n", encoding="utf-8")
-        data = _load(T.methodology_lookup.invoke({"vuln_class": "ssrf"}))
+        data = _load(T.methodology_lookup("ssrf"))
         assert data["count"] == 1
         assert "metadata" in data["chapters"][0]["excerpt"].lower()

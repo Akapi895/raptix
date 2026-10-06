@@ -1,14 +1,15 @@
-"""Comprehensive tests for reporting/tools.py wrappers and executive.py helpers.
+"""Comprehensive tests for reporting/tools.py services and executive.py helpers.
 
 Covers:
-- All LangChain @tool wrappers in tools.py (mocking _load + filesystem)
+- The report_* service functions in tools.py (mocking _load; Wave T5
+  demoted them to plain functions — called directly, not via .invoke)
+- The single agent-facing ``generate_report`` dispatch tool
 - Executive summary edge cases beyond the baseline in test_reporting.py
 - Private helper functions: _count_by_severity, _top_chains, _top_cves
 """
 
 from __future__ import annotations
 
-import asyncio
 import json
 from unittest.mock import patch
 
@@ -22,6 +23,7 @@ from raptix.execution.tools.reporting.executive import (
 )
 from raptix.execution.tools.reporting.tools import (
     REPORTING_TOOLS,
+    generate_report,
     report_bugcrowd_csv,
     report_executive,
     report_hackerone,
@@ -356,15 +358,15 @@ class TestRenderExecutiveSummary:
         assert "[CRITICAL]" in md
 
 
-# ── Tests: report_* tool wrappers ─────────────────────────────────────────────
+# ── Tests: report_* service functions ─────────────────────────────────────────
 
 
-class TestReportHackerOneTool:
+class TestReportHackerOneService:
     def test_returns_markdown_for_valid_node(self) -> None:
         g = _rich_graph()
         vuln = g.by_kind(NodeKind.VULNERABILITY)[0]
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_hackerone.ainvoke({"finding_id": vuln.id}))
+            result = report_hackerone(vuln.id)
         payload = json.loads(result)
         assert "id" in payload
         assert "markdown" in payload
@@ -374,7 +376,7 @@ class TestReportHackerOneTool:
     def test_returns_error_for_missing_node(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_hackerone.ainvoke({"finding_id": "nonexistent-id"}))
+            result = report_hackerone("nonexistent-id")
         payload = json.loads(result)
         assert "error" in payload
         assert "nonexistent-id" in payload["error"]
@@ -383,16 +385,16 @@ class TestReportHackerOneTool:
         g = _rich_graph()
         vuln = g.by_kind(NodeKind.VULNERABILITY)[0]
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_hackerone.ainvoke({"finding_id": vuln.id}))
+            result = report_hackerone(vuln.id)
         assert isinstance(result, str)
         json.loads(result)  # must not raise
 
 
-class TestReportBugcrowdCsvTool:
+class TestReportBugcrowdCsvService:
     def test_default_min_severity_is_medium(self) -> None:
         g = _graph_all_severities()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_bugcrowd_csv.ainvoke({"min_severity": "medium"}))
+            result = report_bugcrowd_csv(min_severity="medium")
         payload = json.loads(result)
         assert "rows" in payload
         assert "csv" in payload
@@ -402,7 +404,7 @@ class TestReportBugcrowdCsvTool:
     def test_min_severity_low_includes_low_vulns(self) -> None:
         g = _graph_all_severities()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_bugcrowd_csv.ainvoke({"min_severity": "low"}))
+            result = report_bugcrowd_csv(min_severity="low")
         payload = json.loads(result)
         # critical + high + medium + low = 4 data rows
         assert payload["rows"] == 4
@@ -410,14 +412,14 @@ class TestReportBugcrowdCsvTool:
     def test_min_severity_critical_filters_to_one_row(self) -> None:
         g = _graph_all_severities()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_bugcrowd_csv.ainvoke({"min_severity": "critical"}))
+            result = report_bugcrowd_csv(min_severity="critical")
         payload = json.loads(result)
         assert payload["rows"] == 1
 
     def test_csv_has_header_row(self) -> None:
         g = _rich_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_bugcrowd_csv.ainvoke({"min_severity": "low"}))
+            result = report_bugcrowd_csv(min_severity="low")
         payload = json.loads(result)
         first_line = payload["csv"].splitlines()[0]
         assert "title" in first_line
@@ -426,60 +428,60 @@ class TestReportBugcrowdCsvTool:
     def test_empty_graph_returns_header_only(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_bugcrowd_csv.ainvoke({"min_severity": "low"}))
+            result = report_bugcrowd_csv(min_severity="low")
         payload = json.loads(result)
         assert payload["rows"] == 0
 
     def test_result_is_json_string(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_bugcrowd_csv.ainvoke({"min_severity": "medium"}))
+            result = report_bugcrowd_csv(min_severity="medium")
         assert isinstance(result, str)
         json.loads(result)
 
 
-class TestReportExecutiveTool:
+class TestReportExecutiveService:
     def test_returns_markdown_key(self) -> None:
         g = _rich_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_executive.ainvoke({"engagement_name": "Acme"}))
+            result = report_executive(engagement_name="Acme")
         payload = json.loads(result)
         assert "markdown" in payload
 
     def test_engagement_name_appears_in_markdown(self) -> None:
         g = _rich_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_executive.ainvoke({"engagement_name": "WidgetCorp"}))
+            result = report_executive(engagement_name="WidgetCorp")
         payload = json.loads(result)
         assert "WidgetCorp" in payload["markdown"]
 
     def test_empty_graph_returns_no_findings_message(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_executive.ainvoke({"engagement_name": "Empty"}))
+            result = report_executive(engagement_name="Empty")
         payload = json.loads(result)
         assert "No findings" in payload["markdown"]
 
     def test_default_engagement_name_used(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_executive.ainvoke({}))
+            result = report_executive()
         payload = json.loads(result)
         assert "Engagement" in payload["markdown"]
 
     def test_result_is_json_string(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_executive.ainvoke({}))
+            result = report_executive()
         assert isinstance(result, str)
         json.loads(result)
 
 
-class TestReportTimelineTool:
+class TestReportTimelineService:
     def test_returns_count_and_events_keys(self) -> None:
         g = _rich_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_timeline.ainvoke({}))
+            result = report_timeline()
         payload = json.loads(result)
         assert "count" in payload
         assert "events" in payload
@@ -487,28 +489,28 @@ class TestReportTimelineTool:
     def test_count_matches_events_length(self) -> None:
         g = _rich_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_timeline.ainvoke({}))
+            result = report_timeline()
         payload = json.loads(result)
         assert payload["count"] == len(payload["events"])
 
     def test_events_are_list(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_timeline.ainvoke({}))
+            result = report_timeline()
         payload = json.loads(result)
         assert isinstance(payload["events"], list)
 
     def test_empty_graph_returns_zero_events(self) -> None:
         g = _empty_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_timeline.ainvoke({}))
+            result = report_timeline()
         payload = json.loads(result)
         assert payload["count"] == 0
 
     def test_result_is_json_string(self) -> None:
         g = _rich_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(report_timeline.ainvoke({}))
+            result = report_timeline()
         assert isinstance(result, str)
         json.loads(result)
 
@@ -521,14 +523,95 @@ class TestReportingToolsList:
         assert isinstance(REPORTING_TOOLS, list)
         assert len(REPORTING_TOOLS) > 0
 
-    def test_all_five_tools_present(self) -> None:
+    def test_generate_report_is_the_only_tool(self) -> None:
         names = {t.name for t in REPORTING_TOOLS}
-        assert "report_hackerone" in names
-        assert "report_bugcrowd_csv" in names
-        assert "report_executive" in names
-        assert "report_timeline" in names
-        assert "report_sarif" in names
+        assert names == {"generate_report"}
 
     def test_all_tools_have_description(self) -> None:
         for tool in REPORTING_TOOLS:
             assert tool.description, f"{tool.name} has no description"
+
+
+# ── Tests: generate_report dispatch ────────────────────────────────────────────
+
+
+class TestGenerateReport:
+    def test_unknown_format_lists_valid_formats(self) -> None:
+        result = generate_report.invoke({"format": "docx"})
+        payload = json.loads(result)
+        assert "error" in payload
+        assert "hackerone" in payload["valid"]
+        assert "bounty" in payload["valid"]
+
+    def test_hackerone_dispatches(self) -> None:
+        g = _rich_graph()
+        vuln = g.by_kind(NodeKind.VULNERABILITY)[0]
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
+            result = generate_report.invoke({"format": "hackerone", "finding_id": vuln.id})
+        assert json.loads(result)["id"] == vuln.id
+
+    def test_hackerone_requires_finding_id(self) -> None:
+        result = generate_report.invoke({"format": "hackerone"})
+        payload = json.loads(result)
+        assert "requires finding_id" in payload["error"]
+
+    def test_bugcrowd_dispatches(self) -> None:
+        g = _graph_all_severities()
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
+            result = generate_report.invoke({"format": "bugcrowd_csv", "min_severity": "critical"})
+        assert json.loads(result)["rows"] == 1
+
+    def test_executive_dispatches(self) -> None:
+        g = _rich_graph()
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
+            result = generate_report.invoke(
+                {"format": "executive", "engagement_name": "WidgetCorp"}
+            )
+        assert "WidgetCorp" in json.loads(result)["markdown"]
+
+    def test_timeline_dispatches(self) -> None:
+        g = _rich_graph()
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
+            result = generate_report.invoke({"format": "timeline"})
+        assert "events" in json.loads(result)
+
+    def test_sarif_requires_args(self) -> None:
+        result = generate_report.invoke({"format": "sarif"})
+        payload = json.loads(result)
+        assert "requires engagement_id and output_path" in payload["error"]
+
+    def test_sarif_dispatches(self, tmp_path) -> None:
+        out = tmp_path / "out.sarif"
+        g = _rich_graph()
+        with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
+            result = generate_report.invoke(
+                {
+                    "format": "sarif",
+                    "engagement_id": "eng-X",
+                    "output_path": str(out),
+                }
+            )
+        assert json.loads(result)["path"] == str(out)
+
+    def test_bounty_requires_finding_id(self) -> None:
+        result = generate_report.invoke({"format": "bounty"})
+        payload = json.loads(result)
+        assert "requires finding_id" in payload["error"]
+
+    def test_bounty_dispatches_to_internal_renderer(self, monkeypatch) -> None:
+        import raptix.execution.tools.research.bounty as bounty_mod
+
+        captured: dict[str, object] = {}
+
+        def _fake(finding_id: str, platform: str = "hackerone", **_: object) -> str:
+            captured["finding_id"] = finding_id
+            captured["platform"] = platform
+            return json.dumps({"title": "t", "platform": platform})
+
+        monkeypatch.setattr(bounty_mod, "format_bounty_report", _fake)
+        result = generate_report.invoke(
+            {"format": "bounty", "finding_id": "abc123", "platform": "bugcrowd"}
+        )
+        payload = json.loads(result)
+        assert payload["platform"] == "bugcrowd"
+        assert captured["finding_id"] == "abc123"

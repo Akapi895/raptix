@@ -48,7 +48,7 @@ from langchain.agents import create_agent
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
-from raptix.execution.tools.references.tools import killchain_lookup, oneliner_search
+from raptix.execution.tools.references.tools import search_security_references
 from raptix.execution.tools.web.search import web_fetch, web_search
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
@@ -64,9 +64,8 @@ from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plug
 _STANDARD_TOOLS: dict[str, Any] = {
     t.name: t
     for t in [
-        # References
-        oneliner_search,
-        killchain_lookup,
+        # References (Wave T5 semantic fan-out)
+        search_security_references,
         # Open-web acquisition (ADR-0010): keyword search + RoE-gated fetch
         web_search,
         web_fetch,

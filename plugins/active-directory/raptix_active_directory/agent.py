@@ -24,7 +24,7 @@ DEFINITION = DomainAgentDefinition(
         "bhce_status",
         "bhce_cypher",
         "bhce_ingest_zip",
-        "killchain_lookup",
+        "search_security_references",
         "bash",
         "bash_output",
         "bash_kill",

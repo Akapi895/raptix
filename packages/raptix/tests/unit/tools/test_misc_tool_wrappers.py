@@ -150,11 +150,11 @@ class TestFoundryToolWrappers:
         assert len(CONTRACT_TOOLS) == 5
 
 
-# ── evidence/tools.py wrappers ─────────────────────────────────────────────
+# ── evidence/tools.py services ─────────────────────────────────────────────
 
 
-class TestExportSessionAsciicastTool:
-    """export_session_asciicast @tool output shapes."""
+class TestExportSessionAsciicastService:
+    """export_session_asciicast service output shapes (Wave T5: plain function)."""
 
     def test_successful_export_returns_status_exported(self, tmp_path: Path) -> None:
         from raptix.execution.tools.evidence.tools import export_session_asciicast
@@ -167,13 +167,7 @@ class TestExportSessionAsciicastTool:
         evidence_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast.invoke(
-                {
-                    "session_name": "mysession",
-                    "pipe_pane_log_path": "",
-                    "title": "Test Session",
-                }
-            )
+            result = export_session_asciicast("mysession", title="Test Session")
 
         data = json.loads(result)
         assert data["status"] == "exported"
@@ -188,13 +182,7 @@ class TestExportSessionAsciicastTool:
         evidence_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast.invoke(
-                {
-                    "session_name": "s1",
-                    "pipe_pane_log_path": str(log),
-                    "title": "",
-                }
-            )
+            result = export_session_asciicast("s1", pipe_pane_log_path=str(log))
 
         data = json.loads(result)
         assert data["status"] == "exported"
@@ -206,20 +194,16 @@ class TestExportSessionAsciicastTool:
         evidence_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast.invoke(
-                {
-                    "session_name": "nope",
-                    "pipe_pane_log_path": str(tmp_path / "nonexistent.log"),
-                    "title": "",
-                }
+            result = export_session_asciicast(
+                "nope", pipe_pane_log_path=str(tmp_path / "nonexistent.log")
             )
 
         data = json.loads(result)
         assert "error" in data
 
 
-class TestListSessionRecordingsTool:
-    """list_session_recordings @tool output shapes."""
+class TestListSessionRecordingsService:
+    """list_session_recordings service output shapes (Wave T5: plain function)."""
 
     def test_empty_dir_returns_count_zero(self, tmp_path: Path) -> None:
         from raptix.execution.tools.evidence.tools import list_session_recordings
@@ -228,7 +212,7 @@ class TestListSessionRecordingsTool:
         recordings_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = list_session_recordings.invoke({})
+            result = list_session_recordings()
 
         data = json.loads(result)
         assert data["count"] == 0
@@ -249,17 +233,17 @@ class TestListSessionRecordingsTool:
         )
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = list_session_recordings.invoke({})
+            result = list_session_recordings()
 
         data = json.loads(result)
         assert data["count"] == 2
         names = sorted(m["session_name"] for m in data["recordings"])
         assert names == ["a", "b"]
 
-    def test_evidence_tools_list_has_four_items(self) -> None:
+    def test_evidence_tools_list_has_inspect_evidence_only(self) -> None:
         from raptix.execution.tools.evidence.tools import EVIDENCE_TOOLS
 
-        assert len(EVIDENCE_TOOLS) == 4
+        assert [t.name for t in EVIDENCE_TOOLS] == ["inspect_evidence"]
 
 
 # ── cloud/tools.py wrappers ────────────────────────────────────────────────

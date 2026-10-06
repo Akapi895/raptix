@@ -226,7 +226,7 @@ class TestBountyScopeCheck:
         assert any("Low-impact" in w for w in result["warnings"])
 
 
-# ── format_bounty_report ──────────────────────────────────────────────────
+# ── format_bounty_report (Wave T5: internal service, called directly) ─────
 
 
 class TestFormatBountyReport:
@@ -261,7 +261,7 @@ class TestFormatBountyReport:
 
     def test_missing_finding_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        raw = format_bounty_report.invoke({"finding_id": "nonexistent-id-xyz"})
+        raw = format_bounty_report("nonexistent-id-xyz")
         result = json.loads(raw)
         assert "error" in result
         assert "not found" in result["error"]
@@ -270,7 +270,7 @@ class TestFormatBountyReport:
         graph = _configure_kg(monkeypatch)
         host = Node.make(NodeKind.HOST, "web server", key="host-1")
         graph.upsert_node(host)
-        raw = format_bounty_report.invoke({"finding_id": host.id})
+        raw = format_bounty_report(host.id)
         result = json.loads(raw)
         assert "error" in result
         assert "not finding" in result["error"]
@@ -284,7 +284,7 @@ class TestFormatBountyReport:
             validated=False,
         )
         graph.upsert_node(finding)
-        raw = format_bounty_report.invoke({"finding_id": finding.id})
+        raw = format_bounty_report(finding.id)
         result = json.loads(raw)
         assert "error" in result
         assert "not validated" in result["error"]
@@ -296,19 +296,17 @@ class TestFormatBountyReport:
         program_name: str = "",
         component_name: str = "",
     ) -> dict[str, Any]:
-        """Invoke format_bounty_report with the filesystem Path mocked out."""
+        """Call format_bounty_report with the filesystem Path mocked out."""
         from unittest.mock import patch as _patch
 
         with _patch("raptix.execution.tools.research.bounty.Path") as mock_path_cls:
             mock_report_path = MagicMock()
             mock_path_cls.return_value = mock_report_path
-            raw = format_bounty_report.invoke(
-                {
-                    "finding_id": finding_id,
-                    "platform": platform,
-                    "program_name": program_name,
-                    "component_name": component_name,
-                }
+            raw = format_bounty_report(
+                finding_id,
+                platform=platform,
+                program_name=program_name,
+                component_name=component_name,
             )
         return json.loads(raw)
 

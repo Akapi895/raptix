@@ -1,8 +1,7 @@
-"""Tests for the SARIF v2.1.0 renderer + ``report_sarif`` tool."""
+"""Tests for the SARIF v2.1.0 renderer + the ``report_sarif`` service."""
 
 from __future__ import annotations
 
-import asyncio
 import json
 from pathlib import Path
 from unittest.mock import patch
@@ -199,14 +198,12 @@ class TestStableRuleId:
         assert rid == node.id or rid == "rule"
 
 
-class TestReportSarifTool:
+class TestReportSarifService:
     def test_writes_sarif_to_disk_and_reports_metadata(self, tmp_path: Path) -> None:
         out = tmp_path / "out" / "raptix.sarif"
         g = _seeded_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            result = asyncio.run(
-                report_sarif.ainvoke({"engagement_id": "eng-X", "output_path": str(out)})
-            )
+            result = report_sarif(engagement_id="eng-X", output_path=str(out))
 
         assert out.exists()
         payload = json.loads(out.read_text(encoding="utf-8"))
@@ -221,5 +218,5 @@ class TestReportSarifTool:
         out = tmp_path / "nested" / "deeper" / "raptix.sarif"
         g = _seeded_graph()
         with patch("raptix.execution.tools.reporting.tools._load", return_value=(g, None)):
-            asyncio.run(report_sarif.ainvoke({"engagement_id": "eng-Y", "output_path": str(out)}))
+            report_sarif(engagement_id="eng-Y", output_path=str(out))
         assert out.exists()
