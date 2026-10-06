@@ -5,12 +5,16 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
+
+import pytest
 
 REPO_ROOT = Path(__file__).parents[5]
 INSTALL_SCRIPT = REPO_ROOT / "scripts" / "install.sh"
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX bash installer test")
 def test_stable_resolver_reads_release_payload_from_curl(tmp_path: Path) -> None:
     script_without_main = INSTALL_SCRIPT.read_text(encoding="utf-8").rsplit('\nmain "$@"', 1)[0]
     releases = [

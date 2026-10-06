@@ -43,8 +43,8 @@ def test_capture_run_provenance_records_source_artifacts_and_sanitized_config(
     skills = repo / "skills"
     prompts.mkdir()
     skills.mkdir()
-    (prompts / "agent.md").write_text("system prompt\n", encoding="utf-8")
-    (skills / "SKILL.md").write_text("skill body\n", encoding="utf-8")
+    (prompts / "agent.md").write_bytes(b"system prompt\n")
+    (skills / "SKILL.md").write_bytes(b"skill body\n")
     _git(repo, "add", ".")
     _git(repo, "commit", "-qm", "fixture")
     expected_commit = _git(repo, "rev-parse", "HEAD")
