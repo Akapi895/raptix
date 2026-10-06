@@ -31,12 +31,13 @@ class _Store:
 
 
 class _Sandbox:
-    def __init__(self, content: bytes = NMAP_XML) -> None:
+    def __init__(self, content: bytes = NMAP_XML, name: str = "scan.xml") -> None:
         self.content = content
+        self.name = name
         self.downloaded: list[str] = []
 
     def ls_info(self, directory: str):
-        return [{"path": f"{directory}/scan.xml", "size": len(self.content)}]
+        return [{"path": f"{directory}/{self.name}", "size": len(self.content)}]
 
     def download_files(self, paths: list[str]):
         self.downloaded.extend(paths)
@@ -274,3 +275,112 @@ async def test_replay_recon_turn_preserves_model_decisions_and_autoingests(tmp_p
     second.messages = [*first.messages, first_reply, tool_reply]
     assert replay.wrap_model_call(second, live_model).content == final.content
     assert store.writes[0]["engagement"] == "acme"
+
+
+# ── Wave T3: registry-routed kinds (subfinder/dnsx/ffuf/masscan/gobuster) ──
+
+
+FFUF_JSON = b"""{
+  "commandLine": "ffuf -u https://10.0.0.1/FUZZ",
+  "results": [
+    {"url": "https://10.0.0.1/admin", "status": 200, "length": 1024}
+  ]
+}"""
+
+SUBFINDER_TXT = b"api.acme.test\nweb.acme.test\n"
+
+MASSCAN_JSON = (
+    b'[\n{"ip": "10.0.0.7", "ports": [{"port": 8443, "proto": "tcp", "status": "open"}]},\n'
+)
+
+DNSX_JSONL = b'{"host": "acme.test", "a": ["10.0.0.2"]}\n'
+
+GOBUSTER_TXT = b"/admin               (Status: 200) [Size: 1024]\n"
+
+
+async def _registry_ingest(command: str, content: bytes):
+    from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
+
+    output_path = command.split()[
+        command.split().index("-o" if "-oJ" not in command.split() else "-oJ") + 1
+    ]
+    name = output_path.rsplit("/", 1)[-1]
+    store, sandbox, result = _Store(), _Sandbox(content=content, name=name), _result()
+    hook = KGAutoIngestMiddleware(store=store, sandbox=sandbox, role="recon")
+
+    async def handler(_request):
+        return result
+
+    returned = await hook.awrap_tool_call(_request(command), handler)
+    return returned, result, store
+
+
+async def test_ffuf_output_ingested_via_parser_registry():
+    returned, result, store = await _registry_ingest(
+        "ffuf -o /workspace/ffuf.json -u https://10.0.0.1/FUZZ", FFUF_JSON
+    )
+    assert returned is result
+    assert len(store.writes) == 1
+    assert store.writes[0]["engagement"] == "acme"
+    assert store.writes[0]["created_by"] == "recon"
+    kinds = {record["kind"] for record in store.writes[0]["observations"]}
+    assert kinds >= {"Host", "URL", "Entrypoint"}
+
+
+async def test_subfinder_output_ingested_via_parser_registry():
+    returned, result, store = await _registry_ingest(
+        "subfinder -d acme.test -o /workspace/subs.txt", SUBFINDER_TXT
+    )
+    assert returned is result
+    kinds = {record["kind"] for record in store.writes[0]["observations"]}
+    assert kinds >= {"Host", "Entrypoint"}
+
+
+async def test_masscan_output_ingested_via_parser_registry():
+    returned, result, store = await _registry_ingest(
+        "masscan -oJ /workspace/mass.json 10.0.0.0/24", MASSCAN_JSON
+    )
+    assert returned is result
+    kinds = {record["kind"] for record in store.writes[0]["observations"]}
+    assert kinds >= {"Host", "Service"}
+
+
+async def test_dnsx_output_ingested_via_parser_registry():
+    returned, result, store = await _registry_ingest(
+        "dnsx -l /workspace/domains.txt -o /workspace/dns.jsonl", DNSX_JSONL
+    )
+    assert returned is result
+    kinds = {record["kind"] for record in store.writes[0]["observations"]}
+    assert kinds >= {"Host"}
+
+
+async def test_gobuster_output_ingested_via_parser_registry_with_base_url_from_flag():
+    """gobuster's text hits carry no origin of their own — the middleware
+    must extract -u's value and thread it through as artifact metadata,
+    the fix for the review-caught regression (gobuster had no auto-ingest
+    path at all and its @tool was removed with nothing to replace it)."""
+    returned, result, store = await _registry_ingest(
+        "gobuster dir -u https://10.0.0.1 -w wordlist.txt -o /workspace/gobuster.txt",
+        GOBUSTER_TXT,
+    )
+    assert returned is result
+    assert len(store.writes) == 1
+    kinds = {record["kind"] for record in store.writes[0]["observations"]}
+    assert kinds >= {"Host", "URL", "Entrypoint"}
+
+
+async def test_gobuster_without_u_flag_is_not_auto_ingested():
+    """No base_url to anchor hits to a host -> refuse rather than guess."""
+    returned, result, store = await _registry_ingest(
+        "gobuster dir -w wordlist.txt -o /workspace/gobuster.txt", GOBUSTER_TXT
+    )
+    assert returned is result
+    assert store.writes == []
+
+
+async def test_registry_parse_failure_keeps_result_without_writes():
+    returned, result, store = await _registry_ingest(
+        "ffuf -o /workspace/ffuf.json -u https://10.0.0.1/FUZZ", b"not ffuf output at all"
+    )
+    assert returned is result
+    assert store.writes == []

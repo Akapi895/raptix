@@ -1,13 +1,39 @@
-"""LangChain ``@tool`` wrappers that expose the research package to agents.
+"""Agent-facing research tools plus Wave T3 parser services.
 
-These are the surfaces the Analyst (and optionally the Orchestrator)
-exercise to drive vulnerability research:
+Agent-facing ``@tool`` surfaces (what the Analyst — and optionally the
+Orchestrator — exercise to drive vulnerability research):
 
 - ``kg_*``         — CRUD + query over the knowledge graph
+- ``kg_ingest_sarif`` / ``kg_ingest_slither`` / ``kg_ingest_testssl`` /
+  ``kg_ingest_crackmapexec`` / ``kg_ingest_asrep_hashes`` — lift an
+  on-disk scanner output file into the graph (see below for why these 5
+  stay explicit tool calls instead of auto-ingesting)
 - ``cve_*``        — NVD/OSV/EPSS intelligence lookup
-- ``ingest_sarif`` — lift any SARIF file on disk into the graph
 - ``plan_attack_chains`` — ranked multi-hop exploit paths
 - ``fuzz_*``       — harness synthesis + crash recording helpers
+
+Of the 14 former ``kg_ingest_*`` scanner-output tools, 9 became internal
+services in Wave T3 (``docs/tool-optimization-implementation-plan.md``):
+``nmap_xml``, ``nuclei_jsonl``, ``httpx_jsonl``, ``katana_jsonl``,
+``subfinder``, ``dnsx``, ``ffuf``, ``masscan``, ``gobuster``. Each has a
+clean, auto-detectable ``<binary> ... -o <file>``-shaped bash invocation,
+so ``KGAutoIngestMiddleware`` (L2a) parses their output automatically —
+no ``@tool`` decorator, absent from every ``*_TOOLS`` list, resolved
+through the ``knowledge.ingest`` ParserRegistry instead of parsing
+inline. They stay importable for callers and middleware.
+
+The other 5 — ``kg_ingest_sarif``, ``kg_ingest_slither``,
+``kg_ingest_testssl``, ``kg_ingest_crackmapexec``,
+``kg_ingest_asrep_hashes`` — stay ``@tool``-decorated and in
+``RESEARCH_TOOLS``. Their source tools (SARIF scanners, Slither,
+testssl.sh, crackmapexec/netexec, impacket-GetNPUsers) are conventionally
+invoked with output redirected to a file (``> out.txt`` / piped) rather
+than through a single predictable output flag — ``KGAutoIngestMiddleware``
+explicitly refuses to auto-ingest a command containing shell redirection,
+so there is no safe, evidence-based way to auto-detect their output path
+yet. Guessing a flag convention here risked silently ingesting the wrong
+content; keeping them as explicit tool calls was the conservative choice
+until a future wave designs the right heuristic for this invocation shape.
 
 Every tool returns a compact, JSON-serialisable string so it fits the
 LangChain tool return contract and keeps LLM token usage low.
@@ -22,9 +48,8 @@ import os
 import re
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urlparse
 
-import defusedxml.ElementTree as ET
 from langchain_core.tools import tool
 from raptix_contracts.patterns import scan_solidity_source
 from raptix_reversing.binary import identify_binary
@@ -47,11 +72,18 @@ from raptix.execution.tools.research.sarif import ingest_sarif_file
 from raptix.execution.tools.research.scanner_tools import SCANNER_TOOLS
 from raptix.execution.tools.research.secret_scanner import scan_secrets
 from raptix.execution.tools.research.tech_detection import detect_tech_stack
+from raptix.knowledge.ingest import (
+    ParseError,
+    ParseOutcome,
+    apply_observations,
+    default_registry,
+)
+from raptix.knowledge.ingest.parsers import severity_from_string as _severity_from_string
+from raptix_core.types.capability import Artifact
 from raptix_core.types.kg import (
     SEVERITY_SCORE,
     Edge,
     EdgeKind,
-    KnowledgeGraph,
     Node,
     NodeKind,
     Severity,
@@ -59,6 +91,31 @@ from raptix_core.types.kg import (
 from raptix_core.utils.logging import get_logger
 
 log = get_logger("research.tools")
+
+
+# ── Parser registry dispatch (Wave T3) ──────────────────────────────────
+#
+# The former inline kg_ingest_* parsing bodies moved to
+# ``knowledge/ingest/parsers/``; these internal services keep their
+# signatures and JSON responses but resolve content through the
+# parser registry instead of parsing + writing inline.
+
+_INGEST_REGISTRY = default_registry()
+
+
+def _parse_content(content: bytes, format_id: str, metadata: dict[str, Any]) -> ParseOutcome:
+    """Route raw scanner output through the parser registry."""
+    digest = hashlib.sha256(content).hexdigest()
+    artifact = Artifact(
+        id=f"kg-ingest::{digest[:16]}",
+        artifact_ref=f"sha256://{digest}",
+        format_hint=format_id,
+        content_type="application/octet-stream",
+        sha256=digest,
+        producer="kg_ingest",
+        metadata=metadata,
+    )
+    return _INGEST_REGISTRY.parse(artifact, content, expected_formats=(format_id,))
 
 
 # ── Helpers ─────────────────────────────────────────────────────────────
@@ -98,25 +155,6 @@ def _severity_from_score(score: float) -> Severity:
     return Severity.INFO
 
 
-def _severity_from_string(value: str | None) -> Severity:
-    if not value:
-        return Severity.MEDIUM
-    normalized = value.strip().lower()
-    mapping = {
-        "critical": Severity.CRITICAL,
-        "high": Severity.HIGH,
-        "medium": Severity.MEDIUM,
-        "low": Severity.LOW,
-        "info": Severity.INFO,
-        "informational": Severity.INFO,
-    }
-    return mapping.get(normalized, Severity.MEDIUM)
-
-
-def _is_web_port(port: int) -> bool:
-    return port in {80, 81, 443, 3000, 5000, 7001, 8000, 8008, 8080, 8443, 8888}
-
-
 def _severity_threshold(sev: Severity) -> float:
     return SEVERITY_SCORE.get(sev, 0.0)
 
@@ -141,65 +179,6 @@ def _cookie_finding_severity(finding: str) -> Severity:
     if "secure flag not set" in text:
         return Severity.MEDIUM
     return Severity.LOW
-
-
-def _ensure_host_node(
-    graph: KnowledgeGraph,
-    *,
-    label: str,
-    key: str,
-    **props: Any,
-) -> Node:
-    return graph.upsert_node(Node.make(NodeKind.HOST, label, key=key, **props))
-
-
-def _ensure_service_node(
-    graph: KnowledgeGraph,
-    *,
-    host: Node,
-    host_label: str,
-    port: int,
-    proto: str,
-    **props: Any,
-) -> Node:
-    label = f"{host_label}:{port}/{proto}"
-    service = graph.upsert_node(
-        Node.make(
-            NodeKind.SERVICE,
-            label,
-            key=f"service::{host_label}:{port}/{proto}",
-            host=host_label,
-            port=port,
-            protocol=proto,
-            **props,
-        )
-    )
-    graph.upsert_edge(Edge.make(host.id, service.id, EdgeKind.EXPOSES, weight=0.6))
-    graph.upsert_edge(Edge.make(service.id, host.id, EdgeKind.HOSTS, weight=0.6))
-    return service
-
-
-def _ensure_entrypoint_node(
-    graph: KnowledgeGraph,
-    *,
-    host_label: str,
-    port: int,
-    source: str,
-) -> Node:
-    scheme = "https" if port in {443, 8443} else "http"
-    default_port = (scheme == "http" and port == 80) or (scheme == "https" and port == 443)
-    endpoint = f"{scheme}://{host_label}/" if default_port else f"{scheme}://{host_label}:{port}/"
-    return graph.upsert_node(
-        Node.make(
-            NodeKind.ENTRYPOINT,
-            endpoint,
-            key=f"entrypoint::{endpoint}",
-            source=source,
-            host=host_label,
-            port=port,
-            scheme=scheme,
-        )
-    )
 
 
 def _iter_requirements(path: Path) -> list[tuple[str, str, str]]:
@@ -796,7 +775,6 @@ def kg_ingest_sarif(path: str, scanner_hint: str = "") -> str:
 # ── Recon report ingestion ──────────────────────────────────────────────
 
 
-@tool
 @kg_degrades
 def kg_ingest_nmap_xml(path: str, scanner_hint: str = "nmap") -> str:
     """Ingest Nmap XML output into the knowledge graph.
@@ -804,96 +782,19 @@ def kg_ingest_nmap_xml(path: str, scanner_hint: str = "nmap") -> str:
     This creates host/service nodes and adds entrypoint nodes for common web
     ports so chain planning can start from externally reachable surfaces.
     """
+    try:
+        content = Path(path).read_bytes()
+    except OSError as exc:
+        return _json({"error": f"failed to parse nmap xml: {exc}"})
+    try:
+        outcome = _parse_content(content, "nmap_xml", {"scanner_hint": scanner_hint})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        try:
-            root = ET.parse(path).getroot()
-        except (OSError, ET.ParseError) as e:
-            return _json({"error": f"failed to parse nmap xml: {e}"})
-        if root is None:
-            return _json({"error": "failed to parse nmap xml: empty document"})
-
-        hosts_added = 0
-        services_added = 0
-        entrypoints_added = 0
-
-        for host_el in root.findall("host"):
-            status = host_el.find("status")
-            if status is not None and status.get("state") not in {None, "up"}:
-                continue
-
-            addr_el = host_el.find("address[@addrtype='ipv4']")
-            if addr_el is None:
-                addr_el = host_el.find("address")
-            if addr_el is None:
-                continue
-            ip = addr_el.get("addr")
-            if not ip:
-                continue
-
-            hostname_el = host_el.find("hostnames/hostname")
-            hostname = hostname_el.get("name") if hostname_el is not None else ""
-            host_label = hostname or ip
-            host = _ensure_host_node(
-                graph,
-                label=host_label,
-                key=f"host::{ip}",
-                ip=ip,
-                hostname=hostname,
-                source=scanner_hint,
-            )
-            hosts_added += 1
-
-            for port_el in host_el.findall("ports/port"):
-                state_el = port_el.find("state")
-                if state_el is None or state_el.get("state") != "open":
-                    continue
-                try:
-                    port = int(port_el.get("portid", "0"))
-                except ValueError:
-                    continue
-                proto = port_el.get("protocol", "tcp")
-                service_el = port_el.find("service")
-                service_name = service_el.get("name") if service_el is not None else "unknown"
-                product = service_el.get("product") if service_el is not None else ""
-                version = service_el.get("version") if service_el is not None else ""
-
-                service = _ensure_service_node(
-                    graph,
-                    host=host,
-                    host_label=host_label,
-                    port=port,
-                    proto=proto,
-                    source=scanner_hint,
-                    service=service_name,
-                    product=product,
-                    version=version,
-                )
-                services_added += 1
-
-                if _is_web_port(port):
-                    ep = _ensure_entrypoint_node(
-                        graph,
-                        host_label=hostname or ip,
-                        port=port,
-                        source=scanner_hint,
-                    )
-                    graph.upsert_edge(Edge.make(service.id, ep.id, EdgeKind.EXPOSES, weight=0.5))
-                    graph.upsert_edge(Edge.make(ep.id, service.id, EdgeKind.HOSTS, weight=0.5))
-                    entrypoints_added += 1
-
-        return _json(
-            {
-                "ingested": {
-                    "hosts": hosts_added,
-                    "services": services_added,
-                    "entrypoints": entrypoints_added,
-                },
-                "stats": graph.stats(),
-            }
-        )
+        apply_observations(graph, outcome.observations)
+        return _json({"ingested": dict(outcome.summary), "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_ingest_nuclei_jsonl(path: str, scanner_hint: str = "nuclei") -> str:
     """Ingest Nuclei JSONL output into the knowledge graph.
@@ -904,99 +805,15 @@ def kg_ingest_nuclei_jsonl(path: str, scanner_hint: str = "nuclei") -> str:
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
+    try:
+        outcome = _parse_content(p.read_bytes(), "nuclei_jsonl", {"scanner_hint": scanner_hint})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        parsed = 0
-        skipped = 0
-
-        for raw_line in p.read_text(encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-            try:
-                record = json.loads(line)
-            except json.JSONDecodeError:
-                skipped += 1
-                continue
-
-            info = record.get("info") if isinstance(record.get("info"), dict) else {}
-            severity = _severity_from_string(info.get("severity"))
-            rule_id = str(record.get("template-id") or "unknown-template")
-            target = str(record.get("matched-at") or record.get("host") or "unknown-target")
-            parsed += 1
-
-            vuln = graph.upsert_node(
-                Node.make(
-                    NodeKind.VULNERABILITY,
-                    f"[{scanner_hint}:{rule_id}] {target}",
-                    key=f"{scanner_hint}::{rule_id}::{target}",
-                    scanner=scanner_hint,
-                    rule_id=rule_id,
-                    severity=severity.value,
-                    type=record.get("type"),
-                    matcher_name=record.get("matcher-name"),
-                    message=record.get("matched-at") or target,
-                    tags=(info.get("tags") if isinstance(info.get("tags"), list) else []),
-                )
-            )
-
-            parsed_target = urlparse(target)
-            if parsed_target.scheme and parsed_target.netloc:
-                url_node = graph.upsert_node(
-                    Node.make(
-                        NodeKind.URL,
-                        target,
-                        key=f"url::{target}",
-                        source=scanner_hint,
-                    )
-                )
-                target_node = graph.upsert_node(
-                    Node.make(
-                        NodeKind.ENTRYPOINT,
-                        target,
-                        key=f"entrypoint::{target}",
-                        source=scanner_hint,
-                        scheme=parsed_target.scheme,
-                        host=parsed_target.hostname,
-                        port=parsed_target.port,
-                    )
-                )
-                graph.upsert_edge(
-                    Edge.make(target_node.id, url_node.id, EdgeKind.HOSTS, weight=0.5)
-                )
-                graph.upsert_edge(
-                    Edge.make(url_node.id, target_node.id, EdgeKind.EXPOSES, weight=0.5)
-                )
-            else:
-                host_label = target.split(":", 1)[0]
-                target_node = _ensure_host_node(
-                    graph,
-                    label=host_label,
-                    key=f"host::{host_label}",
-                    source=scanner_hint,
-                )
-            graph.upsert_edge(Edge.make(target_node.id, vuln.id, EdgeKind.HAS_VULN, weight=0.4))
-
-            classification = info.get("classification")
-            if isinstance(classification, dict):
-                cve_ids = classification.get("cve-id")
-                if isinstance(cve_ids, str):
-                    cve_ids = [cve_ids]
-                if isinstance(cve_ids, list):
-                    for cve_id in cve_ids:
-                        if not isinstance(cve_id, str):
-                            continue
-                        cid = cve_id.strip().upper()
-                        if not cid.startswith("CVE-"):
-                            continue
-                        cve_node = graph.upsert_node(
-                            Node.make(NodeKind.CVE, cid, key=f"cve::{cid}", source=scanner_hint)
-                        )
-                        graph.upsert_edge(Edge.make(vuln.id, cve_node.id, EdgeKind.MAPS_TO))
-
-        return _json({"parsed": parsed, "skipped": skipped, "stats": graph.stats()})
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_ingest_subfinder(path: str, root_domain: str = "") -> str:
     """Ingest subfinder plaintext output (one subdomain per line).
@@ -1008,53 +825,15 @@ def kg_ingest_subfinder(path: str, root_domain: str = "") -> str:
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
+    try:
+        outcome = _parse_content(p.read_bytes(), "subfinder", {"root_domain": root_domain})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        domains_added = 0
-        entrypoints_added = 0
-        root = root_domain.strip().lower()
-
-        for raw_line in p.read_text(encoding="utf-8").splitlines():
-            domain = raw_line.strip().lower().rstrip(".")
-            if not domain or " " in domain:
-                continue
-            if root and not domain.endswith(root):
-                continue
-
-            host = _ensure_host_node(
-                graph,
-                label=domain,
-                key=f"host::{domain}",
-                source="subfinder",
-                root_domain=root or None,
-            )
-            domains_added += 1
-
-            for scheme in ("https", "http"):
-                url = f"{scheme}://{domain}/"
-                ep = graph.upsert_node(
-                    Node.make(
-                        NodeKind.ENTRYPOINT,
-                        url,
-                        key=f"entrypoint::{url}",
-                        source="subfinder",
-                        host=domain,
-                        scheme=scheme,
-                    )
-                )
-                graph.upsert_edge(Edge.make(host.id, ep.id, EdgeKind.EXPOSES, weight=0.5))
-                graph.upsert_edge(Edge.make(ep.id, host.id, EdgeKind.HOSTS, weight=0.5))
-                entrypoints_added += 1
-
-        return _json(
-            {
-                "domains_added": domains_added,
-                "entrypoints_added": entrypoints_added,
-                "stats": graph.stats(),
-            }
-        )
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_ingest_httpx_jsonl(path: str, scanner_hint: str = "httpx") -> str:
     """Ingest httpx JSONL output into host/service/entrypoint graph nodes."""
@@ -1062,132 +841,13 @@ def kg_ingest_httpx_jsonl(path: str, scanner_hint: str = "httpx") -> str:
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
+    try:
+        outcome = _parse_content(p.read_bytes(), "httpx_jsonl", {"scanner_hint": scanner_hint})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        parsed = 0
-        skipped = 0
-        entrypoints = 0
-        service_links = 0
-
-        for raw_line in p.read_text(encoding="utf-8").splitlines():
-            line = raw_line.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                skipped += 1
-                continue
-
-            url = str(row.get("url") or row.get("input") or "").strip()
-            if not url:
-                skipped += 1
-                continue
-            parsed += 1
-
-            parsed_url = urlparse(url)
-            host_value = (
-                str(row.get("host") or parsed_url.hostname or row.get("input") or "")
-                .strip()
-                .lower()
-            )
-            if not host_value:
-                skipped += 1
-                continue
-
-            port = row.get("port") or parsed_url.port
-            try:
-                port_int = (
-                    int(port) if port is not None else (443 if parsed_url.scheme == "https" else 80)
-                )
-            except (TypeError, ValueError):
-                port_int = 443 if parsed_url.scheme == "https" else 80
-
-            scheme = parsed_url.scheme or ("https" if port_int in {443, 8443} else "http")
-            status_code = row.get("status-code")
-            title = row.get("title")
-            webserver = row.get("webserver")
-            technologies = row.get("tech") if isinstance(row.get("tech"), list) else []
-
-            host = _ensure_host_node(
-                graph,
-                label=host_value,
-                key=f"host::{host_value}",
-                source=scanner_hint,
-            )
-
-            service = _ensure_service_node(
-                graph,
-                host=host,
-                host_label=host_value,
-                port=port_int,
-                proto="tcp",
-                source=scanner_hint,
-                service="http",
-                scheme=scheme,
-                status_code=status_code,
-                webserver=webserver,
-                technologies=technologies,
-            )
-
-            ep = graph.upsert_node(
-                Node.make(
-                    NodeKind.ENTRYPOINT,
-                    url,
-                    key=f"entrypoint::{url}",
-                    source=scanner_hint,
-                    host=host_value,
-                    scheme=scheme,
-                    port=port_int,
-                    status_code=status_code,
-                    title=title,
-                    webserver=webserver,
-                    technologies=technologies,
-                )
-            )
-            url_node = graph.upsert_node(
-                Node.make(
-                    NodeKind.URL,
-                    url,
-                    key=f"url::{url}",
-                    source=scanner_hint,
-                    status_code=status_code,
-                    title=title,
-                    webserver=webserver,
-                    technologies=technologies,
-                )
-            )
-            graph.upsert_edge(Edge.make(host.id, ep.id, EdgeKind.EXPOSES, weight=0.5))
-            graph.upsert_edge(Edge.make(ep.id, host.id, EdgeKind.HOSTS, weight=0.5))
-            graph.upsert_edge(Edge.make(service.id, ep.id, EdgeKind.EXPOSES, weight=0.4))
-            graph.upsert_edge(Edge.make(ep.id, service.id, EdgeKind.HOSTS, weight=0.4))
-            graph.upsert_edge(Edge.make(ep.id, url_node.id, EdgeKind.EXPOSES, weight=0.3))
-            graph.upsert_edge(Edge.make(url_node.id, ep.id, EdgeKind.HOSTS, weight=0.3))
-            entrypoints += 1
-            service_links += 1
-
-            if isinstance(status_code, int) and status_code >= 500:
-                vuln = graph.upsert_node(
-                    Node.make(
-                        NodeKind.VULNERABILITY,
-                        f"[{scanner_hint}] unstable endpoint {url}",
-                        key=f"{scanner_hint}::http-5xx::{url}",
-                        scanner=scanner_hint,
-                        rule_id="http-5xx",
-                        severity=Severity.LOW.value,
-                        status_code=status_code,
-                    )
-                )
-                graph.upsert_edge(Edge.make(ep.id, vuln.id, EdgeKind.HAS_VULN, weight=0.7))
-
-        return _json(
-            {
-                "parsed": parsed,
-                "skipped": skipped,
-                "entrypoints": entrypoints,
-                "service_links": service_links,
-                "stats": graph.stats(),
-            }
-        )
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
 # ── Web/Auth signal ingestion ──────────────────────────────────────────
@@ -1940,7 +1600,6 @@ async def validate_finding(
 # ── Tier 2 ingesters (Kali tool output → knowledge graph) ─────────────
 
 
-@tool
 @kg_degrades
 def kg_ingest_dnsx(path: str) -> str:
     """Ingest dnsx JSONL output (one resolution record per line).
@@ -1952,70 +1611,15 @@ def kg_ingest_dnsx(path: str) -> str:
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
+    try:
+        outcome = _parse_content(p.read_bytes(), "dnsx", {})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        hosts_added = 0
-        for raw in p.read_text(encoding="utf-8").splitlines():
-            line = raw.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            host_value = str(row.get("host") or row.get("name") or "").strip().lower().rstrip(".")
-            if not host_value:
-                continue
-            a = row.get("a") or []
-            aaaa = row.get("aaaa") or []
-            cname = row.get("cname") or []
-            host = _ensure_host_node(
-                graph,
-                label=host_value,
-                key=f"host::{host_value}",
-                source="dnsx",
-                a_records=a if isinstance(a, list) else [],
-                aaaa_records=aaaa if isinstance(aaaa, list) else [],
-                cname_records=cname if isinstance(cname, list) else [],
-            )
-            hosts_added += 1
-            # Link CNAME targets as separate host nodes. CNAME is an
-            # "exposes" relationship in reverse — the alias host surfaces
-            # the canonical host to the outside world. We also add the
-            # reverse ``runs_on`` edge so the chain planner can traverse
-            # aliases in either direction.
-            for target in cname if isinstance(cname, list) else []:
-                target_label = str(target).lower().rstrip(".")
-                if not target_label:
-                    continue
-                target_host = _ensure_host_node(
-                    graph,
-                    label=target_label,
-                    key=f"host::{target_label}",
-                    source="dnsx-cname",
-                )
-                graph.upsert_edge(
-                    Edge.make(
-                        host.id,
-                        target_host.id,
-                        EdgeKind.EXPOSES,
-                        weight=0.5,
-                        key=f"cname::{host_value}->{target_label}",
-                    )
-                )
-                graph.upsert_edge(
-                    Edge.make(
-                        target_host.id,
-                        host.id,
-                        EdgeKind.HOSTS,
-                        weight=0.5,
-                        key=f"cname-rev::{target_label}->{host_value}",
-                    )
-                )
-
-        return _json({"hosts_added": hosts_added, "stats": graph.stats()})
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_ingest_katana(path: str) -> str:
     """Ingest katana JSONL crawl output as URL / entrypoint nodes."""
@@ -2023,64 +1627,15 @@ def kg_ingest_katana(path: str) -> str:
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
+    try:
+        outcome = _parse_content(p.read_bytes(), "katana_jsonl", {})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        urls_added = 0
-        for raw in p.read_text(encoding="utf-8").splitlines():
-            line = raw.strip()
-            if not line:
-                continue
-            try:
-                row = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            endpoint = (
-                row.get("endpoint")
-                or row.get("request", {}).get("endpoint")
-                or row.get("url")
-                or ""
-            )
-            if not endpoint:
-                continue
-            parsed_url = urlparse(endpoint)
-            host_value = (parsed_url.hostname or "").lower()
-            if not host_value:
-                continue
-            host = _ensure_host_node(
-                graph,
-                label=host_value,
-                key=f"host::{host_value}",
-                source="katana",
-            )
-            url_node = graph.upsert_node(
-                Node.make(
-                    NodeKind.URL,
-                    endpoint,
-                    key=f"url::{endpoint}",
-                    source="katana",
-                    method=row.get("method") or row.get("request", {}).get("method") or "GET",
-                )
-            )
-            ep = graph.upsert_node(
-                Node.make(
-                    NodeKind.ENTRYPOINT,
-                    endpoint,
-                    key=f"entrypoint::{endpoint}",
-                    source="katana",
-                    host=host_value,
-                )
-            )
-            graph.upsert_edge(Edge.make(host.id, url_node.id, EdgeKind.EXPOSES, weight=0.5))
-            graph.upsert_edge(Edge.make(url_node.id, host.id, EdgeKind.HOSTS, weight=0.5))
-            graph.upsert_edge(Edge.make(host.id, ep.id, EdgeKind.EXPOSES, weight=0.4))
-            graph.upsert_edge(Edge.make(ep.id, host.id, EdgeKind.HOSTS, weight=0.4))
-            graph.upsert_edge(Edge.make(ep.id, url_node.id, EdgeKind.EXPOSES, weight=0.3))
-            graph.upsert_edge(Edge.make(url_node.id, ep.id, EdgeKind.HOSTS, weight=0.3))
-            urls_added += 1
-
-        return _json({"urls_added": urls_added, "stats": graph.stats()})
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_ingest_masscan(path: str) -> str:
     """Ingest masscan JSON output into host + service nodes.
@@ -2093,64 +1648,14 @@ def kg_ingest_masscan(path: str) -> str:
         return _json({"error": f"file not found: {path}"})
 
     try:
-        raw = p.read_text(encoding="utf-8").strip()
-        if not raw:
-            return _json({"error": "masscan output empty"})
-        # masscan -oJ emits a list with trailing commas sometimes; wrap
-        # in brackets if needed
-        if raw.startswith("["):
-            entries = json.loads(
-                raw.rstrip(",\n") + ("]" if not raw.rstrip().endswith("]") else "")
-            )
-        else:
-            entries = [json.loads(line.rstrip(",")) for line in raw.splitlines() if line.strip()]
-    except (OSError, json.JSONDecodeError) as e:
-        return _json({"error": f"failed to parse masscan json: {e}"})
-
+        outcome = _parse_content(p.read_bytes(), "masscan", {})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        hosts_added = 0
-        services_added = 0
-        for entry in entries:
-            if not isinstance(entry, dict):
-                continue
-            ip = str(entry.get("ip") or "").strip()
-            if not ip:
-                continue
-            host = _ensure_host_node(graph, label=ip, key=f"host::{ip}", ip=ip, source="masscan")
-            hosts_added += 1
-            for port_row in entry.get("ports") or []:
-                try:
-                    port = int(port_row.get("port", 0))
-                except (TypeError, ValueError):
-                    continue
-                if not port:
-                    continue
-                proto = port_row.get("proto", "tcp")
-                if port_row.get("status") and port_row.get("status") != "open":
-                    continue
-                _ensure_service_node(
-                    graph,
-                    host=host,
-                    host_label=ip,
-                    port=port,
-                    proto=proto,
-                    source="masscan",
-                    service="unknown",
-                    product="",
-                    version="",
-                )
-                services_added += 1
-
-        return _json(
-            {
-                "hosts_added": hosts_added,
-                "services_added": services_added,
-                "stats": graph.stats(),
-            }
-        )
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_ingest_ffuf(path: str) -> str:
     """Ingest ffuf JSON output as URL nodes anchored to a host.
@@ -2163,99 +1668,14 @@ def kg_ingest_ffuf(path: str) -> str:
         return _json({"error": f"file not found: {path}"})
 
     try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        return _json({"error": f"failed to parse ffuf json: {e}"})
-
-    results = data.get("results") or []
-
+        outcome = _parse_content(p.read_bytes(), "ffuf", {})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        urls_added = 0
-        entrypoints_added = 0
-        for row in results:
-            url = row.get("url") or ""
-            if not url:
-                continue
-            try:
-                status = int(row.get("status") or 0)
-            except (ValueError, TypeError):
-                status = 0
-            try:
-                length = int(row.get("length") or 0)
-            except (ValueError, TypeError):
-                length = 0
-            parsed_url = urlparse(url)
-            host_value = (parsed_url.hostname or "").lower()
-            host = None
-            if host_value:
-                host = _ensure_host_node(
-                    graph, label=host_value, key=f"host::{host_value}", source="ffuf"
-                )
-            url_node = graph.upsert_node(
-                Node.make(
-                    NodeKind.URL,
-                    url,
-                    key=f"url::{url}",
-                    source="ffuf",
-                    status=status,
-                    length=length,
-                )
-            )
-            ep = graph.upsert_node(
-                Node.make(
-                    NodeKind.ENTRYPOINT,
-                    url,
-                    key=f"entrypoint::{url}",
-                    source="ffuf",
-                    host=host_value,
-                    status=status,
-                )
-            )
-            if host is not None:
-                graph.upsert_edge(Edge.make(host.id, url_node.id, EdgeKind.EXPOSES, weight=0.5))
-                graph.upsert_edge(Edge.make(url_node.id, host.id, EdgeKind.HOSTS, weight=0.5))
-                graph.upsert_edge(Edge.make(host.id, ep.id, EdgeKind.EXPOSES, weight=0.4))
-                graph.upsert_edge(Edge.make(ep.id, host.id, EdgeKind.HOSTS, weight=0.4))
-            graph.upsert_edge(Edge.make(ep.id, url_node.id, EdgeKind.EXPOSES, weight=0.3))
-            graph.upsert_edge(Edge.make(url_node.id, ep.id, EdgeKind.HOSTS, weight=0.3))
-            urls_added += 1
-            entrypoints_added += 1
-
-        return _json(
-            {
-                "urls_added": urls_added,
-                "entrypoints_added": entrypoints_added,
-                "stats": graph.stats(),
-            }
-        )
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
-_GOBUSTER_DIR_RESULT = re.compile(
-    r"^(?P<path>/?[A-Za-z0-9._~/%-]+)\s+\(Status: (?P<status>\d{3})\)"
-    r"(?:\s+\[Size: (?P<size>\d+)\])?"
-)
-
-
-def _gobuster_hits(lines: list[str], base_url: str) -> list[tuple[str, int, int]]:
-    """Keep only directory-mode hits under the exact supplied web origin."""
-    root = urlparse(base_url)
-    hits: list[tuple[str, int, int]] = []
-    for line in lines:
-        match = _GOBUSTER_DIR_RESULT.match(line)
-        if match is None:
-            continue
-        discovered = match.group("path")
-        if ".." in discovered.split("/"):
-            continue
-        url = urljoin(base_url.rstrip("/") + "/", discovered.lstrip("/"))
-        parsed = urlparse(url)
-        if parsed.netloc.lower() != root.netloc.lower() or parsed.scheme != root.scheme:
-            continue
-        hits.append((url, int(match.group("status")), int(match.group("size") or 0)))
-    return hits
-
-
-@tool
 @kg_degrades
 def kg_ingest_gobuster(path: str, base_url: str) -> str:
     """Ingest Gobuster `dir -o` text hits for an explicitly supplied web root."""
@@ -2277,38 +1697,15 @@ def kg_ingest_gobuster(path: str, base_url: str) -> str:
     except (OSError, UnicodeError) as exc:
         return _json({"error": f"failed to read gobuster output: {exc}"})
 
-    hits = _gobuster_hits(lines, base_url)
+    try:
+        outcome = _parse_content(
+            "\n".join(lines).encode("utf-8"), "gobuster", {"base_url": base_url}
+        )
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        count = 0
-        for url, status, length in hits:
-            host = _ensure_host_node(
-                graph, label=root.hostname, key=f"host::{root.hostname}", source="gobuster"
-            )
-            url_node = graph.upsert_node(
-                Node.make(
-                    NodeKind.URL,
-                    url,
-                    key=f"url::{url}",
-                    source="gobuster",
-                    status=status,
-                    length=length,
-                )
-            )
-            entry = graph.upsert_node(
-                Node.make(
-                    NodeKind.ENTRYPOINT,
-                    url,
-                    key=f"entrypoint::{url}",
-                    source="gobuster",
-                    host=root.hostname,
-                    status=status,
-                )
-            )
-            graph.upsert_edge(Edge.make(host.id, url_node.id, EdgeKind.EXPOSES, weight=0.5))
-            graph.upsert_edge(Edge.make(host.id, entry.id, EdgeKind.EXPOSES, weight=0.4))
-            graph.upsert_edge(Edge.make(entry.id, url_node.id, EdgeKind.EXPOSES, weight=0.3))
-            count += 1
-        return _json({"urls_added": count, "stats": graph.stats()})
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
 @tool
@@ -2332,90 +1729,12 @@ def kg_ingest_testssl(path: str, target: str = "") -> str:
         return _json({"error": f"file not found: {path}"})
 
     try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as e:
-        return _json({"error": f"failed to parse testssl json: {e}"})
-
-    rows: list[dict[str, Any]] = []
-    envelope_target = ""
-    if isinstance(data, list):
-        rows = [r for r in data if isinstance(r, dict)]
-    elif isinstance(data, dict):
-        envelope_target = str(data.get("targetHost") or data.get("target") or "").strip()
-        # Newer testssl wraps everything in {"scanResult": [...]}
-        scan_result = data.get("scanResult")
-        if isinstance(scan_result, list):
-            for entry in scan_result:
-                if not isinstance(entry, dict):
-                    continue
-                if not envelope_target:
-                    envelope_target = str(
-                        entry.get("targetHost") or entry.get("target") or ""
-                    ).strip()
-                section = entry.get("vulnerabilities") or entry.get("serverDefaults") or []
-                if isinstance(section, list):
-                    rows.extend(r for r in section if isinstance(r, dict))
-
-    # Resolve the host label: explicit arg > envelope target > none
-    host_label = (target or envelope_target).strip()
-
+        outcome = _parse_content(p.read_bytes(), "testssl", {"target": target})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        host_node = None
-        if host_label:
-            # Strip port suffix for the graph host key
-            bare_host = host_label.split(":", 1)[0].lower()
-            host_node = _ensure_host_node(
-                graph,
-                label=bare_host,
-                key=f"host::{bare_host}",
-                source="testssl",
-            )
-
-        severity_map = {
-            "CRITICAL": Severity.CRITICAL,
-            "HIGH": Severity.HIGH,
-            "MEDIUM": Severity.MEDIUM,
-            "LOW": Severity.LOW,
-            "WARN": Severity.LOW,
-            "INFO": Severity.INFO,
-            "OK": Severity.INFO,
-        }
-        vulns_added = 0
-        linked = 0
-        for row in rows:
-            sev_raw = str(row.get("severity") or "INFO").upper()
-            severity = severity_map.get(sev_raw, Severity.INFO)
-            if severity in {Severity.INFO, Severity.LOW}:
-                continue
-            rule_id = str(row.get("id") or "testssl.finding")
-            finding = str(row.get("finding") or "").strip()
-            scope = host_label or "unscoped"
-            key = f"testssl::{scope}::{rule_id}::{finding[:48]}"
-            vuln = graph.upsert_node(
-                Node.make(
-                    NodeKind.VULNERABILITY,
-                    f"[testssl:{rule_id}] {finding[:80]}",
-                    key=key,
-                    scanner="testssl",
-                    rule_id=rule_id,
-                    severity=severity.value,
-                    description=finding,
-                    target=host_label,
-                )
-            )
-            vulns_added += 1
-            if host_node is not None:
-                graph.upsert_edge(Edge.make(host_node.id, vuln.id, EdgeKind.HAS_VULN, weight=0.6))
-                linked += 1
-
-        return _json(
-            {
-                "vulns_added": vulns_added,
-                "linked_to_host": linked,
-                "host": host_label,
-                "stats": graph.stats(),
-            }
-        )
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
 @tool
@@ -2431,56 +1750,15 @@ def kg_ingest_crackmapexec(path: str, protocol: str = "smb", target: str = "") -
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
-    text = p.read_text(encoding="utf-8", errors="replace")
-    success_re = re.compile(r"\[\+\].*?([A-Za-z0-9._-]+)[\\/]([A-Za-z0-9._-]+):(\S+)")
-    admin_re = re.compile(r"\(Pwn3d!?\)")
-
-    with graph_transaction() as graph:
-        creds_added = 0
-        admins_added = 0
-        for line in text.splitlines():
-            if "[+]" not in line:
-                continue
-            m = success_re.search(line)
-            if not m:
-                continue
-            domain, user, secret = m.group(1), m.group(2), m.group(3)
-            is_admin = bool(admin_re.search(line))
-            cred = graph.upsert_node(
-                Node.make(
-                    NodeKind.CREDENTIAL,
-                    f"{domain}\\{user}",
-                    key=f"cred::{domain}\\{user}",
-                    source="crackmapexec",
-                    protocol=protocol,
-                    target=target,
-                    secret_type=("ntlm" if ":" in secret and len(secret) >= 32 else "password"),
-                    admin=is_admin,
-                )
-            )
-            user_node = graph.upsert_node(
-                Node.make(
-                    NodeKind.USER,
-                    f"{domain}\\{user}",
-                    key=f"user::{domain}\\{user}",
-                    source="crackmapexec",
-                    domain=domain,
-                )
-            )
-            graph.upsert_edge(
-                Edge.make(cred.id, user_node.id, EdgeKind.AUTHENTICATES_TO, weight=0.5)
-            )
-            creds_added += 1
-            if is_admin:
-                admins_added += 1
-
-        return _json(
-            {
-                "creds_added": creds_added,
-                "admin_creds_added": admins_added,
-                "stats": graph.stats(),
-            }
+    try:
+        outcome = _parse_content(
+            p.read_bytes(), "crackmapexec", {"protocol": protocol, "target": target}
         )
+    except ParseError as exc:
+        return _json({"error": str(exc)})
+    with graph_transaction() as graph:
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
 @tool
@@ -2495,40 +1773,27 @@ def kg_ingest_asrep_hashes(path: str, domain: str = "") -> str:
     if not p.exists():
         return _json({"error": f"file not found: {path}"})
 
+    try:
+        outcome = _parse_content(p.read_bytes(), "asrep_hashes", {"domain": domain})
+    except ParseError as exc:
+        return _json({"error": str(exc)})
     with graph_transaction() as graph:
-        added = 0
-        for line in p.read_text(encoding="utf-8", errors="replace").splitlines():
-            line = line.strip()
-            if not line.startswith("$krb5asrep$"):
-                continue
-            # Format: $krb5asrep$23$USER@DOMAIN:SALT$ENCRYPTED_TIMESTAMP
-            # split("$", 4) →
-            #   [0]=''  [1]='krb5asrep'  [2]='23'
-            #   [3]='USER@DOMAIN:SALT'   [4]='ENCRYPTED_TIMESTAMP'
-            after_dollars = line.split("$", 4)
-            if len(after_dollars) < 5:
-                continue
-            user_part = after_dollars[3].split(":", 1)[0]
-            user = user_part.split("@", 1)[0]
-            dom = user_part.split("@", 1)[1] if "@" in user_part else domain
-            label = f"{dom}\\{user}" if dom else user
-            graph.upsert_node(
-                Node.make(
-                    NodeKind.CREDENTIAL,
-                    label,
-                    key=f"cred-asrep::{label}",
-                    source="impacket-GetNPUsers",
-                    secret_type="krb5asrep",
-                    hashcat_mode=18200,
-                    hash=line,
-                )
-            )
-            added += 1
-
-        return _json({"asrep_hashes_added": added, "stats": graph.stats()})
+        apply_observations(graph, outcome.observations)
+        return _json({**dict(outcome.summary), "stats": graph.stats()})
 
 
 # ── Public tool list ────────────────────────────────────────────────────
+#
+# Wave T3: 9 of the 14 kg_ingest_* scanner-output parsers (nmap_xml,
+# nuclei_jsonl, httpx_jsonl, katana_jsonl, subfinder, dnsx, ffuf, masscan,
+# gobuster) are internal services now — importable (above) but
+# deliberately absent from the agent-facing tool list, since
+# KGAutoIngestMiddleware auto-detects their bash invocation and parses
+# through the ``knowledge/ingest`` ParserRegistry instead. The remaining
+# 5 (sarif, slither, testssl, crackmapexec, asrep_hashes) keep their
+# ``@tool`` decorator and RESEARCH_TOOLS membership — see the module
+# docstring for why they don't fit the auto-ingest command-detection
+# model yet.
 
 RESEARCH_TOOLS = [
     kg_add_node,
@@ -2538,24 +1803,15 @@ RESEARCH_TOOLS = [
     kg_stats,
     kg_backend_health,
     kg_dedupe_findings,
-    kg_ingest_nmap_xml,
-    kg_ingest_nuclei_jsonl,
-    kg_ingest_subfinder,
-    kg_ingest_httpx_jsonl,
-    kg_ingest_dnsx,
-    kg_ingest_katana,
-    kg_ingest_masscan,
-    kg_ingest_ffuf,
-    kg_ingest_gobuster,
+    kg_ingest_sarif,
+    kg_ingest_slither,
     kg_ingest_testssl,
     kg_ingest_crackmapexec,
     kg_ingest_asrep_hashes,
-    kg_ingest_sarif,
     kg_analyze_jwt,
     kg_analyze_oauth_callback,
     kg_analyze_cookie_value,
     kg_scan_solidity,
-    kg_ingest_slither,
     kg_triage_binary,
     cve_lookup,
     cve_by_package,

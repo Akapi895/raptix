@@ -22,11 +22,11 @@ from raptix.intelligence.agents.plugins.vulnresearch import create_vulnresearch_
 from raptix.intelligence.agents.standard.analyst import create_analyst_agent
 from raptix.intelligence.agents.standard.autohunt import create_autohunt_agent
 from raptix.intelligence.agents.standard.blue_cell import create_blue_cell_agent
-from raptix.intelligence.agents.standard.raptix import create_raptix_agent
 from raptix.intelligence.agents.standard.exploit import create_exploit_agent
 from raptix.intelligence.agents.standard.forensicator import create_forensicator_agent
 from raptix.intelligence.agents.standard.osint_operator import create_osint_operator_agent
 from raptix.intelligence.agents.standard.postexploit import create_postexploit_agent
+from raptix.intelligence.agents.standard.raptix import create_raptix_agent
 from raptix.intelligence.agents.standard.recon import create_recon_agent
 from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
 from raptix.intelligence.agents.standard.supply_chain_operator import (

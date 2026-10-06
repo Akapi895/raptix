@@ -1,8 +1,8 @@
 {
   "dependencies": ["./packages/raptix"],
   "graphs": {
-    "raptix": "./packages/raptix/raptix/intelligence/agents/standard/decepticon.py:graph",
-    "decepticon": "./packages/raptix/raptix/intelligence/agents/standard/decepticon.py:graph",
+    "raptix": "./packages/raptix/raptix/intelligence/agents/standard/raptix.py:graph",
+    "decepticon": "./packages/raptix/raptix/intelligence/agents/standard/raptix.py:graph",
     "recon": "./packages/raptix/raptix/intelligence/agents/standard/recon.py:graph",
     "autohunt": "./packages/raptix/raptix/intelligence/agents/standard/autohunt.py:graph",
     "soundwave": "./packages/raptix/raptix/intelligence/agents/standard/soundwave.py:graph",
