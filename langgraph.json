@@ -27,10 +27,10 @@
   "env": ".env",
   "python_version": "3.13",
   "checkpointer": {
-    "path": "./packages/raptix/raptix/server/checkpointer.py:sqlite_checkpointer"
+    "path": "./packages/raptix/raptix/interfaces/api/checkpointer.py:sqlite_checkpointer"
   },
   "http": {
     "multitask_strategy": "interrupt",
-    "app": "./packages/raptix/raptix/server/plugins_api.py:app"
+    "app": "./packages/raptix/raptix/interfaces/api/plugins_api.py:app"
   }
 }
