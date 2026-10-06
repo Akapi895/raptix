@@ -804,10 +804,10 @@ Surface by role:
 - All existing data reachable through new surfaces
 - Role-appropriate exposure (attack workers never see reporting)
 
-**Outcome: references 15 → 3, reporting 6 → 1, evidence 4 → 1; 24
-functions demoted to internal services.** The agent-facing reference
-surface is now `research_cve(query)` (every CVE id in the query is
-resolved against the local PoC index), `search_security_references(
+**Outcome: references 15 → 3, reporting 6 → 1, evidence 4 → 4 (see fix
+below); 21 functions demoted to internal services.** The agent-facing
+reference surface is now `research_cve(query)` (every CVE id in the
+query is resolved against the local PoC index), `search_security_references(
 query, kinds=[], limit=5)` (one call fans out across the HackerOne /
 one-liner / methodology / kill-chain corpora — the agent never picks
 the corpus; external sections keep the `wrap_corpus` trust envelope),
@@ -815,21 +815,37 @@ and `lookup_payload(query, vuln_class="", limit=25)` (bundled + ingested
 payload fan-out). Reporting collapsed into `generate_report(format,
 ...)` with formats `hackerone | bugcrowd_csv | executive | timeline |
 sarif | bounty` — `format_bounty_report` was absorbed as the `bounty`
-format per the T1 note that both renderers should merge. Evidence
-became `inspect_evidence(finding_id)` (finding node + 1-hop linked
-nodes + chain-of-custody verification + asciicast recordings), with
-`_verify_manifest` extracted as the shared internal used by both the
-plain `verify_evidence` service and the tool.
+format per the T1 note that both renderers should merge. Evidence added
+`inspect_evidence(finding_id)` (finding node + 1-hop linked nodes +
+chain-of-custody verification + asciicast recordings) as a 4th tool
+alongside the 3 capture/seal tools (see fix below) — `_verify_manifest`
+is the shared internal both `verify_evidence` and `inspect_evidence` call.
+
+**Fix (same regression shape as T3): `seal_evidence` /
+`export_session_asciicast` / `list_session_recordings` restored to
+`@tool` + `EVIDENCE_TOOLS`.** The first cut demoted all 4 evidence
+functions, same as references/reporting, on the stated plan "automatic
+in the ArtifactStore pipeline" — but that pipeline doesn't exist yet, so
+removing their only caller (`@tool`) left nothing to ever invoke them.
+Concretely: nothing wrote the chain-of-custody manifest anymore, so
+`inspect_evidence`'s new `custody` field would always report "manifest
+not found," and nothing captured asciicast recordings, so its
+`recordings` field would always be empty — the new tool's own flagship
+feature was dead on arrival. Restored exactly like T3's 5 holdouts:
+`seal_evidence`/`export_session_asciicast`/`list_session_recordings`
+keep `@tool` + `EVIDENCE_TOOLS` membership until a real automatic
+pipeline lands to replace them. `verify_evidence` alone stays a plain
+function — it IS reachable today via `inspect_evidence`'s
+`_verify_manifest` call, so no fix needed there.
 
 Demoted to plain functions (importable, no `@tool`, never-delete rule):
 13 references services (`ref_list/suggest/topic/fetch/status/grep`,
 `payload_search`, `payload_classes`, `cve_poc_lookup`, `h1_search`,
 `oneliner_search`, `killchain_lookup`, `methodology_lookup`,
-`references_hydrate`), the 5 `report_*` renderers, all 4 evidence
-services (`seal_evidence`, `verify_evidence`, `export_session_asciicast`,
-`list_session_recordings`), and `format_bounty_report`. The corpus
-trust helpers moved to `references/corpus.py` (shared by the semantic
-fan-out and the demoted services — no circular import).
+`references_hydrate`), the 5 `report_*` renderers, `verify_evidence`
+(reachable via `inspect_evidence`), and `format_bounty_report`. The
+corpus trust helpers moved to `references/corpus.py` (shared by the
+semantic fan-out and the demoted services — no circular import).
 
 Scope decisions worth remembering:
 
@@ -841,7 +857,8 @@ Scope decisions worth remembering:
   never quarantine-listed; they carry their own explicit
   `untrusted-external-corpus` envelope (now via `corpus.wrap_corpus`).
 - `bounty_scope_check` stays `@tool` in `BOUNTY_TOOLS` (control-plane,
-  per T1); `EVIDENCE_TOOLS = [inspect_evidence]` is wired to the
+  per T1); `EVIDENCE_TOOLS = [inspect_evidence, seal_evidence,
+  export_session_asciicast, list_session_recordings]` is wired to the
   verifier plugin and the analyst (operator lane); `REPORTING_TOOLS =
   [generate_report]` stays analyst-only — attack workers never see
   reporting or evidence surfaces.
@@ -868,6 +885,14 @@ contract; `test_bounty*.py` re-pinned to the 1-tool `BOUNTY_TOOLS`.
 2,757 tests pass across the focused suites (references + reporting +
 evidence + bounty 425, agents 192, tools 510, research + middleware
 1,600). basedpyright 0 errors / 727 warnings (T4 baseline held).
+
+**After the evidence fix:** `test_evidence_tools.py` and
+`test_misc_tool_wrappers.py`'s `seal_evidence`/`export_session_asciicast`/
+`list_session_recordings` call sites converted back to `.invoke({...})`
+(they're `StructuredTool`s again); `test_misc_tool_wrappers.py`'s
+`EVIDENCE_TOOLS == [inspect_evidence]` assertion — which had been
+directly pinning the regression — updated to the 4-tool set. 106/106
+pass across the targeted evidence + adapter suites post-fix.
 
 ---
 
@@ -1011,6 +1036,14 @@ nikto, responder, python3-impacket).
   (`str/int/bool/list/url/domain/artifact-name`) with
   `AdapterParameterError`; **unknown request parameters are ignored** —
   there is no raw-args escape hatch, a planner cannot smuggle flags.
+  **Fix (hardening, not a regression):** a review found `str_param`
+  only rejected whitespace/control characters, not a leading `-` — a
+  bare positional value (e.g. `target`) starting with `-` could be
+  misread by the binary's own argument parser as a flag rather than a
+  value (argument injection; no shell is invoked, so not command
+  injection). `str_param`/`str_list_param` now reject a leading `-` by
+  default, with an explicit `allow_leading_dash=True` opt-out for a
+  future adapter that genuinely needs one (none of the current 8 do).
 - 7 adapter modules, one capability each (impacket module serves two):
   `network.scan`→nmap (fixed `-sT/-sS/-sU` mapping, port-list charset,
   `-oX` artifact), `network.discover_subdomains`→subfinder (`-json -o`
@@ -1057,6 +1090,12 @@ import-probe restricted to `module:attr` carriers, health gate with
 injected probes). 82/82 tests pass. ruff clean; basedpyright 0 errors
 / 727 warnings (baseline held, zero new warnings in the adapter
 package).
+
+**After the leading-dash fix:** 3 new tests in `test_adapters.py` —
+`NmapAdapter` rejects `target="--script=evil"`, `str_list_param` rejects
+a dash-prefixed entry, and the `allow_leading_dash=True` opt-out is
+proven to still work. 106/106 pass across the targeted evidence +
+adapter suites post-fix (combined with the T5 evidence fix above).
 
 ---
 

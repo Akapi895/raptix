@@ -154,7 +154,8 @@ class TestFoundryToolWrappers:
 
 
 class TestExportSessionAsciicastService:
-    """export_session_asciicast service output shapes (Wave T5: plain function)."""
+    """export_session_asciicast tool output shapes (Wave T5: restored @tool —
+    see evidence/tools.py module docstring for why)."""
 
     def test_successful_export_returns_status_exported(self, tmp_path: Path) -> None:
         from raptix.execution.tools.evidence.tools import export_session_asciicast
@@ -167,7 +168,9 @@ class TestExportSessionAsciicastService:
         evidence_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast("mysession", title="Test Session")
+            result = export_session_asciicast.invoke(
+                {"session_name": "mysession", "title": "Test Session"}
+            )
 
         data = json.loads(result)
         assert data["status"] == "exported"
@@ -182,7 +185,9 @@ class TestExportSessionAsciicastService:
         evidence_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast("s1", pipe_pane_log_path=str(log))
+            result = export_session_asciicast.invoke(
+                {"session_name": "s1", "pipe_pane_log_path": str(log)}
+            )
 
         data = json.loads(result)
         assert data["status"] == "exported"
@@ -194,8 +199,8 @@ class TestExportSessionAsciicastService:
         evidence_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = export_session_asciicast(
-                "nope", pipe_pane_log_path=str(tmp_path / "nonexistent.log")
+            result = export_session_asciicast.invoke(
+                {"session_name": "nope", "pipe_pane_log_path": str(tmp_path / "nonexistent.log")}
             )
 
         data = json.loads(result)
@@ -203,7 +208,8 @@ class TestExportSessionAsciicastService:
 
 
 class TestListSessionRecordingsService:
-    """list_session_recordings service output shapes (Wave T5: plain function)."""
+    """list_session_recordings tool output shapes (Wave T5: restored @tool —
+    see evidence/tools.py module docstring for why)."""
 
     def test_empty_dir_returns_count_zero(self, tmp_path: Path) -> None:
         from raptix.execution.tools.evidence.tools import list_session_recordings
@@ -212,7 +218,7 @@ class TestListSessionRecordingsService:
         recordings_dir.mkdir(parents=True)
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = list_session_recordings()
+            result = list_session_recordings.invoke({})
 
         data = json.loads(result)
         assert data["count"] == 0
@@ -233,17 +239,26 @@ class TestListSessionRecordingsService:
         )
 
         with patch("raptix.execution.tools.evidence.tools._workspace", return_value=tmp_path):
-            result = list_session_recordings()
+            result = list_session_recordings.invoke({})
 
         data = json.loads(result)
         assert data["count"] == 2
         names = sorted(m["session_name"] for m in data["recordings"])
         assert names == ["a", "b"]
 
-    def test_evidence_tools_list_has_inspect_evidence_only(self) -> None:
+    def test_evidence_tools_list_includes_capture_and_seal_tools(self) -> None:
+        """Wave T5 originally planned inspect_evidence as the only tool, with
+        seal/export/list becoming automatic. A review found that pipeline
+        doesn't exist yet, so these 3 stay @tool-decorated until it does —
+        see evidence/tools.py's module docstring."""
         from raptix.execution.tools.evidence.tools import EVIDENCE_TOOLS
 
-        assert [t.name for t in EVIDENCE_TOOLS] == ["inspect_evidence"]
+        assert {t.name for t in EVIDENCE_TOOLS} == {
+            "inspect_evidence",
+            "seal_evidence",
+            "export_session_asciicast",
+            "list_session_recordings",
+        }
 
 
 # ── cloud/tools.py wrappers ────────────────────────────────────────────────

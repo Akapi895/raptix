@@ -1,9 +1,18 @@
-"""Evidence services (plain functions) + the verifier-facing ``inspect_evidence`` tool.
+"""Evidence tools: capture/seal explicitly, inspect automatically.
 
-Wave T5: sealing / verification / recording become internal pipeline
-steps (automatic in the ArtifactStore pipeline once it lands), and the
-single agent-facing surface is ``inspect_evidence(finding_id)`` for the
-verifier and operator roles.
+Wave T5 originally planned to make sealing/verification/recording
+automatic "in the ArtifactStore pipeline" and drop them from the agent
+surface entirely. A review caught that this pipeline doesn't exist yet —
+removing ``@tool`` from ``seal_evidence``/``export_session_asciicast``/
+``list_session_recordings`` with no automatic replacement left them with
+no caller at all, so the manifest `seal_evidence` writes never gets
+created and `inspect_evidence`'s `custody`/`recordings` fields would
+always report empty (the exact T3-shaped regression: a decorator removed
+with nothing left to invoke it). Fixed the same way T3's holdouts were:
+these 3 keep their ``@tool`` decorator and ``EVIDENCE_TOOLS`` membership
+until a real automatic pipeline lands to replace them — ``verify_evidence``
+stays a plain function since it IS reachable today, via
+``inspect_evidence``'s ``_verify_manifest`` call.
 """
 
 from __future__ import annotations
@@ -77,6 +86,7 @@ def _evidence_files(evidence_root: Path, manifest_path: Path) -> list[Path]:
     return found
 
 
+@tool
 def export_session_asciicast(
     session_name: str,
     pipe_pane_log_path: str = "",
@@ -108,12 +118,14 @@ def export_session_asciicast(
     return _json({"status": "exported", **manifest})
 
 
+@tool
 def list_session_recordings() -> str:
     """List all asciicast recordings captured for the current engagement."""
     manifests = list_recordings(_evidence_dir())
     return _json({"count": len(manifests), "recordings": manifests})
 
 
+@tool
 def seal_evidence(workspace_path: str = "") -> str:
     """Seal every file under ``<workspace>/evidence/`` into the
     append-only chain-of-custody manifest (SHA-256 + size per file,
@@ -293,4 +305,9 @@ def inspect_evidence(finding_id: str) -> str:
     )
 
 
-EVIDENCE_TOOLS = [inspect_evidence]
+EVIDENCE_TOOLS = [
+    inspect_evidence,
+    seal_evidence,
+    export_session_asciicast,
+    list_session_recordings,
+]
