@@ -596,11 +596,35 @@ heavy frameworks, and T2 itself adds no new dependency at all —
 
 ---
 
-### Wave T3 — Parser registry (internal service, remove @tool)
+### Wave T3 — Parser registry (internal service, remove @tool) ✅ DONE
 
 **Goal:** Convert 14 `kg_ingest_*` functions from agent-facing tools to
 internal parser services. This is the highest-value change: 14 tools that
 no LLM should ever need to choose.
+
+**Outcome: 9 of 14, not all 14.** A review of the first implementation
+found 6 formats (sarif, slither, gobuster, testssl, crackmapexec,
+asrep_hashes) had their `@tool` decorator removed with no auto-ingest
+replacement wired in, making them silently unreachable — a real
+capability regression that 804 passing tests didn't catch, because the
+tests only exercised the shim functions directly, never end-to-end
+reachability. Fix: only formats with a clean, evidence-based
+`<binary> ... -o <file>` bash invocation auto-ingest —
+`nmap_xml`/`nuclei_jsonl`/`httpx_jsonl`/`katana_jsonl` (pre-existing
+adapter path) + `subfinder`/`dnsx`/`ffuf`/`masscan`/`gobuster` (new
+`ParserRegistry` path, confirmed against `packages/raptix-skills`
+canonical invocations). `gobuster` additionally needed its `-u`
+value threaded through as artifact metadata (`GobusterParser` cannot
+anchor hits to a host otherwise). The other 5 — `sarif`, `slither`,
+`testssl`, `crackmapexec`, `asrep_hashes` — are conventionally invoked
+with output redirected to a file (`> out.txt` / piped), which
+`KGAutoIngestMiddleware` deliberately never parses (it rejects any
+command containing shell redirection outright); guessing a flag
+convention for these risked silently ingesting the wrong content, so
+they kept their `@tool` decorator and `RESEARCH_TOOLS` membership —
+exactly their pre-T3 shape. A future wave can revisit once there's a
+safe way to detect their output (e.g. a stdout-capture heuristic, or a
+documented convention requiring an explicit output flag).
 
 **Artifact access (per the T2 review — not a T2 code change, a T3
 design constraint):** `Artifact.artifact_ref` is intentionally not a
@@ -642,12 +666,17 @@ Steps:
 7. Wire `ParserRegistry` into post-tool middleware hook (L2a auto-ingest)
 8. Re-export shim for backward compatibility of callers
 
-**Acceptance:**
-- 14 fewer agent-facing tools
-- Existing tests pass via registry dispatch
-- `kg_ingest_*` importable but not in any `*_TOOLS` list
-- Auto-ingest works: tool output → parser → AKG (no LLM decision)
-- Explicit format ID resolves to exactly one parser
+**Acceptance (met):**
+- 9 fewer agent-facing tools (not 14 — see Outcome above)
+- 811/811 tests pass via registry dispatch (incl. end-to-end auto-ingest
+  tests per format, not just shim-function unit tests)
+- The 9 auto-ingested `kg_ingest_*` are importable but not in
+  `RESEARCH_TOOLS`; the other 5 stay in `RESEARCH_TOOLS` by design
+- Auto-ingest works for all 9: bash tool output → parser → AKG (no LLM
+  decision), verified per-format in `test_kg_autoingest.py`
+- Explicit format ID resolves to exactly one parser (fixed a
+  multi-candidate `expected_formats` fallthrough bug: the resolver
+  used to examine only the first candidate regardless of list length)
 - Ambiguous sniffing never silently chooses a parser
 - Parser fixture dispatch is deterministic
 

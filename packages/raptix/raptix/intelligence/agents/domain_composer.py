@@ -33,8 +33,19 @@ _TOOL_GROUPS = {
     "reversing": REVERSING_TOOLS,
     "web": WEB_TOOLS,
 }
+
+
+def _tool_name(tool: Any) -> str:
+    """LangChain tools carry ``.name``; Wave T3 turned the ``kg_ingest_*``
+    parser services into plain functions, which only have ``__name__``."""
+    name = getattr(tool, "name", None)
+    if isinstance(name, str) and name:
+        return name
+    return tool.__name__
+
+
 _NAMED_TOOLS = {
-    tool.name: tool
+    _tool_name(tool): tool
     for tool in [
         *REFERENCES_TOOLS,
         *RESEARCH_TOOLS,
@@ -51,7 +62,7 @@ def domain_baseline_tools(definition: DomainAgentDefinition) -> dict[str, Any]:
         raise DomainCompositionError(
             f"unknown tool capability for {definition.role}: {exc}"
         ) from exc
-    return {tool.name: tool for tool in selected}
+    return {_tool_name(tool): tool for tool in selected}
 
 
 def compose_domain_agent(

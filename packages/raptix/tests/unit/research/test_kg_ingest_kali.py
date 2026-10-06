@@ -73,7 +73,7 @@ class TestKgIngestDnsx:
             ),
             encoding="utf-8",
         )
-        payload = json.loads(research_tools.kg_ingest_dnsx.invoke({"path": str(out)}))
+        payload = json.loads(research_tools.kg_ingest_dnsx(path=str(out)))
         assert payload["hosts_added"] == 2
         graph = fake.load_graph()
         labels = {n.label for n in graph.by_kind(NodeKind.HOST)}
@@ -90,9 +90,7 @@ class TestKgIngestDnsx:
 
     def test_missing_file(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch, tmp_path)
-        payload = json.loads(
-            research_tools.kg_ingest_dnsx.invoke({"path": str(tmp_path / "missing")})
-        )
+        payload = json.loads(research_tools.kg_ingest_dnsx(path=str(tmp_path / "missing")))
         assert "error" in payload
 
 
@@ -119,7 +117,7 @@ class TestKgIngestKatana:
             ),
             encoding="utf-8",
         )
-        payload = json.loads(research_tools.kg_ingest_katana.invoke({"path": str(out)}))
+        payload = json.loads(research_tools.kg_ingest_katana(path=str(out)))
         assert payload["urls_added"] == 2
         graph = fake.load_graph()
         urls = {n.label for n in graph.by_kind(NodeKind.URL)}
@@ -149,7 +147,7 @@ class TestKgIngestMasscan:
             ),
             encoding="utf-8",
         )
-        payload = json.loads(research_tools.kg_ingest_masscan.invoke({"path": str(out)}))
+        payload = json.loads(research_tools.kg_ingest_masscan(path=str(out)))
         assert payload["hosts_added"] == 2
         assert payload["services_added"] == 3
         graph = fake.load_graph()
@@ -172,7 +170,7 @@ class TestKgIngestFfuf:
             ),
             encoding="utf-8",
         )
-        payload = json.loads(research_tools.kg_ingest_ffuf.invoke({"path": str(out)}))
+        payload = json.loads(research_tools.kg_ingest_ffuf(path=str(out)))
         assert payload["urls_added"] == 2
         graph = fake.load_graph()
         urls = {n.label for n in graph.by_kind(NodeKind.URL)}
@@ -192,9 +190,7 @@ class TestKgIngestGobuster:
             encoding="utf-8",
         )
         payload = json.loads(
-            research_tools.kg_ingest_gobuster.invoke(
-                {"path": str(output), "base_url": "https://example.com/"}
-            )
+            research_tools.kg_ingest_gobuster(path=str(output), base_url="https://example.com/")
         )
         assert payload["urls_added"] == 2
         graph = fake.load_graph()
@@ -214,9 +210,7 @@ class TestKgIngestGobuster:
             encoding="utf-8",
         )
         payload = json.loads(
-            research_tools.kg_ingest_gobuster.invoke(
-                {"path": str(output), "base_url": "https://example.com/"}
-            )
+            research_tools.kg_ingest_gobuster(path=str(output), base_url="https://example.com/")
         )
         assert payload["urls_added"] == 0
         assert fake.graph.by_kind(NodeKind.URL) == []
@@ -236,7 +230,7 @@ class TestKgIngestGobuster:
 
         def run_ingest(_request):
             return ToolMessage(
-                content=research_tools.kg_ingest_gobuster.invoke(args),
+                content=research_tools.kg_ingest_gobuster(**args),
                 name="kg_ingest_gobuster",
                 tool_call_id="ingest-1",
             )

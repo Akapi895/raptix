@@ -86,7 +86,7 @@ class TestReconIngestion:
             encoding="utf-8",
         )
 
-        payload = json.loads(research_tools.kg_ingest_nmap_xml.invoke({"path": str(xml_path)}))
+        payload = json.loads(research_tools.kg_ingest_nmap_xml(path=str(xml_path)))
         assert payload["ingested"]["hosts"] == 1
         assert payload["ingested"]["services"] == 1
         assert payload["ingested"]["entrypoints"] == 1
@@ -119,9 +119,7 @@ class TestReconIngestion:
             encoding="utf-8",
         )
 
-        payload = json.loads(
-            research_tools.kg_ingest_nuclei_jsonl.invoke({"path": str(nuclei_path)})
-        )
+        payload = json.loads(research_tools.kg_ingest_nuclei_jsonl(path=str(nuclei_path)))
         assert payload["parsed"] == 1
         assert payload["skipped"] == 0
 
@@ -161,7 +159,7 @@ class TestReconIngestion:
             encoding="utf-8",
         )
 
-        payload = json.loads(research_tools.kg_ingest_httpx_jsonl.invoke({"path": str(httpx_path)}))
+        payload = json.loads(research_tools.kg_ingest_httpx_jsonl(path=str(httpx_path)))
         assert payload["parsed"] == 2
         assert payload["entrypoints"] == 2
         assert payload["service_links"] == 2
@@ -331,3 +329,46 @@ contract Vault {
         graph = fake.load_graph()
         vulns = graph.by_kind(NodeKind.VULNERABILITY)
         assert any(v.props.get("scanner") == "cookie-analysis" for v in vulns)
+
+
+class TestWaveT3IngestToolSurface:
+    """Pins exactly which kg_ingest_* formats are agent tools vs internal
+    services — the fix for the regression a review caught: 6 of 14
+    formats had their @tool decorator stripped with no replacement
+    auto-ingest wiring, making them unreachable by anything."""
+
+    _STILL_TOOLS = (
+        "kg_ingest_sarif",
+        "kg_ingest_slither",
+        "kg_ingest_testssl",
+        "kg_ingest_crackmapexec",
+        "kg_ingest_asrep_hashes",
+    )
+    _INTERNAL_ONLY = (
+        "kg_ingest_nmap_xml",
+        "kg_ingest_nuclei_jsonl",
+        "kg_ingest_httpx_jsonl",
+        "kg_ingest_katana",
+        "kg_ingest_subfinder",
+        "kg_ingest_dnsx",
+        "kg_ingest_ffuf",
+        "kg_ingest_masscan",
+        "kg_ingest_gobuster",
+    )
+
+    def test_five_formats_without_a_safe_auto_ingest_heuristic_stay_tools(self) -> None:
+        names = {getattr(t, "name", None) for t in research_tools.RESEARCH_TOOLS}
+        for tool_name in self._STILL_TOOLS:
+            assert tool_name in names, f"{tool_name} must stay an agent tool"
+            func = getattr(research_tools, tool_name)
+            assert hasattr(func, "invoke"), f"{tool_name} must be @tool-decorated"
+
+    def test_nine_formats_with_a_clean_flag_convention_stay_internal(self) -> None:
+        names = {getattr(t, "name", None) for t in research_tools.RESEARCH_TOOLS}
+        for tool_name in self._INTERNAL_ONLY:
+            assert tool_name not in names, f"{tool_name} must not be agent-facing"
+            func = getattr(research_tools, tool_name)
+            assert not hasattr(func, "invoke"), f"{tool_name} must be a plain function"
+
+    def test_all_fourteen_formats_accounted_for(self) -> None:
+        assert len(self._STILL_TOOLS) + len(self._INTERNAL_ONLY) == 14

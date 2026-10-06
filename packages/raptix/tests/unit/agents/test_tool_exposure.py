@@ -59,6 +59,9 @@ def test_summarize_tool_exposure_falls_back_to_dunder_name_for_bare_callables():
 
 def test_record_tool_exposure_noop_without_env(monkeypatch, caplog):
     monkeypatch.delenv("RAPTIX_TOOL_TELEMETRY", raising=False)
+    # ``raptix_core.utils.logging`` sets propagate=False on the "raptix"
+    # root logger during import; caplog only sees records that reach the root.
+    monkeypatch.setattr(logging.getLogger("raptix"), "propagate", True)
     with caplog.at_level(logging.INFO, logger="raptix.tools.exposure"):
         record_tool_exposure("recon", [_fake_tool("bash")])
     assert caplog.records == []
@@ -66,6 +69,7 @@ def test_record_tool_exposure_noop_without_env(monkeypatch, caplog):
 
 def test_record_tool_exposure_logs_when_enabled(monkeypatch, caplog):
     monkeypatch.setenv("RAPTIX_TOOL_TELEMETRY", "1")
+    monkeypatch.setattr(logging.getLogger("raptix"), "propagate", True)
     with caplog.at_level(logging.INFO, logger="raptix.tools.exposure"):
         record_tool_exposure("recon", [_fake_tool("bash")])
     assert any("tool_exposure" in r.getMessage() for r in caplog.records)

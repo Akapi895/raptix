@@ -23,7 +23,6 @@ from raptix.execution.tools.research import _state as state
 from raptix.execution.tools.research import tools as research_tools
 from raptix.execution.tools.research.tools import (
     _cookie_finding_severity,
-    _is_web_port,
     _iter_cargo_lock,
     _iter_go_sum,
     _iter_package_lock,
@@ -35,6 +34,7 @@ from raptix.execution.tools.research.tools import (
     _severity_from_string,
     _severity_threshold,
 )
+from raptix.knowledge.ingest.parsers.nmap_xml import _is_web_port
 from raptix_core.types.kg import KnowledgeGraph, NodeKind, Severity  # noqa: F401
 
 # ── Shared fake store ────────────────────────────────────────────────────
@@ -640,7 +640,7 @@ class TestKgIngestSubfinder:
         p = tmp_path / "subdomains.txt"
         p.write_text("api.example.com\nwww.example.com\n", encoding="utf-8")
 
-        result = json.loads(research_tools.kg_ingest_subfinder.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_subfinder(path=str(p)))
         assert result["domains_added"] == 2
         # 2 domains × 2 schemes (http + https) = 4
         assert result["entrypoints_added"] == 4
@@ -649,9 +649,7 @@ class TestKgIngestSubfinder:
 
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(
-            research_tools.kg_ingest_subfinder.invoke({"path": "/no/such/file.txt"})
-        )
+        result = json.loads(research_tools.kg_ingest_subfinder(path="/no/such/file.txt"))
         assert "error" in result
 
     def test_root_domain_filter(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -659,9 +657,7 @@ class TestKgIngestSubfinder:
         p = tmp_path / "subs.txt"
         p.write_text("api.example.com\nother.attacker.com\n", encoding="utf-8")
         result = json.loads(
-            research_tools.kg_ingest_subfinder.invoke(
-                {"path": str(p), "root_domain": "example.com"}
-            )
+            research_tools.kg_ingest_subfinder(path=str(p), root_domain="example.com")
         )
         assert result["domains_added"] == 1
 
@@ -669,7 +665,7 @@ class TestKgIngestSubfinder:
         _configure_kg(monkeypatch)
         p = tmp_path / "subs.txt"
         p.write_text("\n   \nsub.example.com\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_subfinder.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_subfinder(path=str(p)))
         assert result["domains_added"] == 1
 
 
@@ -681,7 +677,7 @@ class TestKgIngestDnsx:
             json.dumps({"host": "api.example.com", "a": ["10.0.0.1"]}) + "\n",
             encoding="utf-8",
         )
-        result = json.loads(research_tools.kg_ingest_dnsx.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_dnsx(path=str(p)))
         assert result["hosts_added"] == 1
         assert len(fake.graph.by_kind(NodeKind.HOST)) == 1
 
@@ -694,14 +690,14 @@ class TestKgIngestDnsx:
             json.dumps({"host": "cdn.example.com", "cname": ["upstream.cdn.net"]}) + "\n",
             encoding="utf-8",
         )
-        result = json.loads(research_tools.kg_ingest_dnsx.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_dnsx(path=str(p)))
         assert result["hosts_added"] == 1
         # cdn.example.com + upstream.cdn.net
         assert len(fake.graph.by_kind(NodeKind.HOST)) == 2
 
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_ingest_dnsx.invoke({"path": "/no/file.jsonl"}))
+        result = json.loads(research_tools.kg_ingest_dnsx(path="/no/file.jsonl"))
         assert "error" in result
 
     def test_invalid_jsonl_lines_skipped(
@@ -710,14 +706,14 @@ class TestKgIngestDnsx:
         _configure_kg(monkeypatch)
         p = tmp_path / "dnsx.jsonl"
         p.write_text("not-json\n" + json.dumps({"host": "ok.example.com"}) + "\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_dnsx.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_dnsx(path=str(p)))
         assert result["hosts_added"] == 1
 
     def test_empty_host_skipped(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
         p = tmp_path / "dnsx.jsonl"
         p.write_text(json.dumps({"a": ["1.2.3.4"]}) + "\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_dnsx.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_dnsx(path=str(p)))
         assert result["hosts_added"] == 0
 
 
@@ -730,7 +726,7 @@ class TestKgIngestKatana:
         row = {"endpoint": "https://app.example.com/api/v1/users", "method": "GET"}
         p.write_text(json.dumps(row) + "\n", encoding="utf-8")
 
-        result = json.loads(research_tools.kg_ingest_katana.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_katana(path=str(p)))
         assert result["urls_added"] == 1
         assert len(fake.graph.by_kind(NodeKind.URL)) == 1
         assert len(fake.graph.by_kind(NodeKind.ENTRYPOINT)) == 1
@@ -740,12 +736,12 @@ class TestKgIngestKatana:
         p = tmp_path / "katana.jsonl"
         row = {"request": {"endpoint": "https://app.example.com/login", "method": "POST"}}
         p.write_text(json.dumps(row) + "\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_katana.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_katana(path=str(p)))
         assert result["urls_added"] == 1
 
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_ingest_katana.invoke({"path": "/missing/file.jsonl"}))
+        result = json.loads(research_tools.kg_ingest_katana(path="/missing/file.jsonl"))
         assert "error" in result
 
     def test_invalid_json_lines_skipped(
@@ -757,7 +753,7 @@ class TestKgIngestKatana:
             "BADLINE\n" + json.dumps({"endpoint": "https://ok.example.com/"}) + "\n",
             encoding="utf-8",
         )
-        result = json.loads(research_tools.kg_ingest_katana.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_katana(path=str(p)))
         assert result["urls_added"] == 1
 
 
@@ -773,7 +769,7 @@ class TestKgIngestMasscan:
         ]
         p.write_text(json.dumps(entries), encoding="utf-8")
 
-        result = json.loads(research_tools.kg_ingest_masscan.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_masscan(path=str(p)))
         assert result["hosts_added"] == 2
         assert result["services_added"] == 2
         assert len(fake.graph.by_kind(NodeKind.HOST)) == 2
@@ -781,7 +777,7 @@ class TestKgIngestMasscan:
 
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_ingest_masscan.invoke({"path": "/bad/path.json"}))
+        result = json.loads(research_tools.kg_ingest_masscan(path="/bad/path.json"))
         assert "error" in result
 
     def test_empty_file_returns_error(
@@ -790,7 +786,7 @@ class TestKgIngestMasscan:
         _configure_kg(monkeypatch)
         p = tmp_path / "masscan.json"
         p.write_text("", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_masscan.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_masscan(path=str(p)))
         assert "error" in result
 
     def test_closed_port_skipped(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -798,7 +794,7 @@ class TestKgIngestMasscan:
         p = tmp_path / "masscan.json"
         entries = [{"ip": "10.0.0.1", "ports": [{"port": 22, "proto": "tcp", "status": "closed"}]}]
         p.write_text(json.dumps(entries), encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_masscan.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_masscan(path=str(p)))
         assert result["services_added"] == 0
 
     def test_line_format_without_brackets(
@@ -809,7 +805,7 @@ class TestKgIngestMasscan:
         # masscan sometimes emits one JSON object per line
         line = json.dumps({"ip": "192.168.1.1", "ports": [{"port": 8080, "proto": "tcp"}]})
         p.write_text(line + "\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_masscan.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_masscan(path=str(p)))
         assert result["hosts_added"] == 1
 
 
@@ -827,7 +823,7 @@ class TestKgIngestFfuf:
         p = tmp_path / "ffuf.json"
         p.write_text(json.dumps(data), encoding="utf-8")
 
-        result = json.loads(research_tools.kg_ingest_ffuf.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_ffuf(path=str(p)))
         assert result["urls_added"] == 2
         assert result["entrypoints_added"] == 2
         assert len(fake.graph.by_kind(NodeKind.URL)) == 2
@@ -835,7 +831,7 @@ class TestKgIngestFfuf:
 
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_ingest_ffuf.invoke({"path": "/no/file.json"}))
+        result = json.loads(research_tools.kg_ingest_ffuf(path="/no/file.json"))
         assert "error" in result
 
     def test_invalid_json_returns_error(
@@ -844,14 +840,14 @@ class TestKgIngestFfuf:
         _configure_kg(monkeypatch)
         p = tmp_path / "ffuf.json"
         p.write_text("{not valid json", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_ffuf.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_ffuf(path=str(p)))
         assert "error" in result
 
     def test_empty_results_array(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
         p = tmp_path / "ffuf.json"
         p.write_text(json.dumps({"results": []}), encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_ffuf.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_ffuf(path=str(p)))
         assert result["urls_added"] == 0
 
 
@@ -1096,9 +1092,7 @@ class TestFuzzRecordCrash:
 class TestKgIngestNmapErrors:
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(
-            research_tools.kg_ingest_nmap_xml.invoke({"path": "/nonexistent/scan.xml"})
-        )
+        result = json.loads(research_tools.kg_ingest_nmap_xml(path="/nonexistent/scan.xml"))
         assert "error" in result
 
     def test_malformed_xml_returns_error(
@@ -1107,7 +1101,7 @@ class TestKgIngestNmapErrors:
         _configure_kg(monkeypatch)
         p = tmp_path / "bad.xml"
         p.write_text("<not-closed>", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_nmap_xml.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_nmap_xml(path=str(p)))
         assert "error" in result
 
     def test_host_without_address_skipped(
@@ -1119,7 +1113,7 @@ class TestKgIngestNmapErrors:
             '<?xml version="1.0"?><nmaprun><host><status state="up"/></host></nmaprun>',
             encoding="utf-8",
         )
-        result = json.loads(research_tools.kg_ingest_nmap_xml.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_nmap_xml(path=str(p)))
         assert result["ingested"]["hosts"] == 0
 
     def test_down_host_skipped(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -1132,16 +1126,14 @@ class TestKgIngestNmapErrors:
             "</host></nmaprun>",
             encoding="utf-8",
         )
-        result = json.loads(research_tools.kg_ingest_nmap_xml.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_nmap_xml(path=str(p)))
         assert result["ingested"]["hosts"] == 0
 
 
 class TestKgIngestNucleiErrors:
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(
-            research_tools.kg_ingest_nuclei_jsonl.invoke({"path": "/no/such/file.jsonl"})
-        )
+        result = json.loads(research_tools.kg_ingest_nuclei_jsonl(path="/no/such/file.jsonl"))
         assert "error" in result
 
     def test_invalid_json_lines_counted_as_skipped(
@@ -1150,7 +1142,7 @@ class TestKgIngestNucleiErrors:
         _configure_kg(monkeypatch)
         p = tmp_path / "nuclei.jsonl"
         p.write_text("NOTJSON\nalso bad\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_nuclei_jsonl.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_nuclei_jsonl(path=str(p)))
         assert result["skipped"] == 2
         assert result["parsed"] == 0
 
@@ -1170,7 +1162,7 @@ class TestKgIngestNucleiErrors:
             + "\n",
             encoding="utf-8",
         )
-        result = json.loads(research_tools.kg_ingest_nuclei_jsonl.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_nuclei_jsonl(path=str(p)))
         assert result["parsed"] == 1
         assert len(fake.graph.by_kind(NodeKind.HOST)) == 1
 
@@ -1178,14 +1170,14 @@ class TestKgIngestNucleiErrors:
 class TestKgIngestHttpxErrors:
     def test_file_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_ingest_httpx_jsonl.invoke({"path": "/no/file.jsonl"}))
+        result = json.loads(research_tools.kg_ingest_httpx_jsonl(path="/no/file.jsonl"))
         assert "error" in result
 
     def test_row_without_url_skipped(self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
         p = tmp_path / "httpx.jsonl"
         p.write_text(json.dumps({"status-code": 200}) + "\n", encoding="utf-8")
-        result = json.loads(research_tools.kg_ingest_httpx_jsonl.invoke({"path": str(p)}))
+        result = json.loads(research_tools.kg_ingest_httpx_jsonl(path=str(p)))
         assert result["skipped"] >= 1
 
 
