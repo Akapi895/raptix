@@ -205,3 +205,66 @@ def build_summary(store: KGStore, *, engagement: str) -> str:
         sections.append(_render_crown_jewels(crown_jewels))
 
     return "\n\n".join(sections)
+
+
+# ── Planning context (Wave T4) ────────────────────────────────────────
+
+MAX_PLANNING_JEWELS = 3
+MAX_PATH_HOPS = 6
+
+
+def _cheapest_paths(store: KGStore, *, engagement: str) -> list[dict[str, Any]]:
+    """Cheapest entrypoint → crown-jewel path per jewel (bounded).
+
+    One Cypher per crown jewel (max 3) — the projection the planner
+    needs without paying for a full Dijkstra on every rebuild.
+    """
+    jewels = store.execute_read(
+        (
+            "MATCH (c:CrownJewel) WHERE c.engagement = $engagement "
+            "RETURN c.key AS key, c.label AS label LIMIT $cap"
+        ),
+        {"engagement": engagement, "cap": MAX_PLANNING_JEWELS},
+        engagement=engagement,
+    )
+    paths: list[dict[str, Any]] = []
+    for jewel in jewels:
+        rows = store.execute_read(
+            (
+                "MATCH p=(e:Entrypoint)-[*1..%d]->(c:CrownJewel) "
+                "WHERE c.engagement = $engagement AND e.engagement = $engagement "
+                "  AND all(n IN nodes(p) WHERE n.engagement = $engagement) "
+                "  AND all(r IN relationships(p) WHERE r.engagement = $engagement) "
+                "RETURN e.label AS entrypoint, length(p) AS hops, "
+                "       [n IN nodes(p) | coalesce(n.label, n.key)] AS route "
+                "ORDER BY hops ASC LIMIT 1"
+            )
+            % MAX_PATH_HOPS,
+            {"engagement": engagement},
+            engagement=engagement,
+        )
+        if not rows:
+            continue
+        paths.append({"crown_jewel": jewel.get("label") or jewel.get("key"), **rows[0]})
+    return paths
+
+
+def build_planning_context(store: KGStore, *, engagement: str) -> str:
+    """Build the planner's attack-context block (Wave T4).
+
+    Injected automatically by ``KGMiddleware`` for the orchestrator —
+    ``get_attack_context()`` from the plan is a projection, not a tool
+    the model must call. Bounded: at most one cheapest path per crown
+    jewel, three jewels total. Returns "" when no paths exist.
+    """
+    paths = _cheapest_paths(store, engagement=engagement)
+    if not paths:
+        return ""
+    lines = ["## PLANNING CONTEXT (cheapest known attack paths)"]
+    for path in paths:
+        route = " → ".join(str(step) for step in path.get("route") or [])
+        lines.append(
+            f"- {path.get('entrypoint', '?')} → **{path.get('crown_jewel', '?')}** "
+            f"({path.get('hops', '?')} hops): {route}"
+        )
+    return "\n".join(lines)

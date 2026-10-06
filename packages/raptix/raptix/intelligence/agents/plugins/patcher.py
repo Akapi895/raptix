@@ -8,7 +8,6 @@ high recursion budget because the iteration loop (write → apply → test
 
 Tool surface:
   - ``patch_propose`` / ``patch_verify`` — proposal + ZFP verification
-  - ``kg_query`` / ``kg_neighbors`` — read verified findings
   - Filesystem Edit / Read via ``FilesystemMiddleware`` — apply diffs
   - ``bash`` — run the repo's test suite and stage test commands
 

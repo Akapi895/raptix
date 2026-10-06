@@ -37,6 +37,13 @@ The scanner agent feeds the raw JSON output through
 :func:`rank_candidates` (a pure-Python merge + top-k selector) before
 promoting the top hits to ``CODE_LOCATION`` / ``CANDIDATE`` nodes via
 :func:`kg_add_candidate`.
+
+Wave T4 note: ``rank_candidates`` and ``kg_add_candidate`` deliberately
+KEEP their ``@tool`` decorators even though the T1 classification lists
+them as internal services — the scanner pipeline's documented workflow
+(prompts/plugins/scanner.md, the skills corpus) invokes them as discrete
+steps of the scan capability, and no auto-wired replacement exists yet.
+Revisit at T10 (bounded workers); do not strip them before.
 """
 
 from __future__ import annotations
@@ -538,8 +545,8 @@ def kg_add_candidate(
     candidate gets a deterministic dedup key of ``"{path}:{line}:{sink_kind}"``
     so repeated shard runs never double-insert.
 
-    Downstream: the detector stage calls ``kg_query(kind="candidate")`` to
-    fetch these, reads the surrounding source, and either promotes the
+    Downstream: the detector stage reads these ``CANDIDATE`` nodes,
+    reads the surrounding source, and either promotes the
     candidate to a ``VULNERABILITY`` node (with a ``DERIVED_FROM`` edge
     back to the candidate) or marks it as a false positive by updating
     its ``props.status``.

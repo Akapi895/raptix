@@ -16,7 +16,8 @@ Key design choices — enforced by the tool surface, not just the prompt:
 - **No ``kg_add_node`` / ``kg_add_edge``.** Detections are recorded
   deterministically by ``blue_cell_scan`` (the matcher decides what fired) —
   the agent cannot fabricate detection coverage. It gets the read-only KG
-  query subset to inspect Findings and narrate the gap report.
+  semantic projections (``search_knowledge`` / ``inspect_asset``) to inspect
+  Findings and narrate the gap report.
 
 Library API
 -----------
@@ -44,22 +45,21 @@ from langchain.agents import create_agent
 from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.defense.blue_cell import blue_cell_scan
 from raptix.execution.tools.defense.brief import defense_brief, export_attack_navigator
-from raptix.execution.tools.research.tools import kg_neighbors, kg_query, kg_stats
+from raptix.execution.tools.research.semantic import inspect_asset, search_knowledge
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt
 from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plugin_callbacks
 
 # Name-keyed baseline tools. Read-only by construction: the detection-coverage
-# scanner + Defense Brief deliverables plus the KG query subset — no bash, no
-# kg_add_node/kg_add_edge.
+# scanner + Defense Brief deliverables plus the semantic KG read projections —
+# no bash, no kg_add_node/kg_add_edge, no raw CRUD.
 _STANDARD_TOOLS: dict[str, Any] = {
     "blue_cell_scan": blue_cell_scan,
     "defense_brief": defense_brief,
     "export_attack_navigator": export_attack_navigator,
-    "kg_query": kg_query,
-    "kg_neighbors": kg_neighbors,
-    "kg_stats": kg_stats,
+    "search_knowledge": search_knowledge,
+    "inspect_asset": inspect_asset,
 }
 
 

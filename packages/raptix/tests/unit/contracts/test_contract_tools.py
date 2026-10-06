@@ -75,7 +75,7 @@ class TestSlitherIngestTool:
 
     def test_slither_ingest_oserror_branch_returns_error_dict(self, tmp_path: Path) -> None:
         missing = tmp_path / "missing.json"
-        result = slither_ingest.invoke({"path": str(missing)})
+        result = slither_ingest(path=str(missing))
         data = json.loads(result)
         assert "error" in data
         assert isinstance(data["error"], str)
@@ -103,13 +103,12 @@ class TestFoundryTools:
 
 
 class TestContractToolsRegistry:
-    def test_registry_has_six_tools_with_expected_names(self) -> None:
-        assert len(CONTRACT_TOOLS) == 6
+    def test_registry_has_five_tools_with_expected_names(self) -> None:
+        assert len(CONTRACT_TOOLS) == 5
         names = {t.name for t in CONTRACT_TOOLS}
         assert names == {
             "solidity_scan",
             "solidity_scan_file",
-            "slither_ingest",
             "foundry_reentrancy_test",
             "foundry_access_test",
             "foundry_flashloan_test",

@@ -30,7 +30,7 @@ def test_standard_tools_are_readonly() -> None:
     names = set(agent_mod._STANDARD_TOOLS)
     assert "blue_cell_scan" in names
     assert {"defense_brief", "export_attack_navigator"} <= names  # Defense Brief deliverables
-    assert {"kg_query", "kg_neighbors", "kg_stats"} <= names
+    assert {"search_knowledge", "inspect_asset"} <= names  # Wave T4 semantic KG reads
     # No attack surface and no hand-written graph mutation.
     assert "bash" not in names
     assert "kg_add_node" not in names

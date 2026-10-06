@@ -1,9 +1,10 @@
-"""Agent-facing research tools plus Wave T3 parser services.
+"""Agent-facing research tools plus Wave T3/T4 parser & KG services.
 
 Agent-facing ``@tool`` surfaces (what the Analyst — and optionally the
 Orchestrator — exercise to drive vulnerability research):
 
-- ``kg_*``         — CRUD + query over the knowledge graph
+- ``search_knowledge`` / ``inspect_asset`` / ``find_attack_paths`` —
+  Wave T4 semantic KG read projections (``research/semantic.py``)
 - ``kg_ingest_sarif`` / ``kg_ingest_slither`` / ``kg_ingest_testssl`` /
   ``kg_ingest_crackmapexec`` / ``kg_ingest_asrep_hashes`` — lift an
   on-disk scanner output file into the graph (see below for why these 5
@@ -35,6 +36,23 @@ yet. Guessing a flag convention here risked silently ingesting the wrong
 content; keeping them as explicit tool calls was the conservative choice
 until a future wave designs the right heuristic for this invocation shape.
 
+Wave T4 folded the raw KG surface into internal services: the six
+former ``@tool`` wrappers in this module (``kg_add_node``,
+``kg_add_edge``, ``kg_query``, ``kg_neighbors``, ``kg_stats``,
+``kg_backend_health``), ``kg_dedupe_findings`` (:mod:`.dedupe`), and
+the five duplicate analysis twins (``kg_analyze_jwt``,
+``kg_analyze_oauth_callback``, ``kg_analyze_cookie_value``,
+``kg_scan_solidity``, ``kg_triage_binary``) are all plain importable
+functions now. Agents read the graph through the semantic projections
+(:mod:`.semantic`) and write through ``kg_record`` / auto-ingest —
+never raw CRUD. The five analysis twins are demoted per the T1
+classification's duplicate-merge notes: every capability they carried
+is already exposed by the domain-owned tools ``jwt_parse`` /
+``oauth_audit`` / ``cookie_audit`` / ``solidity_scan_file`` /
+``bin_identify`` + ``bin_strings``. Likewise ``slither_ingest``
+(:mod:`~raptix.execution.tools.contracts.tools`) lost its ``@tool``
+decorator to ``kg_ingest_slither`` — one ingest path per format.
+
 Every tool returns a compact, JSON-serialisable string so it fits the
 LangChain tool return contract and keeps LLM token usage low.
 """
@@ -64,13 +82,20 @@ from raptix.execution.tools.contracts.slither import ingest_slither_file
 from raptix.execution.tools.research import cve as cve_mod
 from raptix.execution.tools.research import fuzz as fuzz_mod
 from raptix.execution.tools.research.chain import critical_path_score, plan_chains, promote_chain
-from raptix.execution.tools.research.dedupe import kg_dedupe_findings
+from raptix.execution.tools.research.dedupe import (  # noqa: F401  # re-exported: plain service stays importable via tools
+    kg_dedupe_findings,
+)
 from raptix.execution.tools.research.health import backend_health
 from raptix.execution.tools.research.osint import OSINT_TOOLS
 from raptix.execution.tools.research.patch import PATCH_TOOLS
 from raptix.execution.tools.research.sarif import ingest_sarif_file
 from raptix.execution.tools.research.scanner_tools import SCANNER_TOOLS
 from raptix.execution.tools.research.secret_scanner import scan_secrets
+from raptix.execution.tools.research.semantic import (
+    find_attack_paths,
+    inspect_asset,
+    search_knowledge,
+)
 from raptix.execution.tools.research.tech_detection import detect_tech_stack
 from raptix.knowledge.ingest import (
     ParseError,
@@ -349,10 +374,16 @@ def _manifest_path(path: Path) -> str | None:
         return None
 
 
-# ── Knowledge graph tools ───────────────────────────────────────────────
+# ── Knowledge graph internal services (Wave T4) ────────────────────────
+#
+# The former kg_add_node / kg_add_edge / kg_query / kg_neighbors /
+# kg_stats / kg_backend_health @tool wrappers are plain importable
+# services since Wave T4: agents read the graph through the semantic
+# projections in ``research/semantic.py`` (search_knowledge,
+# inspect_asset, find_attack_paths) and mutate it via ``kg_record`` /
+# auto-ingest, never raw CRUD.
 
 
-@tool
 @kg_degrades
 def kg_add_node(kind: str, label: str, props: str = "{}") -> str:
     """Insert or update a node in the engagement knowledge graph.
@@ -391,7 +422,6 @@ def kg_add_node(kind: str, label: str, props: str = "{}") -> str:
         )
 
 
-@tool
 @kg_degrades
 def kg_add_edge(src: str, dst: str, kind: str, weight: float = 1.0) -> str:
     """Connect two nodes with a typed, weighted edge.
@@ -433,7 +463,6 @@ def kg_add_edge(src: str, dst: str, kind: str, weight: float = 1.0) -> str:
         return _json({"id": edge.id, "kind": edge.kind.value, "stats": graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_query(kind: str = "", min_severity: str = "", limit: int = 25) -> str:
     """Query the knowledge graph for nodes matching kind / severity.
@@ -485,7 +514,6 @@ def kg_query(kind: str = "", min_severity: str = "", limit: int = 25) -> str:
         )
 
 
-@tool
 @kg_degrades
 def kg_neighbors(node_id: str, direction: str = "out", edge_kind: str = "") -> str:
     """Walk one hop out from a node to see what it connects to.
@@ -522,7 +550,6 @@ def kg_neighbors(node_id: str, direction: str = "out", edge_kind: str = "") -> s
         )
 
 
-@tool
 @kg_degrades
 def kg_stats() -> str:
     """Return counts of nodes and edges by kind. Cheapest way to sanity check
@@ -531,7 +558,6 @@ def kg_stats() -> str:
         return _json({"backend": _kg_backend_name(), **graph.stats()})
 
 
-@tool
 @kg_degrades
 def kg_backend_health() -> str:
     """Report KnowledgeGraph backend health/startup diagnostics.
@@ -853,7 +879,14 @@ def kg_ingest_httpx_jsonl(path: str, scanner_hint: str = "httpx") -> str:
 # ── Web/Auth signal ingestion ──────────────────────────────────────────
 
 
-@tool
+# Wave T4: duplicate-primitive collapse. ``kg_analyze_jwt`` /
+# ``kg_analyze_oauth_callback`` / ``kg_analyze_cookie_value`` /
+# ``kg_scan_solidity`` / ``kg_triage_binary`` are plain internal services
+# now — their capability is carried by the domain-owned duplicates
+# (jwt_parse / oauth_audit / cookie_audit / solidity_scan_file /
+# bin_identify + bin_strings). Importable, never agent-facing.
+
+
 @kg_degrades
 def kg_analyze_jwt(token: str, source: str = "") -> str:
     """Parse a JWT and lift suspicious indicators into graph vulnerabilities."""
@@ -929,7 +962,6 @@ def kg_analyze_jwt(token: str, source: str = "") -> str:
         )
 
 
-@tool
 @kg_degrades
 def kg_analyze_oauth_callback(
     callback_url: str,
@@ -995,7 +1027,6 @@ def kg_analyze_oauth_callback(
         )
 
 
-@tool
 @kg_degrades
 def kg_analyze_cookie_value(
     name: str,
@@ -1081,7 +1112,6 @@ def kg_analyze_cookie_value(
 # ── Smart contract ingestion ───────────────────────────────────────────
 
 
-@tool
 @kg_degrades
 def kg_scan_solidity(
     path: str, min_severity: str = "low", scanner_hint: str = "solidity-patterns"
@@ -1182,7 +1212,6 @@ def kg_ingest_slither(path: str) -> str:
 # ── Binary triage ingestion ────────────────────────────────────────────
 
 
-@tool
 @kg_degrades
 def kg_triage_binary(path: str, max_strings: int = 400) -> str:
     """Triage a binary for exploit-relevant signals and persist graph entities."""
@@ -1794,25 +1823,32 @@ def kg_ingest_asrep_hashes(path: str, domain: str = "") -> str:
 # ``@tool`` decorator and RESEARCH_TOOLS membership — see the module
 # docstring for why they don't fit the auto-ingest command-detection
 # model yet.
+#
+# Wave T4: the raw KG CRUD/read tools (kg_add_node, kg_add_edge,
+# kg_query, kg_neighbors, kg_stats, kg_backend_health),
+# kg_dedupe_findings, and the five duplicate analysis twins
+# (kg_analyze_jwt, kg_analyze_oauth_callback, kg_analyze_cookie_value,
+# kg_scan_solidity, kg_triage_binary) are internal services now — agents
+# read the graph through the semantic projections (search_knowledge /
+# inspect_asset / find_attack_paths) and write through kg_record /
+# auto-ingest; the twins' capabilities are carried by the domain-owned
+# duplicates (jwt_parse / oauth_audit / cookie_audit /
+# solidity_scan_file / bin_identify + bin_strings). ``rank_candidates``
+# and ``kg_add_candidate`` in SCANNER_TOOLS deliberately keep their
+# ``@tool`` decorators: the scanner pipeline's documented workflow
+# invokes them as discrete steps of the scan capability (prompts/
+# scanner.md, skills corpus), and no auto-wired replacement exists yet
+# — revisit at T10 (bounded workers), not before.
 
 RESEARCH_TOOLS = [
-    kg_add_node,
-    kg_add_edge,
-    kg_query,
-    kg_neighbors,
-    kg_stats,
-    kg_backend_health,
-    kg_dedupe_findings,
+    search_knowledge,
+    inspect_asset,
+    find_attack_paths,
     kg_ingest_sarif,
     kg_ingest_slither,
     kg_ingest_testssl,
     kg_ingest_crackmapexec,
     kg_ingest_asrep_hashes,
-    kg_analyze_jwt,
-    kg_analyze_oauth_callback,
-    kg_analyze_cookie_value,
-    kg_scan_solidity,
-    kg_triage_binary,
     cve_lookup,
     cve_by_package,
     cve_enrich_dependencies,

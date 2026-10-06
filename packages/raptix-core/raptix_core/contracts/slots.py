@@ -234,11 +234,16 @@ SLOTS_PER_ROLE: dict[str, frozenset[MiddlewareSlot]] = {
     "phisher": _BASH_AGENT_SLOTS,
     "mobile_operator": _BASH_AGENT_SLOTS,
     "wireless_operator": _BASH_AGENT_SLOTS,
+    # Wave T4: forensicator / supply_chain_operator / iot_operator /
+    # ics_operator gave up raw kg_add_node / kg_add_edge CRUD and record
+    # observations through ``kg_record`` instead (read side moved to the
+    # semantic projections). The KG slot degrades to absent when Neo4j
+    # is not configured.
     "osint_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
-    "iot_operator": _BASH_AGENT_SLOTS,
-    "ics_operator": _BASH_AGENT_SLOTS,
-    "forensicator": _BASH_AGENT_SLOTS,
-    "supply_chain_operator": _BASH_AGENT_SLOTS,
+    "iot_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
+    "ics_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
+    "forensicator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
+    "supply_chain_operator": _BASH_AGENT_SLOTS | {MiddlewareSlot.KG},
     # ── Plugin orchestrator (no EngagementContext per the existing
     # vulnresearch factory — it consumes its parent's context) ──
     "vulnresearch": _BASE_SLOTS | {MiddlewareSlot.SUBAGENT, MiddlewareSlot.OPPLAN},

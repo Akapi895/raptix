@@ -30,8 +30,6 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-from langchain_core.tools import tool
-
 from raptix.execution.tools.research._state import _json, graph_transaction
 from raptix_core.types.kg import KnowledgeGraph, Node, NodeKind
 
@@ -293,7 +291,6 @@ def _cluster_summary(members: Sequence[Node]) -> dict[str, Any]:
     }
 
 
-@tool
 def kg_dedupe_findings(min_cluster_size: int = 2) -> str:
     """Report likely-duplicate finding/vulnerability clusters (read-only).
 

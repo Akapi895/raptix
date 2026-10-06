@@ -14,7 +14,9 @@ DEFINITION = DomainAgentDefinition(
     tool_names=(
         "solidity_scan",
         "solidity_scan_file",
-        "slither_ingest",
+        # Wave T4: one Slither ingest path — kg_ingest_slither carries
+        # the capability now (slither_ingest is an plain internal service).
+        "kg_ingest_slither",
         "foundry_reentrancy_test",
         "foundry_access_test",
         "foundry_flashloan_test",
