@@ -1179,7 +1179,7 @@ exclusion, and a catalog cross-check that no
 
 ---
 
-### Wave T9 — Dynamic exposure — SHADOW MODE
+### Wave T9 — Dynamic exposure — SHADOW MODE ✅ DONE
 
 **Goal:** Implement dynamic tool exposure but in shadow mode only (log
 proposed filtered set, don't enforce).
@@ -1227,6 +1227,61 @@ Never enforce until T12 validates non-regression.
 - `phase_affinity` used for ranking, not intersection/exclusion
 - Static `_STANDARD_TOOLS` still serves actual tools
 - Diff data available for T11 evaluation
+
+**Outcome: a shadow-mode exposure module under
+`raptix/intelligence/tooling/` (the plan's named path — new package) +
+a logging-only hook in `build_tools()`.** Opt-in via
+`RAPTIX_EXPOSURE_SHADOW=1` — zero cost when off, mirroring T0's
+`RAPTIX_TOOL_TELEMETRY` pattern. Nothing is enforced; T12 validates
+non-regression before any filtering goes live.
+
+- `exposure.py` — `resolve_active_tools(...)` composes the T6
+  evaluators: `EligibilityEvaluator` (role → hard `allowed_phases` →
+  requirements) then `AvailabilityEvaluator` (UNAVAILABLE filters;
+  PARTIAL keeps). `phase_affinity` only re-ranks the proposed order
+  (stable sort by bonus, original order within equal rank) — it never
+  excludes. Returns `ExposureResult(proposed_tools, current_tools,
+  filtered_out, reason_map)` — frozen tuples instead of the sketch's
+  lists.
+- `GraphSnapshot` — caller-computed requirement answers (requirement id
+  → satisfied), NOT a live graph handle: the exposure module never
+  queries the AKG itself (the frozen T2 no-query rule); an id absent
+  from the mapping counts as unmet (the conservative T6 default).
+- Recovery surface — `RECOVERY_TOOL_NAMES` pins the plan's five names
+  plus the runtime spelling `ask_user_question` (the sketch predates
+  the tool inventory; `inspect_context`/`diagnose_execution` have no
+  runtime tools yet but inherit the guarantee by name). Recovery tools
+  are kept before any capability verdict is consulted.
+- Tool↔capability join — the catalog's in-process carriers
+  (`"module:attr"`) resolve to tool names via `importlib` (cached by
+  `sys.modules`; these modules are already imported by agent assembly).
+  The T7 binary capabilities contribute no agent tool (bare binary
+  names) and therefore never enter the filter.
+- Shadow hook — `build_tools()` calls `record_exposure_shadow(role,
+  result)` right after T0's `record_tool_exposure`: never raises, never
+  mutates, logs one `exposure_shadow` JSON record (current vs proposed
+  names, filtered entries with reasons, counts) — the T11 diff data.
+  `summarize_exposure_result` is the pure, shared summary shape (also
+  consumable directly by T11 evaluation scripts).
+- Deviations from the sketch, deliberate: `resolve_active_tools` takes
+  the caller's current tool list (the sketch omitted where
+  `ExposureResult.current_tools` comes from); `phase` is the UKC slug
+  and is `None` in the build-time hook (no phase exists yet at agent
+  assembly — the hook logs the assembly-time diff; phase-aware diffs
+  are caller-supplied via the parameter).
+
+Test surface: new `tests/unit/tooling/test_exposure.py` — 15
+deterministic tests (unmapped tools always proposed, recovery
+guarantee beats an ineligible verdict, role/phase/requirement/
+availability filter paths each with a reason, affinity ranking vs the
+hard `allowed_phases` constraint, `available_executors` probe override
+keeping PARTIAL, summarize shape with no parameter values, env gating,
+the hook never raising while the direct call raises loudly, and the
+`build_tools` static-list contract with shadow on — the same patching
+pattern the T0 telemetry test pins). 15/15 pass; the T0/agents suites
+(`test_tool_exposure`, `test_build`) re-ran green (51/51) after the
+`build.py` hook landed. ruff clean; basedpyright 0 errors / 0 warnings
+on the new module.
 
 ---
 

@@ -43,6 +43,7 @@ from raptix.intelligence.agents.middleware_slots import (
     MiddlewareSlot,
 )
 from raptix.intelligence.agents.tool_exposure import record_tool_exposure
+from raptix.intelligence.tooling.exposure import record_exposure_shadow
 from raptix.middleware.skillogy import maybe_install_skillogy
 from raptix_core.plugin_loader import (
     PluginBundle,
@@ -512,6 +513,10 @@ def build_tools(
     # T0 baseline telemetry (docs/tool-optimization-implementation-plan.md):
     # logging-only, gated by RAPTIX_TOOL_TELEMETRY, never mutates ``result``.
     record_tool_exposure(role, result)
+    # T9 shadow-mode dynamic exposure (same plan): computes what a
+    # dynamically filtered surface WOULD look like and logs the diff —
+    # gated by RAPTIX_EXPOSURE_SHADOW, never enforces, never mutates.
+    record_exposure_shadow(role, result)
     return result
 
 
