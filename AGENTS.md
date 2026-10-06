@@ -50,9 +50,8 @@ Plan invariants (violating these reopens settled design):
   root (launcher contract) and mount `./infra/{config,containers}`.
 - W3 landed the subsystem boundaries inside `packages/raptix/raptix/`:
   `orchestration/`, `knowledge/`, `intelligence/`, `execution/`,
-  `interfaces/` (docstring-only placeholders — no code moved, no re-export
-  shims needed until W4–W6). The flat content layout is still canonical
-  until each move wave lands: `mcp_server/`, `server/`.
+  `interfaces/` (populated in W14–W15 with `mcp/` and `api/`).
+  Re-export shims remain at `mcp_server/` and `server/`.
 - W4 landed the knowledge subsystem: the engagement-graph implementation
   moved from `middleware/kg_internal` to `knowledge/graph`; middleware
   keeps only thin adapters (`kg.py`, `kg_autoingest.py`, `tried_edges.py`).
@@ -94,6 +93,26 @@ Plan invariants (violating these reopens settled design):
   re-exports under `execution/tools/` are gone. The Phase-1 core/framework/sdk
   split shims (`raptix.core.*`, `raptix.plugin_loader`) are a separate 2.0.0
   contract and stay.
+- W12 documented `infra/config/` LLM provider handlers as an intentional
+  exception — zero raptix dependency, container-mount artifacts (ADR-0039).
+- W13 added 4 structural invariant enforcement tests: SDK imports, apps
+  imports, skills imports, UKC phase source-tree check.
+- W14 moved `mcp_server/` → `interfaces/mcp/` (12 files); re-export shims
+  at old paths.
+- W15 moved `server/` → `interfaces/api/` (3 files); sys.modules shim for
+  `plugins_api.py` to preserve `patch.object` compatibility.
+- W16 broke the circular coupling between `engagement.py` and `opplan.py`
+  by replacing duplicate reducers with `state_reducers.reduce_converging_value`
+  (ADR-0040).
+- W17 scaffolded `orchestration/mission/` and moved `engagement.py` there;
+  sys.modules shim at `middleware/engagement.py`.
+- W18 moved `opplan.py` → `orchestration/mission/opplan.py`; sys.modules
+  shim at `middleware/opplan.py`.
+- W19 added ADR-0041 (middleware cross-cutting only) and shim enforcement
+  tests.
+- W20 created 8 authoritative `docs/architecture/` docs: repository-structure,
+  system-context, container-view, runtime-boundaries, dependency-rules,
+  ukc-phase-model, skills-and-capabilities, plugins.
 - `langgraph.json` maps graph names to
   `packages/raptix/raptix/intelligence/agents/standard/`
   and loads `.env`; in-checkout plugin bundles come from root `[tool.raptix.plugins]`.
