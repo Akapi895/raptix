@@ -1,7 +1,7 @@
 [project]
 name = "raptix-defense"
 version = "0.0.0"
-description = "Defense domain pack: CONOPS resolution + SIEM/EDR detection builders (the blue_cell runtime loop stays in the raptix package)."
+description = "Defense domain pack: CONOPS workspace resolution (the SIEM/EDR detection pushers POST over HTTP and stay in the raptix runtime — plugin packs import stdlib + SDK/core only)."
 requires-python = ">=3.13"
 dependencies = ["raptix-sdk"]
 [build-system]

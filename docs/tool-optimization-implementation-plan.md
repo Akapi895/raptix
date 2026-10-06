@@ -1689,6 +1689,29 @@ every moved module). 1,040 tests pass across the affected suites
 (tools, ad, reversing, blue_cell, agents); `uv sync --dev` installs the
 new pack; ruff clean; basedpyright 0 errors on the new/moved modules.
 
+**Fix (boundary honesty + encoding repair, both caught in review):**
+two real defects shipped in the first cut.
+
+- *The plugin boundary was violated by 5 of the 6 moves.*
+  `plugins/tests/test_domain_packs.py` enforces "plugin packs import
+  stdlib + SDK/core only", and the SIEM/EDR detection pushers
+  (`edr`/`elastic`/`sentinel`/`splunk` — nested `import requests`) and
+  the BHCE REST client (`bhce_client` — `import httpx`) are HTTP
+  executors, not offline analyzers. They moved back to the runtime
+  (`raptix.execution.tools.{defense,ad}.*` are again canonical, shims
+  deleted), `requests` is now a declared runtime dep, the
+  active-directory plugin's `httpx` declaration is dropped, and the
+  defense plugin keeps exactly what is genuinely offline — CONOPS
+  resolution — with its metadata saying so. The first cut's "all
+  stdlib" claim about the defense builders was simply wrong, and the
+  boundary guard (which the first cut never ran) now passes.
+- *The move session corrupted Unicode.* cp1252-mojibake was baked into
+  comments/docstrings of ~10 files (including `raptix.md`, corrupted
+  already in T5) and a UTF-8 BOM into several test modules; all
+  reversed losslessly (git-history restore + cp1252→utf-8 inversion),
+  and a repo-wide signature scan is clean outside one intentional
+  `U+FFFD` assertion in `test_http_branches.py`.
+
 ---
 
 ## What NOT to custom-implement

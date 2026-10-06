@@ -1,23 +1,23 @@
-﻿"""Unit tests for the BHCE v9.2.2 REST client.
+"""Unit tests for the BHCE v9.2.2 REST client.
 
 The signature test vectors are NOT computed by re-running our own
 algorithm against itself.  They were extracted from a verbatim
 ``crypto/hmac`` reproduction of BHCE's ``NewRequestSignature``
 (``cmd/api/src/api/signature.go:97-145``, commit ``1a7b3df``) using
-``go run`` â€” see /tmp/bhce-sign-vector/main.go in dev notes.  Pinning
+``go run`` — see /tmp/bhce-sign-vector/main.go in dev notes.  Pinning
 the Go-generated base64 here gives us byte-precision compatibility
 with the BHCE server-side validator.
 """
 
 from __future__ import annotations
 
-from raptix_active_directory.bhce_client import (
+from raptix.execution.tools.ad.bhce_client import (
     BHCEClient,
     BHCEConfigError,
     sign_request,
 )
 
-# â”€â”€ HMAC 3-chain reference vectors (Go-generated, do not edit) â”€â”€â”€â”€â”€â”€
+# ── HMAC 3-chain reference vectors (Go-generated, do not edit) ──────
 
 
 def test_sign_empty_get_self_matches_go_reference() -> None:
@@ -59,16 +59,16 @@ def test_sign_post_empty_body_negative_offset_matches_go_reference() -> None:
     assert headers["Signature"] == "CPaTRCh7gZf+z0hsYRMV8CHDjIKvIXnl0kzmKVcUjuA="
 
 
-# â”€â”€ Behavioural contracts on the sign_request helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Behavioural contracts on the sign_request helper ────────────────
 
 
 def test_sign_includes_query_string_in_signature() -> None:
-    """BHCE's *server-side* verifier feeds ``request.RequestURI`` â€”
-    path + query â€” into the signature (``cmd/api/src/api/auth.go:355``),
+    """BHCE's *server-side* verifier feeds ``request.RequestURI`` —
+    path + query — into the signature (``cmd/api/src/api/auth.go:355``),
     even though its Go *client* signs only ``request.URL.Path``
     (``signature.go:160``).  We match the server because that is what
     decides accept/reject.  Verified empirically against the live
-    v9.2.2 sidecar on the paginated ``GET /api/v2/file-upload?skip=â€¦``
+    v9.2.2 sidecar on the paginated ``GET /api/v2/file-upload?skip=…``
     poll path (signature mismatched when we stripped query, matched
     when we included it).
     """
@@ -111,7 +111,7 @@ def test_sign_body_changes_signature() -> None:
     assert h1["Signature"] != h2["Signature"]
 
 
-# â”€â”€ Client wiring (env / errors) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# ── Client wiring (env / errors) ────────────────────────────────────
 
 
 def test_from_env_requires_url(monkeypatch) -> None:

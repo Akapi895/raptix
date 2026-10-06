@@ -2,16 +2,16 @@
 
 Pure-Python implementations that run without Ghidra / radare2 installed:
 
-- ``binary``  â€” ELF / PE / Mach-O header parser with architecture, segment, section, and protection flag extraction
-- ``strings`` â€” classified string extraction with URL/IP/crypto constant/version heuristics
-- ``packer``  â€” entropy-based packer detection (UPX, ASPack, Themida hints)
-- ``rop``     â€” ROP gadget finder operating on raw bytes via a tiny x86 disassembler
-- ``symbols`` â€” import/export table walker + sanitizer-symbol detection
-- ``scripts`` â€” Ghidra + r2 script generators the agent can drop on disk and run
-- ``ghidra``  â€” Ghidra headless + MCP bridge integration (decompile, xrefs, analysis)
+- ``binary``  — ELF / PE / Mach-O header parser with architecture, segment, section, and protection flag extraction
+- ``strings`` — classified string extraction with URL/IP/crypto constant/version heuristics
+- ``packer``  — entropy-based packer detection (UPX, ASPack, Themida hints)
+- ``rop``     — ROP gadget finder operating on raw bytes via a tiny x86 disassembler
+- ``symbols`` — import/export table walker + sanitizer-symbol detection
+- ``scripts`` — Ghidra + r2 script generators the agent can drop on disk and run
+- ``ghidra``  — Ghidra headless + MCP bridge integration (decompile, xrefs, analysis)
 
 The agent can escalate to a real disassembler via bash (radare2,
-ghidra_headless, objdump) â€” this package is the fast first pass.
+ghidra_headless, objdump) — this package is the fast first pass.
 """
 
 from __future__ import annotations

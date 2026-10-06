@@ -2074,6 +2074,7 @@ dependencies = [
     { name = "raptix-skills" },
     { name = "raptix-web" },
     { name = "raptix-wireless" },
+    { name = "requests" },
     { name = "starlette" },
     { name = "typer" },
     { name = "uvicorn" },
@@ -2147,6 +2148,7 @@ requires-dist = [
     { name = "raptix-skills", editable = "packages/raptix-skills" },
     { name = "raptix-web", editable = "plugins/web" },
     { name = "raptix-wireless", editable = "plugins/wireless" },
+    { name = "requests", specifier = ">=2.32.0" },
     { name = "starlette", specifier = ">=1.3.1" },
     { name = "typer", extras = ["all"], specifier = ">=0.9.0" },
     { name = "uvicorn", specifier = ">=0.30.0" },
@@ -2159,15 +2161,11 @@ name = "raptix-active-directory"
 version = "0.0.0"
 source = { editable = "plugins/active-directory" }
 dependencies = [
-    { name = "httpx" },
     { name = "raptix-sdk" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "httpx" },
-    { name = "raptix-sdk", editable = "packages/raptix-sdk" },
-]
+requires-dist = [{ name = "raptix-sdk", editable = "packages/raptix-sdk" }]
 
 [[package]]
 name = "raptix-cloud"

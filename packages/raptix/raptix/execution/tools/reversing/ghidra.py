@@ -1,4 +1,4 @@
-"""Re-export shim â€” the Ghidra/r2 recon bridge moved to the reversing plugin.
+"""Re-export shim — the Ghidra/r2 recon bridge moved to the reversing plugin.
 
 Wave T13 (domain pluginization): the canonical home of this module is now
 ``raptix_reversing.ghidra`` (the plugin owns its domain tooling). Every
