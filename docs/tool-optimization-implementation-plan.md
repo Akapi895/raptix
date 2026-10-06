@@ -548,8 +548,21 @@ Key design decisions in contracts:
 - **Skill references use logical `SkillId`** (e.g., `"ad.credential_reuse.netexec"`)
   resolved by SkillRegistry — never file paths that break on move
 
-**Acceptance:** `raptix-core` exports all types; no runtime behavior change;
-`raptix-core` still imports nothing outside stdlib.
+**Acceptance (met):** Implemented at
+`packages/raptix-core/raptix_core/types/capability.py`, exported from
+`raptix_core.types.__init__`, pinned in
+`tests/test_public_api_stability.py` (94 public names). 165/165
+`raptix-core` tests pass, incl. `test_capability_contracts.py` (frozen
+dataclasses, kind-specific `ImplementationSpec` validation, the
+"CompletionSpec can never be unbounded" invariant, and a
+WORKER-implementation-requires-CompletionSpec check on
+`CapabilityManifest`) and `test_no_runtime_deps.py` (no runtime behavior
+change; `raptix-core` still imports only `pydantic` + stdlib +
+`typing_extensions` — never the heavy frameworks). One deliberate
+implementation choice beyond the sketch above: `JsonValue` is a PEP 695
+recursive `type` alias (Python 3.13, this repo's floor), not a quoted
+string-forward-ref union — equivalent shape, no need for
+`from __future__ import annotations` gymnastics on the alias itself.
 
 ---
 

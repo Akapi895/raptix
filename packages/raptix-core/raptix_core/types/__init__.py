@@ -1,6 +1,6 @@
 """Pure-pydantic types for the Raptix contract layer.
 
-Four submodules:
+Submodules:
 
   * ``engagement`` — red-team planning documents (RoE, ConOps, OPPLAN,
     Finding, Objective, OpsecLevel, C2Tier, MITREPhase, ...). Was
@@ -16,6 +16,11 @@ Four submodules:
     evaluation layer that decides allow/deny for a target or command;
     consumed by the framework's RoE-enforcement middleware. Distinct from
     ``engagement.RoE`` (the planning document).
+  * ``capability`` — capability-registry contracts (Wave T2 of
+    ``docs/tool-optimization-implementation-plan.md``): ``CapabilityManifest``,
+    ``ImplementationSpec``, ``CompletionSpec``, the Availability/
+    Eligibility pair, and the Request/Execution/Observation/Result
+    round-trip types.
 
 These modules import only ``pydantic`` + stdlib + ``typing_extensions`` —
 no ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
@@ -24,6 +29,6 @@ no ``langchain`` / ``langgraph`` / ``deepagents`` / ``httpx`` /
 
 from __future__ import annotations
 
-from raptix_core.types import engagement, kg, llm, roe
+from raptix_core.types import capability, engagement, kg, llm, roe
 
-__all__ = ["engagement", "llm", "kg", "roe"]
+__all__ = ["engagement", "llm", "kg", "roe", "capability"]

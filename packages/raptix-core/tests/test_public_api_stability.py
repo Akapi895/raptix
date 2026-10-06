@@ -61,6 +61,26 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.types.roe", "Decision"),
     ("raptix_core.types.roe", "evaluate_target"),
     ("raptix_core.types.roe", "evaluate_command"),
+    # raptix_core.types.capability — capability-registry contracts (T2)
+    ("raptix_core.types.capability", "CapabilityId"),
+    ("raptix_core.types.capability", "SkillId"),
+    ("raptix_core.types.capability", "RoleId"),
+    ("raptix_core.types.capability", "RiskClass"),
+    ("raptix_core.types.capability", "RequirementKind"),
+    ("raptix_core.types.capability", "RequirementSpec"),
+    ("raptix_core.types.capability", "ImplementationKind"),
+    ("raptix_core.types.capability", "ImplementationSpec"),
+    ("raptix_core.types.capability", "CompletionSpec"),
+    ("raptix_core.types.capability", "CapabilityManifest"),
+    ("raptix_core.types.capability", "CapabilityStatus"),
+    ("raptix_core.types.capability", "CapabilityAvailability"),
+    ("raptix_core.types.capability", "CapabilityEligibility"),
+    ("raptix_core.types.capability", "CapabilityRequest"),
+    ("raptix_core.types.capability", "ExecutorKind"),
+    ("raptix_core.types.capability", "ExecutionSpec"),
+    ("raptix_core.types.capability", "Artifact"),
+    ("raptix_core.types.capability", "Observation"),
+    ("raptix_core.types.capability", "CapabilityResult"),
     # raptix_core.protocols
     ("raptix_core.protocols", "BackendProtocol"),
     ("raptix_core.protocols", "MiddlewareProtocol"),
@@ -136,7 +156,7 @@ def test_manifest_count_unchanged() -> None:
     a major-version bump is an audit signal.
     """
     # Update this number deliberately when adding/removing public names.
-    expected = 75
+    expected = 94
     actual = len(CORE_PUBLIC_API)
     assert actual == expected, (
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "
