@@ -74,7 +74,7 @@ infra/config/*.local.*
 reference/
 demo.tape
 
-# Decepticon runtime data
+# Raptix runtime data
 .raptix/
 .dogfood/
 workspace/
