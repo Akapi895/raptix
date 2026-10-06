@@ -16,10 +16,12 @@ from pathlib import Path
 
 _SDK_ROOT = Path(__file__).resolve().parent.parent / "raptix_sdk"
 
-_ALLOWED_PREFIXES = frozenset({
-    "raptix_core",
-    "raptix_sdk",
-})
+_ALLOWED_PREFIXES = frozenset(
+    {
+        "raptix_core",
+        "raptix_sdk",
+    }
+)
 
 _FORBIDDEN_PREFIX = "raptix."
 
@@ -52,10 +54,7 @@ def _is_forbidden(module_name: str) -> bool:
 def test_sdk_does_not_import_runtime_internals() -> None:
     violations = _collect_imports(_SDK_ROOT.parent)
     if violations:
-        detail = "\n".join(
-            f"  {path}:{line} imports {mod!r}"
-            for path, line, mod in violations
-        )
+        detail = "\n".join(f"  {path}:{line} imports {mod!r}" for path, line, mod in violations)
         raise AssertionError(
             f"raptix-sdk must not import runtime internals (repo_invariant §36).\n"
             f"Found {len(violations)} violation(s):\n{detail}"

@@ -36,16 +36,15 @@ def test_skills_have_no_raptix_imports() -> None:
             if isinstance(node, ast.Import):
                 for alias in node.names:
                     if _is_raptix_import(alias.name):
-                        violations.append((py_file.relative_to(_SKILLS_ROOT), node.lineno, alias.name))
+                        violations.append(
+                            (py_file.relative_to(_SKILLS_ROOT), node.lineno, alias.name)
+                        )
             elif isinstance(node, ast.ImportFrom) and node.module:
                 if _is_raptix_import(node.module):
                     violations.append((py_file.relative_to(_SKILLS_ROOT), node.lineno, node.module))
 
     if violations:
-        detail = "\n".join(
-            f"  {path}:{line} imports {mod!r}"
-            for path, line, mod in violations
-        )
+        detail = "\n".join(f"  {path}:{line} imports {mod!r}" for path, line, mod in violations)
         raise AssertionError(
             f"raptix-skills must not import raptix packages (repo_invariant §36).\n"
             f"Found {len(violations)} violation(s):\n{detail}"

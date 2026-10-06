@@ -41,7 +41,6 @@ from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 from raptix.execution.tools.opplan import OPPLAN_TOOL_NAMES, build_opplan_tools
 from raptix.middleware.state_reducers import reduce_converging_value
 
-
 # ── State Schema ──────────────────────────────────────────────────────
 
 
