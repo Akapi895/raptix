@@ -39,23 +39,7 @@ from langchain.agents.middleware.types import OmitFromInput
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
 from raptix.execution.tools.opplan import OPPLAN_TOOL_NAMES, build_opplan_tools
-
-
-def _reduce_engagement_name(current: str | None, update: str | None) -> str | None:
-    """Merge concurrent launcher/tool writes to the stable engagement slug."""
-    return update if update is not None else current
-
-
-def _reduce_workspace_path(current: str | None, update: str | None) -> str | None:
-    """Merge concurrent writes to the active workspace path.
-
-    Without a reducer, LangGraph rejects parallel state updates to the
-    same key with INVALID_CONCURRENT_GRAPH_UPDATE. The launcher is the
-    single source of truth, so every concurrent writer agrees on the
-    same value — last-write-wins on non-None is sufficient and matches
-    ``_reduce_engagement_name`` semantics. Closes #153.
-    """
-    return update if update is not None else current
+from raptix.middleware.state_reducers import reduce_converging_value
 
 
 # ── State Schema ──────────────────────────────────────────────────────
@@ -72,7 +56,7 @@ class OPPLANState(AgentState):
     objectives: Annotated[NotRequired[list[dict]], OmitFromInput]
     """List of OPPLAN objectives in dict form (serialized Objective models)."""
 
-    engagement_name: NotRequired[Annotated[str, OmitFromInput, _reduce_engagement_name]]
+    engagement_name: NotRequired[Annotated[str, OmitFromInput, reduce_converging_value]]
     """Current engagement name for context."""
 
     threat_profile: Annotated[NotRequired[str], OmitFromInput]
@@ -81,7 +65,7 @@ class OPPLANState(AgentState):
     objective_counter: Annotated[NotRequired[int], OmitFromInput]
     """Auto-increment counter for objective IDs."""
 
-    workspace_path: Annotated[NotRequired[str], OmitFromInput, _reduce_workspace_path]
+    workspace_path: Annotated[NotRequired[str], OmitFromInput, reduce_converging_value]
     """Engagement workspace root path — set by launcher config/load_opplan."""
 
 
