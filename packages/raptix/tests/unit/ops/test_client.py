@@ -10,6 +10,7 @@ permitted. The transport substitution matches the convention used by
 from __future__ import annotations
 
 import json
+import sys
 
 import httpx
 import pytest
@@ -105,6 +106,7 @@ def test_http_error_is_raised() -> None:
     assert "not in allowlist" in json.dumps(exc_info.value.body)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="AF_UNIX not available on Windows")
 def test_unreachable_when_socket_missing(tmp_path) -> None:
     bogus = tmp_path / "missing.sock"
     client = OpsControlClient(socket_path=str(bogus))
@@ -125,6 +127,7 @@ def test_ops_available_false_when_socket_absent(tmp_path, monkeypatch) -> None:
     assert ops_available() is False
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="AF_UNIX not available on Windows")
 def test_ops_available_false_when_socket_node_but_no_daemon(tmp_path, monkeypatch) -> None:
     # A stale/leftover node at the path (or an unrelated file in a hosted
     # container) must NOT count: no daemon is accepting, so a connect fails and
@@ -137,6 +140,7 @@ def test_ops_available_false_when_socket_node_but_no_daemon(tmp_path, monkeypatc
     assert ops_available() is False
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="AF_UNIX not available on Windows")
 def test_ops_available_true_when_daemon_accepting(tmp_path, monkeypatch) -> None:
     # `decepticon start` topology — a live daemon is bound to + accepting on the
     # socket. Only a successful connect flips this True.

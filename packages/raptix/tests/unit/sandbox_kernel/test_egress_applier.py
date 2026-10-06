@@ -9,6 +9,9 @@ exercised without a live ``nft`` or a real network.
 from __future__ import annotations
 
 import os
+import sys
+
+import pytest
 
 from raptix.execution.sandbox.kernel.egress import (
     EgressPolicy,
@@ -79,6 +82,7 @@ def test_discover_management_cidrs_survives_total_failure(tmp_path):
     assert cidrs == ("127.0.0.0/8",)
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="/proc/net/route is Linux-only")
 def test_discover_management_cidrs_default_proc_path_is_readable():
     # Smoke: the real /proc/net/route parses without raising on this host.
     assert os.path.exists("/proc/net/route")
