@@ -75,8 +75,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
 # ── Tools NOT yet wired into apt-install ──
 # Deliberately deferred to follow-up PRs because they need either a
 # GitHub-release pull (no apt package) or a pip install:
-#   chisel       (GitHub release: jpillora/chisel)
-#   ligolo-ng    (GitHub release: nicocha30/ligolo-ng)
+#   chisel       (GitHub release: jpillora/chisel — ligolo-ng superseded
+#                 it as the default pivot tool and is now the opt-in
+#                 sandbox-pivot profile below)
 #   afl++ / aflplusplus / honggfuzz (apt names + dep weight uncertain)
 #   plaso        (pip: ``plaso``; pulls in pyparsing + heavy deps)
 #   volatility3  (pip: ``volatility3``; same as operator's host install)
@@ -200,6 +201,85 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
 ENV GHIDRA_INSTALL_DIR=/opt/ghidra \
     GHIDRA_MCP_URL=http://ghidra-mcp:8089 \
     JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+
+# ── Wave T8 executor profiles (opt-in) ──────────────────────────────
+# Three opt-in profiles close the capability-drift gap for executors the
+# base image does not ship: every package below already has a T3 parser
+# or a SKILL.md workflow teaching it (recon/active-recon, exploit/web/*,
+# ad/netexec, ad/certipy-esc-chain, post-exploit/lateral-movement), so a
+# profile image makes the advertised capability actually runnable. Same
+# pattern as INSTALL_REVERSING: defaults stay false so the published
+# image stays lean; enable with
+#   docker build --build-arg INSTALL_WEB_TOOLS=true ...
+# or via the compose build args on the `sandbox` service (see
+# .env.example: INSTALL_WEB_TOOLS / INSTALL_AD_TOOLS / INSTALL_PIVOT_TOOLS
+# + `docker compose build sandbox`).
+#
+# Each profile writes /opt/raptix/tool-versions/<profile>.tsv — the
+# dpkg name + version manifest feeding execution provenance (Wave T6's
+# build_execution_provenance tool_version / tool_data_version fields).
+# Nuclei's template corpus is NOT in the apt package (it is fetched at
+# runtime by ``nuclei -update``); its manifest row records that honestly
+# instead of pinning a corpus this image does not ship.
+ARG INSTALL_WEB_TOOLS=false
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
+    if [ "$INSTALL_WEB_TOOLS" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends --no-install-suggests \
+            # ── sandbox-web: host probe → crawl → fuzz → vuln scan → TLS audit ──
+            httpx-toolkit \
+            katana \
+            ffuf \
+            nuclei \
+            testssl.sh && \
+        mkdir -p /opt/raptix/tool-versions && \
+        dpkg-query -W -f='${Package}\t${Version}\n' \
+            httpx-toolkit katana ffuf nuclei testssl.sh \
+            > /opt/raptix/tool-versions/sandbox-web.tsv && \
+        printf 'nuclei-templates\truntime-fetched (nuclei -update)\n' \
+            >> /opt/raptix/tool-versions/sandbox-web.tsv ; \
+    else \
+        echo "INSTALL_WEB_TOOLS=false — skipping sandbox-web profile" ; \
+    fi
+
+ARG INSTALL_AD_TOOLS=false
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
+    if [ "$INSTALL_AD_TOOLS" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends --no-install-suggests \
+            # ── sandbox-ad: SMB/LDAP/WinRM enum (NetExec = former CrackMapExec,
+            #    output format the T3 crackmapexec parser reads), ADCS abuse,
+            #    WinRM shell ──
+            netexec \
+            certipy-ad \
+            evil-winrm && \
+        mkdir -p /opt/raptix/tool-versions && \
+        dpkg-query -W -f='${Package}\t${Version}\n' \
+            netexec certipy-ad evil-winrm \
+            > /opt/raptix/tool-versions/sandbox-ad.tsv ; \
+    else \
+        echo "INSTALL_AD_TOOLS=false — skipping sandbox-ad profile" ; \
+    fi
+
+ARG INSTALL_PIVOT_TOOLS=false
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
+    if [ "$INSTALL_PIVOT_TOOLS" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends --no-install-suggests \
+            # ── sandbox-pivot: ligolo-ng, the default pivot/tunnel tool
+            #    (in-package proxy + agent; the sandbox foothold runs the
+            #    agent, the attacker side runs the proxy) ──
+            ligolo-ng && \
+        mkdir -p /opt/raptix/tool-versions && \
+        dpkg-query -W -f='${Package}\t${Version}\n' \
+            ligolo-ng \
+            > /opt/raptix/tool-versions/sandbox-pivot.tsv ; \
+    else \
+        echo "INSTALL_PIVOT_TOOLS=false — skipping sandbox-pivot profile" ; \
+    fi
 
 # Ship only the modules the daemon actually imports:
 #   - raptix/__init__.py     — package marker (light-weight, just reads __version__)

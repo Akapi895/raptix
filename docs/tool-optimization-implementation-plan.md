@@ -1099,7 +1099,7 @@ adapter suites post-fix (combined with the T5 evidence fix above).
 
 ---
 
-### Wave T8 — Add missing sandbox executor profiles
+### Wave T8 — Add missing sandbox executor profiles ✅ DONE
 
 **Goal:** Close the capability-drift gap by adding mature executors that
 already have parsers/skills in the repo. Not custom Python — Dockerfile only.
@@ -1120,6 +1120,62 @@ template corpus version) in execution metadata for reproducibility.
 - Parser/skill that already existed now has matching binary
 - No custom Python reimplementation of security tools
 - Tool and data versions recorded in execution provenance
+
+**Outcome: three opt-in build-arg profiles in `sandbox.Dockerfile` +
+compose passthrough + build-time version manifests.** The plan's "separate
+Dockerfile stages or sidecar services" resolved to the image's own
+precedent: `INSTALL_REVERSING`-style build args (`INSTALL_WEB_TOOLS`,
+`INSTALL_AD_TOOLS`, `INSTALL_PIVOT_TOOLS`, all default `false`) — stages
+would fork the base image and sidecars are useless for CLI binaries the
+agent execs inside its own sandbox container. All 9 kali-rolling package
+names verified against `pkg.kali.org` before landing (incl. ligolo-ng
+0.9.1, migrated 2026-08 — the Dockerfile's old "needs a GitHub release"
+deferred note was stale and is updated).
+
+- `sandbox-web` (`INSTALL_WEB_TOOLS=true`): httpx-toolkit, katana, ffuf,
+  nuclei, testssl.sh. `sandbox-ad` (`INSTALL_AD_TOOLS=true`): netexec
+  (nxc — the CrackMapExec rename; output format the T3 `crackmapexec`
+  parser already reads), certipy-ad, evil-winrm. `sandbox-pivot`
+  (`INSTALL_PIVOT_TOOLS=true`): ligolo-ng.
+- `docker-compose.yml` `sandbox` service passes the three args through
+  from `.env` (default off) so `docker compose build sandbox` opts in;
+  `INSTALL_REVERSING` is deliberately NOT passed — the reversing toolset
+  stays sidecar-scoped (ghidra-mcp). `.env.example` documents the knobs.
+- Version provenance: each profile writes
+  `/opt/raptix/tool-versions/<profile>.tsv` (dpkg name + version via
+  `dpkg-query -W`) at build time — the version strings T6's
+  `build_execution_provenance` consumes once executors/adapters for
+  these binaries embed provenance. Nuclei's template corpus is NOT in
+  the apt package; its manifest row records `runtime-fetched
+  (nuclei -update)` instead of pinning a corpus the image does not ship.
+
+Honesty notes (deviations from the acceptance wording, deliberate):
+
+- **No catalog flip.** "Capabilities previously UNAVAILABLE become
+  AVAILABLE" holds at the inventory level, not the T6 registry: T1
+  classified the related ingest functions as internal services and
+  assigned these binaries NO semantic capability ids, so there is no
+  manifest to flip — and per the frozen bash-honesty rule the resolver
+  must not claim capabilities for binaries without declared adapter/worker
+  paths. The drift T8 closes is skill-corpus ↔ binary (recon/
+  active-recon, exploit/web/\*, ad/netexec, ad/certipy-esc-chain,
+  post-exploit/lateral-movement all teach these commands) plus
+  parser ↔ binary. Capability manifests/adapters for these binaries are
+  future waves, if warranted at all.
+- **Parser gap not fully closed.** `dnsx`/`masscan` parsers still have no
+  binary — they are not in the plan's T8 table and were not added
+  (staying close to the frozen plan); they remain honestly
+  UNAVAILABLE/parses-only.
+- **Release pipeline** still builds the base image only; profile images
+  are local-build opt-ins for now.
+
+Test surface: new `tests/unit/execution/test_sandbox_tool_profiles.py`
+— 10 deterministic drift-guard tests (ARG defaults opt-in, exact package
+sets per the plan table, per-profile version manifests, nuclei
+runtime-fetched row, compose passthrough defaults + REVERSING
+exclusion, and a catalog cross-check that no
+`ImplementationSpec.profile` names a profile the image cannot provide).
+10/10 pass. ruff clean; basedpyright clean on the new file (0/0/0).
 
 ---
 
