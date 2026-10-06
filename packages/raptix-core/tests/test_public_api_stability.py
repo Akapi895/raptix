@@ -80,6 +80,7 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.types.capability", "ExecutionSpec"),
     ("raptix_core.types.capability", "Artifact"),
     ("raptix_core.types.capability", "Observation"),
+    ("raptix_core.types.capability", "ExecutionRecord"),
     ("raptix_core.types.capability", "CapabilityResult"),
     # raptix_core.protocols
     ("raptix_core.protocols", "BackendProtocol"),
@@ -156,7 +157,7 @@ def test_manifest_count_unchanged() -> None:
     a major-version bump is an audit signal.
     """
     # Update this number deliberately when adding/removing public names.
-    expected = 94
+    expected = 95
     actual = len(CORE_PUBLIC_API)
     assert actual == expected, (
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "

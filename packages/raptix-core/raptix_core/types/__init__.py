@@ -1,4 +1,6 @@
-"""Pure-pydantic types for the Raptix contract layer.
+"""Pure contract types for the Raptix contract layer. Most submodules use
+pydantic ``BaseModel``; ``capability`` and parts of ``roe`` use frozen
+stdlib ``dataclass`` instead — both stay import-boundary-pure, see below.
 
 Submodules:
 

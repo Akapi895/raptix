@@ -551,18 +551,48 @@ Key design decisions in contracts:
 **Acceptance (met):** Implemented at
 `packages/raptix-core/raptix_core/types/capability.py`, exported from
 `raptix_core.types.__init__`, pinned in
-`tests/test_public_api_stability.py` (94 public names). 165/165
-`raptix-core` tests pass, incl. `test_capability_contracts.py` (frozen
-dataclasses, kind-specific `ImplementationSpec` validation, the
-"CompletionSpec can never be unbounded" invariant, and a
-WORKER-implementation-requires-CompletionSpec check on
-`CapabilityManifest`) and `test_no_runtime_deps.py` (no runtime behavior
-change; `raptix-core` still imports only `pydantic` + stdlib +
-`typing_extensions` — never the heavy frameworks). One deliberate
-implementation choice beyond the sketch above: `JsonValue` is a PEP 695
-recursive `type` alias (Python 3.13, this repo's floor), not a quoted
-string-forward-ref union — equivalent shape, no need for
-`from __future__ import annotations` gymnastics on the alias itself.
+`tests/test_public_api_stability.py` (95 public names). 173/173
+`raptix-core` tests pass, incl. `test_capability_contracts.py` and
+`test_no_runtime_deps.py` (no runtime behavior change; `raptix-core`
+still imports only `pydantic` + stdlib + `typing_extensions` — never the
+heavy frameworks, and T2 itself adds no new dependency at all —
+`capability.py` uses only `dataclasses`/`enum`/`collections.abc`).
+
+**Revised after a second review caught two real gaps in the first cut**
+(fixed before anything downstream could consume the contract):
+- `CompletionSpec.max_steps` is now REQUIRED (was optional). The first
+  cut accepted `CompletionSpec(success_observations=(...,))` with no
+  `max_steps` — if that observation never fired, the worker ran forever,
+  contradicting the type's own docstring claim. A success/failure
+  condition is now documented as an early-exit signal layered on top of
+  the hard `max_steps` bound, never a substitute for it.
+- `ExecutionSpec` now carries a required `implementation_id`. Without
+  it, two implementations of one capability that both resolve through
+  the same `ExecutorKind` (e.g. `ad.netexec.smb` vs `ad.impacket.psexec`,
+  both `ExecutorKind.COMMAND`, under `access.move_laterally`) were
+  indistinguishable once the provenance chain reached execution — the
+  adapter/resolver must copy `ImplementationSpec.id` into this field.
+- `CapabilityResult.execution: ExecutionSpec | None` (singular) is now
+  `executions: tuple[ExecutionRecord, ...]`. The architecture always
+  allowed a bounded `WORKER` to run several executions per request
+  (e.g. `curl` → research → PoC → `bash`); the contract's first cut
+  only modeled "1 capability = 1 tool invocation". `ExecutionRecord`
+  wraps one `ExecutionSpec` with the artifacts it produced, so artifacts
+  stay attributed to the execution that produced them.
+- Documented (no new field): `CapabilityManifest.allowed_roles == ()`
+  means UNRESTRICTED, matching `PluginBundle.roles`'s existing
+  convention — not "no roles allowed". A `WORKER`
+  `ImplementationSpec.worker_id` MUST resolve, via T10's
+  `WorkerRegistry`, to a `WorkerSpec` with an explicit primitive
+  allowlist, or the implementation is UNAVAILABLE — this invariant is
+  written into T2 now specifically so T10 does not have to break the
+  contract to add it.
+- Flagged for T3 (not a T2 code change): a Parser must never treat
+  `Artifact.artifact_ref` as a filesystem path — it may be `artifact://`,
+  `s3://`, a database id, or a container-crossing reference. T3's
+  `ParserRegistry` should read the artifact via an `ArtifactReader`/
+  `ArtifactStore` and hand the parser *content*, never let the parser
+  resolve the ref itself.
 
 ---
 
@@ -572,6 +602,27 @@ string-forward-ref union — equivalent shape, no need for
 internal parser services. This is the highest-value change: 14 tools that
 no LLM should ever need to choose.
 
+**Artifact access (per the T2 review — not a T2 code change, a T3
+design constraint):** `Artifact.artifact_ref` is intentionally not a
+filesystem path (it may be `artifact://`, `s3://`, a database id, or a
+container-crossing reference — see `capability.py`'s module docstring).
+A parser must never resolve it itself (e.g. `Path(artifact.artifact_ref).read_text()`).
+The `ParserRegistry` reads the artifact through an `ArtifactReader`/
+`ArtifactStore` and hands the parser *content*, so a parser stays
+storage-backend-agnostic:
+
+```
+ParserRegistry
+      │
+      ├─ Artifact (metadata only)
+      │
+      └─ ArtifactReader / ArtifactStore
+                ↓
+              content (bytes)
+                ↓
+              parser.parse(artifact, content)
+```
+
 Steps:
 1. Create `knowledge/ingest/registry.py` with `ParserRegistry`
 2. Create `knowledge/ingest/parsers/` with one module per format
@@ -579,8 +630,8 @@ Steps:
 3. Each parser implements `ArtifactParser` protocol:
    - `format_id: str`
    - `parser_version: str`
-   - `supports(artifact: Artifact) -> float` (confidence 0.0–1.0)
-   - `parse(artifact: Artifact) -> list[Observation]`
+   - `supports(artifact: Artifact, content: bytes) -> float` (confidence 0.0–1.0)
+   - `parse(artifact: Artifact, content: bytes) -> list[Observation]`
 4. Parser resolution order:
    - Execution metadata / adapter `expected_artifact_formats` → exact match
    - Explicit format hint on artifact → exact match
@@ -821,13 +872,37 @@ Never enforce until T12 validates non-regression.
 `ImplementationKind.WORKER` implementations where deterministic resolver
 is insufficient.
 
+**Contract already frozen in T2 (`capability.py`'s `ImplementationSpec`
+docstring) — T10 must honor it, not redesign it:** `worker_id` carries
+no allowlist field itself; it MUST resolve, via a `WorkerRegistry`, to a
+`WorkerSpec` that carries an explicit primitive allowlist (model policy,
+step budget, etc. also live there). A `worker_id` that resolves to no
+such `WorkerSpec` makes that implementation UNAVAILABLE — never a
+worker running with an implicit/unscoped toolset:
+
+```
+ImplementationSpec.worker_id
+          ↓
+     WorkerRegistry
+          ↓
+      WorkerSpec
+   ├─ allowed_primitives
+   ├─ model policy
+   ├─ step budget
+   └─ ...
+```
+
 Worker contract:
-- Receives one `CapabilityRequest` and a scoped toolset (≤10 tools)
+- Receives one `CapabilityRequest` and a scoped toolset (≤10 tools,
+  from `WorkerSpec.allowed_primitives` — never an implicit/unscoped set)
 - Has `CompletionSpec` from the manifest defining:
-  - `success_observations` (what means "done")
-  - `failure_conditions` (what means "stop")
-  - `max_steps` (hard step budget)
+  - `max_steps` (REQUIRED hard step budget — see T2's revision)
+  - `success_observations` (early-exit "done" signal, not a substitute
+    for `max_steps`)
+  - `failure_conditions` (early-exit "stop" signal)
 - Does not hold canonical state
+- May run several executions per request (one `ExecutionRecord` each —
+  see T2's `CapabilityResult.executions`), not just one
 - Output is normalized by Parser before AKG ingestion
 
 Example: `exploit_unknown_service` spawns a bounded worker with

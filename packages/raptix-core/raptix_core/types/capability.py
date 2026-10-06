@@ -20,8 +20,8 @@ them — see the implementation plan's "Three-way separation" section):
     evaluated at invocation time, never a capability-manifest field, and
     never satisfied by exposure/eligibility alone.
 
-Design decisions (frozen after a contract review — do not relax without
-re-reviewing the same points):
+Design decisions (frozen after two contract reviews — do not relax
+without re-reviewing the same points):
 
   * No ``RequirementSpec.query`` — this package must not couple to the
     AKG/Cypher backend. A runtime ``RequirementEvaluator`` decides HOW to
@@ -32,10 +32,26 @@ re-reviewing the same points):
   * ``ExecutorKind`` generalizes past CLI — MCP/browser/session/service
     execution paths are first-class even before every kind has a real
     executor.
-  * ``CompletionSpec`` is mandatory whenever a capability declares a
-    ``WORKER`` implementation (enforced in :meth:`CapabilityManifest.__post_init__`)
-    — without a bounded termination criterion a worker degenerates into
-    an unbounded mini-agent.
+  * ``CompletionSpec.max_steps`` is REQUIRED, not optional. A success/
+    failure *observation* condition is an early-exit signal layered on
+    top of that hard bound, never a substitute for it — a
+    ``CompletionSpec`` built from only a success observation that never
+    fires would let a worker run forever. ``CompletionSpec`` is itself
+    mandatory whenever a capability declares a ``WORKER`` implementation
+    (enforced in :meth:`CapabilityManifest.__post_init__`).
+  * ``ExecutionSpec.implementation_id`` is REQUIRED — the field the
+    second review found missing. Without it, two implementations of the
+    same capability that both happen to run through
+    ``ExecutorKind.COMMAND`` (e.g. ``ad.netexec.smb`` vs
+    ``ad.impacket.psexec`` under ``access.move_laterally``) are
+    indistinguishable in the provenance chain once execution starts. The
+    adapter/resolver that builds an ``ExecutionSpec`` MUST copy the
+    ``ImplementationSpec.id`` it resolved into this field.
+  * ``CapabilityResult.executions`` is a tuple of :class:`ExecutionRecord`,
+    not a single ``ExecutionSpec | None`` — a bounded ``WORKER``
+    implementation can run several executions per request (e.g.
+    ``curl`` → research → PoC → ``bash``), and each one's artifacts need
+    to stay attributed to the execution that produced them.
   * ``Mapping[str, JsonValue]`` (not ``dict``) on every payload-shaped
     field — the type signals read-only intent; this package does not
     additionally wrap values in ``MappingProxyType`` at construction, so
@@ -43,9 +59,28 @@ re-reviewing the same points):
     mutate it afterward.
   * ``Artifact.artifact_ref`` (not ``path``) — a stable ``ArtifactStore``
     reference; the physical path is a store implementation detail that
-    does not survive across containers.
+    does not survive across containers. **T3 implication**: a Parser
+    must never treat ``artifact_ref`` as a filesystem path (e.g.
+    ``Path(artifact.artifact_ref).read_text()``) — it may be
+    ``artifact://``, ``s3://``, a database id, or a container-crossing
+    reference. The registry reads the artifact via an ``ArtifactReader``/
+    ``ArtifactStore`` and hands the parser *content*, not a ref to resolve
+    itself; the parser must stay storage-backend-agnostic.
   * Skill references use a logical :class:`SkillId` resolved by the
     skill registry — never a file path that breaks on move.
+  * ``CapabilityManifest.allowed_roles == ()`` means **unrestricted**
+    (every role), matching ``PluginBundle.roles``' existing convention in
+    ``raptix_core.plugin_loader`` — not "no roles allowed". A capability
+    manifest built with the default is reachable by every role, not
+    inaccessible to all of them.
+  * A ``WORKER`` ``ImplementationSpec`` declares only ``worker_id`` here;
+    the scoped-toolset allowlist is NOT a manifest field.
+    ``worker_id`` MUST resolve (via T10's ``WorkerRegistry``) to a
+    ``WorkerSpec`` carrying an explicit primitive allowlist — a
+    ``worker_id`` that resolves to no such ``WorkerSpec`` makes that
+    implementation UNAVAILABLE, never a worker with an implicit/unscoped
+    toolset. This invariant is documented here ahead of T10 specifically
+    so T10 does not have to break this contract to add it.
 """
 
 from __future__ import annotations
@@ -132,6 +167,13 @@ class ImplementationSpec:
     ``ADAPTER`` needs ``adapter_id`` + ``executable``; ``WORKER`` needs
     ``worker_id``. ``MCP``/``SERVICE`` carry no required extra field here
     — the MCP server id / service name lives on ``id`` itself.
+
+    A ``WORKER``'s scoped-toolset allowlist is deliberately NOT a field
+    here. ``worker_id`` MUST resolve, via T10's ``WorkerRegistry``, to a
+    ``WorkerSpec`` carrying an explicit primitive allowlist; a
+    ``worker_id`` with no such ``WorkerSpec`` makes this implementation
+    UNAVAILABLE — never a worker running with an implicit/unscoped
+    toolset.
     """
 
     id: str
@@ -165,23 +207,23 @@ class ImplementationSpec:
 class CompletionSpec:
     """Termination criteria for a ``WORKER`` implementation.
 
-    At least one bound is required — ``max_steps``, or a non-empty
-    ``success_observations``/``failure_conditions`` — so a worker can
-    never be genuinely open-ended (the plan's own stated risk: "Worker
-    becomes unbounded mini-agent").
+    ``max_steps`` is the hard resource bound and is REQUIRED — a worker
+    cannot be genuinely open-ended. ``success_observations`` /
+    ``failure_conditions`` are early-exit signals layered on top of that
+    bound, never a substitute for it: a condition that never fires must
+    not let the worker run forever, so a ``CompletionSpec`` with no
+    ``max_steps`` was rejected even when it carried a success observation
+    (fixed after a review caught this — the step budget is the only
+    guarantee that actually terminates the worker).
     """
 
+    max_steps: int
     success_observations: tuple[str, ...] = ()
     failure_conditions: tuple[str, ...] = ()
-    max_steps: int | None = None
 
     def __post_init__(self) -> None:
-        if self.max_steps is not None and self.max_steps < 1:
-            raise ValueError("CompletionSpec.max_steps must be positive when set")
-        if self.max_steps is None and not self.success_observations and not self.failure_conditions:
-            raise ValueError(
-                "CompletionSpec needs max_steps or at least one success/failure condition"
-            )
+        if self.max_steps < 1:
+            raise ValueError("CompletionSpec.max_steps must be positive")
 
 
 # ── Manifest (the capability catalog entry) ─────────────────────────────
@@ -196,6 +238,12 @@ class CapabilityManifest:
     hard filter. ``allowed_phases`` is the HARD constraint (``None`` =
     valid in every phase; use sparingly, see the implementation plan's
     "UKC phase semantics" section).
+
+    ``allowed_roles == ()`` means UNRESTRICTED (every role), matching
+    ``PluginBundle.roles``'s existing convention in
+    ``raptix_core.plugin_loader`` ("empty tuple = unrestricted") — not
+    "no roles allowed". A manifest built with the default is reachable
+    by every role.
     """
 
     id: CapabilityId
@@ -286,8 +334,17 @@ class ExecutionSpec:
     """What an adapter hands the executor. ``payload`` is executor-specific
     — e.g. an argv list for ``COMMAND``, a tool-call body for ``MCP`` —
     deliberately not typed further here so this stays executor-agnostic.
+
+    ``implementation_id`` MUST be the ``ImplementationSpec.id`` the
+    adapter/resolver resolved to build this spec. Without it, two
+    implementations of the same capability that both happen to run
+    through the same ``ExecutorKind`` (e.g. ``ad.netexec.smb`` vs
+    ``ad.impacket.psexec`` under ``access.move_laterally``, both
+    ``ExecutorKind.COMMAND``) are indistinguishable once the provenance
+    chain reaches execution.
     """
 
+    implementation_id: str
     executor_kind: ExecutorKind
     executor_id: str
     payload: Mapping[str, JsonValue] = field(default_factory=dict)
@@ -295,6 +352,8 @@ class ExecutionSpec:
     timeout_seconds: int | None = None
 
     def __post_init__(self) -> None:
+        if not self.implementation_id:
+            raise ValueError("ExecutionSpec needs a non-empty implementation_id")
         if not self.executor_id:
             raise ValueError("ExecutionSpec needs a non-empty executor_id")
         if self.timeout_seconds is not None and self.timeout_seconds < 1:
@@ -338,14 +397,32 @@ class Observation:
 
 
 @dataclass(frozen=True)
+class ExecutionRecord:
+    """One completed execution and the artifacts it produced.
+
+    A single :class:`CapabilityRequest` can produce more than one of
+    these — a bounded ``WORKER`` implementation runs several executions
+    per request (e.g. ``curl`` → research → PoC → ``bash``), and each
+    one's artifacts must stay attributed to the execution that produced
+    them rather than pooling into one undifferentiated list. ``spec``
+    already carries ``implementation_id`` (see :class:`ExecutionSpec`),
+    so it is not duplicated here.
+    """
+
+    spec: ExecutionSpec
+    artifacts: tuple[Artifact, ...] = ()
+    success: bool = False
+    error: str | None = None
+
+
+@dataclass(frozen=True)
 class CapabilityResult:
-    """The full round-trip record: request → (maybe) execution → artifacts
-    → observations → outcome. ``execution`` is ``None`` for a capability
-    that resolved without running an executor (e.g. a pure read)."""
+    """The full round-trip record: request → zero or more executions →
+    observations → outcome. ``executions`` is empty for a capability that
+    resolved without running any executor (e.g. a pure read)."""
 
     request: CapabilityRequest
-    execution: ExecutionSpec | None
-    artifacts: tuple[Artifact, ...] = ()
+    executions: tuple[ExecutionRecord, ...] = ()
     observations: tuple[Observation, ...] = ()
     success: bool = False
     error: str | None = None
