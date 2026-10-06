@@ -326,3 +326,94 @@ def test_after_model_skips_non_ai_messages() -> None:
     # Even though the last message is a ToolMessage, the most-recent
     # AIMessage triggered a KG tool, so the revision is dirty.
     assert out == {"kg_revision": "dirty"}
+
+
+# ── Wave T4: planning-context projection ──────────────────────────────
+
+
+def test_before_agent_builds_planning_context_when_enabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = _store_mock(revision="rev-acme-8")
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_summary",
+        lambda store, *, engagement: "summary",
+    )
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_planning_context",
+        lambda store, *, engagement: f"plan-{engagement}",
+    )
+    mw = KGMiddleware(store=store, planning_context=True)
+    out = mw.before_agent({"engagement_name": "acme"}, runtime=None)
+    assert out is not None
+    assert out["kg_planning_context"] == "plan-acme"
+
+
+def test_before_agent_skips_planning_context_when_disabled(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = _store_mock(revision="rev-acme-8")
+    called: list[str] = []
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_summary",
+        lambda store, *, engagement: "summary",
+    )
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_planning_context",
+        lambda store, *, engagement: called.append(engagement) or "",
+    )
+    mw = KGMiddleware(store=store)
+    mw.before_agent({"engagement_name": "acme"}, runtime=None)
+    assert called == []
+
+
+def test_before_agent_planning_context_failure_records_empty_string(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    store = _store_mock(revision="rev-acme-1")
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_summary",
+        lambda store, *, engagement: "summary",
+    )
+    monkeypatch.setattr(
+        "raptix.middleware.kg.build_planning_context",
+        lambda store, *, engagement: (_ for _ in ()).throw(RuntimeError("query timeout")),
+    )
+    mw = KGMiddleware(store=store, planning_context=True)
+    out = mw.before_agent({"engagement_name": "acme"}, runtime=None)
+    assert out is not None
+    assert out["kg_planning_context"] == ""
+    # The revision still advances so we don't retry the broken planning
+    # path on every turn.
+    assert out["kg_revision"] == "rev-acme-1"
+
+
+def test_wrap_model_call_appends_planning_block_when_enabled() -> None:
+    mw = KGMiddleware(store=_store_mock(), planning_context=True)
+    request = _fake_request(
+        state={
+            "kg_engagement": "acme",
+            "kg_summary": "## KG STATE (engagement=acme)",
+            "kg_planning_context": "## PLANNING CONTEXT (cheapest known attack paths)",
+        },
+        system_message=SystemMessage(content="base prompt"),
+    )
+    out = mw.wrap_model_call(request, lambda req: req)
+    blocks = out.system_message.content
+    assert "PLANNING CONTEXT" in blocks[-1]["text"]
+    # The summary block stays in front of the planning block.
+    assert "KG STATE" in blocks[-2]["text"]
+
+
+def test_wrap_model_call_omits_planning_block_when_disabled() -> None:
+    mw = _middleware()
+    request = _fake_request(
+        state={
+            "kg_engagement": "acme",
+            "kg_summary": "## KG STATE (engagement=acme)",
+            "kg_planning_context": "## PLANNING CONTEXT (should not appear)",
+        },
+        system_message=SystemMessage(content="base prompt"),
+    )
+    out = mw.wrap_model_call(request, lambda req: req)
+    assert "PLANNING CONTEXT" not in str(out.system_message.content)

@@ -246,7 +246,13 @@ def _make_kg(*, role: str, **_: Any):
             "yes",
         }
         return KGMiddleware(
-            enabled_tools=enabled_tools, operational_shadow=role == "raptix" and experimental
+            enabled_tools=enabled_tools,
+            operational_shadow=role == "raptix" and experimental,
+            # Wave T4: the orchestrator gets the planner's
+            # planning-context projection (cheapest known attack paths)
+            # injected automatically instead of calling a
+            # get_attack_context() tool every turn.
+            planning_context=role == "raptix",
         )
     except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
         # ImportError covers the case where the optional ``neo4j``

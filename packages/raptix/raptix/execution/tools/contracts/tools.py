@@ -47,7 +47,11 @@ def solidity_scan_file(path: str) -> str:
     )
 
 
-@tool
+# Wave T4 duplicate-ingest-path pick: ``kg_ingest_slither``
+# (execution/tools/research/tools.py, routed through the T3
+# ``knowledge/ingest`` ParserRegistry) is the one canonical Slither
+# ingest path. This thin duplicate keeps its signature and JSON
+# responses for importers but is no longer an agent-facing tool.
 def slither_ingest(path: str) -> str:
     """Ingest a Slither ``--json -`` output file into the engagement KG.
 
@@ -72,10 +76,11 @@ foundry_access_test = tool(contract_tools.foundry_access_test)
 foundry_flashloan_test = tool(contract_tools.foundry_flashloan_test)
 
 
+# slither_ingest is a Wave T4 internal service (see its comment) —
+# kg_ingest_slither in RESEARCH_TOOLS is the canonical ingest path.
 CONTRACT_TOOLS = [
     solidity_scan,
     solidity_scan_file,
-    slither_ingest,
     foundry_reentrancy_test,
     foundry_access_test,
     foundry_flashloan_test,

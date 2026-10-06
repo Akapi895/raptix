@@ -682,7 +682,7 @@ Steps:
 
 ---
 
-### Wave T4 — KG surface consolidation (25 → ~4 tools)
+### Wave T4 — KG surface consolidation (25 → ~4 tools) ✅ DONE
 
 **Goal:** Replace 25 low-level KG tools with 3–4 semantic query tools.
 
@@ -706,6 +706,61 @@ Agent reads graph through projections, never raw CRUD.
 - `PlanningContext` injected automatically (no tool call needed for base context)
 - Low-level functions remain as internal services (importable, no `@tool`)
 - Graph reads return structured projections, not raw Cypher results
+
+**Outcome: agents read via 3 semantic projections; 12 more functions
+became internal services.** The agent-facing surface is now
+`search_knowledge(query)` / `inspect_asset(node_id)` /
+`find_attack_paths()` (all `@tool`, `kg_degrades`-guarded,
+structured-projection JSON) beside the KGMiddleware pair
+`kg_record`/`kg_ingest` and the raptix-only `kg_surface_inventory`.
+Demoted to plain functions (importable, no `@tool`, per the standing
+never-delete rule): the 6 KG CRUD services (`kg_add_node`,
+`kg_add_edge`, `kg_query`, `kg_neighbors`, `kg_stats`,
+`kg_dedupe_findings`) and 6 duplicate twins identified by the T1
+classification (`kg_analyze_jwt`, `kg_analyze_oauth_callback`,
+`kg_analyze_cookie_value`, `kg_scan_solidity`, `kg_triage_binary` —
+each collapsible into `jwt_parse`/`oauth_audit`/`cookie_audit`/
+`solidity_scan_file`/`bin_identify`+`bin_strings` — plus
+`slither_ingest`, whose canonical twin is `kg_ingest_slither`;
+the contracts plugin's `tool_names` now selects the canonical name,
+while the provenance string `created_by == "slither_ingest"` is kept).
+Verification passed on day one: zero agents or domain plugins
+selected any demoted tool name before the change.
+
+Scope decisions worth remembering:
+
+- `rank_candidates` and `kg_add_candidate` keep their `@tool` and
+  `RESEARCH_TOOLS` membership — the detector→scanner candidate
+  pipeline still drives them as a workflow; revisit at T10.
+- `bh_ingest_zip` vs `bhce_ingest_zip` overlap: intentionally not
+  picked apart here (needs an cycles-relation ADR first).
+- `PlanningContext` is injected, revision-cached and bounded: rebuilt
+  inside `KGMiddleware._hydrate_kg_state` only when the KG revision
+  advances, ≤3 crown jewels × 1 cheapest path × ≤6 hops, failure →
+  `""` with the revision still advancing. Wired for the orchestrator
+  role only (`_make_kg`: `planning_context=role == "raptix"`).
+- Bug caught by the new unit tests: `search_knowledge`/`inspect_asset`
+  originally read `node.key`, which does not exist — the dedup key
+  lives in `props["key"]` (`Node.make`, `types/kg.py`). Now read via
+  `node.props.get("key")`.
+- Fixed en route: pre-existing `_StubStore` route typo in
+  `test_kg_summary_unit.py` (`HAS_VULP` → `HAS_VULN`) that had quietly
+  broken the "full engagement" summary test.
+- Deferred to T9: the skills corpus still teaches the old surface —
+  `kg_query`/`kg_stats` playbook references across SKILL.md files and
+  one `slither_ingest` mention in `standard/contracts/SKILL.md` line 39.
+  Refresh them together with `make build-skill-graph` /
+  `make audit-skills-strict` (one deliberate skills pass, no piecemeal
+  `content_sha256` churn).
+
+Test surface: new `test_semantic_tools.py` (projection behaviors and
+error paths, fake-store based) and `test_kg_slot.py` (`_make_kg` role
+wiring via recording stand-in); planning-context hydration/failure/injection
+tests in `test_kg_middleware_unit.py` and `test_kg_summary_unit.py`;
+converted twin tests to direct calls in `test_tools.py`,
+`test_tools_extended.py`, `test_dedupe.py`, `test_blue_cell_agent.py`,
+`test_contract_tools.py`, `test_misc_tool_wrappers.py`. 283 tests
+pass across those nine files.
 
 ---
 

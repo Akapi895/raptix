@@ -5,7 +5,8 @@ Existing test_tools.py covers the main ingesters and web/auth tools.
 This file adds:
 - Pure helper / formatter functions
 - Dependency-file parsers (_iter_requirements, _iter_package_lock, etc.)
-- KG CRUD tools (kg_add_node, kg_add_edge, kg_query, kg_neighbors, kg_stats)
+- KG CRUD internal services (kg_add_node, kg_add_edge, kg_query,
+  kg_neighbors, kg_stats — plain functions since Wave T4)
 - Tier-2 ingesters (subfinder, dnsx, katana, masscan, ffuf, testssl,
   crackmapexec, asrep_hashes)
 - Fuzz tools (fuzz_harness, fuzz_record_crash)
@@ -430,16 +431,19 @@ class TestParseDependencies:
         assert _parse_dependencies(p) == []
 
 
-# ── KG CRUD tools ─────────────────────────────────────────────────────────
+# ── KG CRUD internal services (Wave T4) ────────────────────────────────────
+#
+# kg_add_node / kg_add_edge / kg_query / kg_neighbors / kg_stats lost their
+# ``@tool`` decorator in Wave T4 — agents read via the semantic projections
+# in ``research/semantic.py`` instead. These are direct-call tests against
+# the still-importable internal services.
 
 
 class TestKgAddNode:
     def test_valid_kind_creates_node(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # NodeKind enum values are Title-case: "Host", "Vulnerability", etc.
         fake = _configure_kg(monkeypatch)
-        result = json.loads(
-            research_tools.kg_add_node.invoke({"kind": "Host", "label": "10.0.0.1"})
-        )
+        result = json.loads(research_tools.kg_add_node(kind="Host", label="10.0.0.1"))
         assert "id" in result
         assert result["kind"] == "Host"
         assert result["label"] == "10.0.0.1"
@@ -448,23 +452,21 @@ class TestKgAddNode:
     def test_with_props(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
         result = json.loads(
-            research_tools.kg_add_node.invoke(
-                {"kind": "Vulnerability", "label": "XSS", "props": '{"severity": "high"}'}
+            research_tools.kg_add_node(
+                kind="Vulnerability", label="XSS", props='{"severity": "high"}'
             )
         )
         assert result["kind"] == "Vulnerability"
 
     def test_unknown_kind_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(
-            research_tools.kg_add_node.invoke({"kind": "notakind", "label": "test"})
-        )
+        result = json.loads(research_tools.kg_add_node(kind="notakind", label="test"))
         assert "error" in result
         assert "valid" in result
 
     def test_stats_returned(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_add_node.invoke({"kind": "Host", "label": "x"}))
+        result = json.loads(research_tools.kg_add_node(kind="Host", label="x"))
         assert "stats" in result
 
 
@@ -472,30 +474,24 @@ class TestKgAddEdge:
     def test_valid_edge_created(self, monkeypatch: pytest.MonkeyPatch) -> None:
         # EdgeKind enum values are UPPER_SNAKE: "HAS_VULN", "EXPOSES", etc.
         fake = _configure_kg(monkeypatch)
-        src = json.loads(research_tools.kg_add_node.invoke({"kind": "Host", "label": "src"}))["id"]
-        dst = json.loads(
-            research_tools.kg_add_node.invoke({"kind": "Vulnerability", "label": "dst"})
-        )["id"]
-        result = json.loads(
-            research_tools.kg_add_edge.invoke({"src": src, "dst": dst, "kind": "HAS_VULN"})
-        )
+        src = json.loads(research_tools.kg_add_node(kind="Host", label="src"))["id"]
+        dst = json.loads(research_tools.kg_add_node(kind="Vulnerability", label="dst"))["id"]
+        result = json.loads(research_tools.kg_add_edge(src=src, dst=dst, kind="HAS_VULN"))
         assert "id" in result
         assert result["kind"] == "HAS_VULN"
         assert len(fake.graph.edges) == 1
 
     def test_unknown_edge_kind_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(
-            research_tools.kg_add_edge.invoke({"src": "a", "dst": "b", "kind": "invalid_kind"})
-        )
+        result = json.loads(research_tools.kg_add_edge(src="a", dst="b", kind="invalid_kind"))
         assert "error" in result
         assert "valid" in result
 
     def test_missing_node_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
         result = json.loads(
-            research_tools.kg_add_edge.invoke(
-                {"src": "nonexistent-id-1", "dst": "nonexistent-id-2", "kind": "EXPOSES"}
+            research_tools.kg_add_edge(
+                src="nonexistent-id-1", dst="nonexistent-id-2", kind="EXPOSES"
             )
         )
         assert "error" in result
@@ -504,16 +500,10 @@ class TestKgAddEdge:
 
     def test_custom_weight(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        src = json.loads(research_tools.kg_add_node.invoke({"kind": "Entrypoint", "label": "ep"}))[
-            "id"
-        ]
-        dst = json.loads(
-            research_tools.kg_add_node.invoke({"kind": "Vulnerability", "label": "v"})
-        )["id"]
+        src = json.loads(research_tools.kg_add_node(kind="Entrypoint", label="ep"))["id"]
+        dst = json.loads(research_tools.kg_add_node(kind="Vulnerability", label="v"))["id"]
         result = json.loads(
-            research_tools.kg_add_edge.invoke(
-                {"src": src, "dst": dst, "kind": "HAS_VULN", "weight": 0.3}
-            )
+            research_tools.kg_add_edge(src=src, dst=dst, kind="HAS_VULN", weight=0.3)
         )
         assert "id" in result
 
@@ -521,29 +511,29 @@ class TestKgAddEdge:
 class TestKgQuery:
     def test_all_nodes_returned_when_no_filter(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        research_tools.kg_add_node.invoke({"kind": "Host", "label": "h1"})
-        research_tools.kg_add_node.invoke({"kind": "Vulnerability", "label": "v1"})
-        result = json.loads(research_tools.kg_query.invoke({}))
+        research_tools.kg_add_node(kind="Host", label="h1")
+        research_tools.kg_add_node(kind="Vulnerability", label="v1")
+        result = json.loads(research_tools.kg_query())
         assert result["total"] == 2
         assert result["returned"] == 2
 
     def test_kind_filter(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        research_tools.kg_add_node.invoke({"kind": "Host", "label": "h1"})
-        research_tools.kg_add_node.invoke({"kind": "Vulnerability", "label": "v1"})
-        result = json.loads(research_tools.kg_query.invoke({"kind": "Host"}))
+        research_tools.kg_add_node(kind="Host", label="h1")
+        research_tools.kg_add_node(kind="Vulnerability", label="v1")
+        result = json.loads(research_tools.kg_query(kind="Host"))
         assert result["total"] == 1
         assert result["nodes"][0]["kind"] == "Host"
 
     def test_min_severity_filter(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        research_tools.kg_add_node.invoke(
-            {"kind": "Vulnerability", "label": "high-vuln", "props": '{"severity": "high"}'}
+        research_tools.kg_add_node(
+            kind="Vulnerability", label="high-vuln", props='{"severity": "high"}'
         )
-        research_tools.kg_add_node.invoke(
-            {"kind": "Vulnerability", "label": "low-vuln", "props": '{"severity": "low"}'}
+        research_tools.kg_add_node(
+            kind="Vulnerability", label="low-vuln", props='{"severity": "low"}'
         )
-        result = json.loads(research_tools.kg_query.invoke({"min_severity": "high"}))
+        result = json.loads(research_tools.kg_query(min_severity="high"))
         # Only the high-severity vuln should be returned
         assert result["total"] >= 1
         for node in result["nodes"]:
@@ -551,19 +541,19 @@ class TestKgQuery:
 
     def test_unknown_kind_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_query.invoke({"kind": "badkind"}))
+        result = json.loads(research_tools.kg_query(kind="badkind"))
         assert "error" in result
 
     def test_bad_severity_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_query.invoke({"min_severity": "extreme"}))
+        result = json.loads(research_tools.kg_query(min_severity="extreme"))
         assert "error" in result
 
     def test_limit_applied(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
         for i in range(10):
-            research_tools.kg_add_node.invoke({"kind": "Host", "label": f"h{i}"})
-        result = json.loads(research_tools.kg_query.invoke({"limit": 3}))
+            research_tools.kg_add_node(kind="Host", label=f"h{i}")
+        result = json.loads(research_tools.kg_query(limit=3))
         assert result["returned"] == 3
         assert result["total"] == 10
 
@@ -571,44 +561,32 @@ class TestKgQuery:
 class TestKgNeighbors:
     def test_returns_connected_nodes(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        src_id = json.loads(research_tools.kg_add_node.invoke({"kind": "Host", "label": "host1"}))[
-            "id"
-        ]
-        dst_id = json.loads(
-            research_tools.kg_add_node.invoke({"kind": "Service", "label": "svc1"})
-        )["id"]
-        research_tools.kg_add_edge.invoke({"src": src_id, "dst": dst_id, "kind": "EXPOSES"})
-        result = json.loads(
-            research_tools.kg_neighbors.invoke({"node_id": src_id, "direction": "out"})
-        )
+        src_id = json.loads(research_tools.kg_add_node(kind="Host", label="host1"))["id"]
+        dst_id = json.loads(research_tools.kg_add_node(kind="Service", label="svc1"))["id"]
+        research_tools.kg_add_edge(src=src_id, dst=dst_id, kind="EXPOSES")
+        result = json.loads(research_tools.kg_neighbors(node_id=src_id, direction="out"))
         assert len(result) == 1
         assert result[0]["edge_kind"] == "EXPOSES"
         assert result[0]["neighbor_id"] == dst_id
 
     def test_node_not_found_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_neighbors.invoke({"node_id": "ghost-node-id"}))
+        result = json.loads(research_tools.kg_neighbors(node_id="ghost-node-id"))
         assert "error" in result
 
     def test_invalid_edge_kind_filter_returns_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        nid = json.loads(research_tools.kg_add_node.invoke({"kind": "Host", "label": "x"}))["id"]
-        result = json.loads(
-            research_tools.kg_neighbors.invoke({"node_id": nid, "edge_kind": "bad_kind"})
-        )
+        nid = json.loads(research_tools.kg_add_node(kind="Host", label="x"))["id"]
+        result = json.loads(research_tools.kg_neighbors(node_id=nid, edge_kind="bad_kind"))
         assert "error" in result
 
     def test_direction_in(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        src_id = json.loads(research_tools.kg_add_node.invoke({"kind": "Host", "label": "h"}))["id"]
-        dst_id = json.loads(research_tools.kg_add_node.invoke({"kind": "Service", "label": "s"}))[
-            "id"
-        ]
-        research_tools.kg_add_edge.invoke({"src": src_id, "dst": dst_id, "kind": "EXPOSES"})
+        src_id = json.loads(research_tools.kg_add_node(kind="Host", label="h"))["id"]
+        dst_id = json.loads(research_tools.kg_add_node(kind="Service", label="s"))["id"]
+        research_tools.kg_add_edge(src=src_id, dst=dst_id, kind="EXPOSES")
         # From dst looking "in"
-        result = json.loads(
-            research_tools.kg_neighbors.invoke({"node_id": dst_id, "direction": "in"})
-        )
+        result = json.loads(research_tools.kg_neighbors(node_id=dst_id, direction="in"))
         assert len(result) == 1
         assert result[0]["neighbor_id"] == src_id
 
@@ -616,15 +594,15 @@ class TestKgNeighbors:
 class TestKgStats:
     def test_returns_stats_dict(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        result = json.loads(research_tools.kg_stats.invoke({}))
+        result = json.loads(research_tools.kg_stats())
         assert "backend" in result
         assert isinstance(result, dict)
 
     def test_stats_reflect_additions(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _configure_kg(monkeypatch)
-        before = json.loads(research_tools.kg_stats.invoke({}))
-        research_tools.kg_add_node.invoke({"kind": "Host", "label": "new"})
-        after = json.loads(research_tools.kg_stats.invoke({}))
+        before = json.loads(research_tools.kg_stats())
+        research_tools.kg_add_node(kind="Host", label="new")
+        after = json.loads(research_tools.kg_stats())
         assert isinstance(before, dict)
         assert isinstance(after, dict)
 

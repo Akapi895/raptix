@@ -105,9 +105,8 @@ def create_scanner_agent(
         sweeps cost pennies.
       - ``recursion_limit=60`` — scanner work is shallow; if it needs more
         iterations something is wrong (probably reading whole files).
-      - Tools: sharded scanner helpers + ``kg_query`` + ``kg_stats``, plus
-        ``bash`` for directory sizing (``du``, ``wc -l``, ``ls``). No other
-        research tools.
+      - Tools: sharded scanner helpers, plus ``bash`` for directory
+        sizing (``du``, ``wc -l``, ``ls``). No other research tools.
       - Skills routed through ``/skills/plugins/scanner/`` + ``/skills/shared/``.
 
     Args:

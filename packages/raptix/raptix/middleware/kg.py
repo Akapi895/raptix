@@ -43,7 +43,7 @@ from typing_extensions import override
 from raptix.knowledge.graph.operational_state import build_operational_state
 from raptix.knowledge.graph.state import KGState
 from raptix.knowledge.graph.store import KGStore
-from raptix.knowledge.graph.summary import build_summary
+from raptix.knowledge.graph.summary import build_planning_context, build_summary
 from raptix.knowledge.graph.tools import build_kg_tools
 
 log = logging.getLogger(__name__)
@@ -91,6 +91,10 @@ class KGMiddleware(AgentMiddleware):
         Override the tool surface. Defaults to ``{"kg_record",
         "kg_ingest"}`` (see ``DEFAULT_KG_TOOLS`` in
         ``raptix.knowledge.graph.tools``).
+    planning_context
+        When True (the orchestrator/planner role), also rebuild and
+        inject the Wave T4 planning-context projection (cheapest known
+        attack paths) alongside the summary. Read-only, revision-cached.
     """
 
     state_schema = KGState
@@ -101,10 +105,12 @@ class KGMiddleware(AgentMiddleware):
         store: KGStore | None = None,
         enabled_tools: Iterable[str] | None = None,
         operational_shadow: bool = False,
+        planning_context: bool = False,
     ) -> None:
         super().__init__()
         self._store = store if store is not None else KGStore.from_env()
         self._operational_shadow = operational_shadow
+        self._planning_context = planning_context
         self.tools = build_kg_tools(self._store, enabled=enabled_tools)
         self._kg_tool_names = {getattr(t, "name", "") for t in self.tools}
 
@@ -166,6 +172,14 @@ class KGMiddleware(AgentMiddleware):
                 except Exception as exc:
                     log.warning("KGMiddleware operational projection failed: %s", exc)
                     updates["kg_operational_state"] = ""
+            if self._planning_context:
+                try:
+                    updates["kg_planning_context"] = build_planning_context(
+                        self._store, engagement=engagement
+                    )
+                except Exception as exc:
+                    log.warning("KGMiddleware planning projection failed: %s", exc)
+                    updates["kg_planning_context"] = ""
         return updates or None
 
     # ── wrap_model_call ───────────────────────────────────────────────
@@ -188,6 +202,7 @@ class KGMiddleware(AgentMiddleware):
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         summary = str(get("kg_summary") or "")
         operational = str(get("kg_operational_state") or "") if self._operational_shadow else ""
+        planning = str(get("kg_planning_context") or "") if self._planning_context else ""
 
         # No engagement / no summary yet — pass the request through.
         if not get("kg_engagement"):
@@ -203,6 +218,8 @@ class KGMiddleware(AgentMiddleware):
             injected_blocks.append({"type": "text", "text": "\n\n" + summary})
         if operational:
             injected_blocks.append({"type": "text", "text": "\n\n" + operational})
+        if planning:
+            injected_blocks.append({"type": "text", "text": "\n\n" + planning})
 
         if request.system_message is not None:
             new_content = [

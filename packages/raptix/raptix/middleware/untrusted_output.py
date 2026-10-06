@@ -70,6 +70,12 @@ UNTRUSTED_TOOL_NAMES: frozenset[str] = frozenset(
         "kg_neighbors",
         "kg_stats",
         "kg_backend_health",
+        # Wave T4 semantic KG read projections — graph content is
+        # attacker-influenceable (scanner output feeds it), so their
+        # results are quarantined exactly like the raw CRUD reads.
+        "search_knowledge",
+        "inspect_asset",
+        "find_attack_paths",
         # Scanner prefilter tools surface raw bytes from the (attacker-
         # controlled) target tree: scan_shard returns code snippets walked
         # out of /workspace/target, and rank_candidates re-emits those hits.

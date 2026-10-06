@@ -90,12 +90,15 @@ class TestSolidityScantoolFile:
 
 
 class TestSlitherIngestTool:
-    """slither_ingest @tool — reads file and ingests into KG."""
+    """slither_ingest — reads file and ingests into KG."""
+
+    # Wave T4: slither_ingest is a plain internal service (canonical twin
+    # is the agent-facing kg_ingest_slither), so call it directly.
 
     def test_missing_file_returns_error(self, tmp_path: Path) -> None:
         from raptix.execution.tools.contracts.tools import slither_ingest
 
-        result = slither_ingest.invoke({"path": str(tmp_path / "missing.json")})
+        result = slither_ingest(path=str(tmp_path / "missing.json"))
         data = json.loads(result)
         assert "error" in data
 
@@ -141,10 +144,10 @@ class TestFoundryToolWrappers:
         assert "source" in data
         assert "executeOperation" in data["source"]
 
-    def test_contract_tools_list_has_six_items(self) -> None:
+    def test_contract_tools_list_has_five_items(self) -> None:
         from raptix.execution.tools.contracts.tools import CONTRACT_TOOLS
 
-        assert len(CONTRACT_TOOLS) == 6
+        assert len(CONTRACT_TOOLS) == 5
 
 
 # ── evidence/tools.py wrappers ─────────────────────────────────────────────

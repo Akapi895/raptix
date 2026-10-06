@@ -12,9 +12,6 @@ the prompt + tool surface both lean hard into the ZFP workflow.
 
 Tool surface:
   - ``validate_finding`` — the ZFP-enforcing PoC runner
-  - ``kg_query``/``kg_neighbors``/``kg_add_node``/``kg_add_edge`` — graph
-    read + bookkeeping (never emit new vuln kinds, only update existing
-    ones with attempt counters)
   - ``bash`` — start services, stage PoCs, run curl sanity checks
 
 Library API

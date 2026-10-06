@@ -13,11 +13,8 @@ DEFINITION = DomainAgentDefinition(
         "tree at skills/standard/iot/."
     ),
     tool_names=(
-        "kg_add_node",
-        "kg_add_edge",
-        "kg_query",
-        "kg_neighbors",
-        "kg_stats",
+        "search_knowledge",
+        "inspect_asset",
         "cve_lookup",
         "payload_search",
         "methodology_lookup",

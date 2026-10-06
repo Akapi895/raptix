@@ -15,9 +15,8 @@ Design notes:
   - Sub-agents are wrapped in :class:`StreamingRunnable` so their tool
     calls and messages stream through both the Python CLI and the
     LangGraph Platform HTTP API.
-  - The orchestrator itself has only ``kg_query``/``kg_stats`` as tools
-    (plus the SubAgent ``task()`` and OPPLAN CRUD). It MUST NOT touch
-    bash, source files, or PoCs directly.
+  - The orchestrator itself has only the SubAgent ``task()`` and OPPLAN
+    CRUD tools. It MUST NOT touch bash, source files, or PoCs directly.
   - EngagementContext slot is NOT included (see SLOTS_PER_ROLE).
 
 Library API
@@ -94,10 +93,10 @@ def create_vulnresearch_agent(
 ):
     """Build the Vulnresearch orchestrator.
 
-    Tool surface is intentionally tiny: ``kg_query`` + ``kg_stats`` for
-    graph inspection, plus the OPPLAN CRUD tools (injected by
-    :class:`OPPLANMiddleware`) and the ``task()`` dispatcher (injected
-    by :class:`SubAgentMiddleware`). Everything else is delegated.
+    Tool surface is intentionally tiny: only the OPPLAN CRUD tools
+    (injected by :class:`OPPLANMiddleware`) and the ``task()`` dispatcher
+    (injected by :class:`SubAgentMiddleware`). Everything else is
+    delegated.
 
     Args:
         backend: deepagents-style filesystem backend. Defaults to
@@ -111,8 +110,7 @@ def create_vulnresearch_agent(
             and each wrapped in ``StreamingRunnable``.
         tools: full tool list — when provided, replaces the standard
             registry entirely. When ``None`` (default), the OSS
-            baseline (``kg_query`` + ``kg_stats``) is built and plugin
-            overrides applied.
+            baseline is built and plugin overrides applied.
         middleware: full middleware list — when provided, replaces the
             OSS slot stack entirely. When ``None``, the baseline is
             assembled with plugin slot overrides applied.

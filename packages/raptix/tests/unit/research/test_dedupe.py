@@ -10,6 +10,7 @@ from raptix.execution.tools.research import tools as research_tools
 from raptix.execution.tools.research.dedupe import (
     DuplicateVerdict,
     find_duplicate,
+    kg_dedupe_findings,
     prefilter,
 )
 from raptix_core.types.kg import KnowledgeGraph, Node, NodeKind
@@ -179,7 +180,7 @@ class TestKgDedupeFindingsTool:
     def test_reports_duplicate_cluster_for_same_bug(self, monkeypatch: pytest.MonkeyPatch) -> None:
         fake = _configure_store(monkeypatch, _same_bug_graph())
 
-        payload = json.loads(research_tools.kg_dedupe_findings.invoke({}))
+        payload = json.loads(kg_dedupe_findings())
 
         assert payload["scanned_findings"] == 2
         assert payload["duplicate_clusters"] == 1
@@ -196,7 +197,7 @@ class TestKgDedupeFindingsTool:
     ) -> None:
         _configure_store(monkeypatch, _distinct_pair_graph())
 
-        payload = json.loads(research_tools.kg_dedupe_findings.invoke({}))
+        payload = json.loads(kg_dedupe_findings())
 
         assert payload["scanned_findings"] == 2
         assert payload["duplicate_clusters"] == 0
@@ -208,7 +209,7 @@ class TestKgDedupeFindingsTool:
         before_nodes = {nid: n.model_copy(deep=True) for nid, n in fake.graph.nodes.items()}
         before_edge_count = len(fake.graph.edges)
 
-        research_tools.kg_dedupe_findings.invoke({})
+        kg_dedupe_findings()
 
         assert set(fake.graph.nodes.keys()) == set(before_nodes.keys())
         assert len(fake.graph.edges) == before_edge_count
@@ -218,6 +219,8 @@ class TestKgDedupeFindingsTool:
 
 
 class TestRegistry:
-    def test_tool_is_registered_in_research_tools(self) -> None:
+    def test_tool_is_a_plain_internal_service_since_wave_t4(self) -> None:
         names = {getattr(t, "name", None) for t in research_tools.RESEARCH_TOOLS}
-        assert "kg_dedupe_findings" in names
+        assert "kg_dedupe_findings" not in names
+        assert callable(kg_dedupe_findings)
+        assert not hasattr(kg_dedupe_findings, "invoke")

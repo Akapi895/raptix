@@ -66,3 +66,14 @@ class KGState(AgentState):
         ]
     ]
     kg_operational_state: NotRequired[Annotated[str, reduce_converging_value]]
+    kg_planning_context: NotRequired[
+        Annotated[
+            str,
+            (
+                "Planner-only attack-context projection (Wave T4): the "
+                "cheapest known entrypoint → crown-jewel paths, rebuilt "
+                "with ``kg_summary`` when the revision advances."
+            ),
+            reduce_converging_value,
+        ]
+    ]

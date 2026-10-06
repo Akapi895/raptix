@@ -17,12 +17,15 @@ from raptix.knowledge.graph.store import KGStore, KGStoreConfig
 from raptix.knowledge.graph.summary import (
     MAX_CROWN_JEWELS,
     MAX_ENTRYPOINTS,
+    MAX_PATH_HOPS,
+    MAX_PLANNING_JEWELS,
     MAX_VULNS,
     _render_crown_jewels,
     _render_entrypoints,
     _render_stats,
     _render_vulns,
     _severity_order,
+    build_planning_context,
     build_summary,
 )
 
@@ -136,12 +139,20 @@ class _StubStore:
         engagement: str,
     ) -> list[dict[str, Any]]:
         # Coarse routing via signature substrings in the Cypher.
+        if "length(p) AS hops" in cypher:
+            return self._responses.get("planning_paths", [])
+        # Must match the planning-jewels query BEFORE the generic
+        # "(c:CrownJewel)" summary query; "c.label" (vs "e.label" in the
+        # summary entrypoints query) keeps the needles distinct.
+        if "c.label AS label LIMIT $cap" in cypher:
+            return self._responses.get("planning_jewels", [])
         if "count(n) AS nodes" in cypher:
             return self._responses.get("stats", [{"nodes": 0, "edges": 0}])
         if "(v:Vulnerability)" in cypher:
             return self._responses.get("vulns", [])
         # Match the relationship type only: the scope predicate inside the
         # pattern is an implementation detail this stub should not pin.
+        # (Typo fixed 2026-10: the relation is HAS_VULN, not HAS_VULP.)
         if "(e:Entrypoint)" in cypher and "NOT (e)-[:HAS_VULN" in cypher:
             return self._responses.get("entrypoints", [])
         if "(c:CrownJewel)" in cypher:
@@ -244,3 +255,48 @@ def test_max_constants_are_small() -> None:
     assert MAX_VULNS <= 10
     assert MAX_ENTRYPOINTS <= 10
     assert MAX_CROWN_JEWELS <= 25
+
+
+# ── Planning context (Wave T4) ──────────────────────────────────────────
+
+
+def test_build_planning_context_renders_cheapest_path_per_jewel() -> None:
+    store = _StubStore(
+        {
+            "planning_jewels": [{"key": "cj::db", "label": "payments_db"}],
+            "planning_paths": [
+                {
+                    "entrypoint": "https://app/",
+                    "hops": 2,
+                    "route": ["https://app/", "web01", "payments_db"],
+                }
+            ],
+        }
+    )
+    out = build_planning_context(store, engagement="acme")  # type: ignore[arg-type]
+    assert "## PLANNING CONTEXT (cheapest known attack paths)" in out
+    assert "- https://app/ → **payments_db** (2 hops): https://app/ → web01 → payments_db" in out
+
+
+def test_build_planning_context_empty_when_no_crown_jewels() -> None:
+    store = _StubStore({"planning_jewels": [], "planning_paths": []})
+    out = build_planning_context(store, engagement="acme")  # type: ignore[arg-type]
+    assert out == ""
+
+
+def test_build_planning_context_skips_jewels_without_paths() -> None:
+    """A crown jewel that no entrypoint reaches must not render a line."""
+    store = _StubStore(
+        {
+            "planning_jewels": [{"key": "cj::db", "label": "payments_db"}],
+            "planning_paths": [],
+        }
+    )
+    out = build_planning_context(store, engagement="acme")  # type: ignore[arg-type]
+    assert out == ""
+
+
+def test_planning_budgets_stay_small() -> None:
+    """The planner's projection must stay bounded — one path per jewel."""
+    assert MAX_PLANNING_JEWELS <= 3
+    assert MAX_PATH_HOPS <= 6

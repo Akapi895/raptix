@@ -234,7 +234,7 @@ contract Vault {
             encoding="utf-8",
         )
 
-        payload = json.loads(research_tools.kg_scan_solidity.invoke({"path": str(solidity)}))
+        payload = json.loads(research_tools.kg_scan_solidity(path=str(solidity)))
         assert payload["matches"] >= 2
         assert payload["ingested"] >= 2
 
@@ -264,7 +264,7 @@ contract Vault {
             + b"AKIAABCDEFGHIJKLMNOP\x00"
         )
 
-        payload = json.loads(research_tools.kg_triage_binary.invoke({"path": str(binary)}))
+        payload = json.loads(research_tools.kg_triage_binary(path=str(binary)))
         rule_ids = {v["rule_id"] for v in payload["created_vulnerabilities"]}
         assert "secrets.hardcoded" in rule_ids
         assert "rce.primitives" in rule_ids
@@ -277,9 +277,7 @@ contract Vault {
         token = forge_token({"sub": "alice"}, alg="none")
 
         payload = json.loads(
-            research_tools.kg_analyze_jwt.invoke(
-                {"token": token, "source": "https://api.example.com/profile"}
-            )
+            research_tools.kg_analyze_jwt(token=token, source="https://api.example.com/profile")
         )
         assert payload["ingested_vulnerabilities"] >= 1
         assert any("alg=none" in finding for finding in payload["findings"])
@@ -295,9 +293,7 @@ contract Vault {
         callback = "https://app.example.com/callback?code=testcode"
 
         payload = json.loads(
-            research_tools.kg_analyze_oauth_callback.invoke(
-                {"callback_url": callback, "public_client": True}
-            )
+            research_tools.kg_analyze_oauth_callback(callback_url=callback, public_client=True)
         )
         assert payload["ingested_vulnerabilities"] >= 1
         rule_ids = {n["rule_id"] for n in payload["nodes"]}
@@ -313,15 +309,13 @@ contract Vault {
         fake = _configure_kg(monkeypatch, tmp_path)
 
         payload = json.loads(
-            research_tools.kg_analyze_cookie_value.invoke(
-                {
-                    "name": "session",
-                    "value": "abc123",
-                    "secure": False,
-                    "http_only": False,
-                    "same_site": "None",
-                    "source": "https://app.example.com",
-                }
+            research_tools.kg_analyze_cookie_value(
+                name="session",
+                value="abc123",
+                secure=False,
+                http_only=False,
+                same_site="None",
+                source="https://app.example.com",
             )
         )
         assert payload["ingested_vulnerabilities"] >= 1
@@ -372,3 +366,43 @@ class TestWaveT3IngestToolSurface:
 
     def test_all_fourteen_formats_accounted_for(self) -> None:
         assert len(self._STILL_TOOLS) + len(self._INTERNAL_ONLY) == 14
+
+
+class TestWaveT4KGToolSurface:
+    """Pins the Wave T4 KG tool surface: the semantic read projections
+    are the agent-facing tools; the raw CRUD wrappers and the duplicate
+    analysis twins are plain internal services."""
+
+    _SEMANTIC_TOOLS = ("search_knowledge", "inspect_asset", "find_attack_paths")
+    _INTERNAL_SERVICES = (
+        "kg_add_node",
+        "kg_add_edge",
+        "kg_query",
+        "kg_neighbors",
+        "kg_stats",
+        "kg_backend_health",
+        "kg_dedupe_findings",
+        # duplicate-primitive collapses (T1 classification, T4 merges)
+        "kg_analyze_jwt",
+        "kg_analyze_oauth_callback",
+        "kg_analyze_cookie_value",
+        "kg_scan_solidity",
+        "kg_triage_binary",
+    )
+
+    def test_semantic_projections_are_agent_tools(self) -> None:
+        names = {getattr(t, "name", None) for t in research_tools.RESEARCH_TOOLS}
+        for tool_name in self._SEMANTIC_TOOLS:
+            assert tool_name in names, f"{tool_name} must be an agent tool"
+            func = getattr(research_tools, tool_name)
+            assert hasattr(func, "invoke"), f"{tool_name} must be @tool-decorated"
+
+    def test_raw_kg_services_are_not_agent_tools(self) -> None:
+        names = {getattr(t, "name", None) for t in research_tools.RESEARCH_TOOLS}
+        for tool_name in self._INTERNAL_SERVICES:
+            assert tool_name not in names, f"{tool_name} must not be agent-facing"
+            func = getattr(research_tools, tool_name)
+            assert not hasattr(func, "invoke"), f"{tool_name} must be a plain function"
+
+    def test_t4_surface_accounted_for(self) -> None:
+        assert len(self._SEMANTIC_TOOLS) + len(self._INTERNAL_SERVICES) == 15

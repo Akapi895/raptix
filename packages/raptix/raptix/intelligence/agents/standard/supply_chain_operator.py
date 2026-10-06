@@ -29,14 +29,8 @@ from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
 from raptix.execution.tools.references.tools import methodology_lookup, payload_search
-from raptix.execution.tools.research.tools import (
-    cve_lookup,
-    kg_add_edge,
-    kg_add_node,
-    kg_neighbors,
-    kg_query,
-    kg_stats,
-)
+from raptix.execution.tools.research.semantic import inspect_asset, search_knowledge
+from raptix.execution.tools.research.tools import cve_lookup
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
@@ -46,11 +40,8 @@ from raptix_core.plugin_loader import SubAgentSpec, is_bundle_enabled, load_plug
 _STANDARD_TOOLS: dict[str, Any] = {
     t.name: t
     for t in [
-        kg_add_node,
-        kg_add_edge,
-        kg_query,
-        kg_neighbors,
-        kg_stats,
+        search_knowledge,
+        inspect_asset,
         cve_lookup,
         payload_search,
         methodology_lookup,
