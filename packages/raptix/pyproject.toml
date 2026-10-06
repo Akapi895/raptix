@@ -125,7 +125,7 @@ all = ["raptix[neo4j,telemetry,mcp]"]
 [project.scripts]
 raptix-cli = "raptix.cli.__main__:main"
 raptix-kg-health = "raptix.execution.tools.research.health:main"
-raptix-mcp = "raptix.mcp_server.__main__:main"
+raptix-mcp = "raptix.interfaces.mcp.__main__:main"
 
 # Plugin entry-point groups consumed by ``raptix.plugin_loader``.
 # External packages (downstream or community plugins) declare their
