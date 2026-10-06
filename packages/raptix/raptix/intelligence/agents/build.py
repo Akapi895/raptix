@@ -42,6 +42,7 @@ from raptix.intelligence.agents.middleware_slots import (
     SLOTS_PER_ROLE,
     MiddlewareSlot,
 )
+from raptix.intelligence.agents.tool_exposure import record_tool_exposure
 from raptix.middleware.skillogy import maybe_install_skillogy
 from raptix_core.plugin_loader import (
     PluginBundle,
@@ -508,6 +509,9 @@ def build_tools(
 
     result = list(base.values())
     result.extend(load_plugin_tools(role=role))
+    # T0 baseline telemetry (docs/tool-optimization-implementation-plan.md):
+    # logging-only, gated by RAPTIX_TOOL_TELEMETRY, never mutates ``result``.
+    record_tool_exposure(role, result)
     return result
 
 
