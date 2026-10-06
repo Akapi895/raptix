@@ -871,7 +871,7 @@ evidence + bounty 425, agents 192, tools 510, research + middleware
 
 ---
 
-### Wave T6 — Capability catalog + executor availability
+### Wave T6 — Capability catalog + executor availability ✅ DONE
 
 **Goal:** Map current capabilities to their implementations and determine
 real-time availability. This is the runtime instantiation of T2 contracts.
@@ -894,6 +894,63 @@ Steps:
 - Eligibility reflects current state (role, phase, requirements)
 - Health check runs at startup and is queryable
 - Execution provenance records full version chain
+
+**Outcome: 12 manifests, a queryable registry, and separated
+availability/eligibility evaluators under
+`raptix/execution/capabilities/`.** `catalog.py` declares one
+`CapabilityManifest` per T1-classified semantic capability (the 12
+Target Capability IDs; `kg_surface_inventory` excluded per its own T1
+note — T4's PlanningContext absorbed it). All twelve currently execute
+as in-process deterministic callables, so each declares `ADAPTER`
+implementations whose `executable` is a `"module:attr"` carrier path
+(e.g. `raptix.execution.tools.web.search:web_search`) — T7 replaces
+carriers with real adapters + binaries per entry, never renaming the
+capability id. `analyst.fuzz_target` already demonstrates two
+implementations under one capability.
+
+- `registry.py` — `CapabilityRegistry` (get/contains/for_role/
+  health_snapshot; duplicate-id rejection; no implicit fallback for
+  unknown ids) + `health_check()` startup gate (UNAVAILABLE fails,
+  PARTIAL passes).
+- `availability.py` — `AvailabilityEvaluator` with three probe kinds
+  and honest defaults: ADAPTER → PATH lookup for bare names, import
+  probe for `module:attr` carriers (injectable); WORKER → resolves
+  only through the supplied T10 `WorkerRegistry`-shaped callable,
+  unavailable without one (the frozen T2 invariant); MCP/SERVICE →
+  supplied executor probe or unavailable — never assumed. Aggregation:
+  all healthy → AVAILABLE, some → PARTIAL, none/undeclared →
+  UNAVAILABLE (bash is never an implicit path).
+- `eligibility.py` — `EligibilityEvaluator`: role (empty `allowed_roles`
+  = unrestricted), `allowed_phases` as the only hard constraint (left
+  `None` across the initial catalog — used sparingly), and requirements
+  via the runtime `RequirementEvaluator` protocol; with no evaluator
+  registered, declared requirements count as UNMET (conservative).
+  `phase_affinity` is never consulted here.
+- `provenance.py` — `build_execution_provenance(tool_name, *,
+  tool_version, adapter_version, parser_version, tool_data_version)` —
+  the version-chain dict T7 adapters / T10 workers embed in execution
+  metadata; version strings only, never raw parameter values.
+
+Scope decisions worth remembering:
+
+- Manifest `allowed_roles` use runtime role ids (blue_cell, patcher,
+  scanner, analyst, osint_operator, exploit, recon); `research.web_*`
+  declare `()` (unrestricted) matching their T1 "planner, worker:*"
+  surface.
+- Nothing consumes the registry yet by design — T7's resolver picks
+  adapters by capability + availability, T9's exposure layers
+  eligibility ranking on top. The wave is declarations + evaluation
+  only; no tool surface change.
+- `raptix/capabilities/` (pre-existing) is the skill-lane contract
+  system — unrelated; the T6 package lives under `execution/` next to
+  where T7's adapters land.
+
+Test surface: new `tests/unit/capabilities/test_capability_registry.py`
+— 44 deterministic tests (catalog coverage/uniqueness, real import
+probes over every carrier, role/phase/requirement eligibility paths,
+worker/MCP honesty defaults, aggregation, health snapshot, provenance
+shape). ruff clean; basedpyright 0 errors / 727 warnings (baseline
+held).
 
 ---
 
