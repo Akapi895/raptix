@@ -6,3 +6,8 @@ Owns the stateful middleware that manages engagement context
 cross-cutting adapters, so they live under orchestration rather than
 middleware. See ADR-0040.
 """
+
+from raptix.orchestration.mission.engagement import EngagementContextMiddleware
+from raptix.orchestration.mission.opplan import OPPLANMiddleware
+
+__all__ = ["EngagementContextMiddleware", "OPPLANMiddleware"]
