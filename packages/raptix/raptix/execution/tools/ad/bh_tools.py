@@ -21,8 +21,7 @@ from pathlib import Path
 from typing import Any
 
 from langchain_core.tools import tool
-
-from raptix.execution.tools.ad.bhce_client import (
+from raptix_active_directory.bhce_client import (
     BHCEClient,
     BHCEConfigError,
     BHCEHTTPError,
@@ -53,19 +52,19 @@ def _config_error(message: str) -> str:
             "hint": (
                 "Set BHCE_URL, BHCE_TOKEN_ID, BHCE_TOKEN_KEY in the "
                 "environment.  Provision the token via the BHCE UI "
-                "(Admin → My Profile → API Keys) or via "
+                "(Admin â†’ My Profile â†’ API Keys) or via "
                 "POST /api/v2/tokens with a JWT session."
             ),
         }
     )
 
 
-# ── bhce_status ───────────────────────────────────────────────────
+# â”€â”€ bhce_status â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @tool
 def bhce_status() -> str:
-    """Probe the BHCE sidecar — verifies version, auth, and self.
+    """Probe the BHCE sidecar â€” verifies version, auth, and self.
 
     Returns a JSON blob with the BHCE server version and the principal
     behind the configured HMAC token.  Use this when the agent needs to
@@ -94,7 +93,7 @@ def bhce_status() -> str:
         return _json({"error": "BHCE HTTP error", "status_code": exc.status_code, "body": exc.body})
 
 
-# ── bhce_cypher ───────────────────────────────────────────────────
+# â”€â”€ bhce_cypher â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 @tool
@@ -104,7 +103,7 @@ def bhce_cypher(query: str, include_properties: bool = True) -> str:
     Passthrough to ``POST /api/v2/graphs/cypher``.  BHCE enforces
     read-only by default; mutation requires
     ``bhe_enable_cypher_mutations=true`` on the server side (off in
-    our compose by design — see ADR-0005).
+    our compose by design â€” see ADR-0005).
 
     Args:
         query: Cypher query string.
@@ -129,7 +128,7 @@ def bhce_cypher(query: str, include_properties: bool = True) -> str:
         )
 
 
-# ── bhce_ingest_zip ───────────────────────────────────────────────
+# â”€â”€ bhce_ingest_zip â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 
 _UPLOAD_POLL_INTERVAL_SECONDS = 2.0
@@ -237,6 +236,6 @@ def _is_terminal(status: str) -> bool:
 
 
 BHCE_TOOLS = [bhce_status, bhce_cypher, bhce_ingest_zip]
-"""LangChain tool list — wire into the agent toolbox alongside the
+"""LangChain tool list â€” wire into the agent toolbox alongside the
 existing AD_TOOLS surface.  This list will absorb the legacy ``bh_*``
 names in PR #6 of the ADR-0005 migration."""

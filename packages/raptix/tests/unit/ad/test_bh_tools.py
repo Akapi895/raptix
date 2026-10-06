@@ -1,6 +1,6 @@
 """Unit tests for the BHCE-backed ``bhce_*`` LangChain tool surface.
 
-The tools wrap :mod:`raptix.execution.tools.ad.bhce_client`; here we stub the
+The tools wrap :mod:`raptix_active_directory.bhce_client`; here we stub the
 HTTP layer (``httpx.Client``) so we exercise just the tool-side
 behaviour: JSON envelope shape, missing-env diagnostic, the
 file-upload 3-step + poll loop, and error propagation.

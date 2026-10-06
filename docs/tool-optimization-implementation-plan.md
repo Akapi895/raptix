@@ -1601,7 +1601,7 @@ T0/agents suites re-ran green (93/93 across `test_build`,
 
 ---
 
-### Wave T13 — Domain pluginization (physical move)
+### Wave T13 — Domain pluginization (physical move) ✅ DONE
 
 **Goal:** Move domain-specific tool implementations from `execution/tools/`
 to their respective plugins. Only after T0–T12 stabilize.
@@ -1627,6 +1627,67 @@ Core `execution/tools/` retains only:
 - Plugins own their domain capabilities + adapters + parsers
 - Core runtime knows only `Capability`, `ToolAdapter`, `Observation`, `Artifact`
 - All existing tests pass through plugin discovery
+
+**Outcome: the plugin ownership the sketch assumed was already largely in
+place (ADR-0038 — plugins own definitions, prompts, and offline
+analyzers via `raptix_{domain}` packages); T13 closed the remaining
+physical gaps by moving the three pure-stdlib domain modules still
+sitting in core, with re-export shims everywhere.** New plugin pack:
+`plugins/defense` (`raptix_defense`).
+
+- **Moved (git mv, history preserved, canonical homes now in plugins):**
+  - `execution/tools/reversing/ghidra.py` →
+    `plugins/reversing/raptix_reversing/ghidra.py` (the Ghidra/r2 recon
+    bridge — stdlib only);
+  - `execution/tools/ad/bhce_client.py` →
+    `plugins/active-directory/raptix_active_directory/bhce_client.py`
+    (the BloodHound CE REST client; `httpx` now declared in that
+    plugin's deps — already in the environment, declaration-only);
+  - `execution/tools/defense/{conops,edr,elastic,sentinel,splunk}.py` →
+    `plugins/defense/raptix_defense/` (CONOPS resolution + the
+    SIEM/EDR detection builders — all stdlib).
+- **Shims** at every historical path re-export the full surface —
+  public names AND the private helpers tests reach (`_load_conops` via
+  direct import, `_GHIDRA_FUNC_KEYS`, `_YARA_*` patterns) — so the
+  never-delete rule holds and every old import keeps working. Runtime
+  consumers and the moved-code tests were repointed to the canonical
+  plugin imports; no string-form `mock.patch` targets referenced the
+  moved modules, so no patch target silently missed.
+- **Deliberately NOT moved, with reasons:**
+  - the `@tool` wrapper layers (`ad/tools.py`, `ad/bh_tools.py`,
+    `cloud/tools.py`, `contracts/tools.py`, `reversing/tools.py`,
+    `defense/tools.py`) — they are the runtime's LangChain adapter
+    surface; plugins import stdlib + SDK/core only, so wrappers
+    structurally stay in the runtime (same tier as
+    `execution/adapters/`);
+  - the KG-integrated ingest/post modules (`ad/bloodhound.py`,
+    `ad/adcs_post.py`, `contracts/slither.py`) — they depend on the
+    runtime `KGStore`; making them plugin-owned is a T3-style
+    Observation[] refactor (behavior change), not a physical move;
+  - `defense/blue_cell.py` + `defense/brief.py` — the blue_cell
+    detection loop is the runtime's Offensive Vaccine machinery
+    (`raptix.blue_cell` + engagement state), not domain analysis;
+    AGENTS.md's plugin roster deliberately excludes defense.
+  - `cloud/` and `contracts/` had nothing left to move — their
+    analyzers were already plugin-owned; the dirs are wrappers only.
+- **`plugins/defense`**: library pack (stdlib + raptix-sdk dep, wheel
+  config, no bundle entry points — the defense agent is the runtime's
+  `blue_cell`; entry points land if/when defense gets its own
+  subagent). Declared as a workspace member (`plugins/*`) and as a
+  `raptix` dependency, matching the other eleven domain packs; `uv.lock`
+  updated.
+- **Lint config:** TID251's per-file-ignores (the banned-api scope)
+  gained `"plugins/**"` — the rule targets raptix-core's
+  langchain/httpx-free guarantee; plugin packs are the same legitimate
+  user category as apps/benchmarks.
+
+Test surface: new `packages/raptix/tests/unit/tools/test_domain_pluginization.py`
+— 6 drift guards (shim identity for all three move groups, private-name
+reachability through shims, defense-plugin workspace membership +
+runtime dependency declaration, and a no-runtime-imports scan over
+every moved module). 1,040 tests pass across the affected suites
+(tools, ad, reversing, blue_cell, agents); `uv sync --dev` installs the
+new pack; ruff clean; basedpyright 0 errors on the new/moved modules.
 
 ---
 

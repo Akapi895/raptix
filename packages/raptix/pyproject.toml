@@ -52,6 +52,9 @@ dependencies = [
     "raptix-active-directory",
     "raptix-web",
     "raptix-network",
+    # T13 defense domain pack (CONOPS + SIEM/EDR builders); the blue_cell
+    # loop and the @tool wrapper layer stay in this package.
+    "raptix-defense",
     # Core
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
