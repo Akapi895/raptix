@@ -38,7 +38,6 @@ from langgraph.types import Command
 from typing_extensions import override
 
 from raptix.execution.tools.bash.bash import bash_workspace
-from raptix.middleware.opplan import _reduce_engagement_name, _reduce_workspace_path
 from raptix.middleware.state_reducers import reduce_converging_value
 from raptix_core.utils.engagement_scope import set_active_engagement
 
@@ -47,10 +46,10 @@ class EngagementContextState(AgentState):
     """State extension carrying launcher- and harness-decided context."""
 
     engagement_name: NotRequired[
-        Annotated[str, "Workspace slug set by the launcher.", _reduce_engagement_name]
+        Annotated[str, "Workspace slug set by the launcher.", reduce_converging_value]
     ]
     workspace_path: NotRequired[
-        Annotated[str, "Sandbox root for this engagement.", _reduce_workspace_path]
+        Annotated[str, "Sandbox root for this engagement.", reduce_converging_value]
     ]
     kg_engagement: NotRequired[
         Annotated[

@@ -33,10 +33,9 @@ def reduce_converging_value(current: _T | None, update: _T | None) -> _T | None:
 
     Use for any channel whose concurrent writers all carry the same value
     (launcher-set context, benchmark-harness context, shared-store-derived
-    summaries). Mirrors the semantics of ``opplan._reduce_engagement_name``
-    / ``_reduce_workspace_path`` generically over the value type, so it also
-    covers ``dict`` / ``list`` channels. Returns ``update`` unless it is
-    ``None``, in which case the prior value is preserved.
+    summaries). Covers ``str``, ``dict``, and ``list`` channels.
+    Returns ``update`` unless it is ``None``, in which case the prior
+    value is preserved.
     """
     return update if update is not None else current
 

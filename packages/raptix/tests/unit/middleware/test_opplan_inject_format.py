@@ -63,24 +63,16 @@ def _flatten(message: SystemMessage | None) -> str:
     return "\n".join(parts)
 
 
-class TestReduceEngagementName:
+class TestReduceConvergingValue:
     def test_returns_update_when_update_is_not_none(self) -> None:
-        result = opplan_mod._reduce_engagement_name("old", "new")
-        assert result == "new"
+        from raptix.middleware.state_reducers import reduce_converging_value
+
+        assert reduce_converging_value("old", "new") == "new"
 
     def test_returns_current_when_update_is_none(self) -> None:
-        result = opplan_mod._reduce_engagement_name("keep", None)
-        assert result == "keep"
+        from raptix.middleware.state_reducers import reduce_converging_value
 
-
-class TestReduceWorkspacePath:
-    def test_returns_update_when_update_is_not_none(self) -> None:
-        result = opplan_mod._reduce_workspace_path("/ws1", "/ws2")
-        assert result == "/ws2"
-
-    def test_returns_current_when_update_is_none(self) -> None:
-        result = opplan_mod._reduce_workspace_path("/ws1", None)
-        assert result == "/ws1"
+        assert reduce_converging_value("keep", None) == "keep"
 
 
 class TestOpplanMaxRowsDefault:
