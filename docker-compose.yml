@@ -202,6 +202,16 @@ services:
     build:
       context: .
       dockerfile: infra/containers/sandbox.Dockerfile
+      # Opt-in executor profiles (Wave T8) — set INSTALL_WEB_TOOLS=true /
+      # INSTALL_AD_TOOLS=true / INSTALL_PIVOT_TOOLS=true in .env and run
+      # `docker compose build sandbox` to bake the profile binaries into
+      # the local sandbox image. Defaults keep the published image lean.
+      # INSTALL_REVERSING is deliberately NOT passed here — the reversing
+      # toolset stays sidecar-scoped (ghidra-mcp service below).
+      args:
+        INSTALL_WEB_TOOLS: ${INSTALL_WEB_TOOLS:-false}
+        INSTALL_AD_TOOLS: ${INSTALL_AD_TOOLS:-false}
+        INSTALL_PIVOT_TOOLS: ${INSTALL_PIVOT_TOOLS:-false}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox
     networks:
       - sandbox-net
