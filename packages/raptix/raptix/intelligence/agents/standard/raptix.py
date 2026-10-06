@@ -37,7 +37,7 @@ baseline AND applies any plugin overrides discovered via the
 ``raptix.bundles`` entry-point group. Three usage paths converge
 cleanly:
 
-  1. **OSS default**: ``create_decepticon_agent()`` — no args.
+  1. **OSS default**: ``create_raptix_agent()`` — no args.
   2. **Plugin override** (Docker / pip-installed plugin): authors ship
      ``PluginBundle(...)`` under ``raptix.bundles``; the factory
      discovers and applies it automatically.
@@ -74,7 +74,7 @@ _ROLE = "raptix"
 _RECURSION_LIMIT = 400
 
 
-def create_decepticon_agent(
+def create_raptix_agent(
     *,
     # ── Dependencies (injected for testing / library composition) ────
     backend: Any = None,
@@ -206,4 +206,4 @@ def create_decepticon_agent(
 # if a user explicitly disables standard (e.g. ``RAPTIX_PLUGINS=plugins``)
 # the graph is skipped to avoid empty-subagent crashes.
 if is_bundle_enabled("standard"):
-    graph = create_decepticon_agent()
+    graph = create_raptix_agent()

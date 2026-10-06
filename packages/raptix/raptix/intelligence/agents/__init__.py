@@ -22,7 +22,7 @@ from raptix.intelligence.agents.plugins.vulnresearch import create_vulnresearch_
 from raptix.intelligence.agents.standard.analyst import create_analyst_agent
 from raptix.intelligence.agents.standard.autohunt import create_autohunt_agent
 from raptix.intelligence.agents.standard.blue_cell import create_blue_cell_agent
-from raptix.intelligence.agents.standard.decepticon import create_decepticon_agent
+from raptix.intelligence.agents.standard.raptix import create_raptix_agent
 from raptix.intelligence.agents.standard.exploit import create_exploit_agent
 from raptix.intelligence.agents.standard.forensicator import create_forensicator_agent
 from raptix.intelligence.agents.standard.osint_operator import create_osint_operator_agent
@@ -42,7 +42,7 @@ __all__ = [
     "create_exploit_agent",
     "create_surface_exploit_agent",
     "create_postexploit_agent",
-    "create_decepticon_agent",
+    "create_raptix_agent",
     "create_reverser_agent",
     "create_contract_auditor_agent",
     "create_cloud_hunter_agent",
