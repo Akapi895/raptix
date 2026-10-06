@@ -1,19 +1,26 @@
-"""Initial capability catalog (Wave T6) — one manifest per T1-classified
-semantic capability.
+"""Capability catalog (Waves T6 + T7).
 
 The catalog is the runtime instantiation of the frozen T2 contracts
-(``raptix_core.types.capability``): it maps every semantic capability
-the T1 classification assigned a Target Capability ID to the
-implementations that can actually run it today.
+(``raptix_core.types.capability``): it maps every resolvable capability
+to the implementations that can actually run it today.
 
-All twelve T1 semantic capabilities currently execute as in-process
-deterministic Python callables. Those are declared as ``ADAPTER``
-implementations whose ``executable`` is a ``"module:attr"`` carrier
-path (e.g. ``"raptix.execution.tools.web.search:web_search"``) — the
-availability evaluator's import probe checks the carrier is importable
-and the attribute exists. T7's adapter layer will replace these
-carriers with real ``ToolAdapter`` implementations + sandbox binaries
-as they land; the manifest entry changes then, never the capability id.
+Two manifest families:
+
+* **T6 — the twelve T1-classified semantic capabilities**, currently
+  in-process deterministic Python callables. Those are declared as
+  ``ADAPTER`` implementations whose ``executable`` is a
+  ``"module:attr"`` carrier path (e.g.
+  ``"raptix.execution.tools.web.search:web_search"``) — the
+  availability evaluator's import probe checks the carrier is
+  importable and the attribute exists. Graduating a carrier to a real
+  adapter changes the manifest entry, never the capability id.
+* **T7 — the binary-backed capabilities** for the security tools
+  already installed in the sandbox base image (nmap, subfinder, sqlmap,
+  gobuster, nikto, python3-impacket, responder). Each declares one
+  ``ADAPTER`` implementation with the bare binary name (PATH probe),
+  ``profile="base"``, and an ``adapter_id`` matching a
+  :mod:`raptix.execution.adapters` class. T8 adds profiles for
+  binaries the base image does not ship yet.
 
 Deliberately NOT in the catalog:
 
@@ -38,6 +45,8 @@ from raptix_core.types.capability import (
     CapabilityManifest,
     ImplementationKind,
     ImplementationSpec,
+    RequirementKind,
+    RequirementSpec,
     RiskClass,
     RoleId,
 )
@@ -55,6 +64,17 @@ def _builtin(impl_id: str, carrier: str, *, adapter_id: str | None = None) -> Im
         kind=ImplementationKind.ADAPTER,
         adapter_id=adapter_id or f"builtin.{impl_id}",
         executable=carrier,
+    )
+
+
+def _binary(impl_id: str, adapter_id: str, executable: str) -> ImplementationSpec:
+    """A T7 binary-backed ADAPTER implementation (sandbox base profile)."""
+    return ImplementationSpec(
+        id=impl_id,
+        kind=ImplementationKind.ADAPTER,
+        adapter_id=adapter_id,
+        executable=executable,
+        profile="base",
     )
 
 
@@ -274,5 +294,139 @@ def build_catalog() -> tuple[CapabilityManifest, ...]:
             ),
             outputs=("research.search_hits",),
             risk_class=RiskClass.MEDIUM,
+        ),
+        # ── T7: binary-backed capabilities (sandbox base profile) ──────
+        CapabilityManifest(
+            id=CapabilityId("network.scan"),
+            schema_version=1,
+            description=(
+                "Enumerate live hosts and open service ports on a network "
+                "range, writing an XML report (nmap)."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("recon"), RoleId("exploit")),
+            implementations=(_binary("network.scan.nmap", "network.nmap", "nmap"),),
+            outputs=("nmap_xml",),
+            risk_class=RiskClass.MEDIUM,
+        ),
+        CapabilityManifest(
+            id=CapabilityId("network.discover_subdomains"),
+            schema_version=1,
+            description=(
+                "Passive subdomain enumeration for one domain via public data sources (subfinder)."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("recon"), RoleId("osint_operator")),
+            implementations=(
+                _binary("network.discover_subdomains.subfinder", "network.subfinder", "subfinder"),
+            ),
+            outputs=("subfinder",),
+        ),
+        CapabilityManifest(
+            id=CapabilityId("web.test_injection"),
+            schema_version=1,
+            description=(
+                "Actively probe one HTTP endpoint for SQL injection and "
+                "confirm exploitable parameters (sqlmap, --batch)."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("exploit"),),
+            implementations=(_binary("web.test_injection.sqlmap", "web.sqlmap", "sqlmap"),),
+            outputs=("sqlmap_log",),
+            risk_class=RiskClass.HIGH,
+            parallel_safe=False,
+        ),
+        CapabilityManifest(
+            id=CapabilityId("web.fuzz_paths"),
+            schema_version=1,
+            description=(
+                "Brute-force hidden directories and files on a web server "
+                "with a wordlist (gobuster dir)."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("recon"), RoleId("exploit"), RoleId("analyst")),
+            implementations=(_binary("web.fuzz_paths.gobuster", "web.gobuster", "gobuster"),),
+            outputs=("gobuster",),
+        ),
+        CapabilityManifest(
+            id=CapabilityId("web.scan_web"),
+            schema_version=1,
+            description=(
+                "Scan a web server for known misconfigurations, default "
+                "files, and dangerous settings (nikto)."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("recon"), RoleId("exploit")),
+            implementations=(_binary("web.scan_web.nikto", "web.nikto", "nikto"),),
+            outputs=("nikto_txt",),
+            risk_class=RiskClass.MEDIUM,
+        ),
+        CapabilityManifest(
+            id=CapabilityId("access.move_laterally"),
+            schema_version=1,
+            description=(
+                "Execute commands on a remote Windows host over SMB/WMI/"
+                "AT with recorded credentials (impacket psexec/wmiexec/"
+                "atexec)."
+            ),
+            phase_affinity=("network_propagation",),
+            allowed_roles=(RoleId("exploit"),),
+            requirements=(
+                RequirementSpec(
+                    id="credential.available",
+                    kind=RequirementKind.CREDENTIAL,
+                    description="a usable credential for the target host is recorded in the AKG",
+                ),
+            ),
+            implementations=(
+                _binary("access.move_laterally.impacket", "ad.impacket.lateral", "impacket-psexec"),
+            ),
+            outputs=("impacket_txt",),
+            risk_class=RiskClass.HIGH,
+            parallel_safe=False,
+        ),
+        CapabilityManifest(
+            id=CapabilityId("access.credential_dump"),
+            schema_version=1,
+            description=(
+                "Extract local account secrets (SAM/NTDS/LSA) from a "
+                "compromised Windows host (impacket-secretsdump)."
+            ),
+            phase_affinity=("network_propagation", "action_on_objectives"),
+            allowed_roles=(RoleId("exploit"),),
+            requirements=(
+                RequirementSpec(
+                    id="credential.available",
+                    kind=RequirementKind.CREDENTIAL,
+                    description="a usable credential for the target host is recorded in the AKG",
+                ),
+            ),
+            implementations=(
+                _binary(
+                    "access.credential_dump.impacket",
+                    "ad.impacket.cred_dump",
+                    "impacket-secretsdump",
+                ),
+            ),
+            outputs=("impacket_txt",),
+            risk_class=RiskClass.CRITICAL,
+            parallel_safe=False,
+        ),
+        CapabilityManifest(
+            id=CapabilityId("network.capture_ntlm"),
+            schema_version=1,
+            description=(
+                "Capture NTLM authentication attempts on a network "
+                "segment; analyze mode by default, poisoning only on an "
+                "explicit request parameter (responder)."
+            ),
+            phase_affinity=("network_propagation",),
+            allowed_roles=(RoleId("recon"), RoleId("exploit")),
+            implementations=(
+                _binary("network.capture_ntlm.responder", "ad.responder", "responder"),
+            ),
+            outputs=("responder_log",),
+            risk_class=RiskClass.HIGH,
+            parallel_safe=False,
         ),
     )
