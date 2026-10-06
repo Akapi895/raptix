@@ -1285,7 +1285,7 @@ on the new module.
 
 ---
 
-### Wave T10 — Bounded worker execution
+### Wave T10 — Bounded worker execution ✅ DONE
 
 **Goal:** Implement optional bounded worker for capabilities with
 `ImplementationKind.WORKER` implementations where deterministic resolver
@@ -1334,6 +1334,72 @@ full planner toolset. `CompletionSpec` limits it to 10 steps and defines
 - Worker toolset scoped to capability requirements
 - Worker terminates on `CompletionSpec` criteria (not open-ended)
 - Worker output goes through standard normalization pipeline
+
+**Outcome: `WorkerSpec`/`WorkerRegistry` + `BoundedWorkerRunner` under
+`raptix/execution/workers/`, plus the plan's own example capability in
+the catalog (`exploit.unknown_service`).**
+
+- `spec.py` — honors the frozen T2 invariant verbatim instead of
+  redesigning it: a `WORKER` `ImplementationSpec` carries only
+  `worker_id`; the scoped-toolset allowlist lives on `WorkerSpec`
+  (`allowed_primitives`, capped at the plan's ≤10 via
+  `MAX_WORKER_PRIMITIVES`), plus the plan's other policy fields
+  (`model_policy`, narrowing-only `step_budget`, `description`).
+  `worker_id` resolves through `WorkerRegistry` or the implementation
+  is UNAVAILABLE — `resolves` doubles as the T6
+  `AvailabilityEvaluator` check callable, never an unscoped toolset.
+  Duplicate `worker_id` registration is rejected, mirroring
+  `CapabilityRegistry`.
+- `runner.py` — `BoundedWorkerRunner` dispatches one request for the
+  resolvable WORKER implementation and runs the bounded loop:
+  - toolset resolved up-front from exactly `allowed_primitives`
+    (all-or-nothing — a missing primitive refuses the start), and a
+    planner step naming a non-allowed primitive fails closed (worker
+    stops, step never executes);
+  - `CompletionSpec.max_steps` is the hard bound; `WorkerSpec.step_budget`
+    may only narrow it (`min()`); `success_observations` /
+    `failure_conditions` are early-exit signals matched against the
+    observation kinds each step produces; a planner yielding `None`
+    before any success observation counts as incomplete, never success;
+  - every executed step becomes one `ExecutionRecord` (T2's
+    `CapabilityResult.executions`) with `implementation_id` copied from
+    the resolved `ImplementationSpec`;
+  - a step artifact flows through the T3 `ParserRegistry` — the
+    standard normalization pipeline — before its observations enter the
+    result; a parse failure is recorded on that step's record and the
+    worker continues, never a silent skip;
+  - the planner is an injected `WorkerPlanner` protocol (`next_step`
+    returns the next `WorkerStep` or `None`): the real LLM-backed
+    planner plugs in without reshaping the loop, and the deterministic
+    tests drive a scripted one. Eligibility/authorization are
+    deliberately NOT evaluated here — they stay the separate state
+    and invocation-time guards.
+- `catalog.py` — adds `exploit.unknown_service`, the plan's T10
+  example, verbatim: single `WORKER` implementation
+  (`exploit_worker`), `CompletionSpec(max_steps=10,
+  success_observations=("authentication.success",))`, HIGH risk,
+  `parallel_safe=False`, exploit-role only. It is honestly UNAVAILABLE
+  (and the default startup `health_check` gate fails) until a
+  deployment wires a `WorkerRegistry` resolving `exploit_worker` —
+  the gate test now injects a worker registry alongside the PATH
+  probe, and a new test pins the without-a-registry gate rejection.
+
+Test surface: new `tests/unit/workers/test_workers.py` — 25
+deterministic tests (no LLM, no network; scripted planners, fake
+resolvers, and the real `ParserRegistry` over canned nmap XML):
+registry round-trip/duplicate/validation, the frozen T2
+unregistered-worker-is-UNAVAILABLE invariant end to end through the T6
+evaluator, dispatch, allowlist-scoped toolset, fail-closed primitives,
+hard-budget/success/failure termination, parse-failure continuation,
+per-step provenance, and two catalog-truth tests driving the real
+`exploit.unknown_service` manifest through the runner.
+`test_capability_registry.py` re-pins the 21-manifest catalog with a
+`T10_CAPABILITIES` set, the
+worker-implementation-pins-bounded-completion shape, and the
+with/without-worker-registry health-gate pair. 149 tests pass across
+the affected suites (workers, capabilities, adapters, sandbox tool
+profiles, exposure); ruff clean; basedpyright 0 errors / 0 warnings /
+0 notes on the new modules.
 
 ---
 
