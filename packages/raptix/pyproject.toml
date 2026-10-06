@@ -52,8 +52,9 @@ dependencies = [
     "raptix-active-directory",
     "raptix-web",
     "raptix-network",
-    # T13 defense domain pack (CONOPS + SIEM/EDR builders); the blue_cell
-    # loop and the @tool wrapper layer stay in this package.
+    # T13 defense domain pack (CONOPS resolution — offline stdlib analysis).
+    # The SIEM/EDR detection pushers stay in this package: they POST over
+    # HTTP (requests) and plugin packs import stdlib + SDK/core only.
     "raptix-defense",
     # Core
     "pydantic>=2.0.0",
@@ -69,6 +70,8 @@ dependencies = [
     "langgraph-sdk>=0.1.0",
     # HTTP
     "httpx>=0.27.0",
+    # SIEM/EDR detection pushers (execution/tools/defense) POST via requests.
+    "requests>=2.32.0",
     "deepagents>=0.5.0",
     # Open-web engine (raptix/execution/sandbox/web) — runs inside the sandbox, which
     # mounts raptix as /deps/raptix, so its pure-Python parse deps ride

@@ -1,4 +1,4 @@
-﻿"""Extended tests for raptix.execution.tools.defense â€” push functions, edge cases.
+"""Extended tests for raptix.execution.tools.defense â€” push functions, edge cases.
 
 Coverage additions on top of test_defense.py (which handles the basic converter
 happy paths and minimal conops tests).  This file focuses on:
@@ -20,20 +20,21 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from raptix_defense import conops as conops_mod
-from raptix_defense.edr import (
+
+from raptix.execution.tools.defense.edr import (
     _CROWDSTRIKE_TYPE_MAP,
     _extract_yara_metadata,
     push_crowdstrike_ioa,
     push_defender_xdr_detection,
 )
-from raptix_defense.elastic import (
+from raptix.execution.tools.defense.elastic import (
     SigmaToElasticError,
     _field_clause_lucene,
     _selection_to_lucene,
     push_detection_rule,
     sigma_to_lucene,
 )
-from raptix_defense.sentinel import (
+from raptix.execution.tools.defense.sentinel import (
     SigmaToKqlError,
     _field_clause_kql,
     _selection_to_kql,
@@ -41,7 +42,7 @@ from raptix_defense.sentinel import (
     push_analytic_rule,
     sigma_to_kql,
 )
-from raptix_defense.splunk import (
+from raptix.execution.tools.defense.splunk import (
     SigmaConversionError,
     _field_clause,
     _quote_spl,
@@ -339,7 +340,7 @@ class TestSentinelConverter:
         assert '\\"hi\\"' in kql
 
     def test_severity_map_critical_maps_to_high(self):
-        from raptix_defense.sentinel import _SEVERITY_MAP
+        from raptix.execution.tools.defense.sentinel import _SEVERITY_MAP
 
         assert _SEVERITY_MAP["critical"] == "High"
         assert _SEVERITY_MAP["informational"] == "Informational"
@@ -416,7 +417,7 @@ class TestElasticConverter:
         assert '\\"quotes\\"' in lucene
 
     def test_severity_map_informational_is_low(self):
-        from raptix_defense.elastic import _SEVERITY_MAP
+        from raptix.execution.tools.defense.elastic import _SEVERITY_MAP
 
         assert _SEVERITY_MAP["informational"] == "low"
         assert _SEVERITY_MAP["critical"] == "critical"

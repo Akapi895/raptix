@@ -6,7 +6,8 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
-from raptix_defense.edr import (
+
+from raptix.execution.tools.defense.edr import (
     _CROWDSTRIKE_TYPE_MAP,
     push_crowdstrike_ioa,
     push_defender_xdr_detection,
