@@ -55,10 +55,12 @@ def test_export_session_asciicast_explicit_log_path_success(
         encoding="utf-8",
     )
     result = json.loads(
-        export_session_asciicast(
-            session_name="sess",
-            pipe_pane_log_path=str(log_file),
-            title="My Title",
+        export_session_asciicast.invoke(
+            {
+                "session_name": "sess",
+                "pipe_pane_log_path": str(log_file),
+                "title": "My Title",
+            }
         )
     )
     assert result["status"] == "exported"
@@ -82,7 +84,7 @@ def test_export_session_asciicast_fallback_tmux_log_path(
         "output\nRAPTIX_PROMPT_END_xx\nmore\nRAPTIX_PROMPT_END_xx\n",
         encoding="utf-8",
     )
-    result = json.loads(export_session_asciicast(session_name="fb"))
+    result = json.loads(export_session_asciicast.invoke({"session_name": "fb"}))
     assert result["status"] == "exported"
     assert (
         result["source_log"].endswith(".tmux-logs/fb.log")
@@ -95,7 +97,7 @@ def test_export_session_asciicast_error_when_log_missing(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
-    result = json.loads(export_session_asciicast(session_name="missing"))
+    result = json.loads(export_session_asciicast.invoke({"session_name": "missing"}))
     assert "error" in result
     assert "status" not in result
     assert "pipe-pane log not found" in result["error"]
@@ -105,7 +107,7 @@ def test_list_session_recordings_empty_when_evidence_dir_absent(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
-    result = json.loads(list_session_recordings())
+    result = json.loads(list_session_recordings.invoke({}))
     assert result == {"count": 0, "recordings": []}
 
 
@@ -121,20 +123,20 @@ def test_list_session_recordings_returns_manifests(
     (recordings_dir / "b.cast.manifest.json").write_text(
         json.dumps({"session_name": "b"}), encoding="utf-8"
     )
-    result = json.loads(list_session_recordings())
+    result = json.loads(list_session_recordings.invoke({}))
     assert result["count"] == 2
     assert sorted(r["session_name"] for r in result["recordings"]) == ["a", "b"]
 
 
 def test_seal_evidence_error_when_dir_missing(tmp_path: Path) -> None:
-    result = json.loads(seal_evidence(str(tmp_path)))
+    result = json.loads(seal_evidence.invoke({"workspace_path": str(tmp_path)}))
     assert "error" in result
     assert "status" not in result
 
 
 def test_seal_evidence_writes_manifest_for_each_file(tmp_path: Path) -> None:
     _seed_evidence(tmp_path)
-    result = json.loads(seal_evidence(str(tmp_path)))
+    result = json.loads(seal_evidence.invoke({"workspace_path": str(tmp_path)}))
     assert result["status"] == "sealed"
     assert result["sealed"] == 2
     assert sorted(result["files"]) == ["a.txt", "captures/b.bin"]
@@ -151,7 +153,7 @@ def test_seal_evidence_writes_manifest_for_each_file(tmp_path: Path) -> None:
 
 def test_verify_evidence_ok_after_seal(tmp_path: Path) -> None:
     _seed_evidence(tmp_path)
-    seal_evidence(str(tmp_path))
+    seal_evidence.invoke({"workspace_path": str(tmp_path)})
     result = json.loads(verify_evidence(str(tmp_path)))
     assert result["ok"] is True
     assert result["records_checked"] == 2
@@ -162,7 +164,7 @@ def test_verify_evidence_ok_after_seal(tmp_path: Path) -> None:
 
 def test_verify_evidence_flags_drift_when_file_tampered(tmp_path: Path) -> None:
     evidence = _seed_evidence(tmp_path)
-    seal_evidence(str(tmp_path))
+    seal_evidence.invoke({"workspace_path": str(tmp_path)})
     (evidence / "a.txt").write_text("TAMPERED", encoding="utf-8")
     result = json.loads(verify_evidence(str(tmp_path)))
     assert result["ok"] is False
@@ -172,7 +174,7 @@ def test_verify_evidence_flags_drift_when_file_tampered(tmp_path: Path) -> None:
 
 def test_verify_evidence_flags_missing_file(tmp_path: Path) -> None:
     evidence = _seed_evidence(tmp_path)
-    seal_evidence(str(tmp_path))
+    seal_evidence.invoke({"workspace_path": str(tmp_path)})
     (evidence / "a.txt").unlink()
     result = json.loads(verify_evidence(str(tmp_path)))
     assert result["ok"] is False
@@ -190,7 +192,7 @@ def test_verify_evidence_flags_hmac_chain_break(
 ) -> None:
     monkeypatch.setenv("RAPTIX_AUDIT_HMAC_KEY", "secret-key")
     _seed_evidence(tmp_path)
-    seal_evidence(str(tmp_path))
+    seal_evidence.invoke({"workspace_path": str(tmp_path)})
     manifest = tmp_path / "evidence" / "chain-of-custody.jsonl"
     lines = manifest.read_text().splitlines()
     first = json.loads(lines[0])
@@ -237,7 +239,7 @@ class TestInspectEvidence:
         monkeypatch.setenv("RAPTIX_ENGAGEMENT_WORKSPACE", str(tmp_path))
         graph, finding, host = self._seed_graph()
         _seed_evidence(tmp_path)  # seed custody-manifested files
-        seal_evidence(str(tmp_path))
+        seal_evidence.invoke({"workspace_path": str(tmp_path)})
 
         token = set_active_engagement("eng-test")
         try:

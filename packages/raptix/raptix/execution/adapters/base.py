@@ -79,11 +79,23 @@ def str_param(
     default: str | None = None,
     required: bool = True,
     allow_spaces: bool = False,
+    allow_leading_dash: bool = False,
 ) -> str:
     """Fetch and validate one string parameter.
 
     Rejects non-strings, empty values, control characters, and (unless
     ``allow_spaces``) any whitespace — argv elements are single tokens.
+
+    Also rejects a leading ``-`` unless ``allow_leading_dash=True``. A
+    value built into an argv list as a bare positional (e.g. ``target``,
+    a principal string) that starts with ``-`` can be misread by the
+    binary's own argument parser as a flag rather than a value —
+    argument injection, distinct from shell injection (no shell is
+    invoked here) but still lets a planner smuggle an unintended flag
+    into the command. No current adapter parameter legitimately needs a
+    leading dash; the escape hatch exists for a future one that does, so
+    that case is explicit and auditable rather than silently permitted
+    for everyone.
     """
     value = request.parameters.get(key)
     if value is None:
@@ -96,6 +108,10 @@ def str_param(
         raise AdapterParameterError(f"parameter {key!r} must not be empty")
     if _CONTROL_CHARS.search(value):
         raise AdapterParameterError(f"parameter {key!r} contains control characters")
+    if not allow_leading_dash and value.startswith("-"):
+        raise AdapterParameterError(
+            f"parameter {key!r} must not start with '-' (looks like a flag, not a value)"
+        )
     if not allow_spaces and re.search(r"\s", value):
         raise AdapterParameterError(f"parameter {key!r} must not contain whitespace")
     return value
@@ -147,6 +163,10 @@ def str_list_param(
             raise AdapterParameterError(f"parameter {key!r} must be a list of non-empty strings")
         if _CONTROL_CHARS.search(item):
             raise AdapterParameterError(f"parameter {key!r} contains control characters")
+        if item.startswith("-"):
+            raise AdapterParameterError(
+                f"parameter {key!r} entries must not start with '-' (looks like a flag)"
+            )
         if re.search(r"\s", item):
             raise AdapterParameterError(f"parameter {key!r} entries must not contain whitespace")
         items.append(item)

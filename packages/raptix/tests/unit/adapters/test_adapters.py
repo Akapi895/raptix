@@ -28,7 +28,7 @@ from raptix.execution.adapters import (
     ToolAdapter,
     default_adapters,
 )
-from raptix.execution.adapters.base import artifact_name_param, str_param
+from raptix.execution.adapters.base import artifact_name_param, str_list_param, str_param
 from raptix.execution.capabilities import AvailabilityEvaluator, CapabilityRegistry
 from raptix.execution.capabilities.registry import UnknownCapabilityError
 from raptix.knowledge.ingest.registry import default_registry, iter_node_observations
@@ -168,6 +168,25 @@ class TestParamValidation:
                 "10.0.0.5",
             ]
         )
+
+    def test_single_token_params_reject_leading_dash(self) -> None:
+        """A bare positional value starting with '-' can be misread by the
+        binary's own argument parser as a flag rather than a value —
+        argument injection (no shell involved, distinct from command
+        injection). Found by review; closed by rejecting it at the
+        shared str_param validator every adapter builds on."""
+        with pytest.raises(AdapterParameterError, match="must not start with '-'"):
+            NmapAdapter().build_argv(_request("network.scan", target="--script=evil"))
+
+    def test_str_list_param_entries_reject_leading_dash(self) -> None:
+        with pytest.raises(AdapterParameterError, match="must not start with '-'"):
+            str_list_param(_request("test.cap", items=["ok", "-flag"]), "items")
+
+    def test_leading_dash_guard_has_explicit_opt_out(self) -> None:
+        request = _request("test.cap", value="-not-smuggled")
+        with pytest.raises(AdapterParameterError, match="must not start with '-'"):
+            str_param(request, "value")
+        assert str_param(request, "value", allow_leading_dash=True) == "-not-smuggled"
 
     def test_string_helpers(self) -> None:
         request = _request(
