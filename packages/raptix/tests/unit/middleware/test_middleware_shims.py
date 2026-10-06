@@ -26,26 +26,17 @@ def test_engagement_and_opplan_are_shims() -> None:
             f"middleware/{name} has {len(lines)} lines (max {MAX_SHIM_LINES}); "
             f"it should be a shim, not a full implementation"
         )
-        assert "sys.modules" in content, (
-            f"middleware/{name} must use sys.modules redirect pattern"
-        )
+        assert "sys.modules" in content, f"middleware/{name} must use sys.modules redirect pattern"
 
 
 def test_canonical_files_exist_in_orchestration_mission() -> None:
-    mission_dir = (
-        Path(__file__).resolve().parents[3]
-        / "raptix"
-        / "orchestration"
-        / "mission"
-    )
+    mission_dir = Path(__file__).resolve().parents[3] / "raptix" / "orchestration" / "mission"
     for name in SHIM_FILES:
         canonical = mission_dir / name
         assert canonical.exists(), (
-            f"orchestration/mission/{name} missing — "
-            f"canonical location required by ADR-0040"
+            f"orchestration/mission/{name} missing — canonical location required by ADR-0040"
         )
         content = canonical.read_text(encoding="utf-8")
         assert len(content.strip().splitlines()) > MAX_SHIM_LINES, (
-            f"orchestration/mission/{name} looks like a shim, "
-            f"not the canonical implementation"
+            f"orchestration/mission/{name} looks like a shim, not the canonical implementation"
         )

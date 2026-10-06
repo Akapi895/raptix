@@ -15,15 +15,19 @@ from pathlib import Path
 
 _RUNTIME_ROOT = Path(__file__).resolve().parents[3] / "raptix"
 
-_CANONICAL_PHASES = frozenset({
-    "initial_foothold",
-    "network_propagation",
-    "action_on_objectives",
-})
+_CANONICAL_PHASES = frozenset(
+    {
+        "initial_foothold",
+        "network_propagation",
+        "action_on_objectives",
+    }
+)
 
-_EXCLUDED = frozenset({
-    _RUNTIME_ROOT / "orchestration" / "phases",
-})
+_EXCLUDED = frozenset(
+    {
+        _RUNTIME_ROOT / "orchestration" / "phases",
+    }
+)
 
 
 def test_no_phase_named_directories() -> None:

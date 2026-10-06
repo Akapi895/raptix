@@ -16,10 +16,12 @@ from pathlib import Path
 
 _APPS_ROOT = Path(__file__).resolve().parent.parent / "apps"
 
-_ALLOWED_SCRIPTS = frozenset({
-    Path("web/tools/capture-runtime.py"),
-    Path("web/tools/generate-planning-schemas.py"),
-})
+_ALLOWED_SCRIPTS = frozenset(
+    {
+        Path("web/tools/capture-runtime.py"),
+        Path("web/tools/generate-planning-schemas.py"),
+    }
+)
 
 _FORBIDDEN_PREFIX = "raptix."
 _ALLOWED_PREFIXES = frozenset({"raptix_core", "raptix_sdk"})
@@ -54,10 +56,7 @@ def test_apps_have_no_private_runtime_imports() -> None:
         violations.append((rel, 0, "<unexpected Python file under apps/>"))
 
     if violations:
-        detail = "\n".join(
-            f"  apps/{path}:{line} — {mod}"
-            for path, line, mod in violations
-        )
+        detail = "\n".join(f"  apps/{path}:{line} — {mod}" for path, line, mod in violations)
         raise AssertionError(
             f"apps/ must not contain Python runtime logic (repo_invariant §36).\n"
             f"Found {len(violations)} violation(s):\n{detail}\n"
