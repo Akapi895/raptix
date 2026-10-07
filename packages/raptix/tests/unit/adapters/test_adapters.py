@@ -20,9 +20,14 @@ from raptix.execution.adapters import (
     GobusterAdapter,
     ImpacketCredentialDumpAdapter,
     ImpacketLateralMoveAdapter,
+    JohnAdapter,
+    NetExecAdapter,
     NiktoAdapter,
     NmapAdapter,
+    NucleiAdapter,
     ResponderAdapter,
+    SlitherAdapter,
+    SnmpwalkAdapter,
     SqlmapAdapter,
     SubfinderAdapter,
     ToolAdapter,
@@ -100,9 +105,15 @@ class TestAdapterContract:
             "web.sqlmap",
             "web.gobuster",
             "web.nikto",
+            "web.nuclei",
             "ad.impacket.lateral",
             "ad.impacket.cred_dump",
+            "ad.netexec",
+            "ad.netexec.bloodhound",
             "ad.responder",
+            "credentials.john",
+            "network.snmpwalk",
+            "contracts.slither",
         }
         for adapter in adapters.values():
             assert isinstance(adapter, ToolAdapter)
@@ -116,7 +127,12 @@ class TestAdapterContract:
             impl.adapter_id
             for manifest in build_catalog()
             for impl in manifest.implementations
-            if impl.kind is ImplementationKind.ADAPTER and impl.profile == "base"
+            # Every sandbox-executed ADAPTER implementation must have a
+            # registered adapter — base-profile or opt-in profile alike
+            # (TC-2/5/7). T6 in-process carriers (builtin.*) have no
+            # CommandAdapter route by design.
+            if impl.kind is ImplementationKind.ADAPTER
+            and not (impl.adapter_id or "").startswith("builtin.")
         }
         assert catalog_adapter_ids == set(default_adapters())
 
@@ -205,6 +221,179 @@ class TestParamValidation:
         assert artifact_name_param(_request("test.cap"), "missing", default="out.txt") == "out.txt"
         with pytest.raises(AdapterParameterError, match="plain artifact filename"):
             artifact_name_param(_request("test.cap", path="../evil.xml"), "path", default="out.txt")
+
+
+class TestNucleiAdapter:
+    def test_default_argv(self) -> None:
+        argv = NucleiAdapter().build_argv(_request("web.scan_templates", url="http://10.0.0.5/"))
+        assert argv == [
+            "nuclei",
+            "-u",
+            "http://10.0.0.5/",
+            "-jsonl",
+            "-o",
+            "nuclei.jsonl",
+            "-silent",
+        ]
+
+    def test_severity_filter(self) -> None:
+        argv = NucleiAdapter().build_argv(
+            _request("web.scan_templates", url="http://10.0.0.5/", severity="High,Critical")
+        )
+        assert argv[-2:] == ["-severity", "high,critical"]
+
+    def test_rejects_bad_severity(self) -> None:
+        with pytest.raises(AdapterParameterError, match="severity"):
+            NucleiAdapter().build_argv(
+                _request("web.scan_templates", url="http://10.0.0.5/", severity="apocalypse")
+            )
+
+
+class TestNetExecAdapter:
+    def test_default_smb_exec(self) -> None:
+        argv = NetExecAdapter().build_argv(
+            _request(
+                "access.move_laterally",
+                target="10.0.0.20",
+                username="svc_backup",
+                password="Backup2026!",
+            )
+        )
+        assert argv == [
+            "nxc",
+            "smb",
+            "10.0.0.20",
+            "-u",
+            "svc_backup",
+            "-p",
+            "Backup2026!",
+            "-x",
+            "whoami",
+        ]
+
+    def test_domain_hashes_and_port(self) -> None:
+        argv = NetExecAdapter().build_argv(
+            _request(
+                "access.move_laterally",
+                target="10.0.0.20",
+                username="admin",
+                password="unused",
+                domain="CORP",
+                hashes="aad3b435b51404eeaad3b435b51404ee:3f8a3...",
+                port=445,
+                command="net localgroup administrators",
+            )
+        )
+        assert argv[argv.index("-d") + 1] == "CORP"
+        assert argv[argv.index("-H") + 1] == "aad3b435b51404eeaad3b435b51404ee:3f8a3..."
+        assert argv[argv.index("--port") + 1] == "445"
+        assert argv[argv.index("-x") + 1] == "net localgroup administrators"
+
+    def test_rejects_bad_protocol_and_hash_shape(self) -> None:
+        with pytest.raises(AdapterParameterError, match="protocol"):
+            NetExecAdapter().build_argv(
+                _request(
+                    "access.move_laterally",
+                    target="t",
+                    username="u",
+                    password="p",
+                    protocol="ssh",
+                )
+            )
+        with pytest.raises(AdapterParameterError, match="hashes"):
+            NetExecAdapter().build_argv(
+                _request(
+                    "access.move_laterally",
+                    target="t",
+                    username="u",
+                    password="p",
+                    hashes="not-a-ntlm-pair",
+                )
+            )
+
+
+class TestJohnAdapter:
+    def test_pinned_wordlist_and_dedicated_pot(self) -> None:
+        argv = JohnAdapter().build_argv(
+            _request("access.crack_hash", format="nt", hash_file="asrep.txt", pot_file="asrep.pot")
+        )
+        assert argv == [
+            "john",
+            "--format=nt",
+            "--wordlist=/opt/raptix/share/wordlists/benchmark-dict.txt",
+            "--pot=asrep.pot",
+            "asrep.txt",
+        ]
+
+    def test_format_is_required_and_pinned(self) -> None:
+        with pytest.raises(AdapterParameterError, match="required"):
+            JohnAdapter().build_argv(_request("access.crack_hash", hash_file="h.txt"))
+        with pytest.raises(AdapterParameterError, match="format"):
+            JohnAdapter().build_argv(
+                _request("access.crack_hash", format="autodetect", hash_file="h.txt")
+            )
+
+
+class TestSnmpwalkAdapter:
+    def test_default_community_walk(self) -> None:
+        argv = SnmpwalkAdapter().build_argv(_request("network.snmp_enumerate", target="10.0.0.254"))
+        assert argv[:4] == ["snmpwalk", "-v", "2c", "-On"]
+        assert "10.0.0.254" in argv
+        assert "SYSTEM" in argv and "IF-MIB::ifDescr" in argv
+        assert argv[argv.index("-o") + 1] == "snmpwalk.txt"
+
+    def test_non_default_port_names_transport(self) -> None:
+        argv = SnmpwalkAdapter().build_argv(
+            _request("network.snmp_enumerate", target="10.0.0.254", port=1161)
+        )
+        assert "udp:10.0.0.254:1161" in argv
+        argv6 = SnmpwalkAdapter().build_argv(
+            _request("network.snmp_enumerate", target="fd00::5", port=1161)
+        )
+        assert "udp6:fd00::5:1161" in argv6
+
+    def test_v3_requires_typed_usm_params(self) -> None:
+        with pytest.raises(AdapterParameterError, match="USM"):
+            SnmpwalkAdapter().build_argv(
+                _request("network.snmp_enumerate", target="t", version="3", community="public")
+            )
+
+    def test_v3_auth_priv_params(self) -> None:
+        argv = SnmpwalkAdapter().build_argv(
+            _request(
+                "network.snmp_enumerate",
+                target="10.0.0.254",
+                version="3",
+                v3_username="ro_user",
+                v3_auth_protocol="SHA",
+                v3_auth_passphrase="AuthSecret1",
+                v3_priv_protocol="AES",
+                v3_priv_passphrase="PrivSecret1",
+            )
+        )
+        assert argv[argv.index("-l") + 1] == "authPriv"
+        assert argv[argv.index("-a") + 1] == "SHA"
+        assert argv[argv.index("-x") + 1] == "AES"
+
+
+class TestSlitherAdapter:
+    def test_default_argv(self) -> None:
+        argv = SlitherAdapter().build_argv(
+            _request("contracts.audit_static", target_file="src/Target.sol")
+        )
+        assert argv == ["slither", "src/Target.sol", "--json", "slither.json"]
+
+    def test_solc_version(self) -> None:
+        argv = SlitherAdapter().build_argv(
+            _request("contracts.audit_static", target_file="src/T.sol", solc_version="0.8.19")
+        )
+        assert argv[argv.index("--solc") + 1] == "0.8.19"
+
+    def test_rejects_non_solidity_target(self) -> None:
+        with pytest.raises(AdapterParameterError, match=".sol"):
+            SlitherAdapter().build_argv(
+                _request("contracts.audit_static", target_file="src/Target.rs")
+            )
 
 
 class TestNmapAdapter:
@@ -623,14 +812,25 @@ class TestEndToEnd:
             assert observation.source_artifact_id == "art-1"
 
     def test_unparsable_expected_format_is_a_hard_error(self) -> None:
-        # Adapter honesty: sqlmap has no registered parser yet (T8+); the
-        # expected-format declaration must surface that as a parse error,
-        # never a silent skip.
-        spec = _resolver().resolve(_request("web.test_injection", url="http://10.0.0.5/"))
+        # Adapter honesty: an expected-format declaration with no
+        # registered parser surfaces as a parse error, never a silent
+        # skip. (sqlmap_log/nikto_txt/impacket_txt/responder_log parsers
+        # landed with TC-1; an unregistered format id still hard-fails.)
         artifact = Artifact(id="art-2", artifact_ref="artifact://run-1/art-2")
         from raptix.knowledge.ingest.registry import UnknownFormatError
 
         with pytest.raises(UnknownFormatError):
             default_registry().parse(
-                artifact, b"sqlmap log text", expected_formats=spec.expected_artifact_formats
+                artifact, b"sqlmap log text", expected_formats=("no_such_format",)
             )
+
+    def test_sqlmap_log_expected_format_now_resolves(self) -> None:
+        # TC-1: the previously missing sqlmap_log parser closes the gap —
+        # the adapter's expected-format declaration resolves and parses.
+        spec = _resolver().resolve(_request("web.test_injection", url="http://10.0.0.5/"))
+        artifact = Artifact(id="art-2", artifact_ref="artifact://run-1/art-2")
+        outcome = default_registry().parse(
+            artifact, b"sqlmap/1.8.2#stable\n", expected_formats=spec.expected_artifact_formats
+        )
+        assert outcome.format_id == "sqlmap_log"
+        assert outcome.summary["injection_points"] == 0

@@ -470,7 +470,11 @@ def test_step_artifact_flows_through_the_real_parser_registry() -> None:
 
 
 def test_parse_failure_is_recorded_never_silent() -> None:
-    artifact = Artifact(id="art-2", artifact_ref="artifact://run-1/art-2", format_hint="sqlmap_log")
+    # sqlmap_log has a registered parser since TC-1; the recorded-failure
+    # intent needs a format the default registry genuinely cannot resolve.
+    artifact = Artifact(
+        id="art-2", artifact_ref="artifact://run-1/art-2", format_hint="unregistered_format"
+    )
     planner = ScriptedPlanner(WorkerStep(primitive="bash"))
     runner = _runner(
         workers=WorkerRegistry([_spec(primitives=("bash",))]),
@@ -487,7 +491,7 @@ def test_parse_failure_is_recorded_never_silent() -> None:
     assert result.observations == ()
     assert result.executions[0].error is not None
     assert "artifact parsing failed" in str(result.executions[0].error)
-    assert "sqlmap_log" in str(result.executions[0].error)
+    assert "unregistered_format" in str(result.executions[0].error)
 
 
 def test_parse_failure_lets_the_worker_continue() -> None:

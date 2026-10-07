@@ -17,17 +17,22 @@ Contract (see :mod:`raptix.execution.adapters.base`):
   implementation or no registered adapter is unavailable.
 """
 
+from raptix.execution.adapters.ad.bloodhound_collect import NetExecBloodHoundAdapter
 from raptix.execution.adapters.ad.impacket import (
     ImpacketCredentialDumpAdapter,
     ImpacketLateralMoveAdapter,
 )
+from raptix.execution.adapters.ad.netexec import NetExecAdapter
 from raptix.execution.adapters.ad.responder import ResponderAdapter
 from raptix.execution.adapters.base import (
     AdapterParameterError,
     CommandAdapter,
     ToolAdapter,
 )
+from raptix.execution.adapters.contracts.slither import SlitherAdapter
+from raptix.execution.adapters.credentials.john import JohnAdapter
 from raptix.execution.adapters.network.nmap import NmapAdapter
+from raptix.execution.adapters.network.snmpwalk import SnmpwalkAdapter
 from raptix.execution.adapters.network.subfinder import SubfinderAdapter
 from raptix.execution.adapters.resolver import (
     AdapterResolutionError,
@@ -36,6 +41,7 @@ from raptix.execution.adapters.resolver import (
 )
 from raptix.execution.adapters.web.gobuster import GobusterAdapter
 from raptix.execution.adapters.web.nikto import NiktoAdapter
+from raptix.execution.adapters.web.nuclei import NucleiAdapter
 from raptix.execution.adapters.web.sqlmap import SqlmapAdapter
 
 __all__ = [
@@ -46,9 +52,15 @@ __all__ = [
     "GobusterAdapter",
     "ImpacketCredentialDumpAdapter",
     "ImpacketLateralMoveAdapter",
+    "JohnAdapter",
+    "NetExecAdapter",
+    "NetExecBloodHoundAdapter",
     "NiktoAdapter",
     "NmapAdapter",
+    "NucleiAdapter",
     "ResponderAdapter",
+    "SlitherAdapter",
+    "SnmpwalkAdapter",
     "SqlmapAdapter",
     "SubfinderAdapter",
     "ToolAdapter",

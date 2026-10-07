@@ -265,15 +265,14 @@ async def dns_recon(
                 ]
                 cmd = [c for c in cmd if c]  # Remove empty strings
 
-                result = await asyncio.create_subprocess_exec(
-                    cmd,
+                proc = await asyncio.create_subprocess_exec(
+                    *cmd,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
-                    timeout=timeout,
                 )
-                stdout, stderr = await result.communicate()
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
 
-                if result.returncode == 0:
+                if proc.returncode == 0:
                     records = stdout.decode().strip().split("\n") if stdout else []
                     data["queries"][record_type] = [
                         r for r in records if r and not r.startswith(";")
@@ -328,15 +327,14 @@ async def smb_recon(
         cmd = ["smbclient", "-L", f"//{target}", "-p", str(port), "-N", "-t", str(timeout)]
 
         try:
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout + 2,
             )
-            stdout, stderr = await result.communicate()
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
 
-            if result.returncode == 0:
+            if proc.returncode == 0:
                 output = stdout.decode()
                 data["shares"] = _parse_smb_shares(output)
             else:
@@ -350,14 +348,13 @@ async def smb_recon(
         # Try to get SMB version using smbclient
         try:
             cmd = ["smbclient", "-V"]
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=5,
             )
-            stdout, _ = await result.communicate()
-            if result.returncode == 0:
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
+            if proc.returncode == 0:
                 version_output = stdout.decode().strip()
                 version_match = re.search(r"Version\s+([0-9.]+)", version_output)
                 if version_match:
@@ -369,14 +366,13 @@ async def smb_recon(
         # Try nmblookup for NetBIOS information
         try:
             cmd = ["nmblookup", "-A", target]
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout,
             )
-            stdout, _ = await result.communicate()
-            if result.returncode == 0:
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            if proc.returncode == 0:
                 data["netbios"] = stdout.decode().strip()
         except FileNotFoundError:
             # External tool not installed; skip this recon step silently.
@@ -462,15 +458,14 @@ async def rpc_recon(
         cmd = ["rpcinfo", "-p", target]
 
         try:
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout,
             )
-            stdout, stderr = await result.communicate()
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
 
-            if result.returncode == 0:
+            if proc.returncode == 0:
                 data["services"] = _parse_rpcinfo_output(stdout.decode())
             else:
                 data["error"] = stderr.decode().strip()
@@ -528,6 +523,13 @@ async def snmp_recon(
 ) -> ProtocolResult:
     """Perform SNMP reconnaissance on a target.
 
+    Legacy specialist-tool path (agent-host subprocess). The declared,
+    sandbox-placed route is the ``network.snmp_enumerate`` capability
+    (``network.snmpwalk`` adapter, ``sandbox-network-extra`` profile) —
+    this function remains importable with corrected mechanics, but its
+    placement stays agent-host until it is retired in favor of the
+    capability route (TC-7).
+
     Args:
         target: IP address or hostname
         port: SNMP port (default: 161)
@@ -536,13 +538,14 @@ async def snmp_recon(
         version: SNMP version ("1", "2c", "3")
 
     Returns:
-        ProtocolResult with SNMP reconnaissance data
+        ProtocolResult with SNMP reconnaissance data. ``success`` is
+        True only when at least one OID response was collected — a
+        timed-out or refused walk never reports success.
     """
 
     data: dict[str, Any] = {
         "target": target,
         "port": port,
-        "community": community,
         "version": version,
     }
 
@@ -551,46 +554,50 @@ async def snmp_recon(
         cmd = ["snmpwalk", "-v", version, "-c", community, target, "SYSTEM"]
 
         try:
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout,
             )
-            stdout, stderr = await result.communicate()
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
 
-            if result.returncode == 0:
+            if proc.returncode == 0 and stdout.strip():
                 data["system_info"] = _parse_snmp_output(stdout.decode())
             else:
-                data["error"] = stderr.decode().strip()
+                data["error"] = stderr.decode().strip() or (
+                    f"snmpwalk exited {proc.returncode} with no output"
+                )
 
         except FileNotFoundError:
             data["error"] = "snmpwalk not found"
+        except asyncio.TimeoutError:
+            data["error"] = f"snmpwalk timed out after {timeout}s"
         except Exception as e:
             data["error"] = str(e)
 
         # Try to get interface information
         try:
             cmd = ["snmpwalk", "-v", version, "-c", community, target, "IF-MIB::ifDescr"]
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout,
             )
-            stdout, _ = await result.communicate()
-            if result.returncode == 0:
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout)
+            if proc.returncode == 0 and stdout.strip():
                 data["interfaces"] = _parse_snmp_output(stdout.decode())
         except Exception:
             # SNMP query/parse failed; leave interfaces data unset.
             pass
 
+        succeeded = bool(data.get("system_info") or data.get("interfaces"))
         return ProtocolResult(
             target=target,
             port=port,
             protocol="snmp",
-            success=True,
+            success=succeeded,
             data=data,
+            error=None if succeeded else str(data.get("error") or "no SNMP response collected"),
         )
 
     except Exception as e:
@@ -661,13 +668,12 @@ async def ftp_recon(
             else:
                 cmd = ["nc", "-w", str(int(timeout)), target, str(port)]
 
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout + 2,
             )
-            stdout, stderr = await result.communicate()
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
 
             if stdout:
                 banner = stdout.decode().strip()
@@ -757,15 +763,14 @@ async def ssh_recon(
         try:
             # Use ssh-keyscan to get host keys
             cmd = ["ssh-keyscan", "-p", str(port), "-t", "1", target]
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout,
             )
-            stdout, stderr = await result.communicate()
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
 
-            if result.returncode == 0:
+            if proc.returncode == 0:
                 keys = stdout.decode().strip().split("\n")
                 data["keys"] = []
                 for key in keys:
@@ -782,13 +787,12 @@ async def ssh_recon(
         # Try to connect and get SSH banner
         try:
             cmd = ["nc", "-w", str(int(timeout)), target, str(port)]
-            result = await asyncio.create_subprocess_exec(
-                cmd,
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                timeout=timeout + 2,
             )
-            stdout, _ = await result.communicate()
+            stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=timeout + 2)
             if stdout:
                 banner = stdout.decode().strip()
                 data["banner"] = banner

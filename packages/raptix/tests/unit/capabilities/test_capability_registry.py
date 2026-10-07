@@ -1,4 +1,4 @@
-"""Deterministic tests for the Wave T6 capability catalog + evaluators.
+﻿"""Deterministic tests for the Wave T6 capability catalog + evaluators.
 
 No LLM, no network: availability uses injected probes; the real
 in-process carriers are exercised through the import probe exactly as
@@ -60,13 +60,28 @@ class TestCatalog:
         "network.capture_ntlm",
     }
 
+    # TC-2/5/7/8 added profile-backed implementations and capabilities.
+    TC237_CAPABILITIES = {
+        "web.scan_templates",
+        "access.crack_hash",
+        "network.snmp_enumerate",
+        "contracts.audit_static",
+        "ad.collect_bloodhound",
+    }
+
     T10_CAPABILITIES = {
         "exploit.unknown_service",
     }
 
     def test_covers_every_t1_semantic_capability_plus_t7_binaries(self) -> None:
         ids = {str(m.id) for m in build_catalog()}
-        assert ids == self.T1_CAPABILITIES | self.T7_CAPABILITIES | self.T10_CAPABILITIES
+        assert (
+            ids
+            == self.T1_CAPABILITIES
+            | self.T7_CAPABILITIES
+            | self.TC237_CAPABILITIES
+            | self.T10_CAPABILITIES
+        )
 
     def test_ids_are_unique_and_schema_versioned(self) -> None:
         manifests = build_catalog()
@@ -91,7 +106,7 @@ class TestCatalog:
                 assert not worker_impls, manifest.id
 
     def test_phase_affinity_is_soft_and_allowed_phases_unused(self) -> None:
-        # allowed_phases (hard) is used sparingly — the initial catalog
+        # allowed_phases (hard) is used sparingly â€” the initial catalog
         # leaves it None everywhere; phase_affinity is ranking only.
         for manifest in build_catalog():
             assert manifest.allowed_phases is None
@@ -111,6 +126,11 @@ class TestCatalog:
             if str(manifest.id) not in self.T7_CAPABILITIES:
                 continue
             for impl in manifest.implementations:
+                # TC-2's netexec second implementation is the deliberate
+                # profile-backed exception.
+                if impl.id == "access.move_laterally.netexec":
+                    assert impl.profile == "sandbox-ad", manifest.id
+                    continue
                 assert impl.profile == "base", manifest.id
                 assert impl.adapter_id, manifest.id
                 assert ":" not in (impl.executable or ""), manifest.id
@@ -139,12 +159,15 @@ class TestRegistry:
         assert "research.web_search" in registry
         assert "network.scan" in registry
         assert "exploit.unknown_service" in registry
-        assert len(registry) == 21
+        # TC-2/5/7/8 added web.scan_templates, access.crack_hash,
+        # network.snmp_enumerate and contracts.audit_static to the 21
+        # T7-era manifests.
+        assert len(registry) == 26
 
     def test_for_role_unrestricted_means_every_role(self) -> None:
         registry = CapabilityRegistry()
         roles = {str(m.id) for m in registry.for_role("recon")}
-        # web_search/web_fetch declare allowed_roles=() → unrestricted.
+        # web_search/web_fetch declare allowed_roles=() â†’ unrestricted.
         assert "research.web_search" in roles
         assert "research.web_fetch" in roles
 
@@ -169,8 +192,8 @@ class TestRegistry:
 
     def test_startup_health_check_with_probes_injected(self) -> None:
         # The real catalog probes PATH (sandbox binaries may legitimately
-        # be absent on a dev host — PARTIAL passes, UNAVAILABLE fails)
-        # and resolves worker ids through T10's WorkerRegistry — without
+        # be absent on a dev host â€” PARTIAL passes, UNAVAILABLE fails)
+        # and resolves worker ids through T10's WorkerRegistry â€” without
         # one, the catalog's WORKER capability is honestly UNAVAILABLE.
         from raptix.execution.workers import WorkerRegistry, WorkerSpec
 

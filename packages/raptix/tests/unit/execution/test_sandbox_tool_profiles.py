@@ -26,17 +26,30 @@ COMPOSE_PATH: Final[Path] = REPO_ROOT / "docker-compose.yml"
 
 MANIFEST_DIR: Final[str] = "/opt/raptix/tool-versions"
 
-# The T8 plan table: profile → apt packages (kali-rolling).
+# The T8 plan table + TC-2/5/7 additions: profile → apt packages
+# (kali-rolling).
 T8_PROFILES: Final[dict[str, frozenset[str]]] = {
     "sandbox-web": frozenset({"httpx-toolkit", "katana", "ffuf", "nuclei", "testssl.sh"}),
     "sandbox-ad": frozenset({"netexec", "certipy-ad", "evil-winrm"}),
     "sandbox-pivot": frozenset({"ligolo-ng"}),
+    # TC-5: offline credential recovery (john; wordlist is repo-pinned,
+    # not an apt package — see sandbox-wordlist.txt).
+    "sandbox-credentials": frozenset({"john"}),
+    # TC-7: appliance/network-device enumeration (Net-SNMP).
+    "sandbox-network-extra": frozenset({"snmp"}),
+    # TC-8: smart-contract static analysis (pip-installed slither in a
+    # dedicated venv — not an apt package; version recorded via
+    # `slither --version`, the profile has no dpkg row).
+    "sandbox-contracts": frozenset(),
 }
 
 T8_BUILD_ARGS: Final[dict[str, str]] = {
     "sandbox-web": "INSTALL_WEB_TOOLS",
     "sandbox-ad": "INSTALL_AD_TOOLS",
     "sandbox-pivot": "INSTALL_PIVOT_TOOLS",
+    "sandbox-credentials": "INSTALL_CREDENTIAL_TOOLS",
+    "sandbox-network-extra": "INSTALL_NETWORK_EXTRA",
+    "sandbox-contracts": "INSTALL_CONTRACTS_TOOLS",
 }
 
 
@@ -104,10 +117,24 @@ def test_t8_profiles_install_the_planned_package_sets(
     profile: str,
     packages: frozenset[str],
 ) -> None:
+    if not packages:
+        # sandbox-contracts installs slither via pip in a dedicated venv,
+        # not apt — pinned version asserted separately below.
+        return
     run_instruction = _profile_run_instruction(instructions, T8_BUILD_ARGS[profile])
     assert _apt_install_packages(run_instruction) == packages, (
         f"{profile} package set drifted from the T8 plan table"
     )
+
+
+def test_contracts_profile_pins_slither_and_records_its_version(
+    instructions: list[str],
+) -> None:
+    """TC-8: slither is pip-pinned in the profile venv and its version
+    lands in the sandbox-contracts manifest."""
+    run_instruction = _profile_run_instruction(instructions, "INSTALL_CONTRACTS_TOOLS")
+    assert "slither-analyzer==" in run_instruction
+    assert f"> {MANIFEST_DIR}/sandbox-contracts.tsv" in run_instruction
 
 
 @pytest.mark.parametrize("profile", sorted(T8_PROFILES))
@@ -122,12 +149,41 @@ def test_t8_profiles_write_a_version_manifest(
     )
 
 
-def test_nuclei_template_corpus_recorded_as_runtime_fetched(
+def test_nuclei_template_corpus_is_pinned_not_runtime_fetched(
     instructions: list[str],
 ) -> None:
+    """TC-3: the corpus is pinned to a NUCLEI_TEMPLATES_VERSION release
+    tag; the web-profile build refuses to run without it, and the pinned
+    corpus lands at /opt/raptix/nuclei-templates with the tag recorded
+    in the version manifest."""
     run_instruction = _profile_run_instruction(instructions, "INSTALL_WEB_TOOLS")
+    assert 'if [ -z "$NUCLEI_TEMPLATES_VERSION" ]' in run_instruction
+    assert "exit 1" in run_instruction  # refuses an unpinned build
+    assert "/opt/raptix/nuclei-templates" in run_instruction
     assert "nuclei-templates" in run_instruction
-    assert "runtime-fetched" in run_instruction
+    assert "runtime-fetched" not in run_instruction
+
+
+def test_nuclei_template_pin_is_passed_through_compose() -> None:
+    compose = yaml.safe_load(COMPOSE_PATH.read_text(encoding="utf-8"))
+    build_args = compose["services"]["sandbox"]["build"]["args"]
+    assert build_args.get("NUCLEI_TEMPLATES_VERSION") == "${NUCLEI_TEMPLATES_VERSION:-}"
+
+
+def test_credentials_profile_ships_the_pinned_wordlist_copy(
+    instructions: list[str],
+) -> None:
+    """TC-5: the benchmark dictionary is COPYed from the checkout (not
+    downloaded), so cracking benchmarks never depend on a mutable corpus."""
+    dockerfile_text = DOCKERFILE_PATH.read_text(encoding="utf-8")
+    assert "sandbox-wordlist.txt /opt/raptix/share/wordlists/benchmark-dict.txt" in dockerfile_text
+    wordlist = (REPO_ROOT / "infra" / "containers" / "sandbox-wordlist.txt").read_text(
+        encoding="utf-8"
+    )
+    entries = [
+        line.strip() for line in wordlist.splitlines() if line.strip() and not line.startswith("#")
+    ]
+    assert len(entries) >= 10, "benchmark dictionary must have a usable entry set"
 
 
 def test_compose_passes_t8_build_args_defaulting_off() -> None:
