@@ -213,9 +213,41 @@ def _docker(args: list[str], *, timeout: int = 120) -> subprocess.CompletedProce
     return subprocess.run(["docker", *args], capture_output=True, text=True, timeout=timeout)
 
 
+def _probe_api(url: str, *, timeout: float = 10.0) -> tuple[bool, str]:
+    """Pre-flight probe. Mode-C used to mean "API dead from turn 0" and produced
+    a silent empty trace; now the run refuses to start and names the fix."""
+    import urllib.request
+
+    try:
+        with urllib.request.urlopen(f"{url.rstrip('/')}/ok", timeout=timeout) as resp:
+            return resp.status == 200, f"HTTP {resp.status}"
+    except Exception as exc:  # noqa: BLE001
+        return False, f"{type(exc).__name__}: {exc}"
+
+
+def _capture_status(trace_dir: Path, channel: str, note: str) -> None:
+    """Per-channel capture marker under ``trace/capture/``.
+
+    A post-mortem must never have to infer "missing" vs "never captured"
+    from the absence of a file (the 0-byte Pandora trace).
+    """
+    cap_dir = trace_dir / "capture"
+    cap_dir.mkdir(parents=True, exist_ok=True)
+    (cap_dir / f"{channel}.status").write_text(f"{_now_iso()} {note}\n", encoding="utf-8")
+
+
+def _read_capture_note(trace_dir: Path, channel: str) -> str:
+    path = trace_dir / "capture" / f"{channel}.status"
+    if not path.exists():
+        return "absent"
+    return path.read_text(encoding="utf-8").strip().split(" ", 1)[-1]
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Run one authorized lab with full trace capture.")
-    p.add_argument("--langgraph-url", default="http://localhost:2400")
+    # 2024 = the compose langgraph port (docker-compose.yml). 2400 was a stale
+    # default that silently produced empty traces (mode-C).
+    p.add_argument("--langgraph-url", default="http://localhost:2024")
     p.add_argument("--assistant", default="raptix")
     p.add_argument("--thread", default=None, help="Thread id; default: fresh timestamped id.")
     p.add_argument("--engagement", required=True)
@@ -290,6 +322,14 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
 
     thread_id = args.thread or str(uuid.uuid4())
     client = get_client(url=args.langgraph_url)
+    api_ok, api_detail = _probe_api(args.langgraph_url)
+    _capture_status(trace_dir, "api", "ok" if api_ok else f"failed: {api_detail}")
+    if not api_ok:
+        raise SystemExit(
+            f"LangGraph API unreachable at {args.langgraph_url} ({api_detail}); "
+            "start it with `docker compose up langgraph` or pass --langgraph-url."
+        )
+    _log(f"api ok: {api_detail}")
     started_iso = _now_iso()
     start_epoch = int(time.time())
     await _api(lambda: client.threads.create(thread_id=thread_id), timeout=30)
@@ -434,9 +474,12 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
     except Exception as exc:  # noqa: BLE001
         ws_note = f"docker cp error: {exc}"
     _log(f"workspace: {ws_note}")
+    _capture_status(trace_dir, "workspace_copy", ws_note)
 
     # Time-bounded container logs.
+    log_ok, log_total = 0, 0
     for container in [c.strip() for c in args.log_containers.split(",") if c.strip()]:
+        log_total += 1
         try:
             lp = _docker(["logs", "--since", str(start_epoch), container], timeout=120)
             (logs_dir / f"{container}.log").write_text(
@@ -444,14 +487,45 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
                 encoding="utf-8",
                 errors="replace",
             )
+            log_ok += 1
         except Exception as exc:  # noqa: BLE001
             (logs_dir / f"{container}.log").write_text(
                 f"log capture failed: {exc}", encoding="utf-8"
             )
+    _capture_status(trace_dir, "container_logs", f"{log_ok}/{log_total} containers")
 
     transcript_text = (
         transcript_path.read_text(encoding="utf-8") if transcript_path.exists() else ""
     )
+    # Derived-transcript channel status (the run loop already finished).
+    derived_ok = counters["model"] > 0 or counters["tool"] > 0
+    derived_note = (
+        f"ok (model={counters['model']}, tool={counters['tool']})"
+        if derived_ok
+        else "absent (0 entries; run died before the first model call?)"
+    )
+    _capture_status(trace_dir, "transcripts", derived_note)
+    snaps = trace_dir / "state-snapshots.jsonl"
+    _capture_status(
+        trace_dir,
+        "state_snapshots",
+        f"ok ({snaps.stat().st_size} bytes)"
+        if snaps.exists() and snaps.stat().st_size
+        else "absent",
+    )
+    _capture_status(
+        trace_dir,
+        "thread_runs",
+        "ok" if (trace_dir / "thread-runs.json").exists() else "absent",
+    )
+    capture_channels = {
+        "api": "ok" if api_ok else f"failed: {api_detail}",
+        "transcripts": derived_note,
+        "state_snapshots": _read_capture_note(trace_dir, "state_snapshots"),
+        "thread_runs": _read_capture_note(trace_dir, "thread_runs"),
+        "workspace_copy": ws_note,
+        "container_logs": f"{log_ok}/{log_total} containers",
+    }
     summary = {
         "status": status,
         "turns": turns,
@@ -466,6 +540,8 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
         "user_txt_mentioned": "user.txt" in transcript_text,
         "root_txt_mentioned": "root.txt" in transcript_text,
         "workspace_capture": ws_note,
+        "api_reachable": api_ok,
+        "capture_channels": capture_channels,
     }
     (run_dir / "summary.json").write_text(
         json.dumps(_jsonable(summary), indent=2), encoding="utf-8"
@@ -514,7 +590,8 @@ def main(argv: list[str] | None = None) -> int:
             "turn-by-turn thread-state transcripts; model_calls/tool_calls DERIVED "
             "from message diffs (AIMessage->model call, ToolMessage->tool call); "
             "state snapshots; workspace copy; time-bounded container logs. "
-            "No in-process middleware changes."
+            "No in-process middleware changes. Per-channel capture status in "
+            "trace/capture/<channel>.status + summary.capture_channels."
         ),
         "roe_enforcement": (
             "audit-only (plan/roe.json ships no machine_enforcement block); "
@@ -557,6 +634,11 @@ def main(argv: list[str] | None = None) -> int:
     _log(f"run dir: {run_dir}")
     summary = asyncio.run(_amain(args, run_dir))
     _log(f"terminal status: {summary['status']} after {summary['turns']} turns")
+    # Capture provenance lands in the manifest too (it is written before the
+    # run; merge the post-run statuses back in).
+    manifest["api_reachable"] = summary.get("api_reachable")
+    manifest["capture_channels"] = summary.get("capture_channels", {})
+    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return 0 if summary["status"] == "objectives-complete" else 2
 
 
