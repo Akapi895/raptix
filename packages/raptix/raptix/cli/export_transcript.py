@@ -1,10 +1,13 @@
 """``raptix-cli export-transcript`` - render an engagement's event log.
 
 Reads the append-only ``events.jsonl`` for one engagement and renders it as a
-human-readable Markdown transcript. The log lives at
-``<workspace>/engagements/<engagement_id>/events.jsonl`` (see
-:mod:`raptix.runtime.event_log`); events are rendered in the order they
-were appended.
+human-readable Markdown transcript. The writer
+(:class:`raptix.middleware.event_logging.EventLogMiddleware`) and
+``shutdown.py`` both use the flat ``<workspace>/events.jsonl`` layout, so
+that is the primary path; the legacy nested
+``engagements/<engagement_id>/events.jsonl`` (shared-root deployments that
+pre-date the flat convention) remains a fallback. Events are rendered in
+the order they were appended.
 """
 
 from __future__ import annotations
@@ -58,6 +61,16 @@ def _resolve_workspace(arg_value: Path | None) -> Path:
 
 
 def _events_path(workspace: Path, engagement_id: str) -> Path:
+    """Flat layout first (what the writer + shutdown produce), legacy nested fallback.
+
+    The middleware writes ``<workspace>/events.jsonl``; the nested
+    ``engagements/<id>/`` path existed only in this reader, which is why
+    ``export-transcript`` never found a live log. Keep the fallback so
+    older shared-root workspaces still export.
+    """
+    flat = workspace / "events.jsonl"
+    if flat.exists():
+        return flat
     return workspace / "engagements" / engagement_id / "events.jsonl"
 
 

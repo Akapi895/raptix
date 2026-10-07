@@ -28,6 +28,7 @@ _KNOWN_TYPES = frozenset(
         "engagement.start",
         "engagement.end",
         "engagement.checkpoint",
+        "agent.session.start",
         "agent.turn",
         "tool.call",
         "tool.result",
