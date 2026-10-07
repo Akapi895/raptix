@@ -79,23 +79,14 @@ the top 100k attempts of the matching generator. Skip rockyou.
 
 Persist the captured handshake / PMKID to
 `/workspace/evidence/wireless/<bssid>.hc22000`. On crack success,
-add a `Credential` node:
+note the credential in your findings record (your role has no KG
+write tool — the orchestrator owns graph writes):
 
-```python
-kg_add_node(
-    kind="credential",
-    label=f"WiFi PSK for {ssid}",
-    props={
-        "key": f"wifi-psk::{bssid}",
-        "secret_type": "wpa_psk",
-        "ssid": ssid,
-        "bssid": bssid,
-        "psk": psk,
-        "cracked_at": "<iso8601>",
-        "vendor_default_generator": "<generator-or-null>",
-        "source": "hcxdumptool+hashcat-22000",
-    },
-)
+```
+credential | WiFi PSK for <ssid> | secret_type wpa_psk |
+ssid <ssid> | bssid <bssid> | psk <psk> | cracked_at <iso8601> |
+vendor_default_generator <generator-or-null> |
+source hcxdumptool+hashcat-22000
 ```
 
 ## ZFP

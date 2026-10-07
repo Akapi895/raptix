@@ -186,21 +186,18 @@ cp /tmp/ble_capture.pcap "$EVIDENCE/"
 sha256sum "$EVIDENCE/ble_capture.pcap" >> "$EVIDENCE/sha256.txt"
 ```
 
-Knowledge graph node for a found credential/key:
+Knowledge graph observation for a found credential/key:
 
 ```python
-kg_add_node(
-    kind="credential",
-    label=f"BLE GATT unauthenticated access {target_mac}",
-    props={
-        "key": f"ble-gatt::{target_mac}",
-        "secret_type": "ble_characteristic",
-        "mac": target_mac,
-        "characteristic_uuid": char_uuid,
-        "raw_value": value_hex,
-        "pairing_method": "just_works_or_none",
-        "source": "bleak+gatttool",
-    },
+kg_record(
+    '[{"kind": "Credential", "key": f"ble-gatt::{target_mac}",'
+    '  "label": f"BLE GATT unauthenticated access {target_mac}",'
+    '  "props": {"secret_type": "ble_characteristic",'
+    '            "mac": target_mac,'
+    '            "characteristic_uuid": char_uuid,'
+    '            "raw_value": value_hex,'
+    '            "pairing_method": "just_works_or_none",'
+    '            "source": "bleak+gatttool"}}]'
 )
 ```
 

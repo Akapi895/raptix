@@ -225,18 +225,15 @@ mkdir -p "$EVDIR"
 john /tmp/unshadowed.txt --show > "$EVDIR/cracked_passwords.txt"
 cp /tmp/all_strings.txt "$EVDIR/strings_all.txt"
 
-# Record each finding as a credential node
-# kg_add_node(
-#     kind="credential",
-#     label="Hardcoded admin credential in /etc/shadow",
-#     props={
-#         "key": "iot-cred::<target>::admin",
-#         "secret_type": "unix_password",
-#         "username": "admin",
-#         "hash": "<hash>",
-#         "plaintext": "<if cracked>",
-#         "source": "firmware /etc/shadow",
-#     },
+# Record each finding as a credential observation
+# kg_record(
+#     '[{"kind": "Credential", "key": "iot-cred::<target>::admin",'
+#     '  "label": "Hardcoded admin credential in /etc/shadow",'
+#     '  "props": {"secret_type": "unix_password",'
+#     '            "username": "admin",'
+#     '            "hash": "<hash>",'
+#     '            "plaintext": "<if cracked>",'
+#     '            "source": "firmware /etc/shadow"}}]'
 # )
 ```
 

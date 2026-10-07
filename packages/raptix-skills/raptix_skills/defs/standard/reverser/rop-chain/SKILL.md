@@ -177,12 +177,12 @@ ROP gadgets ending in `ret` get blocked at return. Mitigations:
 - Use syscalls that don't return (`execve`)
 - Bypass via CET-disable techniques where possible
 
-## 7. Promote (knowledge graph)
+## 7. Promote (findings record)
+Note in your findings record (your role has no KG write tool):
 ```
-kg_add_node(kind="exploit_chain", label="ROP: BOF → execve",
-            props={"target":"<binary>","gadget_count":<n>,"libc_required":<bool>})
-kg_add_edge(src=<vuln:BOF>, dst=<exploit_chain>, kind="enables")
-kg_add_edge(src=<exploit_chain>, dst=<crown_jewel:shell>, kind="achieves")
+exploit-chain | ROP: BOF → execve | target <binary> |
+gadget_count <n> | libc_required <bool> |
+enables: vuln BOF | achieves: crown-jewel shell
 ```
 
 ## CVSS

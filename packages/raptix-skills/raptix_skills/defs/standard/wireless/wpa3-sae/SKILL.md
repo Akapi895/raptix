@@ -162,40 +162,24 @@ the PSK directly from the user:
 
 ## Evidence
 
-On successful downgrade or PSK recovery, write a `Credential` node:
+Note both in your findings record (your role has no KG write tool —
+the orchestrator owns graph writes). On successful downgrade or PSK
+recovery:
 
-```python
-kg_add_node(
-    kind="credential",
-    label=f"WiFi PSK for {ssid} (WPA3-SAE transition downgrade)",
-    props={
-        "key": f"wifi-psk::{bssid}",
-        "secret_type": "wpa_sae",
-        "ssid": ssid,
-        "bssid": bssid,
-        "psk": psk,
-        "attack_path": "wpa3-transition-downgrade",
-        "cracked_at": "<iso8601>",
-        "source": "dragonshift+hashcat-22000",
-    },
-)
+```
+credential | WiFi PSK for <ssid> (WPA3-SAE transition downgrade) |
+secret_type wpa_sae | ssid <ssid> | bssid <bssid> | psk <psk> |
+attack_path wpa3-transition-downgrade | cracked_at <iso8601> |
+source dragonshift+hashcat-22000
 ```
 
-Always write a `Finding` node for the PMF state regardless of crack outcome:
+Always note a PMF finding regardless of crack outcome:
 
-```python
-kg_add_node(
-    kind="finding",
-    label="WPA3 Transition Mode — PMF Optional (Downgrade Viable)",
-    props={
-        "key": f"pmf-optional::{bssid}",
-        "severity": "high",
-        "mfpc": True,
-        "mfpr": False,
-        "cve_ids": [],
-        "remediation": "Set MFP=Required (MFPR=1) on the AP to block transition-mode downgrade.",
-    },
-)
+```
+finding | WPA3 Transition Mode — PMF Optional (Downgrade Viable) |
+severity high | mfpc true | mfpr false |
+remediation Set MFP=Required (MFPR=1) on the AP to block
+transition-mode downgrade.
 ```
 
 ## ZFP

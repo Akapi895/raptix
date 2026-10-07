@@ -32,7 +32,7 @@ This populates User / Computer / Group / GPO / OU nodes with attribute
 properties (hasspn, dontreqpreauth, enabled, admincount, sidhistory).
 
 ## 3. Canonical Cypher queries
-Run via `bh_cypher("<query>")` or post-process `kg_query(kind=...)`:
+Run via `bhce_cypher("<query>")` (BloodHound CE server):
 
 | Goal | Cypher |
 |---|---|
@@ -50,21 +50,21 @@ Run via `bh_cypher("<query>")` or post-process `kg_query(kind=...)`:
 | GPO abuse | `MATCH (n)-[:GpLink]->(:OU)-[:Contains*1..]->(c:Computer) WHERE n.name CONTAINS 'unsafe' RETURN n.name,c.name` |
 
 ## 4. Auto-prioritize attack paths
-After ingest:
-```
-plan_attack_chains(promote=True)
-```
-This walks the graph from owned → high-value and surfaces:
-- Tier-0 reachability (DA / EA / krbtgt)
-- Tier-1 reachability (server admins, backup ops)
-- Lateral hops (admin → admin via AdminTo)
+Rank the shortestPath results from the table above: AdminTo /
+GenericAll / GenericWrite chains first, then single-hop sessions.
+Graph-side chain planning is not on your tool surface — the ranking
+is yours to do from the query output.
 
 ## 5. Promote findings
-For each materialized path, add to KG:
+For each materialized path, record it (your KG slot provides
+`kg_record`):
 ```
-kg_add_node(kind="attack_path", label="<owned-user> → <high-value>",
-            props={"hops":<n>, "edges":"<edge-types>", "severity":"critical"})
-kg_add_edge(src=<attack_path>, dst=<crown_jewel>, kind="reaches", weight=1.0)
+kg_record('[{"kind": "AttackPath",
+  "key": "attack-path::<owned-user>-<high-value>",
+  "label": "<owned-user> → <high-value>",
+  "props": {"hops": <n>, "edges": "<edge-types>", "severity": "critical"},
+  "edges_out": [{"to_key": "crown-jewel::<target>", "kind": "REACHES",
+                 "weight": 1.0}]}]')
 ```
 
 ## 6. Common collector failures

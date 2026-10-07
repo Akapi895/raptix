@@ -168,39 +168,21 @@ sudo bettercap -iface <client-bridge-iface> \
 
 ## Evidence
 
-```python
-kg_add_node(
-    kind="credential",
-    label=f"EAP MSCHAPv2 for {identity} on {ssid}",
-    props={
-        "key": f"eap-mschapv2::{bssid}::{identity}",
-        "secret_type": "eap_mschapv2",
-        "ssid": ssid,
-        "bssid": bssid,
-        "eap_identity": identity,          # e.g. "CORP\\jsmith"
-        "eap_realm": realm,                # e.g. "corp.example.com"
-        "challenge": challenge_hex,
-        "response": response_hex,
-        "plaintext_password": password,    # null if not cracked
-        "attack_path": "rogue-radius-eaphammer",
-        "source": "eaphammer",
-    },
-)
+Note both in your findings record (your role has no KG write tool —
+the orchestrator owns graph writes):
 
-kg_add_node(
-    kind="finding",
-    label="WPA-Enterprise: Server Certificate Not Validated",
-    props={
-        "key": f"eap-cert-validation::{bssid}",
-        "severity": "critical",
-        "affected_clients": [<mac_list>],
-        "remediation": (
-            "Configure wpa_supplicant with ca_cert pointing to the "
-            "corporate CA, or enforce 802.1X server cert validation "
-            "via MDM policy."
-        ),
-    },
-)
+```
+credential | EAP MSCHAPv2 for <identity> on <ssid> |
+secret_type eap_mschapv2 | ssid <ssid> | bssid <bssid> |
+eap_identity <e.g. CORP\jsmith> | eap_realm <e.g. corp.example.com> |
+challenge <challenge_hex> | response <response_hex> |
+plaintext_password <null if not cracked> |
+attack_path rogue-radius-eaphammer | source eaphammer
+
+finding | WPA-Enterprise: Server Certificate Not Validated | severity critical |
+affected_clients <mac_list> |
+remediation Configure wpa_supplicant with ca_cert pointing to the
+corporate CA, or enforce 802.1X server cert validation via MDM policy.
 ```
 
 ## ZFP

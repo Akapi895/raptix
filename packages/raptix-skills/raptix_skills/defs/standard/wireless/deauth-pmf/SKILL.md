@@ -173,32 +173,16 @@ PYEOF
 
 ## Evidence
 
-Always write the PMF finding:
+Always write the PMF finding to your findings record (your role has no
+KG write tool — the orchestrator owns graph writes):
 
-```python
-kg_add_node(
-    kind="finding",
-    label=f"802.11w/PMF State: {pmf_state_label} on {ssid}",
-    props={
-        "key": f"pmf-state::{bssid}",
-        "severity": {
-            "disabled": "high",
-            "optional": "medium",
-            "required": "info",
-        }[pmf_state],
-        "pmf_state": pmf_state,          # "disabled" | "optional" | "required"
-        "mfpc": mfpc,                    # bool
-        "mfpr": mfpr,                    # bool
-        "deauth_viable": pmf_state != "required",
-        "bssid": bssid,
-        "ssid": ssid,
-        "remediation": (
-            "Set MFP=Required on the AP (MFPR=1). "
-            "WPA3 mandates PMF-required by spec. "
-            "WPA2 networks should be upgraded to PMF=Required."
-        ),
-    },
-)
+```
+finding | 802.11w/PMF State: <pmf_state_label> on <ssid> |
+pmf_state <disabled|optional|required> | mfpc <bool> | mfpr <bool> |
+deauth_viable <bool> | bssid <bssid> | ssid <ssid> |
+severity high (disabled) / medium (optional) / info (required) |
+remediation Set MFP=Required on the AP (MFPR=1). WPA3 mandates
+PMF-required by spec. WPA2 networks should be upgraded to PMF=Required.
 ```
 
 If deauth was used for handshake capture, cross-reference the

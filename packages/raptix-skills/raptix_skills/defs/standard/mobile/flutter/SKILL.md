@@ -213,20 +213,13 @@ cat /tmp/apk-out/flutter_assets/AssetManifest.json | python3 -m json.tool | head
 
 ## Evidence
 
-```python
-kg_add_node(
-    kind="finding",
-    label="Flutter BoringSSL pinning bypassed",
-    props={
-        "key": f"flutter-boringssl-bypass::{package_id}",
-        "severity": "high",
-        "cvss": 7.4,
-        "package": package_id,
-        "flutter_version": "<version-from-libflutter-strings>",
-        "bypass_method": "reFlutter",
-        "proxy_verified": True,
-    },
-)
+Note in your findings record (your role has no direct KG write tool —
+the orchestrator owns graph writes):
+
+```
+finding | Flutter BoringSSL pinning bypassed | severity high, cvss 7.4 |
+package <package_id> | flutter_version <version-from-libflutter-strings> |
+bypass_method reFlutter | proxy_verified true
 ```
 
 ## ZFP

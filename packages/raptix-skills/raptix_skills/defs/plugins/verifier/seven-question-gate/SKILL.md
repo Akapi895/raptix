@@ -144,14 +144,16 @@ Verifier agent loads this skill BEFORE calling `update_objective`
 on a validated finding. Specifically:
 
 ```
-1. validate_finding(...) returns success
+1. validate_workspace_finding(...) returns success
 2. load_skill("/skills/verifier/seven-question-gate/SKILL.md")
-3. Walk through Q1-Q7 — write each answer to the finding's KG node:
-     kg_add_node(kind="vulnerability", key=<finding>,
-                 props={"gate_q1_scope": "yes",
-                        "gate_q2_impact": "yes",
-                        "gate_q3_poc_proves_impact": "yes",
-                        ...})
+3. Walk through Q1-Q7 — record each answer as a `kg_record`-shaped
+   observation in your return summary (the Verifier has no KG slot;
+   the orchestrator lane applies it to the graph):
+     {"kind": "Vulnerability", "key": <finding>,
+      "props": {"gate_q1_scope": "yes",
+                "gate_q2_impact": "yes",
+                "gate_q3_poc_proves_impact": "yes",
+                ...}}
 4. If all Q1-Q7 = yes → update_objective(status="completed")
 5. If any = no → update_objective(status="blocked",
                   notes="seven_question_gate: <Q#> failed: <reason>")

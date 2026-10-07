@@ -199,29 +199,18 @@ Confirm patch state from firmware version:
 
 ## Evidence
 
-```python
-kg_add_node(
-    kind="finding",
-    label=f"KRACK/FragAttacks: {cve_id} — {description}",
-    props={
-        "key": f"fragattacks::{bssid}::{cve_id}",
-        "severity": "high",   # Injection/decryption: critical; exposure only: high
-        "cve_ids": [cve_id],
-        "bssid": bssid,
-        "ssid": ssid,
-        "client_mac": client_mac,       # if client-side flaw
-        "flaw_type": flaw_type,         # "design" | "implementation"
-        "test_result": "SUCCESS",
-        "tool_output": tool_output_snippet,
-        "remediation": (
-            "Apply firmware/driver update from vendor. "
-            "For wpa_supplicant: upgrade to ≥2.10. "
-            "For mac80211: kernel ≥5.8 + security backports. "
-            "For custom RTOS: contact vendor for KRACK/FragAttacks patch "
-            "or isolate device from untrusted wireless clients."
-        ),
-    },
-)
+Note in your findings record (your role has no KG write tool — the
+orchestrator owns graph writes):
+
+```
+finding | KRACK/FragAttacks: <cve_id> — <description> | severity high |
+cve_ids <cve_id> | bssid <bssid> | ssid <ssid> | client_mac <client_mac> |
+flaw_type <design|implementation> | test_result SUCCESS |
+tool_output <tool_output_snippet> |
+remediation Apply firmware/driver update from vendor. For
+wpa_supplicant: upgrade to >=2.10. For mac80211: kernel >=5.8 +
+security backports. For custom RTOS: contact vendor for
+KRACK/FragAttacks patch or isolate device from untrusted wireless clients.
 ```
 
 ## ZFP

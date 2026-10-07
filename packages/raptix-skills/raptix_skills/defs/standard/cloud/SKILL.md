@@ -30,10 +30,14 @@ metadata:
 3. For each attached policy: fetch JSON and `iam_policy_audit`
 4. Feed Terraform state via `bash("aws s3 cp s3://bucket/terraform.tfstate -")` → `tfstate_audit`
 5. `bash("kubectl get pods -A -o json")` → `k8s_audit`
-6. Every privesc primitive → kg_add_node + chain edges
+6. Every privesc primitive → a `Vulnerability` observation in your
+   findings record (your role has no direct KG write tool; the
+   auto-ingest pipeline and orchestrator own graph writes)
 
 ## Workflow (post-SSRF)
 1. `metadata_endpoints("aws")` for the target cloud
 2. Pivot URL one at a time via the SSRF vector
-3. Confirmed creds → `credential` node + `leaks` edge from the SSRF vuln
-4. `plan_attack_chains(promote=True)` to see the full path
+3. Confirmed creds → noted in your findings record with the SSRF vuln
+   they leaked from (no direct KG write on this surface)
+4. Full-path review is the orchestrator's chain-planning job — hand
+   the primitive list back in your return summary

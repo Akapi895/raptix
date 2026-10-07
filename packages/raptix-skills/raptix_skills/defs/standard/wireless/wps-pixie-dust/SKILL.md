@@ -131,39 +131,20 @@ sudo reaver -i <mon-iface> -b <BSSID> -c <CHANNEL> -p <known_PIN> -vv
 
 ## Evidence
 
-```python
-kg_add_node(
-    kind="credential",
-    label=f"WiFi PSK for {ssid} (WPS Pixie-Dust)",
-    props={
-        "key": f"wifi-psk::{bssid}",
-        "secret_type": "wpa_psk",
-        "ssid": ssid,
-        "bssid": bssid,
-        "psk": psk,
-        "wps_pin": pin,
-        "attack_path": "wps-pixie-dust",
-        "recovered_at": "<iso8601>",
-        "source": "reaver+pixiewps",
-    },
-)
+Note both in your findings record (your role has no KG write tool —
+the orchestrator owns graph writes):
 
-kg_add_node(
-    kind="finding",
-    label="WPS Pixie-Dust Susceptible",
-    props={
-        "key": f"wps-pixie-dust::{bssid}",
-        "severity": "critical",
-        "wps_version": wps_version,
-        "chipset_guess": chipset,
-        "remediation": (
-            "Disable WPS entirely on the AP. If WPS must remain enabled, "
-            "upgrade firmware; WPS 2.0.4+ with secure random nonces mitigates "
-            "Pixie-Dust. Disable WPS PIN method; keep only WPS Push-Button "
-            "with physical access requirement."
-        ),
-    },
-)
+```
+credential | WiFi PSK for <ssid> (WPS Pixie-Dust) | secret_type wpa_psk |
+ssid <ssid> | bssid <bssid> | psk <psk> | wps_pin <pin> |
+attack_path wps-pixie-dust | recovered_at <iso8601> | source reaver+pixiewps
+
+finding | WPS Pixie-Dust Susceptible | severity critical |
+wps_version <wps_version> | chipset_guess <chipset> |
+remediation Disable WPS entirely on the AP. If WPS must remain
+enabled, upgrade firmware; WPS 2.0.4+ with secure random nonces
+mitigates Pixie-Dust. Disable WPS PIN method; keep only WPS
+Push-Button with physical access requirement.
 ```
 
 ## ZFP

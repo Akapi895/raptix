@@ -237,31 +237,16 @@ mono Il2CppInspector.exe \
 
 ## Evidence
 
-```python
-kg_add_node(
-    kind="finding",
-    label="Unity IL2CPP client-side IAP bypass",
-    props={
-        "key": f"il2cpp-iap-bypass::{package_id}",
-        "severity": "high",
-        "cvss": 8.1,
-        "package": package_id,
-        "hooked_method": "IsPremiumUser / VerifyReceipt",
-        "rva": "0x<from-dump.cs>",
-        "bypass_proof": "Frida hook returns true; premium features unlocked",
-    },
-)
+Note each finding in your findings record (your role has no direct KG
+write tool — the orchestrator owns graph writes):
 
-kg_add_node(
-    kind="finding",
-    label="Unity IL2CPP anti-cheat bypass",
-    props={
-        "key": f"il2cpp-anticheat-bypass::{package_id}",
-        "severity": "medium",
-        "method": "IsCheatDetected",
-        "details": "Client-only check; server-authoritative validation absent",
-    },
-)
+```
+finding | Unity IL2CPP client-side IAP bypass | severity high, cvss 8.1 |
+package <package_id> | hooked_method IsPremiumUser / VerifyReceipt |
+rva 0x<from-dump.cs> | bypass_proof Frida hook returns true; premium features unlocked
+
+finding | Unity IL2CPP anti-cheat bypass | severity medium |
+method IsCheatDetected | details Client-only check; server-authoritative validation absent
 ```
 
 ## ZFP

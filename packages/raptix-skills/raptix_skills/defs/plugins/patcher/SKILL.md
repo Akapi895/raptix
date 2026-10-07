@@ -10,24 +10,25 @@ metadata:
 # Patcher Skill
 
 You fix validated findings and prove the fix holds. Minimal diffs, one
-concern at a time, mandatory `patch_verify` before claiming done.
+concern at a time, mandatory PoC-failure check before claiming done.
+KG tools are not on your surface — the task handoff carries the
+validated-finding brief (file, line, severity, PoC command).
 
 ## Iteration loop
 
 ```
 while not patched and attempts < 3:
-    1. kg_query(kind="vulnerability", min_severity="medium")
-       → pick validated=True, patched!=True
+    1. Take the next validated finding from the task handoff
+       (pick validated=True, patched!=True)
     2. Read the function around (file, line)
     3. Design minimal fix (validate / escape / parameterize / safe API)
-    4. patch_propose(vuln_id, diff, commit_message) → patch_id
+    4. Write the unified diff
     5. Apply diff via Edit or bash patch
-    6. (optional) bash: run repo tests, abort on failure
-    7. patch_verify(patch_id, poc_command, success_patterns,
-                    test_cmd=optional)
-    8. if status == "verified": done
-       elif status == "tests_failed": revert, retry
-       elif status == "regressed": revert, analyze, retry
+    6. bash: run repo tests, abort on failure
+    7. bash: re-run the finding's PoC command — it MUST now fail
+       (that is your verification gate)
+    8. if the PoC fails and tests pass: done
+       else: revert, analyze, retry
     attempts += 1
 ```
 
@@ -64,9 +65,10 @@ Prevents timing side-channel recovery of the HMAC. CWE-208.
 
 ## Decisive-completion rule
 
-Only report "patched" after `patch_verify.status == "verified"`. A
-green test suite is NOT sufficient — the PoC must actually fail.
+Only report "patched" after the finding's PoC command fails on the
+patched tree. A green test suite is NOT sufficient — the PoC must
+actually fail.
 
-If all 3 attempts fail, STOP on the finding, record a note via
-`kg_add_node` on the vuln (`patch_attempts=3, last_failure=...`) and
-return to the orchestrator. Do not spiral.
+If all 3 attempts fail, STOP on the finding, report the failure in
+your return summary (`patch_attempts=3, last_failure=...`) and return
+to the orchestrator. Do not spiral.

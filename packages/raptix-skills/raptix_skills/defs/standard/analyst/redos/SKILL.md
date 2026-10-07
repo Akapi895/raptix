@@ -221,8 +221,9 @@ ReDoS alone is a DoS primitive. Promote via:
 - If the regex also leaks match groups (regex injection) → dual vuln class
 
 ```
-kg_add_node("vulnerability", "ReDoS in /api/validate::input",
-  props={"pattern": "(a+)+$", "file": "api/validators.py", "line": 42,
-         "cwe": "CWE-1333", "evil_input_len": 10000, "evil_time_s": 12.3,
-         "key": "redos:api-validate-input"})
+kg_record('[{"kind": "Vulnerability", "key": "redos:api-validate-input",
+  "label": "ReDoS in /api/validate::input",
+  "props": {"pattern": "(a+)+$", "file": "api/validators.py", "line": 42,
+            "cwe": "CWE-1333", "evil_input_len": 10000,
+            "evil_time_s": 12.3}}]')
 ```

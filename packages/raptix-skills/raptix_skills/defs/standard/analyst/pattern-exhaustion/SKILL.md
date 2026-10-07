@@ -53,18 +53,17 @@ Run the search. For EACH hit:
 1. Check: is this the SAME pattern as the confirmed vuln?
 2. Check: is there a mitigation the original instance lacked?
 3. Check: is this in test/fixture/example code? (reject if so)
-4. If potentially exploitable, create a HYPOTHESIS node:
+4. If potentially exploitable, record a HYPOTHESIS observation:
 
 ```
-kg_add_node("hypothesis", "Missing ownership check in DELETE /api/v2/unaccess",
-  props={"pattern": "missing_ownership_validation", "file": "api/routes.py",
-  "line": 87, "related_finding": "<original_finding_id>",
-  "key": "api/routes.py:handle_unaccess:missing_ownership"})
-```
-
-Link to the original vulnerability:
-```
-kg_add_edge(new_hypothesis_id, original_vuln_id, "chains_to", weight=0.3)
+kg_record('[{"kind": "Hypothesis",
+  "key": "api/routes.py:handle_unaccess:missing_ownership",
+  "label": "Missing ownership check in DELETE /api/v2/unaccess",
+  "props": {"pattern": "missing_ownership_validation",
+            "file": "api/routes.py", "line": 87,
+            "related_finding": "<original_finding_id>"},
+  "edges_out": [{"to_key": "<original_vuln_key>",
+                 "kind": "DERIVED_FROM", "weight": 0.3}]}]')
 ```
 
 ### 3. Prioritize by impact
@@ -91,9 +90,11 @@ Stop the pattern search when:
 
 Record the exhaustion state:
 ```
-kg_add_node("hypothesis", "pattern exhaustion complete: missing_ownership",
-  props={"pattern": "missing_ownership_validation", "status": "exhausted",
-  "total_instances": 15, "confirmed": 4, "rejected": 11})
+kg_record('[{"kind": "Hypothesis",
+  "key": "pattern-exhaustion::missing_ownership",
+  "label": "pattern exhaustion complete: missing_ownership",
+  "props": {"pattern": "missing_ownership_validation", "status": "exhausted",
+            "total_instances": 15, "confirmed": 4, "rejected": 11}}]')
 ```
 
 ## Graph Structure

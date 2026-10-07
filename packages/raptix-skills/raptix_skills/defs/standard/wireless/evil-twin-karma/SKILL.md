@@ -186,40 +186,20 @@ tshark -r /tmp/probes-01.cap -Y "wlan.fc.type_subtype == 4" \
 
 ## Evidence
 
-```python
-# Portal-captured credential
-kg_add_node(
-    kind="credential",
-    label=f"Captive portal PSK for {ssid}",
-    props={
-        "key": f"portal-cred::{bssid}::{client_mac}",
-        "secret_type": "wpa_psk_phished",
-        "ssid": ssid,
-        "bssid": bssid,
-        "client_mac": client_mac,
-        "psk": psk,
-        "portal_template": template_name,
-        "captured_at": "<iso8601>",
-        "source": "wifiphisher-portal",
-    },
-)
+Note both in your findings record (your role has no KG write tool —
+the orchestrator owns graph writes):
 
-# PNL leak finding
-kg_add_node(
-    kind="finding",
-    label="Client PNL Probe Leakage — Evil-Twin Viable",
-    props={
-        "key": f"pnl-leak::{client_mac}",
-        "severity": "high",
-        "exposed_ssids": [<ssid_list>],
-        "client_mac": client_mac,
-        "remediation": (
-            "Enable MAC randomization and disable 'auto-connect' for "
-            "saved networks. Use WPA3 with Protected Management Frames "
-            "to prevent deauth-driven roaming."
-        ),
-    },
-)
+```
+credential | Captive portal PSK for <ssid> | secret_type wpa_psk_phished |
+ssid <ssid> | bssid <bssid> | client_mac <client_mac> | psk <psk> |
+portal_template <template_name> | captured_at <iso8601> |
+source wifiphisher-portal
+
+finding | Client PNL Probe Leakage — Evil-Twin Viable | severity high |
+exposed_ssids <ssid_list> | client_mac <client_mac> |
+remediation Enable MAC randomization and disable 'auto-connect' for
+saved networks. Use WPA3 with Protected Management Frames to prevent
+deauth-driven roaming.
 ```
 
 ## ZFP

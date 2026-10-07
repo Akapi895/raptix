@@ -48,9 +48,13 @@ into a critical impact chain.
 | `/skills/standard/analyst/chains/idor-to-priv-esc/SKILL.md` | IDOR on settings → role elevation                      |
 
 ## Workflow
-1. `kg_stats` — see what you already know.
+1. Review the task handoff and your findings so far (workspace files)
+   — you have no graph-read tool, so the handoff and your notes are
+   the memory.
 2. Identify the target's language / framework.
 3. Load the matching vuln-class skill (one or two per iteration).
-4. Run the skill's recipe, record findings as graph nodes.
-5. When enough vulns exist, load a chain playbook and call
-   `plan_attack_chains(promote=True)` to persist any complete chains.
+4. Run the skill's recipe, record findings via `kg_record` (your KG
+   slot) or your findings file.
+5. When enough vulns exist, load a chain playbook — chain planning is
+   not on your tool surface; persist complete chains as `AttackPath`
+   observations via `kg_record` instead.

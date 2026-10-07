@@ -105,11 +105,10 @@ A claimed S3 bucket on an org subdomain gives:
   configured, otherwise it's an HTTP-only takeover (still bad)
 
 ## 6. Promote
-```
-kg_add_node(kind="vulnerability", label="S3 takeover: <subdomain>",
-            props={"severity":"high","bucket":"<bucket>","region":"<region>"})
-kg_add_edge(src=<vuln>, dst=<crown_jewel:org-domain>, kind="grants-impersonation")
-```
+Note in your findings record (your role has no direct KG write tool —
+the auto-ingest pipeline and the orchestrator own graph writes):
+`S3 takeover: <subdomain>` (severity high, bucket <bucket>,
+region <region>) granting impersonation of the org domain.
 
 ## CVSS
 - Subdomain with active OAuth flow / cookie scope: `CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:H/I:H/A:N` = 8.7

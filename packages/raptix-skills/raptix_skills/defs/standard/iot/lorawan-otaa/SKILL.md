@@ -221,17 +221,14 @@ sha256sum "$EVIDENCE"/* >> "$EVIDENCE/sha256.txt"
 ```
 
 ```python
-kg_add_node(
-    kind="finding",
-    label=f"LoRaWAN AppKey extracted for DevEUI={dev_eui_hex}",
-    props={
-        "key": f"lorawan-otaa::{dev_eui_hex}",
-        "dev_eui": dev_eui_hex,
-        "app_eui": app_eui_hex,
-        "app_key": app_key_hex,
-        "abp_fcnt_disabled": abp_fcnt_disabled,
-        "source": "firmware-extraction+laf",
-    },
+kg_record(
+    '[{"kind": "Finding", "key": f"lorawan-otaa::{dev_eui_hex}",'
+    '  "label": f"LoRaWAN AppKey extracted for DevEUI={dev_eui_hex}",'
+    '  "props": {"dev_eui": dev_eui_hex,'
+    '            "app_eui": app_eui_hex,'
+    '            "app_key": app_key_hex,'
+    '            "abp_fcnt_disabled": abp_fcnt_disabled,'
+    '            "source": "firmware-extraction+laf"}}]'
 )
 ```
 

