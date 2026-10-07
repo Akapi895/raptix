@@ -23,22 +23,54 @@ from raptix.execution.capabilities.eligibility import (
     EligibilityEvaluator,
     RequirementEvaluator,
 )
+from raptix.execution.capabilities.health import (
+    CapabilityHealth,
+    ImplementationHealth,
+    PlacementHealthChecker,
+    ProbeFailureReason,
+)
+from raptix.execution.capabilities.inventory import (
+    UndeclaredClaim,
+    build_coverage_inventory,
+    collect_provenance,
+    undeclared_claims,
+    write_coverage_report,
+)
 from raptix.execution.capabilities.provenance import build_execution_provenance
 from raptix.execution.capabilities.registry import (
     CapabilityRegistry,
     UnknownCapabilityError,
     health_check,
 )
+from raptix.execution.capabilities.tool_versions import (
+    build_tool_provenance,
+    parse_tool_versions_tsv,
+    provenance_for_tool,
+    tool_version_from_manifest,
+)
 
 __all__ = [
     "AvailabilityEvaluator",
+    "CapabilityHealth",
     "CapabilityRegistry",
     "EligibilityEvaluator",
     "ExecutorProbe",
+    "ImplementationHealth",
+    "PlacementHealthChecker",
+    "ProbeFailureReason",
     "RequirementEvaluator",
+    "UndeclaredClaim",
     "UnknownCapabilityError",
     "WorkerRegistryCheck",
     "build_catalog",
+    "build_coverage_inventory",
     "build_execution_provenance",
+    "build_tool_provenance",
+    "collect_provenance",
     "health_check",
+    "parse_tool_versions_tsv",
+    "provenance_for_tool",
+    "tool_version_from_manifest",
+    "undeclared_claims",
+    "write_coverage_report",
 ]

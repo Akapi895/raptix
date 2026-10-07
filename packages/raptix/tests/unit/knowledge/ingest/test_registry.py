@@ -55,7 +55,7 @@ class _StaticParser:
 
 
 class TestBuiltinRegistration:
-    def test_all_twelve_formats_registered(self) -> None:
+    def test_all_twenty_one_formats_registered(self) -> None:
         assert {p.format_id for p in default_registry().parsers()} == {
             "nmap_xml",
             "nuclei_jsonl",
@@ -69,6 +69,15 @@ class TestBuiltinRegistration:
             "testssl",
             "crackmapexec",
             "asrep_hashes",
+            "sqlmap_log",
+            "nikto_txt",
+            "impacket_txt",
+            "responder_log",
+            "john_pot",
+            "snmpwalk_txt",
+            "slither_json",
+            "peas_txt",
+            "pspy_log",
         }
 
     def test_parsers_sorted_by_format_id(self) -> None:
@@ -94,7 +103,7 @@ class TestExplicitResolution:
             default_registry().resolve(_artifact(self.NMAP), self.NMAP, expected_formats=("sarif",))
 
     def test_expected_formats_skip_unregistered_ids_to_find_a_registered_one(self) -> None:
-        """The first id WITH a registered parser wins — an earlier,
+        """The first id WITH a registered parser wins â€” an earlier,
         unregistered candidate must not short-circuit the whole list."""
         parser = default_registry().resolve(
             _artifact(self.NMAP), self.NMAP, expected_formats=("sarif", "nmap_xml")
@@ -226,4 +235,4 @@ def test_register_default_parsers_is_idempotent() -> None:
     registry = ParserRegistry()
     register_default_parsers(registry)
     register_default_parsers(registry)
-    assert len(registry.parsers()) == 12
+    assert len(registry.parsers()) == 21

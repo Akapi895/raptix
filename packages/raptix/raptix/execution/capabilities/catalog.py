@@ -75,14 +75,16 @@ def _builtin(impl_id: str, carrier: str, *, adapter_id: str | None = None) -> Im
     )
 
 
-def _binary(impl_id: str, adapter_id: str, executable: str) -> ImplementationSpec:
-    """A T7 binary-backed ADAPTER implementation (sandbox base profile)."""
+def _binary(
+    impl_id: str, adapter_id: str, executable: str, *, profile: str = "base"
+) -> ImplementationSpec:
+    """A T7 binary-backed ADAPTER implementation (declared sandbox profile)."""
     return ImplementationSpec(
         id=impl_id,
         kind=ImplementationKind.ADAPTER,
         adapter_id=adapter_id,
         executable=executable,
-        profile="base",
+        profile=profile,
     )
 
 
@@ -388,6 +390,15 @@ def build_catalog() -> tuple[CapabilityManifest, ...]:
             ),
             implementations=(
                 _binary("access.move_laterally.impacket", "ad.impacket.lateral", "impacket-psexec"),
+                # TC-2: same semantic capability, second implementation —
+                # NetExec SMB command execution in the opt-in AD profile.
+                # The reason ExecutionSpec.implementation_id is REQUIRED.
+                _binary(
+                    "access.move_laterally.netexec",
+                    "ad.netexec",
+                    "nxc",
+                    profile="sandbox-ad",
+                ),
             ),
             outputs=("impacket_txt",),
             risk_class=RiskClass.HIGH,
@@ -434,6 +445,129 @@ def build_catalog() -> tuple[CapabilityManifest, ...]:
                 _binary("network.capture_ntlm.responder", "ad.responder", "responder"),
             ),
             outputs=("responder_log",),
+            risk_class=RiskClass.HIGH,
+            parallel_safe=False,
+        ),
+        CapabilityManifest(
+            id=CapabilityId("web.scan_templates"),
+            schema_version=1,
+            description=(
+                "Template-driven vulnerability scan of one URL (nuclei, "
+                "JSONL report). Requires the opt-in sandbox-web profile."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("recon"), RoleId("exploit"), RoleId("analyst")),
+            implementations=(
+                _binary(
+                    "web.scan_templates.nuclei",
+                    "web.nuclei",
+                    "nuclei",
+                    profile="sandbox-web",
+                ),
+            ),
+            outputs=("nuclei_jsonl",),
+            risk_class=RiskClass.MEDIUM,
+        ),
+        # ── TC-5: offline credential recovery (sandbox-credentials) ──
+        CapabilityManifest(
+            id=CapabilityId("access.crack_hash"),
+            schema_version=1,
+            description=(
+                "Offline dictionary recovery of extracted credential "
+                "hashes with a pinned wordlist (john). Requires the "
+                "opt-in sandbox-credentials profile."
+            ),
+            phase_affinity=("network_propagation", "action_on_objectives"),
+            allowed_roles=(RoleId("exploit"),),
+            requirements=(
+                RequirementSpec(
+                    id="credential.available",
+                    kind=RequirementKind.CREDENTIAL,
+                    description=(
+                        "the hash material to crack was extracted and "
+                        "placed in the sandbox workspace"
+                    ),
+                ),
+            ),
+            implementations=(
+                _binary(
+                    "access.crack_hash.john",
+                    "credentials.john",
+                    "john",
+                    profile="sandbox-credentials",
+                ),
+            ),
+            outputs=("john_pot",),
+            risk_class=RiskClass.CRITICAL,
+            parallel_safe=False,
+        ),
+        # ── TC-7: sandbox-placed SNMP enumeration ─────────────────────
+        CapabilityManifest(
+            id=CapabilityId("network.snmp_enumerate"),
+            schema_version=1,
+            description=(
+                "Enumerate SYSTEM and interface MIB data on one appliance "
+                "via snmpwalk (v1/v2c community, v3 typed USM). Requires "
+                "the opt-in sandbox-network-extra profile."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("recon"), RoleId("exploit")),
+            implementations=(
+                _binary(
+                    "network.snmp_enumerate.snmpwalk",
+                    "network.snmpwalk",
+                    "snmpwalk",
+                    profile="sandbox-network-extra",
+                ),
+            ),
+            outputs=("snmpwalk_txt",),
+            risk_class=RiskClass.MEDIUM,
+        ),
+        # ── TC-8: real static analyzer for contract audit ─────────────
+        CapabilityManifest(
+            id=CapabilityId("contracts.audit_static"),
+            schema_version=1,
+            description=(
+                "Static Solidity analysis with the pinned slither binary "
+                "(JSON report). Requires the opt-in sandbox-contracts "
+                "profile; the offline pattern scanner stays the "
+                "zero-dependency tier."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("analyst"), RoleId("reverser")),
+            implementations=(
+                _binary(
+                    "contracts.audit_static.slither",
+                    "contracts.slither",
+                    "slither",
+                    profile="sandbox-contracts",
+                ),
+            ),
+            outputs=("slither_json",),
+            risk_class=RiskClass.LOW,
+        ),
+        # ── TC-6: BloodHound collection (code-complete; live ingest
+        # verification needs a controlled AD fixture) ─────────────────
+        CapabilityManifest(
+            id=CapabilityId("ad.collect_bloodhound"),
+            schema_version=1,
+            description=(
+                "Collect SharpHound-compatible AD data via NetExec's "
+                "BloodHound module; the ZIP feeds the existing "
+                "bhce_ingest_zip pipeline. Requires the opt-in "
+                "sandbox-ad profile."
+            ),
+            phase_affinity=("initial_foothold",),
+            allowed_roles=(RoleId("ad_operator"),),
+            implementations=(
+                _binary(
+                    "ad.collect_bloodhound.netexec",
+                    "ad.netexec.bloodhound",
+                    "nxc",
+                    profile="sandbox-ad",
+                ),
+            ),
+            outputs=("crackmapexec",),
             risk_class=RiskClass.HIGH,
             parallel_safe=False,
         ),

@@ -1,23 +1,23 @@
-"""Adapter layer foundations (Wave T7 of the tool-optimization plan).
+﻿"""Adapter layer foundations (Wave T7 of the tool-optimization plan).
 
 An adapter translates one :class:`CapabilityRequest` into the
-:class:`ExecutionSpec` a sandbox executor runs — nothing more. It never
+:class:`ExecutionSpec` a sandbox executor runs â€” nothing more. It never
 executes, never parses output, and never swallows errors: execution
 belongs to the sandbox dispatch (where the RoE / authorization /
 SafeCommand guards live) and output normalization belongs to the T3
 ``ParserRegistry``. Splitting those concerns is the whole point of the
-wave: the adapter is the deterministic, unit-testable WHAT→HOW step.
+wave: the adapter is the deterministic, unit-testable WHATâ†’HOW step.
 
 The :class:`CommandAdapter` base covers the ``ExecutorKind.COMMAND``
 shape every binary-backed adapter shares:
 
-* ``payload`` is ``{"argv": [...]}`` — the executor receives the argv
+* ``payload`` is ``{"argv": [...]}`` â€” the executor receives the argv
   as a list and must run it without a shell. Adapters therefore reject
   whitespace / control characters in single-token parameters and offer
   no raw-argument escape hatch: unknown request parameters are IGNORED
   (a planner asking for ``extra_args`` gets nothing), known ones are
   validated up front and raise :class:`AdapterParameterError`.
-* ``implementation_id`` is passed in by the resolver — it must be the
+* ``implementation_id`` is passed in by the resolver â€” it must be the
   ``ImplementationSpec.id`` the resolver actually resolved (frozen T2
   contract), not a value the adapter invents.
 * ``expected_artifact_formats`` names the output format ids the binary
@@ -47,7 +47,7 @@ class AdapterParameterError(ValueError):
 
 @runtime_checkable
 class ToolAdapter(Protocol):
-    """Contract for one deterministic capability→executor translation.
+    """Contract for one deterministic capabilityâ†’executor translation.
 
     Identity metadata is class-level (one adapter class serves one
     capability/binary pair). ``is_available`` answers the
@@ -84,12 +84,12 @@ def str_param(
     """Fetch and validate one string parameter.
 
     Rejects non-strings, empty values, control characters, and (unless
-    ``allow_spaces``) any whitespace — argv elements are single tokens.
+    ``allow_spaces``) any whitespace â€” argv elements are single tokens.
 
     Also rejects a leading ``-`` unless ``allow_leading_dash=True``. A
     value built into an argv list as a bare positional (e.g. ``target``,
     a principal string) that starts with ``-`` can be misread by the
-    binary's own argument parser as a flag rather than a value —
+    binary's own argument parser as a flag rather than a value â€”
     argument injection, distinct from shell injection (no shell is
     invoked here) but still lets a planner smuggle an unintended flag
     into the command. No current adapter parameter legitimately needs a
@@ -176,7 +176,7 @@ def str_list_param(
 def artifact_name_param(request: CapabilityRequest, key: str, *, default: str) -> str:
     """A flat artifact filename inside the sandbox workspace.
 
-    No directories, no traversal — the executor's fresh working
+    No directories, no traversal â€” the executor's fresh working
     directory is the only place an adapter names.
     """
     value = str_param(request, key, default=default, required=False)
@@ -257,16 +257,22 @@ class CommandAdapter:
 
 
 def adapter_classes() -> tuple[type[CommandAdapter], ...]:
-    """Every binary-backed adapter shipped with the runtime (T7)."""
+    """Every binary-backed adapter shipped with the runtime (T7 + TC-2/5/7/8)."""
+    from raptix.execution.adapters.ad.bloodhound_collect import NetExecBloodHoundAdapter
     from raptix.execution.adapters.ad.impacket import (
         ImpacketCredentialDumpAdapter,
         ImpacketLateralMoveAdapter,
     )
+    from raptix.execution.adapters.ad.netexec import NetExecAdapter
     from raptix.execution.adapters.ad.responder import ResponderAdapter
+    from raptix.execution.adapters.contracts.slither import SlitherAdapter
+    from raptix.execution.adapters.credentials.john import JohnAdapter
     from raptix.execution.adapters.network.nmap import NmapAdapter
+    from raptix.execution.adapters.network.snmpwalk import SnmpwalkAdapter
     from raptix.execution.adapters.network.subfinder import SubfinderAdapter
     from raptix.execution.adapters.web.gobuster import GobusterAdapter
     from raptix.execution.adapters.web.nikto import NiktoAdapter
+    from raptix.execution.adapters.web.nuclei import NucleiAdapter
     from raptix.execution.adapters.web.sqlmap import SqlmapAdapter
 
     return (
@@ -275,7 +281,13 @@ def adapter_classes() -> tuple[type[CommandAdapter], ...]:
         SqlmapAdapter,
         GobusterAdapter,
         NiktoAdapter,
+        NucleiAdapter,
         ImpacketLateralMoveAdapter,
         ImpacketCredentialDumpAdapter,
+        NetExecAdapter,
         ResponderAdapter,
+        NetExecBloodHoundAdapter,
+        JohnAdapter,
+        SnmpwalkAdapter,
+        SlitherAdapter,
     )
