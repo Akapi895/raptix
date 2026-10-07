@@ -328,6 +328,86 @@ def _verify_image_provenance(args: argparse.Namespace) -> dict[str, str]:
     return result
 
 
+PROTOCOL_KINDS = ("hint", "interference", "proceed")
+
+
+def _load_protocol(path: Path) -> list[dict[str, Any]]:
+    """Parse + validate the operator-injection protocol (plan D7).
+
+    One JSON object per line:
+      {"turn": <int>, "kind": "hint"|"interference"|"proceed",
+       "text": str, "source": str?}
+
+    Delivery semantics (deterministic, enforced by the turn loop):
+      turn == -1  kind must be "proceed" — the standing-approval message
+                  sent between every turn (legacy --proceed-file).
+      turn == 0   appended to the kickoff prompt, in file order.
+      turn >= 1   REPLACES the standing message for exactly that turn.
+    Duplicate turns (>= 1) or unknown kinds are a hard parse error: a
+    silently-dropped injection is a corrupt experiment.
+    """
+    records: list[dict[str, Any]] = []
+    seen_turns: set[int] = set()
+    for lineno, line in enumerate(path.read_text(encoding="utf-8").splitlines(), start=1):
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise SystemExit(f"{path}:{lineno}: invalid JSON: {exc}") from exc
+        if not isinstance(rec, dict):
+            raise SystemExit(f"{path}:{lineno}: expected a JSON object")
+        turn = rec.get("turn")
+        kind = rec.get("kind")
+        text = rec.get("text")
+        if not isinstance(turn, int) or isinstance(turn, bool):
+            raise SystemExit(f"{path}:{lineno}: 'turn' must be an int")
+        if kind not in PROTOCOL_KINDS:
+            raise SystemExit(
+                f"{path}:{lineno}: 'kind' must be one of {PROTOCOL_KINDS}, got {kind!r}"
+            )
+        if not isinstance(text, str) or not text.strip():
+            raise SystemExit(f"{path}:{lineno}: 'text' must be a non-empty string")
+        if turn == -1:
+            if kind != "proceed":
+                raise SystemExit(f"{path}:{lineno}: turn -1 is reserved for kind 'proceed'")
+        elif turn >= 1:
+            if turn in seen_turns:
+                raise SystemExit(f"{path}:{lineno}: duplicate injection for turn {turn}")
+            seen_turns.add(turn)
+        elif turn != 0:
+            raise SystemExit(f"{path}:{lineno}: turn must be -1, 0, or a positive int")
+        records.append(
+            {
+                "turn": turn,
+                "kind": kind,
+                "text": text,
+                "source": str(rec.get("source", "")),
+            }
+        )
+    return records
+
+
+def _merge_protocol(records: list[dict[str, Any]], proceed_text: str) -> list[dict[str, Any]]:
+    """Attach the standing-approval record; refuse conflicting sources."""
+    if any(r["turn"] == -1 for r in records):
+        raise SystemExit(
+            "conflicting standing-approval sources: --proceed-file and a turn=-1 "
+            "record in --protocol-file; pick one."
+        )
+    return records + [
+        {"turn": -1, "kind": "proceed", "text": proceed_text, "source": "--proceed-file"}
+    ]
+
+
+def _injection_for_turn(scheduled: dict[int, dict[str, Any]], proceed_text: str, turn: int) -> str:
+    """Text for the message that starts ``turn``: a scheduled injection if one
+    targets this exact turn, else the standing approval."""
+    record = scheduled.get(turn)
+    return record["text"] if record else proceed_text
+
+
 def _reset_kg(args: argparse.Namespace, trace_dir: Path) -> str:
     """Opt-in clean graph for this engagement slice before turn 1.
 
@@ -366,7 +446,24 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--container-workspace", required=True, help="e.g. /workspace/lab-silentium-01")
     p.add_argument("--target", required=True)
     p.add_argument("--prompt-file", required=True, type=Path)
-    p.add_argument("--proceed-file", required=True, type=Path)
+    p.add_argument(
+        "--proceed-file",
+        required=True,
+        type=Path,
+        help="Standing-approval message sent between turns (legacy form of a "
+        "turn=-1 'proceed' record; prefer --protocol-file for auditable injections).",
+    )
+    p.add_argument(
+        "--protocol-file",
+        default=None,
+        type=Path,
+        help=(
+            "JSONL of operator injections {turn, kind: hint|interference|proceed, "
+            "text, source?}. turn 0 appends to the kickoff; turn >= 1 replaces the "
+            "standing message for that turn; turn -1 is the standing approval. "
+            "Copied verbatim to input/protocol.jsonl and counted in the summary."
+        ),
+    )
     p.add_argument("--plan-dir", default=None, type=Path, help="roe/conops/deconfliction json dir")
     p.add_argument("--out-dir", required=True, type=Path, help="Base dir holding per-run dirs.")
     p.add_argument("--max-turns", type=int, default=60)
@@ -437,9 +534,7 @@ async def _amain(
         d.mkdir(parents=True, exist_ok=True)
 
     kickoff = args.prompt_file.read_text(encoding="utf-8")
-    proceed = args.proceed_file.read_text(encoding="utf-8")
     (run_dir / "input" / "prompt.txt").write_text(kickoff, encoding="utf-8")
-    (run_dir / "input" / "proceed.txt").write_text(proceed, encoding="utf-8")
     scope = {
         "engagement": args.engagement,
         "container_workspace": args.container_workspace,
@@ -470,6 +565,15 @@ async def _amain(
     await _api(lambda: client.threads.create(thread_id=thread_id), timeout=30)
     _log(f"thread {thread_id} created")
 
+    # Injection schedule (plan D7): turn-0 records append to the kickoff;
+    # turn >= 1 records replace the standing message for that exact turn;
+    # turn -1 is the standing approval used everywhere else.
+    records = getattr(args, "protocol_records", [])
+    turn0_texts = [r["text"] for r in records if r["turn"] == 0]
+    scheduled = {r["turn"]: r for r in records if r["turn"] >= 1}
+    proceed_text = next((r["text"] for r in records if r["turn"] == -1), "")
+    if turn0_texts:
+        kickoff = kickoff + "\n\n" + "\n\n".join(turn0_texts)
     config = {
         "configurable": {
             "engagement_name": args.engagement,
@@ -574,7 +678,15 @@ async def _amain(
                 status = "stalled"
                 break
             prev_sig = signature
-            next_input = {"messages": [{"role": "human", "content": proceed}]}
+            next_turn = turns + 1
+            injection_record = scheduled.get(next_turn)
+            injection = _injection_for_turn(scheduled, proceed_text, next_turn)
+            if injection_record:
+                _log(
+                    f"injection applied at turn {next_turn}: "
+                    f"kind={injection_record['kind']} source={injection_record['source']!r}"
+                )
+            next_input = {"messages": [{"role": "human", "content": injection}]}
 
     stop.set()
     snap_task.cancel()
@@ -678,6 +790,9 @@ async def _amain(
         "root_txt_mentioned": "root.txt" in transcript_text,
         "workspace_capture": ws_note,
         "api_reachable": api_ok,
+        "injections": {
+            kind: sum(1 for r in records if r["kind"] == kind) for kind in PROTOCOL_KINDS
+        },
         "capture_channels": capture_channels,
     }
     (run_dir / "summary.json").write_text(
@@ -697,6 +812,38 @@ def main(argv: list[str] | None = None) -> int:
         if not src.is_file():
             print(f"missing {name}: {src}", file=sys.stderr)
             return 1
+
+    # Operator-injection accounting (plan D7): every run ships exactly one
+    # input/protocol.jsonl. A --protocol-file is copied verbatim; the legacy
+    # --proceed-file is normalized into a turn=-1 proceed record so old
+    # invocations land in the same audit trail. The two forms conflict.
+    protocol_records: list[dict[str, Any]] = []
+    if args.protocol_file:
+        if not args.protocol_file.is_file():
+            print(f"missing protocol file: {args.protocol_file}", file=sys.stderr)
+            return 1
+        protocol_records = _load_protocol(args.protocol_file)
+        shutil.copy2(args.protocol_file, run_dir / "input" / "protocol.jsonl")
+    proceed = args.proceed_file.read_text(encoding="utf-8")
+    (run_dir / "input" / "proceed.txt").write_text(proceed, encoding="utf-8")
+    if any(r["turn"] == -1 for r in protocol_records):
+        print(
+            "conflicting standing-approval sources: --proceed-file and a turn=-1 "
+            "record in --protocol-file; pick one.",
+            file=sys.stderr,
+        )
+        return 1
+    if not args.protocol_file:
+        legacy = {
+            "turn": -1,
+            "kind": "proceed",
+            "text": proceed,
+            "source": "--proceed-file",
+        }
+        (run_dir / "input" / "protocol.jsonl").write_text(
+            json.dumps(legacy) + "\n", encoding="utf-8"
+        )
+    args.protocol_records = _merge_protocol(protocol_records, proceed)
 
     manifest = {
         "runner": "tests/local/harnesses/lab_run.py",
@@ -733,6 +880,13 @@ def main(argv: list[str] | None = None) -> int:
         "roe_enforcement": (
             "audit-only (plan/roe.json ships no machine_enforcement block); "
             "scope enforced by single-target prompt + operator monitoring"
+        ),
+        "injections": {
+            kind: sum(1 for r in args.protocol_records if r["kind"] == kind)
+            for kind in PROTOCOL_KINDS
+        },
+        "protocol_sha256": _sha256_text(
+            (run_dir / "input" / "protocol.jsonl").read_text(encoding="utf-8")
         ),
     }
     try:
