@@ -309,31 +309,26 @@ def get_sandbox(config: RunnableConfig | None = None) -> HTTPSandbox | None:
 
 
 def _engagement_fence(workspace_path: str) -> str:
-    """Enforce the cross-engagement workspace fence.
-
-    When ``RAPTIX_ENGAGEMENT`` is set, every resolved workspace must live
-    inside ``/workspace/<slug>/`` — including the shared ``/workspace``
-    root, which is the tree every engagement sees when no per-engagement
-    bind-mount is in play. Violations raise instead of silently falling
-    back: a wrong workspace_path in the run config is a misconfiguration
-    worth surfacing, and a silent re-route to the engagement dir would
-    mask exactly the cross-engagement reads the fence exists to prevent.
-    With the env unset (legacy / dev), behavior is unchanged.
-    """
+    """A named engagement requires the operator's isolated /workspace mount."""
     slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
     if not slug:
         return workspace_path
-    normalized_slug_path = SandboxBase._normalize_workspace_path(f"/workspace/{slug}")
-    if normalized_slug_path == "/workspace":
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", slug):
         raise RuntimeError(
             f"RAPTIX_ENGAGEMENT={slug!r} is not a valid engagement slug; "
             "bash tools refuse to resolve a workspace without a fenced subtree. "
             "Set RAPTIX_ENGAGEMENT to a [A-Za-z0-9][A-Za-z0-9._-]{0,127} slug."
         )
-    fence_slug = normalized_slug_path[len("/workspace/") :]
-    error = SandboxBase.engagement_fence_error(workspace_path, fence_slug)
-    if error is not None:
-        raise RuntimeError(error)
+    if os.environ.get("RAPTIX_WORKSPACE_ISOLATED") != "1":
+        raise RuntimeError(
+            f"engagement {slug!r} requires an isolated workspace bind mount; "
+            "recreate the stack with RAPTIX_ENGAGEMENT_WORKSPACE set to its host directory"
+        )
+    if workspace_path != "/workspace":
+        raise RuntimeError(
+            f"workspace {workspace_path!r} is outside engagement {slug!r}'s runtime root; "
+            "the engagement is mounted at /workspace. Set workspace_path=/workspace."
+        )
     return workspace_path
 
 
@@ -346,7 +341,9 @@ def _raw_workspace_path_from_config(config: RunnableConfig | None) -> str:
     workspace = configurable.get("workspace_path") if isinstance(configurable, dict) else None
     if isinstance(workspace, str) and workspace.startswith("/workspace"):
         normalized = SandboxBase._normalize_workspace_path(workspace)
-        if normalized != "/workspace":
+        if normalized == "/workspace" and workspace.strip().rstrip("/") != "/workspace":
+            raise RuntimeError(f"invalid workspace_path: {workspace!r}")
+        if normalized != "/workspace" or workspace.rstrip("/") == "/workspace":
             return normalized
 
     env_workspace = os.environ.get("RAPTIX_WORKSPACE_PATH")
@@ -357,6 +354,8 @@ def _raw_workspace_path_from_config(config: RunnableConfig | None) -> str:
 
     env_slug = os.environ.get("RAPTIX_ENGAGEMENT")
     if env_slug:
+        if os.environ.get("RAPTIX_WORKSPACE_ISOLATED") == "1":
+            return "/workspace"
         normalized = SandboxBase._normalize_workspace_path(f"/workspace/{env_slug}")
         if normalized != "/workspace":
             return normalized
@@ -371,9 +370,17 @@ def _with_workspace_kwargs(workspace_path: str) -> dict[str, str]:
 
 
 @contextlib.contextmanager
-def bash_workspace(workspace_path: str):
+def bash_workspace(workspace_path: str, *, engagement_name: str | None = None):
     """Temporarily scope bash tools to one engagement workspace."""
-    safe_path = _engagement_fence(SandboxBase._normalize_workspace_path(workspace_path))
+    if engagement_name and engagement_name != os.environ.get("RAPTIX_ENGAGEMENT", "").strip():
+        raise RuntimeError(
+            f"runtime engagement {engagement_name!r} does not match the pinned engagement; "
+            "recreate the stack for this engagement before executing bash"
+        )
+    normalized = SandboxBase._normalize_workspace_path(workspace_path)
+    if normalized != workspace_path.strip().rstrip("/"):
+        raise RuntimeError(f"invalid workspace_path: {workspace_path!r}")
+    safe_path = _engagement_fence(normalized)
     token = _current_workspace_path.set(safe_path)
     try:
         yield

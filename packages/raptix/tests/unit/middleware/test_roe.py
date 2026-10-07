@@ -12,6 +12,7 @@ from unittest.mock import MagicMock
 
 import pytest
 from langchain_core.messages import ToolMessage
+from langgraph.prebuilt.tool_node import ToolCallRequest, ToolRuntime
 
 from raptix.middleware import roe as roe_mod
 from raptix.middleware._audit_sink import RoEAuditSink, verify_ledger
@@ -30,6 +31,43 @@ from raptix_core.types.roe import (
     evaluate_target,
     evaluate_time_window,
 )
+
+
+def test_framework_dict_tool_call_refuses_out_of_scope_command(tmp_path: Path) -> None:
+    _write_roe(tmp_path, {"mode": "enforce", "in_scope": ["10.0.0.0/24"]})
+    state = {"workspace_path": str(tmp_path)}
+    runtime = ToolRuntime(
+        state=state,
+        context=None,
+        config={},
+        stream_writer=lambda _: None,
+        tool_call_id="tc",
+        store=None,
+    )
+    request = ToolCallRequest(
+        tool_call={
+            "name": "bash",
+            "args": {"command": "curl http://192.0.2.7"},
+            "id": "tc",
+            "type": "tool_call",
+        },
+        tool=MagicMock(name="bash"),
+        state=state,
+        runtime=runtime,
+    )
+    request.tool.name = "bash"
+    executed = []
+
+    def handler(request):
+        executed.append(True)
+        return ToolMessage(content="executed", tool_call_id="tc")
+
+    response = RoEGuardrailMiddleware().wrap_tool_call(request, handler)
+    assert {
+        "status": response.status,
+        "executed": executed,
+        "tool_call_id": response.tool_call_id,
+    } == {"status": "error", "executed": [], "tool_call_id": "tc"}
 
 
 class TestMachineEnforcementSchema:

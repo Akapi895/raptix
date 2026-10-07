@@ -12,6 +12,7 @@
 import hashlib
 import json
 import threading
+from copy import copy
 from typing import Annotated, Any, NotRequired
 
 from deepagents.middleware.subagents import SubAgentMiddleware, TaskToolSchema
@@ -25,6 +26,7 @@ from pydantic import Field
 from raptix.core.dispatch_context import DispatchContext, active_dispatch
 from raptix.core.subagent_streaming import MAX_SUBAGENT_CONSECUTIVE_FAILURES
 from raptix.middleware.subagent_transcript_state import SubagentTranscriptState
+from raptix.orchestration.mission.objective_context import ObjectiveContextState
 from raptix_core.types.dispatch_outcome import (
     DispatchFailureOutcome,
     classify_dispatch_failure,
@@ -42,7 +44,7 @@ def merge_dispatch_ledger(left: dict | None, right: dict | None) -> dict:
     return merged
 
 
-class DispatchState(SubagentTranscriptState):
+class DispatchState(SubagentTranscriptState, ObjectiveContextState):
     dispatch_ledger: NotRequired[Annotated[dict, OmitFromInput, merge_dispatch_ledger]]
 
 
@@ -190,13 +192,14 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "outcome": outcome,
             }
         }
-        if context.objective_id:
-            # Stamp the key the RoE guardrail and the run recorder read —
-            # nothing set it before, so both logged an empty objective_id
-            # forever. The Command update lands in the parent thread state
-            # and propagates to the child via the existing state copy.
-            updates["active_objective_id"] = context.objective_id
+        updates["active_objective_id"] = context.objective_id or ""
         return Command(update=updates)
+
+    @staticmethod
+    def _child_runtime(runtime: ToolRuntime, context: DispatchContext) -> ToolRuntime:
+        child_runtime = copy(runtime)
+        child_runtime.state = {**runtime.state, "active_objective_id": context.objective_id or ""}
+        return child_runtime
 
     def _release(self, key: tuple[str, str]) -> None:
         with self._lock:
@@ -218,7 +221,9 @@ class DispatchMiddleware(SubAgentMiddleware):
             try:
                 try:
                     result = self._task.func(
-                        description=description, subagent_type=subagent_type, runtime=runtime
+                        description=description,
+                        subagent_type=subagent_type,
+                        runtime=self._child_runtime(runtime, context),
                     )
                 except Exception as exc:
                     return self._finish(None, context, fingerprint, runtime, exc)
@@ -242,7 +247,9 @@ class DispatchMiddleware(SubAgentMiddleware):
             try:
                 try:
                     result = await self._task.coroutine(
-                        description=description, subagent_type=subagent_type, runtime=runtime
+                        description=description,
+                        subagent_type=subagent_type,
+                        runtime=self._child_runtime(runtime, context),
                     )
                 except Exception as exc:
                     return self._finish(None, context, fingerprint, runtime, exc)

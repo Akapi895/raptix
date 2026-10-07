@@ -18,8 +18,9 @@ message diffs (AIMessage -> model call, ToolMessage -> tool call), not from
 in-process middleware. This needs no code change in the system under test;
 the derivation rule is recorded in the manifest.
 
-Isolation model: one engagement = one ``engagement_name`` + one container
-workspace dir + one fresh thread. Never reuse a thread across labs.
+Isolation model: one engagement bind-mounted at ``/workspace`` in both
+containers, verified before turn 1, plus one fresh thread. Never reuse a
+thread across labs; named shared-root stacks are refused (ADR-0042).
 
 Exit codes: 0 = objectives-complete; 2 = any other terminal state (evidence
 still saved); 1 = runner usage / setup error.
@@ -32,6 +33,7 @@ import asyncio
 import contextlib
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -43,9 +45,24 @@ from typing import Any
 
 import httpx
 
+from raptix_core.utils.engagement_scope import is_valid_engagement_label
+
 _TRANSIENT = (httpx.HTTPError, asyncio.TimeoutError)
 
 ACTIONABLE = {"pending", "in-progress", "in_progress"}
+CAPTURE_CHANNELS = (
+    "api",
+    "model_calls",
+    "tool_calls",
+    "transcripts",
+    "state_snapshots",
+    "thread_runs",
+    "workspace_isolation",
+    "workspace_ensure",
+    "kg_reset",
+    "workspace_copy",
+    "container_logs",
+)
 
 
 def _log(msg: str) -> None:
@@ -244,34 +261,77 @@ def _read_capture_note(trace_dir: Path, channel: str) -> str:
 
 
 def _ensure_container_workspace(args: argparse.Namespace, trace_dir: Path) -> None:
-    """mkdir -p the engagement dir inside the sandbox before turn 1.
-
-    The in-container dir is otherwise created lazily by the first bash
-    tool call (kernel/tmux.py); teardown capture that ran before any
-    bash call found nothing to copy and reported the channel missing
-    ("docker cp failed"). The agent side also ensures via the daemon's
-    fenced /workspace/ensure — this is the belt to its suspenders, and it
-    covers capture-before-first-bash. Failure is a captured warning, not
-    a run abort: a missing dir at teardown now reports via
-    capture_channels instead of being inferred from absence.
-    """
-    rc = _docker(
-        [
-            "exec",
-            args.sandbox_container,
-            "mkdir",
-            "-p",
-            args.container_workspace,
-        ],
-        timeout=30,
+    """Exercise the authenticated daemon ensure route before any agent turn."""
+    probe = (
+        "import json, os, urllib.request; "
+        "headers={'Content-Type':'application/json'}; "
+        "token=os.environ.get('SANDBOX_TOKEN'); "
+        "headers.update({'Authorization':'Bearer '+token} if token else {}); "
+        "req=urllib.request.Request('http://127.0.0.1:9999/workspace/ensure', "
+        "data=json.dumps({'path':'/workspace'}).encode(), headers=headers); "
+        "print(urllib.request.urlopen(req, timeout=10).read().decode())"
     )
-    if rc.returncode == 0:
-        _capture_status(trace_dir, "workspace_ensure", f"ok: {args.container_workspace}")
-        _log(f"workspace ensured in sandbox: {args.container_workspace}")
-    else:
-        note = f"docker exec mkdir failed: {rc.stderr.strip()[:300]}"
+    try:
+        rc = _docker(["exec", args.sandbox_container, "python3", "-c", probe], timeout=30)
+        if rc.returncode != 0:
+            raise RuntimeError(rc.stderr.strip()[:300])
+    except (OSError, subprocess.TimeoutExpired, RuntimeError) as exc:
+        note = f"failed: workspace ensure: {exc}"
         _capture_status(trace_dir, "workspace_ensure", note)
-        _log(f"WARNING: {note}")
+        raise RuntimeError(note) from exc
+    _capture_status(trace_dir, "workspace_ensure", f"ok: {args.container_workspace}")
+    _log(f"workspace ensured in sandbox: {args.container_workspace}")
+
+
+def _verify_workspace_isolation(args: argparse.Namespace) -> dict[str, Any]:
+    """Verify the operator's deployment claim against both actual Docker mounts."""
+    sources: dict[str, str] = {}
+    errors = []
+    if args.container_workspace != "/workspace":
+        errors.append("--container-workspace must be /workspace (the engagement bind root)")
+    containers = {
+        "langgraph": args.langgraph_container,
+        "sandbox": args.sandbox_container,
+    }
+    for service, container in containers.items():
+        inspection = _docker(["inspect", container, "--format", "{{json .}}"], timeout=30)
+        if inspection.returncode != 0:
+            errors.append(f"{container}: cannot inspect deployment")
+            continue
+        try:
+            deployed = json.loads(inspection.stdout)
+            env = dict(value.split("=", 1) for value in deployed["Config"]["Env"] if "=" in value)
+            mounts = [m for m in deployed["Mounts"] if m["Destination"] == "/workspace"]
+            source = mounts[0]["Source"] if len(mounts) == 1 else ""
+            sources[service] = source
+            if (
+                env.get("RAPTIX_ENGAGEMENT") != args.engagement
+                or env.get("RAPTIX_WORKSPACE_ISOLATED") != "1"
+                or len(mounts) != 1
+                or mounts[0]["Type"] != "bind"
+                or source.replace("\\", "/").rstrip("/").rsplit("/", 1)[-1] != args.engagement
+            ):
+                errors.append(
+                    f"{container}: mount or engagement does not match {args.engagement!r}"
+                )
+        except (ValueError, KeyError, TypeError) as exc:
+            errors.append(f"{container}: invalid deployment inspection ({type(exc).__name__})")
+    if len(set(sources.values())) != 1:
+        errors.append("langgraph and sandbox must mount the same engagement directory")
+    if errors:
+        raise SystemExit(
+            "run requires an isolated engagement workspace:\n  "
+            + "\n  ".join(errors)
+            + "\nRecreate both services with RAPTIX_ENGAGEMENT=<slug> and "
+            "RAPTIX_ENGAGEMENT_WORKSPACE=<absolute host workspace>/<slug>; "
+            "use --container-workspace /workspace."
+        )
+    return {
+        "engagement": args.engagement,
+        "root": "/workspace",
+        "sources": sources,
+        "verdict": "ok",
+    }
 
 
 def _verify_image_provenance(args: argparse.Namespace) -> dict[str, str]:
@@ -287,8 +347,13 @@ def _verify_image_provenance(args: argparse.Namespace) -> dict[str, str]:
     expected = (head.stdout or "").strip()
     result: dict[str, str] = {"expected_head": expected or "unknown"}
     offenders: list[str] = []
-    for svc in ("langgraph", "sandbox"):
-        container = f"raptix-{svc}"
+    if head.returncode != 0 or not expected:
+        offenders.append("checkout HEAD is unknown; cannot verify image revisions")
+    containers = {
+        "langgraph": getattr(args, "langgraph_container", "raptix-langgraph"),
+        "sandbox": getattr(args, "sandbox_container", "raptix-sandbox"),
+    }
+    for svc, container in containers.items():
         insp = _docker(
             [
                 "inspect",
@@ -299,6 +364,8 @@ def _verify_image_provenance(args: argparse.Namespace) -> dict[str, str]:
             timeout=30,
         )
         revision = (insp.stdout or "").strip()
+        if revision == "<no value>":
+            revision = ""
         result[svc] = revision or "unlabeled"
         if insp.returncode != 0:
             offenders.append(f"{svc}: container not found ({insp.stderr.strip()[:120]})")
@@ -309,6 +376,7 @@ def _verify_image_provenance(args: argparse.Namespace) -> dict[str, str]:
     result["verdict"] = (
         "allow-dirty" if offenders and args.allow_dirty else ("ok" if not offenders else "refused")
     )
+    args.image_revisions = result
     if offenders:
         rebuild = (
             "rebuild with:\n"
@@ -342,7 +410,8 @@ def _load_protocol(path: Path) -> list[dict[str, Any]]:
       turn == -1  kind must be "proceed" — the standing-approval message
                   sent between every turn (legacy --proceed-file).
       turn == 0   appended to the kickoff prompt, in file order.
-      turn >= 1   REPLACES the standing message for exactly that turn.
+      turn >= 1   REPLACES the standing message after that turn, before
+                  the next API run starts.
     Duplicate turns (>= 1) or unknown kinds are a hard parse error: a
     silently-dropped injection is a corrupt experiment.
     """
@@ -372,6 +441,9 @@ def _load_protocol(path: Path) -> list[dict[str, Any]]:
         if turn == -1:
             if kind != "proceed":
                 raise SystemExit(f"{path}:{lineno}: turn -1 is reserved for kind 'proceed'")
+            if turn in seen_turns:
+                raise SystemExit(f"{path}:{lineno}: duplicate standing-approval record")
+            seen_turns.add(turn)
         elif turn >= 1:
             if turn in seen_turns:
                 raise SystemExit(f"{path}:{lineno}: duplicate injection for turn {turn}")
@@ -389,9 +461,20 @@ def _load_protocol(path: Path) -> list[dict[str, Any]]:
     return records
 
 
-def _merge_protocol(records: list[dict[str, Any]], proceed_text: str) -> list[dict[str, Any]]:
+def _merge_protocol(
+    records: list[dict[str, Any]], proceed_text: str | None
+) -> list[dict[str, Any]]:
     """Attach the standing-approval record; refuse conflicting sources."""
-    if any(r["turn"] == -1 for r in records):
+    standing = any(r["turn"] == -1 for r in records)
+    if proceed_text is None:
+        if not standing:
+            raise SystemExit(
+                "provide --proceed-file or one turn=-1 proceed record in --protocol-file"
+            )
+        return records
+    if not proceed_text.strip():
+        raise SystemExit("--proceed-file must contain a non-empty standing-approval message")
+    if standing:
         raise SystemExit(
             "conflicting standing-approval sources: --proceed-file and a turn=-1 "
             "record in --protocol-file; pick one."
@@ -402,8 +485,7 @@ def _merge_protocol(records: list[dict[str, Any]], proceed_text: str) -> list[di
 
 
 def _injection_for_turn(scheduled: dict[int, dict[str, Any]], proceed_text: str, turn: int) -> str:
-    """Text for the message that starts ``turn``: a scheduled injection if one
-    targets this exact turn, else the standing approval."""
+    """Text delivered after ``turn``, before the next run starts."""
     record = scheduled.get(turn)
     return record["text"] if record else proceed_text
 
@@ -428,8 +510,10 @@ def _reset_kg(args: argparse.Namespace, trace_dir: Path) -> str:
         finally:
             store.close()
         note = f"ok: {deleted} nodes deleted from {args.engagement!r}"
-    except Exception as exc:  # noqa: BLE001 — never block the run on reset
+    except Exception as exc:  # noqa: BLE001 — an explicit fresh baseline must fail closed
         note = f"failed: {exc}"[:300]
+        _capture_status(trace_dir, "kg_reset", note)
+        raise RuntimeError(f"KG reset failed for {args.engagement!r}: {exc}") from exc
     _capture_status(trace_dir, "kg_reset", note)
     _log(f"kg reset: {note}")
     return note
@@ -443,12 +527,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--assistant", default="raptix")
     p.add_argument("--thread", default=None, help="Thread id; default: fresh timestamped id.")
     p.add_argument("--engagement", required=True)
-    p.add_argument("--container-workspace", required=True, help="e.g. /workspace/lab-silentium-01")
+    p.add_argument(
+        "--container-workspace", default="/workspace", help="Engagement bind root: /workspace"
+    )
     p.add_argument("--target", required=True)
     p.add_argument("--prompt-file", required=True, type=Path)
     p.add_argument(
         "--proceed-file",
-        required=True,
+        default=None,
         type=Path,
         help="Standing-approval message sent between turns (legacy form of a "
         "turn=-1 'proceed' record; prefer --protocol-file for auditable injections).",
@@ -460,8 +546,8 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help=(
             "JSONL of operator injections {turn, kind: hint|interference|proceed, "
             "text, source?}. turn 0 appends to the kickoff; turn >= 1 replaces the "
-            "standing message for that turn; turn -1 is the standing approval. "
-            "Copied verbatim to input/protocol.jsonl and counted in the summary."
+            "standing message after that turn; turn -1 is the standing approval. "
+            "Normalized into input/protocol.jsonl; delivered injections are counted."
         ),
     )
     p.add_argument("--plan-dir", default=None, type=Path, help="roe/conops/deconfliction json dir")
@@ -470,8 +556,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--wall-clock", type=float, default=10800)
     p.add_argument("--per-turn-cap", type=float, default=1800)
     p.add_argument("--snapshot-interval", type=float, default=120)
-    p.add_argument("--sandbox-container", default="raptix-sandbox")
-    p.add_argument("--log-containers", default="raptix-langgraph,raptix-sandbox,raptix-litellm")
+    stack = os.environ.get("RAPTIX_STACK_NAME", "")
+    prefix = f"raptix-{stack}" if stack else "raptix"
+    p.add_argument("--sandbox-container", default=f"{prefix}-sandbox")
+    p.add_argument("--langgraph-container", default=f"{prefix}-langgraph")
+    p.add_argument("--log-containers", default=None)
     p.add_argument("--recursion-limit", type=int, default=400)
     p.add_argument(
         "--fresh-kg",
@@ -490,7 +579,12 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "recorded warning (dev loop; evidence runs should rebuild)."
         ),
     )
-    return p.parse_args(argv)
+    args = p.parse_args(argv)
+    if args.log_containers is None:
+        args.log_containers = (
+            f"{args.langgraph_container},{args.sandbox_container},{prefix}-litellm"
+        )
+    return args
 
 
 async def _snapshotter(
@@ -558,6 +652,12 @@ async def _amain(
     _log(f"api ok: {api_detail}")
     provenance = _verify_image_provenance(args)
     manifest["image_revisions"] = provenance
+    try:
+        manifest["workspace_isolation"] = _verify_workspace_isolation(args)
+    except (SystemExit, OSError, subprocess.TimeoutExpired) as exc:
+        _capture_status(trace_dir, "workspace_isolation", f"failed: {exc}")
+        raise
+    _capture_status(trace_dir, "workspace_isolation", "ok")
     _ensure_container_workspace(args, trace_dir)
     _reset_kg(args, trace_dir)
     started_iso = _now_iso()
@@ -566,7 +666,7 @@ async def _amain(
     _log(f"thread {thread_id} created")
 
     # Injection schedule (plan D7): turn-0 records append to the kickoff;
-    # turn >= 1 records replace the standing message for that exact turn;
+    # turn >= 1 records replace the standing message AFTER that turn;
     # turn -1 is the standing approval used everywhere else.
     records = getattr(args, "protocol_records", [])
     turn0_texts = [r["text"] for r in records if r["turn"] == 0]
@@ -600,6 +700,8 @@ async def _amain(
     prev_sig: tuple[Any, ...] | None = None
     seen_ids: set[str] = set()
     counters = {"model": 0, "tool": 0}
+    delivered = dict.fromkeys(PROTOCOL_KINDS, 0)
+    pending_injections = [r for r in records if r["turn"] == 0]
 
     stop = asyncio.Event()
     snap_task = asyncio.create_task(
@@ -629,6 +731,8 @@ async def _amain(
                     timeout=60,
                 )
                 run_uuid = run["run_id"]
+                for record in pending_injections:
+                    delivered[record["kind"]] += 1
                 run_status = await _await_run_terminal(client, thread_id, run_uuid, turn_cap)
                 state = await _api(lambda: client.threads.get_state(thread_id), timeout=180)
             except RuntimeError as exc:
@@ -679,14 +783,15 @@ async def _amain(
                 break
             prev_sig = signature
             next_turn = turns + 1
-            injection_record = scheduled.get(next_turn)
-            injection = _injection_for_turn(scheduled, proceed_text, next_turn)
+            injection_record = scheduled.get(turns)
+            injection = _injection_for_turn(scheduled, proceed_text, turns)
             if injection_record:
                 _log(
                     f"injection applied at turn {next_turn}: "
                     f"kind={injection_record['kind']} source={injection_record['source']!r}"
                 )
             next_input = {"messages": [{"role": "human", "content": injection}]}
+            pending_injections = [injection_record] if injection_record else [{"kind": "proceed"}]
 
     stop.set()
     snap_task.cancel()
@@ -717,9 +822,9 @@ async def _amain(
             ["cp", f"{args.sandbox_container}:/{ws_src}", str(workspace_dir / "engagement")],
             timeout=600,
         )
-        ws_note = "copied" if cp.returncode == 0 else f"docker cp failed: {cp.stderr[:500]}"
+        ws_note = "ok: copied" if cp.returncode == 0 else f"failed: docker cp: {cp.stderr[:500]}"
     except Exception as exc:  # noqa: BLE001
-        ws_note = f"docker cp error: {exc}"
+        ws_note = f"failed: docker cp: {exc}"
     _log(f"workspace: {ws_note}")
     _capture_status(trace_dir, "workspace_copy", ws_note)
 
@@ -734,12 +839,14 @@ async def _amain(
                 encoding="utf-8",
                 errors="replace",
             )
-            log_ok += 1
+            if lp.returncode == 0:
+                log_ok += 1
         except Exception as exc:  # noqa: BLE001
             (logs_dir / f"{container}.log").write_text(
                 f"log capture failed: {exc}", encoding="utf-8"
             )
-    _capture_status(trace_dir, "container_logs", f"{log_ok}/{log_total} containers")
+    logs_note = f"{'ok' if log_ok == log_total else 'failed'}: {log_ok}/{log_total} containers"
+    _capture_status(trace_dir, "container_logs", logs_note)
 
     transcript_text = (
         transcript_path.read_text(encoding="utf-8") if transcript_path.exists() else ""
@@ -752,6 +859,10 @@ async def _amain(
         else "absent (0 entries; run died before the first model call?)"
     )
     _capture_status(trace_dir, "transcripts", derived_note)
+    for channel, count in (("model_calls", counters["model"]), ("tool_calls", counters["tool"])):
+        _capture_status(
+            trace_dir, channel, f"ok ({count} entries)" if count else "absent (0 entries)"
+        )
     snaps = trace_dir / "state-snapshots.jsonl"
     _capture_status(
         trace_dir,
@@ -771,9 +882,12 @@ async def _amain(
         "state_snapshots": _read_capture_note(trace_dir, "state_snapshots"),
         "thread_runs": _read_capture_note(trace_dir, "thread_runs"),
         "workspace_ensure": _read_capture_note(trace_dir, "workspace_ensure"),
+        "workspace_isolation": _read_capture_note(trace_dir, "workspace_isolation"),
+        "model_calls": _read_capture_note(trace_dir, "model_calls"),
+        "tool_calls": _read_capture_note(trace_dir, "tool_calls"),
         "kg_reset": _read_capture_note(trace_dir, "kg_reset"),
         "workspace_copy": ws_note,
-        "container_logs": f"{log_ok}/{log_total} containers",
+        "container_logs": logs_note,
     }
     summary = {
         "status": status,
@@ -790,7 +904,8 @@ async def _amain(
         "root_txt_mentioned": "root.txt" in transcript_text,
         "workspace_capture": ws_note,
         "api_reachable": api_ok,
-        "injections": {
+        "injections": delivered,
+        "injections_planned": {
             kind: sum(1 for r in records if r["kind"] == kind) for kind in PROTOCOL_KINDS
         },
         "capture_channels": capture_channels,
@@ -803,47 +918,36 @@ async def _amain(
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
+    if not is_valid_engagement_label(args.engagement):
+        raise SystemExit("--engagement must be a valid engagement slug")
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     run_dir = args.out_dir / f"{stamp}_{args.engagement}"
     run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "input").mkdir(exist_ok=True)
+    for channel in CAPTURE_CHANNELS:
+        _capture_status(run_dir / "trace", channel, "absent: not captured yet")
 
-    for name in ("prompt.txt", "proceed.txt"):
-        src: Path = args.prompt_file if name == "prompt.txt" else args.proceed_file
+    for name, src in (("prompt.txt", args.prompt_file), ("proceed.txt", args.proceed_file)):
+        if src is None:
+            continue
         if not src.is_file():
             print(f"missing {name}: {src}", file=sys.stderr)
             return 1
 
-    # Operator-injection accounting (plan D7): every run ships exactly one
-    # input/protocol.jsonl. A --protocol-file is copied verbatim; the legacy
-    # --proceed-file is normalized into a turn=-1 proceed record so old
-    # invocations land in the same audit trail. The two forms conflict.
+    # Archive the effective protocol, including any merged legacy approval.
     protocol_records: list[dict[str, Any]] = []
     if args.protocol_file:
         if not args.protocol_file.is_file():
             print(f"missing protocol file: {args.protocol_file}", file=sys.stderr)
             return 1
         protocol_records = _load_protocol(args.protocol_file)
-        shutil.copy2(args.protocol_file, run_dir / "input" / "protocol.jsonl")
-    proceed = args.proceed_file.read_text(encoding="utf-8")
-    (run_dir / "input" / "proceed.txt").write_text(proceed, encoding="utf-8")
-    if any(r["turn"] == -1 for r in protocol_records):
-        print(
-            "conflicting standing-approval sources: --proceed-file and a turn=-1 "
-            "record in --protocol-file; pick one.",
-            file=sys.stderr,
-        )
-        return 1
-    if not args.protocol_file:
-        legacy = {
-            "turn": -1,
-            "kind": "proceed",
-            "text": proceed,
-            "source": "--proceed-file",
-        }
-        (run_dir / "input" / "protocol.jsonl").write_text(
-            json.dumps(legacy) + "\n", encoding="utf-8"
-        )
+    proceed = args.proceed_file.read_text(encoding="utf-8") if args.proceed_file else None
+    if proceed is not None:
+        (run_dir / "input" / "proceed.txt").write_text(proceed, encoding="utf-8")
     args.protocol_records = _merge_protocol(protocol_records, proceed)
+    (run_dir / "input" / "protocol.jsonl").write_text(
+        "".join(json.dumps(record) + "\n" for record in args.protocol_records), encoding="utf-8"
+    )
 
     manifest = {
         "runner": "tests/local/harnesses/lab_run.py",
@@ -854,7 +958,7 @@ def main(argv: list[str] | None = None) -> int:
         "container_workspace": args.container_workspace,
         "target": args.target,
         "prompt_sha256": _sha256_text(args.prompt_file.read_text(encoding="utf-8")),
-        "proceed_sha256": _sha256_text(args.proceed_file.read_text(encoding="utf-8")),
+        "proceed_sha256": _sha256_text(proceed) if proceed is not None else None,
         "plan_sha256": (
             {
                 p.name: _sha256_text(p.read_text(encoding="utf-8"))
@@ -881,7 +985,8 @@ def main(argv: list[str] | None = None) -> int:
             "audit-only (plan/roe.json ships no machine_enforcement block); "
             "scope enforced by single-target prompt + operator monitoring"
         ),
-        "injections": {
+        "injections": dict.fromkeys(PROTOCOL_KINDS, 0),
+        "injections_planned": {
             kind: sum(1 for r in args.protocol_records if r["kind"] == kind)
             for kind in PROTOCOL_KINDS
         },
@@ -923,13 +1028,17 @@ def main(argv: list[str] | None = None) -> int:
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     _log(f"run dir: {run_dir}")
-    summary = asyncio.run(_amain(args, run_dir, manifest))
+    try:
+        summary = asyncio.run(_amain(args, run_dir, manifest))
+        manifest["injections"] = summary["injections"]
+    finally:
+        channels = {c: _read_capture_note(run_dir / "trace", c) for c in CAPTURE_CHANNELS}
+        manifest["api_reachable"] = channels["api"] == "ok"
+        manifest["capture_channels"] = channels
+        if hasattr(args, "image_revisions"):
+            manifest["image_revisions"] = args.image_revisions
+        (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     _log(f"terminal status: {summary['status']} after {summary['turns']} turns")
-    # Capture provenance lands in the manifest too (it is written before the
-    # run; merge the post-run statuses back in).
-    manifest["api_reachable"] = summary.get("api_reachable")
-    manifest["capture_channels"] = summary.get("capture_channels", {})
-    (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
     return 0 if summary["status"] == "objectives-complete" else 2
 
 

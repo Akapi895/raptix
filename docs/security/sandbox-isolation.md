@@ -198,14 +198,19 @@ enforced today, mechanically:
 
 - **Workspace scoping** — the launcher bind-mounts the engagement dir at
   `/workspace` (`RAPTIX_ENGAGEMENT_WORKSPACE`, `apps/launcher/cmd/start.go`).
-  Without the launcher, the shared tree is mounted and the fence below is
-  what stands between engagements.
-- **Engagement fence** — when `RAPTIX_ENGAGEMENT` is set in a container,
-  the bash tool resolves its workspace only inside
-  `/workspace/<slug>/` and hard-errors otherwise
-  (`execution/tools/bash/bash.py`); the sandbox daemon's
-  `POST /workspace/ensure` applies the same rule
-  (`execution/sandbox/server/app.py`). Env-based enforcement, not prompt.
+  Runtime paths use that mount root, including existing `/workspace/plan` files.
+- **Deployment enforcement** — named engagements require the operator's
+  `RAPTIX_WORKSPACE_ISOLATED=1` declaration, derived by Compose from the explicit
+  engagement bind source. The daemon refuses authenticated operations on named
+  shared-root stacks and validates session/file paths. The runtime refuses bash
+  when the requested engagement differs from the deployment pin. The lab
+  harness additionally inspects both actual mounts before turn 1 (ADR-0042).
+  A cwd prefix is not filesystem isolation: peer engagement directories must
+  not be mounted in the container. Unpinned dev mode is not an evidence-run
+  isolation guarantee.
+- **Legacy volume compatibility** — `workspace_data` remains declared for old
+  `.env` references and data migration. Evidence runs require a per-engagement
+  bind source; a shared named volume is rejected by pre-flight.
 - **Scoped state** — KG reads/writes are engagement-scoped at the store
   boundary (`knowledge/graph/store.py`); tmux sessions and job trackers
   are keyed by workspace slug.

@@ -61,6 +61,7 @@ from typing_extensions import override
 
 from raptix.middleware._audit_sink import RoEAuditSink
 from raptix.middleware._command_targets import extract_targets
+from raptix.orchestration.mission.objective_context import ObjectiveContextState
 from raptix_core.types.roe import (
     Decision,
     EnforcementMode,
@@ -264,8 +265,23 @@ def _tool_call_args(request) -> dict[str, Any]:
     args = getattr(request, "tool_call_args", None)
     if not isinstance(args, dict):
         last = getattr(request, "tool_call", None)
-        args = getattr(last, "args", None) if last else None
+        args = last.get("args") if isinstance(last, dict) else getattr(last, "args", None)
     return args if isinstance(args, dict) else {}
+
+
+def _objective_for_tool(request: Any, tool_name: str) -> str:
+    state = getattr(request, "state", None) or {}
+    get = state.get if hasattr(state, "get") else (lambda _key, _default=None: None)
+    if tool_name != "task":
+        return str(get("active_objective_id") or get("current_objective") or "")
+    # Task audit happens before dispatch. Attribute only IDs present in the
+    # trusted objective catalog, never the parent's stale completion cursor.
+    objective = _tool_call_args(request).get("objective_id")
+    if isinstance(objective, str) and any(
+        isinstance(row, dict) and row.get("id") == objective for row in get("objectives") or []
+    ):
+        return objective
+    return ""
 
 
 def _command_from_tool_call(request) -> str:
@@ -305,6 +321,8 @@ class RoEGuardrailMiddleware(AgentMiddleware):
             random OPSEC jitter on top of the floor when a gated call is
             paced (0 disables jitter; the floor is still honoured).
     """
+
+    state_schema = ObjectiveContextState
 
     def __init__(
         self,
@@ -451,7 +469,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         state = getattr(request, "state", {}) or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         engagement = get("engagement_name") or "unknown-engagement"
-        objective = get("active_objective_id") or get("current_objective") or ""
+        objective = _objective_for_tool(request, tool_name)
         record = {
             "ts": time.time(),
             "event": "abort",
@@ -550,7 +568,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         state = getattr(request, "state", {}) or {}
         get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
         engagement = get("engagement_name") or "unknown-engagement"
-        objective = get("active_objective_id") or get("current_objective") or ""
+        objective = _objective_for_tool(request, tool_name)
         record = {
             "ts": time.time(),
             "engagement": engagement,
@@ -597,7 +615,7 @@ class RoEGuardrailMiddleware(AgentMiddleware):
         record = {
             "ts": time.time(),
             "engagement": get("engagement_name") or "unknown-engagement",
-            "objective_id": get("active_objective_id") or get("current_objective") or "",
+            "objective_id": _objective_for_tool(request, tool_name),
             "tool": tool_name,
             "event": "throttle",
             "reason_code": "MIN_INTER_REQUEST_DELAY",
@@ -614,7 +632,7 @@ def _tcid(request) -> str | None:
     if isinstance(tc, str):
         return tc
     last = getattr(request, "tool_call", None)
-    tc_attr = getattr(last, "id", None) if last else None
+    tc_attr = last.get("id") if isinstance(last, dict) else getattr(last, "id", None)
     return tc_attr if isinstance(tc_attr, str) else None
 
 

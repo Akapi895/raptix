@@ -351,7 +351,7 @@ WORKDIR /workspace
 # execution environment, and avoiding the HTTP round-trip per skill
 # read saves agent-init latency.
 
-# Entrypoint: chmod 777 /workspace so host user can access files without sudo.
+# Entrypoint: world-readable /workspace with umask 022; no world-write grant.
 # Security boundary is the container, not file permissions.
 COPY infra/containers/sandbox-entrypoint.sh /entrypoint.sh
 # Strip any CR so the image builds correctly even from a Windows host

@@ -6,6 +6,20 @@ follows [Semantic Versioning](https://semver.org/) from `1.0.0`
 onward (the `0.x` cycle is pre-stable per the core/framework/sdk split
 design spec, §13.4).
 
+## [Unreleased]
+
+### Fixed
+
+- Preserve model content, tool calls and usage through LangChain ModelResponse
+  recording; propagate validated dispatch objectives to child graphs and audit
+  records before execution.
+- Align launcher/CLI workspace paths with the engagement mount at `/workspace`.
+  Named engagements and lab evidence runs refuse unisolated shared-root stacks
+  (ADR-0042); the harness verifies both actual container mounts.
+- Repair lab runner input creation, canonical injection audit and turn delivery,
+  delivered-versus-planned counters, failed reset/log handling, cancellation
+  event pairs and unknown-checkout provenance refusal.
+
 ## [1.1.47] — 2026-09-26
 
 ### Fixed

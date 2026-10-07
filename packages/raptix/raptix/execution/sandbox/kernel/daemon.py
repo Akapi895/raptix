@@ -38,12 +38,16 @@ validation to ``upload_files`` / ``download_files`` before shipping.
       daemon, no ``DaemonSandbox`` — pool plane only does file IO, the
       heavy bash tool path is reserved for silo plane.
 
-  Dev (single-machine docker compose)
+   Dev (single-machine docker compose)
       The sandbox container's entrypoint starts the daemon
       (``SANDBOX_DAEMON=1``) so the local stack uses the same HTTP
       transport as production. The historical no-daemon path
       (``DockerSandbox`` + ``docker exec`` from the agent host) has
-      been retired; ``HTTPSandbox`` is the only agent-side client now.
+       been retired; ``HTTPSandbox`` is the only agent-side client now.
+       Named engagements require a single-engagement /workspace bind mount.
+       The HTTP service rejects unisolated named deployments and validates
+       file/session paths before forwarding them here (ADR-0042). The local
+       evidence harness additionally verifies the actual Docker mounts.
 
 Class-level state inheritance
 -----------------------------

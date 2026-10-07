@@ -76,9 +76,12 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from langchain.agents.middleware import AgentMiddleware
+from langchain.agents.middleware.types import ModelResponse
 from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Command
 from typing_extensions import override
+
+from raptix.orchestration.mission.objective_context import ObjectiveContextState
 
 log = logging.getLogger(__name__)
 
@@ -179,6 +182,17 @@ def _normalize_usage(message: Any) -> tuple[dict[str, Any] | None, str]:
 
 
 def _serialize_ai_response(message: Any) -> dict[str, Any]:
+    if isinstance(message, ModelResponse):
+        messages = message.result
+        serialized = _serialize_ai_response(
+            next((m for m in reversed(messages) if isinstance(m, AIMessage)), None)
+        )
+        serialized["messages"] = [
+            _serialize_ai_response(m) if isinstance(m, AIMessage) else _serialize_tool_response(m)
+            for m in messages
+        ]
+        serialized["structured_response"] = message.structured_response
+        return serialized
     usage, usage_source = _normalize_usage(message)
     return {
         "type": getattr(message, "type", "ai"),
@@ -392,6 +406,8 @@ class RecordingMiddleware(AgentMiddleware):
     replace a live tool result with an error ToolMessage.
     """
 
+    state_schema = ObjectiveContextState
+
     def __init__(self, *, path: str | Path | None = None, role: str = "") -> None:
         super().__init__()
         self._role = role or ""
@@ -423,7 +439,10 @@ class RecordingMiddleware(AgentMiddleware):
     def _record(self, request: Any, entry: dict[str, Any], dur_ms: int) -> None:
         if self._sink is None:
             return
-        entry.update(self._envelope(request, entry["req_hash"], dur_ms))
+        envelope = self._envelope(request, entry["req_hash"], dur_ms)
+        if "objective_id" in entry:
+            envelope["objective_id"] = entry["objective_id"]
+        entry.update(envelope)
         self._sink.write(entry)
 
     @override
@@ -500,12 +519,18 @@ class RecordingMiddleware(AgentMiddleware):
         else:
             # Unknown non-ToolMessage control object: keep the legacy stub.
             serialized = {"type": "command"}
-        return {
+        entry = {
             "kind": "tool_call",
             "req_hash": req_hash,
             "request": req_dict,
             "response": serialized,
         }
+        if req_dict["tool"] == "task":
+            update = response.update if isinstance(response, Command) else None
+            entry["objective_id"] = (
+                update.get("active_objective_id", "") if isinstance(update, dict) else ""
+            )
+        return entry
 
     @override
     def wrap_tool_call(self, request, handler):

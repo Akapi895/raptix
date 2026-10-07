@@ -43,7 +43,9 @@ import base64
 import hmac
 import logging
 import os
+import re
 from contextlib import asynccontextmanager
+from pathlib import Path
 from typing import Annotated, AsyncIterator
 
 from fastapi import Depends, FastAPI, Header, HTTPException, status
@@ -234,6 +236,41 @@ def auth(
     authorization: Annotated[str | None, Header()] = None,
 ) -> None:
     _verify_token(authorization)
+    slug = _fenced_engagement_slug()
+    if slug is not None and os.environ.get("RAPTIX_WORKSPACE_ISOLATED") != "1":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"engagement {slug!r} requires an isolated /workspace bind mount",
+        )
+
+
+def _checked_workspace(path: str | None, *, runtime_root: bool = False) -> str | None:
+    normalized = DaemonSandbox._normalize_workspace_path(path)
+    slug = _fenced_engagement_slug()
+    if slug is None and runtime_root:
+        return path
+    if slug is not None:
+        raw = (path or "/workspace").strip().rstrip("/")
+        if normalized != raw or runtime_root and normalized != "/workspace":
+            raise HTTPException(
+                status_code=403, detail="workspace must resolve to the pinned /workspace root"
+            )
+        error = DaemonSandbox.engagement_fence_error(normalized, slug, isolated_root=True)
+        if error is not None:
+            raise HTTPException(status_code=403, detail=error)
+    return normalized
+
+
+def _check_file_paths(paths: list[str]) -> None:
+    if _fenced_engagement_slug() is None:
+        return
+    root = Path("/workspace").resolve()
+    if any(
+        not path.startswith("/") or not Path(path).resolve().is_relative_to(root) for path in paths
+    ):
+        raise HTTPException(
+            status_code=403, detail="file path is outside the isolated engagement workspace"
+        )
 
 
 @asynccontextmanager
@@ -322,6 +359,7 @@ def upload_files(
     _: Annotated[None, Depends(auth)],
 ) -> UploadFilesResponse:
     backend = _get_backend()
+    _check_file_paths([file.path for file in req.files])
     decoded = [(f.path, base64.b64decode(f.data_b64)) for f in req.files]
     results = backend.upload_files(decoded)
     return UploadFilesResponse(
@@ -335,6 +373,7 @@ def download_files(
     _: Annotated[None, Depends(auth)],
 ) -> DownloadFilesResponse:
     backend = _get_backend()
+    _check_file_paths(req.paths)
     results = backend.download_files(req.paths)
     return DownloadFilesResponse(
         files=[
@@ -364,7 +403,7 @@ def execute_tmux(
         session=req.session,
         timeout=req.timeout,
         is_input=req.is_input,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     return ExecuteTmuxResponseModel(output=output)
 
@@ -378,7 +417,7 @@ def start_background(
     backend.start_background(
         command=req.command,
         session=req.session,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     return {"status": "ok"}
 
@@ -391,7 +430,7 @@ def poll_completion(
     backend = _get_backend()
     job = backend.poll_completion(
         session=req.session,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     if job is None:
         return PollCompletionResponseModel(job=None)
@@ -422,7 +461,7 @@ def kill_session(
     backend = _get_backend()
     backend.kill_session(
         session=req.session,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     return {"status": "ok"}
 
@@ -435,7 +474,7 @@ def read_session_log_diff(
     backend = _get_backend()
     diff = backend.read_session_log_diff(
         session=req.session,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     return SessionLogDiffResponseModel(diff=diff)
 
@@ -448,7 +487,7 @@ def reset_session_log_offset(
     backend = _get_backend()
     backend.reset_session_log_offset(
         session=req.session,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     return {"status": "ok"}
 
@@ -506,7 +545,7 @@ def session_log_path(
     backend = _get_backend()
     path = backend.session_log_path(
         session=req.session,
-        workspace_path=req.workspace_path,
+        workspace_path=_checked_workspace(req.workspace_path, runtime_root=True),
     )
     return SessionLogPathResponseModel(path=path)
 
@@ -525,8 +564,7 @@ def _fenced_engagement_slug() -> str | None:
     slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
     if not slug:
         return None
-    normalized = DaemonSandbox._normalize_workspace_path(f"/workspace/{slug}")
-    if normalized == "/workspace":
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,127}", slug):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=(
@@ -534,7 +572,7 @@ def _fenced_engagement_slug() -> str | None:
                 "refusing to serve an unfenced workspace root"
             ),
         )
-    return normalized[len("/workspace/") :]
+    return slug
 
 
 @app.post("/workspace/ensure", response_model=EnsureWorkspaceResponse)
@@ -549,12 +587,7 @@ def ensure_workspace(
     mkdir — teardown capture that runs before any bash call used to find
     nothing to copy. Idempotent by construction.
     """
-    normalized = DaemonSandbox._normalize_workspace_path(req.path)
-    slug = _fenced_engagement_slug()
-    if slug is not None:
-        error = DaemonSandbox.engagement_fence_error(normalized, slug)
-        if error is not None:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error)
+    normalized = _checked_workspace(req.path) or "/workspace"
     created = not os.path.isdir(normalized)
     if created:
         os.makedirs(normalized, exist_ok=True)

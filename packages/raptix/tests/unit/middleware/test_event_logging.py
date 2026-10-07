@@ -581,3 +581,19 @@ def test_append_failure_warns_at_most_once_per_event_and_log(
     # One warning per (event_type, log) pair, not one per failed append —
     # a broken sink used to warn on every event for the whole run.
     assert len(warnings) == 1
+
+
+async def test_cancelled_tool_records_result_before_propagating(tmp_path: Path):
+    middleware = EventLogMiddleware()
+    request = _ToolRequest(tmp_path, "eng-cancel", tool="bash", args={}, agent="recon")
+
+    async def cancel(_request):
+        raise asyncio.CancelledError()
+
+    with pytest.raises(asyncio.CancelledError):
+        await middleware.awrap_tool_call(request, cancel)
+    events = [e for e in read_events(tmp_path / "events.jsonl") if e.type.startswith("tool.")]
+    assert [(e.type, e.payload.get("status")) for e in events] == [
+        ("tool.call", None),
+        ("tool.result", "cancelled"),
+    ]
