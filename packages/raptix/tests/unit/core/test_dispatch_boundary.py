@@ -195,3 +195,22 @@ def test_task_tool_runtime_param_survives_schema_validation(task: tuple) -> None
     """
     tool, _ = task
     assert "runtime" in tool._injected_args_keys
+
+
+def test_task_stamps_active_objective_id_into_parent_state(task: tuple) -> None:
+    """The objective the dispatch validated must reach the parent state.
+
+    Nothing set ``active_objective_id`` before, so the RoE guardrail and
+    the run recorder logged an empty ``objective_id`` forever.
+    """
+    tool, _ = task
+    state = {"objectives": [{"id": "A"}], "engagement_name": "lab"}
+    reply = _call(tool, state, objective="A")
+    assert reply.update["active_objective_id"] == "A"
+
+
+def test_task_without_objective_omits_active_objective_stamp(task: tuple) -> None:
+    tool, _ = task
+    state = {"objectives": [{"id": "A"}]}
+    reply = _call(tool, state, objective=None)
+    assert "active_objective_id" not in reply.update

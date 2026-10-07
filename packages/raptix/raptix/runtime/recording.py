@@ -36,16 +36,28 @@ File format
 JSONL, one event per line::
 
     {"kind":"model_call","seq":42,"req_hash":"sha256:...","model":"claude-opus-4-7",
-     "request":{...canonical...},"response":{...content...},"usage":{...}}
+     "request":{...canonical...},"response":{...content...},"usage":{...},
+     "agent":"recon","engagement":"lab-x","workspace":"/workspace/lab-x",
+     "objective_id":"OBJ-3","ts":"...Z","dur_ms":4120}
     {"kind":"tool_call","seq":43,"req_hash":"sha256:...","tool":"bash",
      "request":{...},"response":{...ToolMessage...}}
 
 The ``seq`` field is the global execution order — useful for diffing two
-runs that diverged mid-execution.
+runs that diverged mid-execution. Sinks are shared per resolved path, so
+several agents recording to one file interleave under a single ``seq``.
+
+Every entry additionally carries an **observability envelope** — ``agent``,
+``engagement``, ``workspace``, ``objective_id``, ``ts`` (ISO-8601 UTC),
+``dur_ms`` — which the replayer ignores (it keys on ``kind``/``req_hash``
+only). A failed model/tool call is recorded as a
+``{"type": "error", ...}`` response before the exception is re-raised, so
+capture loss is visible instead of a silent gap; the replayer skips error
+entries (a failed call is not replayable).
 
 What is NOT recorded
 --------------------
-- Real wall-clock timestamps (replay would be misleading).
+- Wall-clock data inside the *canonical hash* (the envelope's ``ts``/
+  ``dur_ms`` sit outside the hashed request, so replay is unaffected).
 - Random.* seeds — agents should not consume randomness; if they do that's
   a separate bug to fix.
 - Sandbox internal state (jobs registry, tmux session IDs) — these are
@@ -58,11 +70,14 @@ import hashlib
 import json
 import logging
 import os
+import time
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, ClassVar
 
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import AIMessage, ToolMessage
+from langgraph.types import Command
 from typing_extensions import override
 
 log = logging.getLogger(__name__)
@@ -138,12 +153,40 @@ def _serialize_tool_request(request: Any) -> dict[str, Any]:
     }
 
 
+def _normalize_usage(message: Any) -> tuple[dict[str, Any] | None, str]:
+    """Return ``(usage, source)`` with an explicit provenance tag.
+
+    Providers disagree on where token counts live. Rather than silently
+    dropping usage when the preferred slot is empty, fall back through the
+    known shapes; when nothing is found report ``(None, "absent")`` so an
+    analyst can distinguish "provider sent nothing" from "recorder bug".
+    """
+    um = getattr(message, "usage_metadata", None)
+    if isinstance(um, dict) and um:
+        return um, "usage_metadata"
+    rm = getattr(message, "response_metadata", None)
+    if isinstance(rm, dict):
+        for key in ("token_usage", "usage"):
+            val = rm.get(key)
+            if isinstance(val, dict) and val:
+                return val, "response_metadata"
+    ak = getattr(message, "additional_kwargs", None)
+    if isinstance(ak, dict):
+        val = ak.get("usage")
+        if isinstance(val, dict) and val:
+            return val, "additional_kwargs"
+    return None, "absent"
+
+
 def _serialize_ai_response(message: Any) -> dict[str, Any]:
+    usage, usage_source = _normalize_usage(message)
     return {
         "type": getattr(message, "type", "ai"),
         "content": getattr(message, "content", ""),
         "tool_calls": getattr(message, "tool_calls", []) or [],
         "usage_metadata": getattr(message, "usage_metadata", {}) or {},
+        "usage": usage,
+        "usage_source": usage_source,
         "additional_kwargs": getattr(message, "additional_kwargs", {}) or {},
     }
 
@@ -159,20 +202,97 @@ def _serialize_tool_response(message: Any) -> dict[str, Any]:
     }
 
 
+def _serialize_command_response(command: Any) -> dict[str, Any]:
+    """Serialize a graph-control ``Command`` (the ``task`` tool's return shape).
+
+    The sub-agent report lives in ``update["messages"]``; the previous
+    ``{"type": "command"}`` stub destroyed it.
+    """
+    update = getattr(command, "update", None)
+    if not isinstance(update, dict):
+        update = {}
+    messages = update.get("messages")
+    return {
+        "type": "command",
+        "update_keys": sorted(update.keys()),
+        "messages": _serialize_messages(messages if isinstance(messages, list) else []),
+        "dispatch_ledger": update.get("dispatch_ledger"),
+    }
+
+
+def _serialize_error_response(exc: BaseException) -> dict[str, Any]:
+    """Observability-only shape for a failed call; never replayable."""
+    return {
+        "type": "error",
+        "error": type(exc).__name__,
+        "detail": str(exc)[:2000],
+    }
+
+
 class _Sink:
-    """Append-only JSONL writer with monotonic seq counter and file rotation hint."""
+    """Append-only JSONL writer, shared per resolved path within a process.
+
+    - One writer per path: two ``RecordingMiddleware`` instances recording
+      to the same file join the same sink, so ``seq`` is the run's global
+      execution order (per process) instead of colliding per instance.
+    - Poisoned on first write failure: capture must never break a live run
+      (an exception escaping into ToolNode would replace the real tool
+      result with an error ToolMessage). After one failed write the sink
+      short-circuits every later write and logs exactly once.
+    - Flush-per-write; no fsync (advisory channel). At most the in-flight
+      line is lost; the fd is released at process exit.
+    """
 
     def __init__(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._path = path
-        self._seq = 0
+        # Continue the seq of an existing file so a second process (or a
+        # re-opened sink) does not restart the ordering from zero.
+        self._seq = self._count_lines(path)
         self._fh = path.open("a", encoding="utf-8")
+        self._poisoned = False
 
-    def write(self, entry: dict[str, Any]) -> None:
+    @staticmethod
+    def _count_lines(path: Path) -> int:
+        if not path.exists():
+            return 0
+        total = 0
+        with path.open("rb") as fh:
+            for chunk in iter(lambda: fh.read(1 << 20), b""):
+                total += chunk.count(b"\n")
+        return total
+
+    @property
+    def path(self) -> Path:
+        return self._path
+
+    @property
+    def poisoned(self) -> bool:
+        return self._poisoned
+
+    @property
+    def closed(self) -> bool:
+        return self._fh.closed
+
+    def write(self, entry: dict[str, Any]) -> bool:
+        """Append one entry. Never raises; returns False once poisoned."""
+        if self._poisoned:
+            return False
         entry["seq"] = self._seq
         self._seq += 1
-        self._fh.write(json.dumps(entry, default=str) + "\n")
-        self._fh.flush()
+        try:
+            self._fh.write(json.dumps(entry, default=str) + "\n")
+            self._fh.flush()
+        except Exception:  # noqa: BLE001 - capture must never break the run
+            self._poisoned = True
+            log.warning(
+                "record sink %s failed; capture disabled for the rest of "
+                "this run (live tool results are returned unchanged)",
+                self._path,
+                exc_info=True,
+            )
+            return False
+        return True
 
     def close(self) -> None:
         try:
@@ -181,9 +301,26 @@ class _Sink:
             log.warning("failed to close record sink at %s", self._path, exc_info=True)
 
 
+_SINKS: dict[str, "_Sink"] = {}
+
+
 def open_record(path: str | Path) -> _Sink:
-    """Open ``path`` for appending recording events."""
-    return _Sink(Path(path))
+    """Open — or join — the shared append-only record sink for ``path``.
+
+    The sink is opened eagerly: an unusable path fails HERE with the real
+    ``OSError`` (which ``_make_record`` re-raises with the env var named),
+    and the first open per path logs the resolved location so capture loss
+    is detectable at startup rather than discovered from an empty file.
+    """
+    resolved = Path(path).expanduser().resolve()
+    key = str(resolved)
+    existing = _SINKS.get(key)
+    if existing is not None and not existing.closed:
+        return existing
+    sink = _Sink(resolved)
+    _SINKS[key] = sink
+    log.info("recording enabled → %s", resolved)
+    return sink
 
 
 class _Replay:
@@ -209,6 +346,11 @@ class _Replay:
                 req_hash = entry.get("req_hash")
                 if not kind or not req_hash:
                     continue
+                response = entry.get("response")
+                if isinstance(response, dict) and response.get("type") == "error":
+                    # A failed call is observability-only; replaying it as an
+                    # empty message would silently corrupt a re-run.
+                    continue
                 if kind == "model_call":
                     self._model[req_hash] = entry
                 elif kind == "tool_call":
@@ -233,22 +375,56 @@ def open_replay(path: str | Path) -> _Replay:
 class RecordingMiddleware(AgentMiddleware):
     """Capture every model + tool round-trip to a JSONL record file.
 
-    Construct once per engagement with the desired output path. The sink
-    is opened in append mode so re-runs onto the same file accumulate
-    events (with monotonically-increasing seq numbers).
+    Sinks are shared per resolved path (see :func:`open_record`), so several
+    agents recording to one file interleave entries under a single global
+    ``seq`` per process.
 
     Place this middleware *closest to the inner runtime* (last in the stack)
     so it observes the request/response shapes that actually hit the LLM
     after all other middleware has had its chance to mutate them.
+
+    Every entry carries an observability envelope — ``agent`` (role, with a
+    ``runtime.agent_name`` fallback), ``engagement``, ``workspace``,
+    ``objective_id``, ``ts``, ``dur_ms`` — that the replayer ignores. A
+    failed call is recorded as an ``{"type": "error"}`` response before the
+    exception is re-raised (previously the gap was silent); sink write
+    failures poison the sink instead of propagating, so capture can never
+    replace a live tool result with an error ToolMessage.
     """
 
-    def __init__(self, *, path: str | Path | None = None) -> None:
+    def __init__(self, *, path: str | Path | None = None, role: str = "") -> None:
         super().__init__()
+        self._role = role or ""
         record_path = path or os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "")
-        if not record_path:
-            self._sink: _Sink | None = None
-        else:
-            self._sink = open_record(Path(record_path))
+        self._sink: _Sink | None = open_record(Path(record_path)) if record_path else None
+
+    def _envelope(self, request: Any, req_hash: str, dur_ms: int) -> dict[str, Any]:
+        """Observability metadata; the replayer reads only kind/req_hash."""
+        state = getattr(request, "state", None) or {}
+        get = state.get if hasattr(state, "get") else (lambda _k, _d=None: None)
+        agent = self._role or ""
+        if not agent:
+            runtime = getattr(request, "runtime", None)
+            agent = getattr(runtime, "agent_name", "") or ""
+        return {
+            "agent": agent,
+            "engagement": str(
+                get("engagement_name")
+                or get("engagement_id")
+                or os.environ.get("RAPTIX_ENGAGEMENT_ID", "")
+            ),
+            "workspace": str(get("workspace_path") or os.environ.get("RAPTIX_WORKSPACE_PATH", "")),
+            "objective_id": str(get("active_objective_id") or ""),
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "dur_ms": dur_ms,
+            "req_hash": req_hash,
+        }
+
+    def _record(self, request: Any, entry: dict[str, Any], dur_ms: int) -> None:
+        if self._sink is None:
+            return
+        entry.update(self._envelope(request, entry["req_hash"], dur_ms))
+        self._sink.write(entry)
 
     @override
     def wrap_model_call(self, request, handler):
@@ -256,14 +432,30 @@ class RecordingMiddleware(AgentMiddleware):
             return handler(request)
         req_dict = _serialize_model_request(request)
         req_hash = _hash_request(req_dict)
-        response = handler(request)
-        self._sink.write(
+        start = time.monotonic()
+        try:
+            response = handler(request)
+        except Exception as exc:
+            self._record(
+                request,
+                {
+                    "kind": "model_call",
+                    "req_hash": req_hash,
+                    "request": req_dict,
+                    "response": _serialize_error_response(exc),
+                },
+                int((time.monotonic() - start) * 1000),
+            )
+            raise
+        self._record(
+            request,
             {
                 "kind": "model_call",
                 "req_hash": req_hash,
                 "request": req_dict,
                 "response": _serialize_ai_response(response),
-            }
+            },
+            int((time.monotonic() - start) * 1000),
         )
         return response
 
@@ -273,16 +465,47 @@ class RecordingMiddleware(AgentMiddleware):
             return await handler(request)
         req_dict = _serialize_model_request(request)
         req_hash = _hash_request(req_dict)
-        response = await handler(request)
-        self._sink.write(
+        start = time.monotonic()
+        try:
+            response = await handler(request)
+        except Exception as exc:
+            self._record(
+                request,
+                {
+                    "kind": "model_call",
+                    "req_hash": req_hash,
+                    "request": req_dict,
+                    "response": _serialize_error_response(exc),
+                },
+                int((time.monotonic() - start) * 1000),
+            )
+            raise
+        self._record(
+            request,
             {
                 "kind": "model_call",
                 "req_hash": req_hash,
                 "request": req_dict,
                 "response": _serialize_ai_response(response),
-            }
+            },
+            int((time.monotonic() - start) * 1000),
         )
         return response
+
+    def _tool_entry(self, req_dict: dict[str, Any], req_hash: str, response: Any) -> dict[str, Any]:
+        if isinstance(response, ToolMessage):
+            serialized = _serialize_tool_response(response)
+        elif isinstance(response, Command):
+            serialized = _serialize_command_response(response)
+        else:
+            # Unknown non-ToolMessage control object: keep the legacy stub.
+            serialized = {"type": "command"}
+        return {
+            "kind": "tool_call",
+            "req_hash": req_hash,
+            "request": req_dict,
+            "response": serialized,
+        }
 
     @override
     def wrap_tool_call(self, request, handler):
@@ -290,16 +513,18 @@ class RecordingMiddleware(AgentMiddleware):
             return handler(request)
         req_dict = _serialize_tool_request(request)
         req_hash = _hash_request(req_dict)
-        response = handler(request)
-        self._sink.write(
-            {
-                "kind": "tool_call",
-                "req_hash": req_hash,
-                "request": req_dict,
-                "response": _serialize_tool_response(response)
-                if isinstance(response, ToolMessage)
-                else {"type": "command"},
-            }
+        start = time.monotonic()
+        try:
+            response = handler(request)
+        except Exception as exc:
+            entry = self._tool_entry(req_dict, req_hash, None)
+            entry["response"] = _serialize_error_response(exc)
+            self._record(request, entry, int((time.monotonic() - start) * 1000))
+            raise
+        self._record(
+            request,
+            self._tool_entry(req_dict, req_hash, response),
+            int((time.monotonic() - start) * 1000),
         )
         return response
 
@@ -309,16 +534,18 @@ class RecordingMiddleware(AgentMiddleware):
             return await handler(request)
         req_dict = _serialize_tool_request(request)
         req_hash = _hash_request(req_dict)
-        response = await handler(request)
-        self._sink.write(
-            {
-                "kind": "tool_call",
-                "req_hash": req_hash,
-                "request": req_dict,
-                "response": _serialize_tool_response(response)
-                if isinstance(response, ToolMessage)
-                else {"type": "command"},
-            }
+        start = time.monotonic()
+        try:
+            response = await handler(request)
+        except Exception as exc:
+            entry = self._tool_entry(req_dict, req_hash, None)
+            entry["response"] = _serialize_error_response(exc)
+            self._record(request, entry, int((time.monotonic() - start) * 1000))
+            raise
+        self._record(
+            request,
+            self._tool_entry(req_dict, req_hash, response),
+            int((time.monotonic() - start) * 1000),
         )
         return response
 
