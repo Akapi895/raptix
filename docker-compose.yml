@@ -212,6 +212,8 @@ services:
         INSTALL_WEB_TOOLS: ${INSTALL_WEB_TOOLS:-false}
         INSTALL_AD_TOOLS: ${INSTALL_AD_TOOLS:-false}
         INSTALL_PIVOT_TOOLS: ${INSTALL_PIVOT_TOOLS:-false}
+        # Source-revision stamp; the lab harness verifies it against HEAD.
+        RAPTIX_REPO_HEAD: ${RAPTIX_REPO_HEAD:-}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox
     networks:
       - sandbox-net
@@ -383,6 +385,8 @@ services:
         # of the image tag selector above — VERSION can be unset locally
         # (defaults to 0.0.0 sentinel) while the tag is still ":dev".
         VERSION: ${VERSION:-0.0.0}
+        # Source-revision stamp; the lab harness verifies it against HEAD.
+        RAPTIX_REPO_HEAD: ${RAPTIX_REPO_HEAD:-}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-langgraph
     ports:
       - "127.0.0.1:${LANGGRAPH_PORT:-2024}:2024"

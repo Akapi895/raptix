@@ -204,9 +204,11 @@ jobs:
           # Stamp the package version into images at build time. langgraph +
           # cli Dockerfiles read this ARG to sed-patch pyproject.toml /
           # package.json from the "0.0.0" sentinel; litellm ignores it
-          # (no ARG declared) which is harmless.
+          # (no ARG declared) which is harmless. RAPTIX_REPO_HEAD stamps
+          # the source revision as an OCI label the lab harness verifies.
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
+            RAPTIX_REPO_HEAD=${{ github.sha }}
           # Only publish the version tag here — `:latest` is promoted by the
           # publish-release job AFTER every image has been verified on GHCR,
           # so a half-finished release never updates the moving tag.

@@ -606,6 +606,8 @@ jobs:
           push: false
           load: true
           tags: raptix-${{ matrix.image }}:ci
+          build-args: |
+            RAPTIX_REPO_HEAD=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=${{ github.event_name == 'push' && 'max' || 'min' }}
       # Informational scan. The hotfix scope (1.0.27) keeps this as a
@@ -672,6 +674,8 @@ jobs:
           load: false
           platforms: linux/arm64
           tags: raptix-${{ matrix.image }}:ci-arm64
+          build-args: |
+            RAPTIX_REPO_HEAD=${{ github.sha }}
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=${{ github.event_name == 'push' && 'max' || 'min' }},scope=arm64
 
