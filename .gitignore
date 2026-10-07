@@ -11,6 +11,7 @@ venv.bak/
 __pycache__/
 *.py[cod]
 *$py.class
+Temp/
 
 # IDE and Editor
 .vscode/
