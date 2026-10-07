@@ -274,6 +274,33 @@ def _ensure_container_workspace(args: argparse.Namespace, trace_dir: Path) -> No
         _log(f"WARNING: {note}")
 
 
+def _reset_kg(args: argparse.Namespace, trace_dir: Path) -> str:
+    """Opt-in clean graph for this engagement slice before turn 1.
+
+    Scoped exactly like every KGStore method: only nodes whose
+    engagement label matches --engagement are deleted; other labs'
+    slices are untouched. Never automatic — the flag is explicit.
+    """
+    if not getattr(args, "fresh_kg", False):
+        note = "skipped (default; pass --fresh-kg for a clean graph)"
+        _capture_status(trace_dir, "kg_reset", note)
+        return note
+    try:
+        from raptix.knowledge.graph.store import KGStore
+
+        store = KGStore.from_env()
+        try:
+            deleted = store.delete_engagement(engagement=args.engagement)
+        finally:
+            store.close()
+        note = f"ok: {deleted} nodes deleted from {args.engagement!r}"
+    except Exception as exc:  # noqa: BLE001 — never block the run on reset
+        note = f"failed: {exc}"[:300]
+    _capture_status(trace_dir, "kg_reset", note)
+    _log(f"kg reset: {note}")
+    return note
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Run one authorized lab with full trace capture.")
     # 2024 = the compose langgraph port (docker-compose.yml). 2400 was a stale
@@ -295,6 +322,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--sandbox-container", default="raptix-sandbox")
     p.add_argument("--log-containers", default="raptix-langgraph,raptix-sandbox,raptix-litellm")
     p.add_argument("--recursion-limit", type=int, default=400)
+    p.add_argument(
+        "--fresh-kg",
+        action="store_true",
+        help=(
+            "Reset this engagement's attack-graph slice before the run "
+            "(same slug reruns start clean). Other engagements untouched. "
+            "Default off: only an operator asking for a clean graph gets one."
+        ),
+    )
     return p.parse_args(argv)
 
 
@@ -362,6 +398,7 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
         )
     _log(f"api ok: {api_detail}")
     _ensure_container_workspace(args, trace_dir)
+    _reset_kg(args, trace_dir)
     started_iso = _now_iso()
     start_epoch = int(time.time())
     await _api(lambda: client.threads.create(thread_id=thread_id), timeout=30)
@@ -555,6 +592,8 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
         "transcripts": derived_note,
         "state_snapshots": _read_capture_note(trace_dir, "state_snapshots"),
         "thread_runs": _read_capture_note(trace_dir, "thread_runs"),
+        "workspace_ensure": _read_capture_note(trace_dir, "workspace_ensure"),
+        "kg_reset": _read_capture_note(trace_dir, "kg_reset"),
         "workspace_copy": ws_note,
         "container_logs": f"{log_ok}/{log_total} containers",
     }

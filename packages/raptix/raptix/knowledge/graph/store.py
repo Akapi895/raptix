@@ -566,3 +566,33 @@ class KGStore:
             engagement=engagement,
         )
         return int(rows[0]["deleted"] or 0) if rows else 0
+
+    def delete_engagement(self, *, engagement: str) -> int:
+        """Detach-delete EVERY node in ``engagement``. Returns nodes deleted.
+
+        The scoped-reset primitive behind ``raptix-cli kg reset`` and the
+        lab harness's ``--fresh-kg``: a rerun of the same engagement slug
+        starts from a clean graph slice. Bounded sweeps like
+        ``delete_stale`` (LIMIT 1000 per transaction) so one call can't
+        block the engagement on a runaway graph. Other engagements'
+        nodes are untouched by construction — the match filters on the
+        engagement label, exactly like every other method here.
+        """
+        self._check_engagement(engagement)
+        cypher = (
+            "MATCH (n) WHERE n.engagement = $engagement "
+            "WITH n LIMIT 1000 "
+            "DETACH DELETE n "
+            "RETURN count(n) AS deleted"
+        )
+        total = 0
+        while True:
+            rows = self.execute_write(
+                cypher,
+                {"engagement": engagement},
+                engagement=engagement,
+            )
+            deleted = int(rows[0]["deleted"] or 0) if rows else 0
+            total += deleted
+            if deleted < 1000:
+                return total
