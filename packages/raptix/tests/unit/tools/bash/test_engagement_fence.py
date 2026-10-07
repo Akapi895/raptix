@@ -1,11 +1,8 @@
 """Engagement workspace fence tests for the bash tool family.
 
-The fence (plan D2, docs/design/2026-10-07-run-isolation-reproducibility-plan.md)
-is env-based enforcement: when ``RAPTIX_ENGAGEMENT`` is set, every resolved
-workspace - via run config, env fallback, or ``bash_workspace()`` - must live
-inside ``/workspace/<slug>/`` or the tool errors. The shared ``/workspace``
-root is refused too: it is the tree every engagement sees when no
-per-engagement bind-mount is in play.
+Named engagements require an isolated bind mount whose runtime root is
+``/workspace``. Nested runtime roots are misconfigurations, not a substitute
+for restricting which engagements' data the container can see (ADR-0042).
 """
 
 from __future__ import annotations
@@ -27,6 +24,7 @@ from raptix.execution.tools.bash.bash import (
 def _isolated_env(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.delenv("RAPTIX_ENGAGEMENT", raising=False)
     monkeypatch.delenv("RAPTIX_WORKSPACE_PATH", raising=False)
+    monkeypatch.setenv("RAPTIX_WORKSPACE_ISOLATED", "1")
 
 
 @pytest.fixture(autouse=True)
@@ -49,10 +47,10 @@ def _config(workspace_path: str) -> dict:
 # -- bash_workspace (orchestrator entry) --
 
 
-def test_bash_workspace_allows_inside_engagement(monkeypatch) -> None:
+def test_bash_workspace_allows_engagement_mount_root(monkeypatch) -> None:
     monkeypatch.setenv("RAPTIX_ENGAGEMENT", "lab-01")
-    with bash_workspace("/workspace/lab-01"):
-        assert _workspace_path_from_config(None) == "/workspace/lab-01"
+    with bash_workspace("/workspace"):
+        assert _workspace_path_from_config(None) == "/workspace"
 
 
 def test_bash_workspace_rejects_other_engagement(monkeypatch) -> None:
@@ -62,9 +60,10 @@ def test_bash_workspace_rejects_other_engagement(monkeypatch) -> None:
             pass
 
 
-def test_bash_workspace_rejects_shared_root(monkeypatch) -> None:
+def test_bash_workspace_rejects_unisolated_root(monkeypatch) -> None:
     monkeypatch.setenv("RAPTIX_ENGAGEMENT", "lab-01")
-    with pytest.raises(RuntimeError, match="outside engagement"):
+    monkeypatch.delenv("RAPTIX_WORKSPACE_ISOLATED")
+    with pytest.raises(RuntimeError, match="isolated"):
         with bash_workspace("/workspace"):
             pass
 
@@ -97,9 +96,9 @@ def test_env_workspace_outside_engagement_raises(monkeypatch) -> None:
         _workspace_path_from_config(None)
 
 
-def test_env_slug_resolution_still_works(monkeypatch) -> None:
+def test_env_slug_resolves_to_isolated_mount_root(monkeypatch) -> None:
     monkeypatch.setenv("RAPTIX_ENGAGEMENT", "lab-01")
-    assert _workspace_path_from_config(None) == "/workspace/lab-01"
+    assert _workspace_path_from_config(None) == "/workspace"
 
 
 def test_no_env_keeps_legacy_resolution(monkeypatch) -> None:

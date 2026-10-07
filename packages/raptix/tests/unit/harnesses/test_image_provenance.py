@@ -129,3 +129,10 @@ def test_unknown_container_refuses() -> None:
     }
     with _patch_docker(mapping), pytest.raises(SystemExit, match="container not found"):
         _verify_image_provenance(_args())
+
+
+def test_unknown_checkout_refuses_even_when_images_are_labeled(monkeypatch) -> None:
+    monkeypatch.setattr(subprocess, "run", lambda *a, **kw: _proc(128, "", "not a repo"))
+    mapping = {"raptix-langgraph": (0, HEAD, ""), "raptix-sandbox": (0, HEAD, "")}
+    with _patch_docker(mapping), pytest.raises(SystemExit, match="checkout HEAD"):
+        _verify_image_provenance(_args())

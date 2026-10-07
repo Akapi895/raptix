@@ -1,8 +1,8 @@
 # Observability capture fix plan
 
 **Date:** 2026-10-07
-**Status:** Implemented (PR-A/PR-B/PR-C landed; acceptance criteria in §5
-verified by the unit suites listed per PR)
+**Status:** Implemented with post-commit review corrections; verification
+surfaces and remaining limitations are recorded in §7.
 **Scope:** Observability only — recorder + event log + pre-flight.
 Isolation/reproducibility is a separate plan.
 
@@ -11,10 +11,13 @@ Isolation/reproducibility is a separate plan.
 The incident report listed symptoms; re-reading the current code corrects
 three of them. The plan fixes the corrected version, not the literal one.
 
-1. **`record.jsonl` does NOT lack `tool_calls`.** `_serialize_ai_response`
-   already records `tool_calls` and `usage_metadata`
-   (`packages/raptix/raptix/runtime/recording.py:141-148`). What the observed
-   artifacts actually lacked:
+1. **The serializer has `tool_calls`, but the real framework boundary lost
+   them.** Post-commit review reproduced LangChain handlers returning
+   `ModelResponse(result=[AIMessage(...)])`, while the recorder read attributes
+   from that wrapper as if it were an AIMessage. The correction unwraps the
+   model messages, preserving content, calls, usage and structured output.
+   The original direct-AIMessage unit tests did not exercise this boundary.
+   Other gaps addressed by PR-A:
    - **agent label** — `_make_record(**_: Any)` discards `role`
      (`intelligence/agents/middleware_slots.py:417`), so entries cannot be
      attributed to an agent. Contrast `_make_event_log(*, role, ...)`
@@ -158,20 +161,24 @@ opt-in, local, and the analysis channel. Note in the docstring that
 
 ### A5. Stamp `active_objective_id` at dispatch (fixes RoE ledger + recorder)
 
-Root cause for the empty `objective_id` is upstream: **nothing sets it**.
-`dispatch.py:_finish` already knows `context.objective_id` and already
-builds `updates` (ln 166-193) — add:
+Objective attribution needs a declared `ObjectiveContextState` channel and a
+separate runtime state copy BEFORE invoking the child. Dispatch inserts the
+validated objective into that copy; unbound tasks receive an empty value rather
+than the previous objective. RoE and recording register the channel on child
+graphs, including read-only specialists.
 
 ```python
-if context.objective_id:
-    updates["active_objective_id"] = context.objective_id
+child_runtime.state = {**runtime.state, "active_objective_id": context.objective_id or ""}
+updates["active_objective_id"] = context.objective_id or ""
 ```
 
-This is the exact key `middleware/roe.py:454,553,600` already reads — no
-renames, no second key. The `Command(update=...)` lands in the parent
-thread state and propagates to the child via the existing state copy, so
-one stamp fixes the orchestrator's own RoE ledger, the child's ledger,
-and the recorder envelope.
+The parent channel is a last-joined completion cursor, with a reducer for
+parallel joins. It is not the scope of parallel children: each child uses its
+own validated copy. Recording a task Command takes its objective from that
+Command, not the parent's previous cursor (ADR-0042).
+The parent's pre-dispatch RoE row resolves the requested ID against the trusted
+objective catalog. ToolCallRequest dict arguments are decoded explicitly; they
+must not fall through to an empty command or stale objective.
 
 ### A6. Shared sink per resolved path + non-colliding seq
 
@@ -235,11 +242,11 @@ tests. **Budget:** ~150 LOC behavior.
 
 ### B1. No orphan `tool.call` (O5)
 
-`wrap_tool_call`/`awrap_tool_call` (`event_logging.py:634-657`): move the
-result emission into `try/finally` so a handler exception emits
+`wrap_tool_call`/`awrap_tool_call`: handler failures emit
 `tool.result {"tool": name, "status": "exception"}` before re-raising.
-Same for `_emit_trajectory_tool` (must not see a missing response —
-guard with the same finally). Existing pair-ordering tests
+Async cancellation also emits the terminal half with `status=cancelled` before
+propagating `CancelledError`. Trajectory hooks run only for actual responses.
+Existing pair-ordering tests
 (`test_tool_call_writes_call_then_result_pair`) must keep passing.
 
 ### B2. Run-start anchor
@@ -297,6 +304,11 @@ warns on every single event for the whole run, drowning the log.
    stays in the manifest; add `api_reachable` + per-channel status next
    to it.
 
+Post-commit correction: create input directories before archiving protocol
+files, initialize every capture marker before pre-flight, and persist the
+manifest in a `finally` even when pre-flight refuses the run. Failed
+`docker logs` return codes are capture failures, not successful containers.
+
 ---
 
 ## 5. Acceptance criteria (maps 1:1 to the four evidence items)
@@ -321,3 +333,16 @@ warns on every single event for the whole run, drowning the log.
 - **Command serialization** may duplicate large sub-agent reports into
   record.jsonl. Accepted (same rationale as envelope growth); the
   `update_keys` field keeps orientation cheap.
+
+## 7. Post-commit review verification
+
+- `test_recording_framework.py` runs compiled LangChain graphs against a
+  deterministic model, exercising real ModelResponse and task Command shapes.
+- Objective checks cover child input, parent channels and task record attribution;
+  the scalar parent cursor does not claim to identify every parallel branch.
+- `test_event_logging.py` covers cancellation propagation with a terminal tool
+  event, in addition to ordinary handler failures.
+- `test_lab_run_flow.py` exercises the CLI entry point, turn loop, actual output
+  files and refusal markers with bounded API/Docker transport stand-ins.
+- These are mechanism checks; they do not claim a live external-provider lab
+  benchmark or a rebuilt full Compose engagement.

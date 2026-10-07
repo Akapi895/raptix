@@ -1,7 +1,7 @@
 # Run Isolation & Reproducibility — Fix Plan
 
 - **Date:** 2026-10-07
-- **Status:** Implemented (PR-D `5166713`, PR-E `dda4750`, PR-F `fe841da`, PR-G `d475656`)
+- **Status:** Implemented with post-commit review corrections (ADR-0042; §7).
 - **Scope:** enforce run isolation (workspace, KG, images) and run
   reproducibility (clean baseline per run, auditable injections) with
   mechanism-level controls — env, code, daemon, entrypoint — never prompt-only.
@@ -14,7 +14,11 @@
 
 ---
 
-## 1. Verified current state (evidence, not the report's memory)
+## 1. Original inventory (historical snapshot)
+
+This table records the initial investigation. Post-commit corrections, including
+the indirect legacy-volume reference, are recorded in §2; D1/D2 and ADR-0042
+define the corrected deployment contract.
 
 | ID | Claim | Verified state | Verdict |
 |----|-------|----------------|---------|
@@ -63,9 +67,10 @@ destroy correct behavior:
    auto-prune includes real engagements sharing `$RAPTIX_HOME`. Prune ships as
    an explicit, opt-in command (D1c).
 
-One dead-config item found while verifying I1: the `workspace_data` volume is
-referenced by no service (compose `:752-753`) — remove it (part of PR-D) so
-nobody re-attaches a shared root by accident.
+Post-review correction to I1: `workspace_data` has an indirect service reference
+when existing `.env` sets `RAPTIX_WORKSPACE_PATH=workspace_data`. Its declaration
+is retained for legacy dev/data migration; named evidence runs require a verified
+engagement-specific bind instead (ADR-0042).
 
 ---
 
@@ -76,47 +81,47 @@ permitted only as documentation of an enforced behavior, never as the control.
 
 ### D1 — Workspace isolation: scope every entry point (env + compose)
 
-**Mechanism, not prompt.** Three entry points, one rule: the container's
-`/workspace` is either the engagement dir or fenced to it.
+**Mechanism, not prompt.** A named bash engagement's `/workspace` mounts only
+that engagement's directory. A shared mount cannot be isolated by cwd fencing.
 
-- **Launcher** — already correct (`start.go:270`). No change.
-- **Web/desktop path:** `useAgent.ts:775-776` sends the workspace **root**.
-  Change the server/web contract so the effective `workspace_path` for a run
-  is `<runtime workspace>/<engagement slug>` once `engagement_ready` delivers
-  the slug (the slug already travels independently — `useAgent.ts:334`).
-  Files: `apps/web/.../useAgent.ts`, the web contracts package
-  (`@raptix/web-contracts` consumer), and wherever `configurable.workspace_path`
-  is re-derived server-side. The web app must never send a bare `/workspace`
-  as a run's workspace once an engagement slug is known.
-- **Compose cleanup:** remove the dead `workspace_data` volume block
-  (`docker-compose.yml:752-753`).
+- **Launcher + CLI:** the launcher binds the engagement directory directly at
+  `/workspace`; CLI therefore sends `/workspace`, not a second slug directory.
+  Compose derives `RAPTIX_WORKSPACE_ISOLATED=1` from the explicit engagement
+  bind source and pins `RAPTIX_ENGAGEMENT` in both containers.
+- **Web/desktop:** the server's existing pinned-slug mode correctly sends the
+  mount root. It must agree with the deployed engagement. Named bash calls on
+  unpinned/shared deployments are refused by the runtime; cwd-prefix scoping
+  is not claimed as filesystem isolation.
+- **Compose compatibility:** retain the legacy volume declaration for indirect
+  `.env` references. It is rejected as an evidence-run workspace by D2.
 
-**Prune (explicit):** add `tests/local/harnesses`-adjacent operator command —
-`lab_run.py --prune-old N` deletes the N-oldest `lab-*` dirs under the runtime
-workspace **after** a successful capture, printing what it deletes; default off.
-Never wired into any automatic path.
+**Prune (explicit, deferred):** the proposed `lab_run.py --prune-old N` would
+delete the N-oldest `lab-*` dirs after successful capture, default off. It is
+not implemented by PR-D or this review correction. No automatic deletion path exists.
 
 ### D2 — Cross-engagement fence + eager workspace ensure (code + daemon)
 
-**The fence (bash tool, hard error):** when `RAPTIX_ENGAGEMENT` is set in the
-agent container, `bash` and every sandbox-path-taking tool must reject a
-resolved workspace outside `/workspace/<RAPTIX_ENGAGEMENT>/` with an actionable
-error ("workspace <path> is outside engagement <slug>; pass a path under
-/workspace/<slug>/"). Implementation point: the resolution chain at
-`bash.py:305-339` — after `SandboxBase._normalize_workspace_path`, compare the
-result against the engagement prefix. This is env-based enforcement: the
-launcher already sets engagement env; PR-D adds `RAPTIX_ENGAGEMENT` to the
-sandbox/langgraph services' environment in compose (from the same var the
-launcher exports) and the harness passes it per run. When the env is unset
-(legacy/dev), behavior is unchanged — the fence appears exactly when an
-engagement is known.
+**Mount isolation, then validation (ADR-0042):** arbitrary bash can read absolute
+paths regardless of cwd, so named shared-root deployments are refused. The
+operator pins a single engagement directory at `/workspace`. Runtime bash
+context must match that pinned engagement and use the root. The daemon gates
+every authenticated operation on the isolation declaration, validates session
+roots, and resolves file paths within the mount before accessing the backend.
+Legacy unpinned dev mode retains its transport API but is not an isolated
+evidence-run deployment.
+
+The harness inspects both actual Docker mounts and env declarations: matching
+engagement, isolation flag, identical bind source whose basename is the slug,
+and `/workspace` runtime root. `--allow-dirty` cannot bypass this check.
 
 **Eager ensure (daemon + harness):** add `POST /workspace/ensure` to the
-sandbox daemon (`execution/sandbox/daemon.py`): body `{"path": ...}`, same
+sandbox daemon (`execution/sandbox/server/app.py`): body `{"path": ...}`, same
 `_normalize_workspace_path` guard, `mkdir -p`, idempotent, fenced by D2's rule
-when `RAPTIX_ENGAGEMENT` is set. `lab_run.py` calls it in pre-flight right
-after the `/ok` probe (extends PR-C's `_probe_api`), so `/workspace/<slug>`
-exists before turn 1 regardless of which tool fires first. This removes the
+when `RAPTIX_ENGAGEMENT` is set. `lab_run.py` calls it, with the daemon's own
+bearer token inside the container, in pre-flight
+after the `/ok` probe (extends PR-C's `_probe_api`), so the isolated `/workspace`
+exists before turn 1 regardless of which tool fires first. Ensure failure
+refuses the run. This removes the
 "capture-before-first-bash" failure mode (§1 E4).
 
 **tmux lazy mkdir stays** as a belt-and-suspenders fallback; it is no longer
@@ -144,9 +149,9 @@ still gets a line in the PR referencing this plan.
 The var has no code path. Implementing per-engagement sandbox containers now
 would duplicate the mount-scoping mechanism (D1) behind a second flag with
 real resource cost. Decision: rewrite the `docs/security/sandbox-isolation.md`
-section to state (a) isolation today = engagement-scoped bind mount (launcher)
-+ env fence (D2) + scoped KG (D5); (b) per-engagement sandbox containers are a
-future design, intentionally not implemented; (c) the env var name is
+section to state (a) isolation today = engagement-scoped bind mount (launcher),
+daemon deployment/path checks (D2) and scoped KG (D5); (b) per-engagement sandbox
+containers are a future design, intentionally not implemented; (c) the env var name is
 reserved but currently a no-op — or drop the name entirely if the doc rewrite
 reads cleaner without it. The PR picks one and deletes the other; no
 half-state.
@@ -167,6 +172,8 @@ half-state.
   (via the CLI module import, not subprocess), reporting `kg_reset: ok|failed`
   in `summary`/manifest. Default off: reruns of the same engagement slug
   intentionally start from a clean graph only when asked.
+- **Failure:** an explicit `--fresh-kg` failure records its marker and aborts
+  before creating a thread. A failed reset is not a clean baseline.
 - **skillogy:** untouched (read-only corpus — §2.1).
 
 ### D6 — Image provenance: label at build, enforce at run (Dockerfile + harness)
@@ -174,7 +181,7 @@ half-state.
 - **Dockerfiles:** add to `langgraph.Dockerfile` and `sandbox.Dockerfile`
   (the two images whose behavior defines a run):
   `ARG RAPTIX_REPO_HEAD=` + `LABEL org.opencontainers.image.revision="${RAPTIX_REPO_HEAD}"`.
-  Build scripts (`Makefile` image targets, release workflow) pass
+  Release/CI workflows and explicit local Compose build args pass
   `--build-arg RAPTIX_REPO_HEAD=$(git rev-parse HEAD)`; same `ARG VERSION`
   pattern as `cli.Dockerfile:10`.
 - **Enforcement:** `lab_run.py` pre-flight (extends PR-C) inspects both images:
@@ -185,6 +192,9 @@ half-state.
   manifest record. `repo_dirty` stays recorded; the *default* becomes
   enforced, with the escape hatch explicit — a harness for evidence runs
   should fail closed, and the dev loop uses `--allow-dirty` knowingly.
+- Unknown checkout HEAD is unverifiable and refuses by default too. The
+  inspected containers are the selected sandbox/langgraph names, including
+  named stacks. Automatic Makefile stamp propagation remains deferred.
 
 ### D7 — Injection protocol: one auditable file (harness)
 
@@ -200,10 +210,14 @@ Reuse the benchmark shape (`benchmarks/schemas.py` `context_mode`,
 - `lab_run.py` gains `--protocol-file` (JSONL); `--proceed-file` is kept and
   normalized into a single `kind: proceed, turn: -1` record so old invocations
   keep working and land in the same accounting.
+- The effective protocol is normalized into one archive, including any merged
+  legacy standing approval. A protocol-only standing approval is supported.
 - The harness applies records deterministically, **refuses** duplicate turns
   or unknown kinds, and reports `injections: {hint: n, interference: n,
-  proceed: n}` in `summary` + manifest. The protocol file itself is the audit
-  record — copied into the run dir like the other inputs.
+  proceed: n}` in `summary` + manifest for deliveries accepted by the API.
+  Unreached turns count zero; repeated standing approvals count each delivery.
+  `injections_planned` separately counts protocol rules. The normalized protocol
+  file is the authoritative input audit record.
 
 ---
 
@@ -244,10 +258,10 @@ user-facing (`kg reset`).
 
 ## 5. Acceptance criteria (whole initiative)
 
-1. With `RAPTIX_ENGAGEMENT` set, a bash `workspace` arg resolving outside the
-   engagement prefix errors before any command runs (unit-provable, not
-   prompt-dependent).
-2. A harness run's `/workspace/<slug>` exists before turn 1 (daemon ensure),
+1. A named bash engagement requires an isolated mount and matching deployment
+   pin; invalid runtime roots error before execution. Shared mounts are refused
+   by harness pre-flight and all authenticated daemon operations.
+2. A harness run's isolated `/workspace` exists before turn 1 (daemon ensure),
    and `docker cp` capture cannot fail for "dir missing" again.
 3. `sandbox-entrypoint.sh` creates no world-writable path (`umask 022`); host
    user can still read captured workspaces.
@@ -259,7 +273,8 @@ user-facing (`kg reset`).
    `input/protocol.jsonl`, counted in the summary.
 7. No code references `RAPTIX_PER_ENGAGEMENT_SANDBOX` remain ambiguous: the
    doc says exactly what isolation is and isn't.
-8. `workspace_data` volume no longer exists in compose.
+8. Existing legacy volume references still render without detaching user data;
+   named-volume/shared-root mounts are rejected for evidence runs.
 
 ---
 
@@ -274,3 +289,17 @@ user-facing (`kg reset`).
   by the observability plan).
 - Benchmarks (`benchmarks/`) injection plumbing — `context_mode` already
   exists there; PR-G only aligns the *lab* flow with it.
+
+## 7. Review-correction verification and migration
+
+- Evidence runs use `--container-workspace /workspace` and a stack recreated
+  with `RAPTIX_ENGAGEMENT=<slug>` and
+  `RAPTIX_ENGAGEMENT_WORKSPACE=<absolute host workspace>/<slug>`.
+- Unit regressions cover the entry point, actual turn delivery/audit, failed
+  reset/log commands, unknown HEAD and shared-root refusal even with allow-dirty.
+- Linux daemon verification uses disposable containers and current source
+  mounts; it checks root plan access and rejection/non-visibility of peer data.
+- KG scoped deletion was verified against disposable Neo4j across a 1000-node
+  batch boundary while preserving another engagement's nodes.
+- Full external-provider lab benchmarks and complete image rebuilds are
+  separate verification surfaces, not claimed by these mechanism checks.

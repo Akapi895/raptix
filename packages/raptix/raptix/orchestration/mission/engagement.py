@@ -407,7 +407,8 @@ class EngagementContextMiddleware(AgentMiddleware):
             "bash_status",
         }:
             workspace = _resolve_workspace_path(request.state)
-            with bash_workspace(workspace):
+            get = getattr(request.state, "get", lambda _key: None)
+            with bash_workspace(workspace, engagement_name=get("engagement_name")):
                 return handler(request)
         return handler(request)
 
@@ -420,7 +421,8 @@ class EngagementContextMiddleware(AgentMiddleware):
             "bash_status",
         }:
             workspace = _resolve_workspace_path(request.state)
-            with bash_workspace(workspace):
+            get = getattr(request.state, "get", lambda _key: None)
+            with bash_workspace(workspace, engagement_name=get("engagement_name")):
                 return await handler(request)
         return await handler(request)
 

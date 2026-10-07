@@ -37,6 +37,7 @@ no-op (mirrors how ``budget.py`` swallows provider errors).
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import re
@@ -478,14 +479,17 @@ class EventLogMiddleware(AgentMiddleware):
         payload = {"tool": tool_name, "args": _redact_args(args)}
         self._safe_append(event_log, EventType.TOOL_CALL, payload, agent, sid)
 
-    def _emit_tool_exception(self, request: Any) -> None:
+    def _emit_tool_exception(self, request: Any, *, cancelled: bool = False) -> None:
         """Emit the failed half of a tool.call/result pair on a handler raise."""
         event_log, agent, sid = self._context(request)
         if event_log is None:
             return
         tool = getattr(request, "tool", None)
         tool_name = getattr(tool, "name", "") if tool else ""
-        payload: dict[str, Any] = {"tool": tool_name, "status": "exception"}
+        payload: dict[str, Any] = {
+            "tool": tool_name,
+            "status": "cancelled" if cancelled else "exception",
+        }
         self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent, sid)
 
     def _emit_tool_result(self, request: Any, response: Any) -> None:
@@ -666,11 +670,13 @@ class EventLogMiddleware(AgentMiddleware):
         try:
             try:
                 response = handler(request)
-            except Exception:
+            except (Exception, asyncio.CancelledError) as exc:
                 # An orphan tool.call is exactly the "hole" a timeline
                 # post-mortem trips over: emit the failed half before the
                 # exception continues up the middleware stack.
-                self._emit_tool_exception(request)
+                self._emit_tool_exception(
+                    request, cancelled=isinstance(exc, asyncio.CancelledError)
+                )
                 raise
         finally:
             reset_current_session(token)
@@ -685,8 +691,10 @@ class EventLogMiddleware(AgentMiddleware):
         try:
             try:
                 response = await handler(request)
-            except Exception:
-                self._emit_tool_exception(request)
+            except (Exception, asyncio.CancelledError) as exc:
+                self._emit_tool_exception(
+                    request, cancelled=isinstance(exc, asyncio.CancelledError)
+                )
                 raise
         finally:
             reset_current_session(token)
