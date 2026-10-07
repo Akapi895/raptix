@@ -35,6 +35,13 @@ RUN sed -i 's/^version = "[^"]*"/version = "'"$VERSION"'"/' \
         packages/*/pyproject.toml \
         plugins/*/pyproject.toml
 
+# Stamp the source revision this image was built from. The lab/benchmark
+# harness (tests/local/harnesses/lab_run.py) refuses to run when this
+# label doesn't match the checkout's HEAD — "which code is in the image"
+# used to be recorded-but-unverifiable (repo_dirty note only).
+ARG RAPTIX_REPO_HEAD=
+LABEL org.opencontainers.image.revision="${RAPTIX_REPO_HEAD}"
+
 # Install the workspace via uv sync. --frozen pins to uv.lock; --no-dev
 # drops dev tooling (pytest, ruff, basedpyright); --extra neo4j adds the
 # Neo4j driver onto the framework wheel so the KG health check works

@@ -3,6 +3,13 @@
 # To update: docker pull kalilinux/kali-rolling:latest && docker inspect --format='{{index .RepoDigests 0}}' kalilinux/kali-rolling:latest
 FROM kalilinux/kali-rolling@sha256:ab7f9873e9d976d62f59e172350604dd980339f567bfb2eaa5c2bdfaa2dc42b7
 
+# Stamp the source revision this image was built from. The lab/benchmark
+# harness (tests/local/harnesses/lab_run.py) refuses to run when this
+# label doesn't match the checkout's HEAD — "which code is in the image"
+# used to be recorded-but-unverifiable (repo_dirty note only).
+ARG RAPTIX_REPO_HEAD=
+LABEL org.opencontainers.image.revision="${RAPTIX_REPO_HEAD}"
+
 # Consolidated package install — one RUN layer to maximize cache hits
 # and minimize image size. Kali apt sandbox disabled so it doesn't fail
 # trying to drop privileges to the _apt user.

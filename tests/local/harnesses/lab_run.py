@@ -274,6 +274,60 @@ def _ensure_container_workspace(args: argparse.Namespace, trace_dir: Path) -> No
         _log(f"WARNING: {note}")
 
 
+def _verify_image_provenance(args: argparse.Namespace) -> dict[str, str]:
+    """Refuse to run on images that don't match the checkout (plan D6).
+
+    Reads org.opencontainers.image.revision off the running stack's
+    langgraph + sandbox containers and compares against HEAD. Refuses by
+    default: an evidence run from an image built from other code is not
+    an evidence run. --allow-dirty downgrades to a recorded warning for
+    the dev loop.
+    """
+    head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=30)
+    expected = (head.stdout or "").strip()
+    result: dict[str, str] = {"expected_head": expected or "unknown"}
+    offenders: list[str] = []
+    for svc in ("langgraph", "sandbox"):
+        container = f"raptix-{svc}"
+        insp = _docker(
+            [
+                "inspect",
+                container,
+                "--format",
+                '{{index .Config.Labels "org.opencontainers.image.revision"}}',
+            ],
+            timeout=30,
+        )
+        revision = (insp.stdout or "").strip()
+        result[svc] = revision or "unlabeled"
+        if insp.returncode != 0:
+            offenders.append(f"{svc}: container not found ({insp.stderr.strip()[:120]})")
+        elif not revision:
+            offenders.append(f"{svc}: no org.opencontainers.image.revision label")
+        elif expected and revision != expected:
+            offenders.append(f"{svc}: image at {revision[:12]} but checkout at {expected[:12]}")
+    result["verdict"] = (
+        "allow-dirty" if offenders and args.allow_dirty else ("ok" if not offenders else "refused")
+    )
+    if offenders:
+        rebuild = (
+            "rebuild with:\n"
+            "  RAPTIX_REPO_HEAD=$(git rev-parse HEAD) docker compose build "
+            "sandbox langgraph\n"
+            "then `docker compose up -d sandbox langgraph`"
+        )
+        if args.allow_dirty:
+            _log(f"WARNING: image/checkout mismatch (--allow-dirty): {'; '.join(offenders)}")
+        else:
+            raise SystemExit(
+                "deployed images do not match this checkout:\n  "
+                + "\n  ".join(offenders)
+                + f"\n{rebuild}\n"
+                "or pass --allow-dirty to record and continue anyway."
+            )
+    return result
+
+
 def _reset_kg(args: argparse.Namespace, trace_dir: Path) -> str:
     """Opt-in clean graph for this engagement slice before turn 1.
 
@@ -331,6 +385,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "Default off: only an operator asking for a clean graph gets one."
         ),
     )
+    p.add_argument(
+        "--allow-dirty",
+        action="store_true",
+        help=(
+            "Downgrade image/checkout mismatch from a refusal to a "
+            "recorded warning (dev loop; evidence runs should rebuild)."
+        ),
+    )
     return p.parse_args(argv)
 
 
@@ -362,7 +424,9 @@ async def _snapshotter(
             _log(f"snapshot failed ({type(exc).__name__}): {exc}")
 
 
-async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
+async def _amain(
+    args: argparse.Namespace, run_dir: Path, manifest: dict[str, Any]
+) -> dict[str, Any]:
     from langgraph_sdk import get_client
 
     trace_dir = run_dir / "trace"
@@ -397,6 +461,8 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
             "start it with `docker compose up langgraph` or pass --langgraph-url."
         )
     _log(f"api ok: {api_detail}")
+    provenance = _verify_image_provenance(args)
+    manifest["image_revisions"] = provenance
     _ensure_container_workspace(args, trace_dir)
     _reset_kg(args, trace_dir)
     started_iso = _now_iso()
@@ -703,7 +769,7 @@ def main(argv: list[str] | None = None) -> int:
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
     _log(f"run dir: {run_dir}")
-    summary = asyncio.run(_amain(args, run_dir))
+    summary = asyncio.run(_amain(args, run_dir, manifest))
     _log(f"terminal status: {summary['status']} after {summary['turns']} turns")
     # Capture provenance lands in the manifest too (it is written before the
     # run; merge the post-run statuses back in).
