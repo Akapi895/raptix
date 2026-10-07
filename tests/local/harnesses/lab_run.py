@@ -243,6 +243,37 @@ def _read_capture_note(trace_dir: Path, channel: str) -> str:
     return path.read_text(encoding="utf-8").strip().split(" ", 1)[-1]
 
 
+def _ensure_container_workspace(args: argparse.Namespace, trace_dir: Path) -> None:
+    """mkdir -p the engagement dir inside the sandbox before turn 1.
+
+    The in-container dir is otherwise created lazily by the first bash
+    tool call (kernel/tmux.py); teardown capture that ran before any
+    bash call found nothing to copy and reported the channel missing
+    ("docker cp failed"). The agent side also ensures via the daemon's
+    fenced /workspace/ensure — this is the belt to its suspenders, and it
+    covers capture-before-first-bash. Failure is a captured warning, not
+    a run abort: a missing dir at teardown now reports via
+    capture_channels instead of being inferred from absence.
+    """
+    rc = _docker(
+        [
+            "exec",
+            args.sandbox_container,
+            "mkdir",
+            "-p",
+            args.container_workspace,
+        ],
+        timeout=30,
+    )
+    if rc.returncode == 0:
+        _capture_status(trace_dir, "workspace_ensure", f"ok: {args.container_workspace}")
+        _log(f"workspace ensured in sandbox: {args.container_workspace}")
+    else:
+        note = f"docker exec mkdir failed: {rc.stderr.strip()[:300]}"
+        _capture_status(trace_dir, "workspace_ensure", note)
+        _log(f"WARNING: {note}")
+
+
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Run one authorized lab with full trace capture.")
     # 2024 = the compose langgraph port (docker-compose.yml). 2400 was a stale
@@ -330,6 +361,7 @@ async def _amain(args: argparse.Namespace, run_dir: Path) -> dict[str, Any]:
             "start it with `docker compose up langgraph` or pass --langgraph-url."
         )
     _log(f"api ok: {api_detail}")
+    _ensure_container_workspace(args, trace_dir)
     started_iso = _now_iso()
     start_epoch = int(time.time())
     await _api(lambda: client.threads.create(thread_id=thread_id), timeout=30)

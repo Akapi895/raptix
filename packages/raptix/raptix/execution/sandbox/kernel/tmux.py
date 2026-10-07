@@ -463,6 +463,9 @@ class TmuxSessionManager:
         if not session_exists:
             log.info("Creating tmux session: %s", self.session)
             try:
+                # Fallback materialization only: the agent-side bash tool
+                # calls the daemon's fenced /workspace/ensure eagerly, so
+                # this mkdir normally finds the dir already present.
                 if self._workspace_path != "/workspace":
                     subprocess.run(
                         [*self._exec_prefix, "mkdir", "-p", self._workspace_path],

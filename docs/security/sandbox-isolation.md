@@ -187,9 +187,34 @@ before issuing `docker compose up`, sets `SANDBOX_URL` and
 `Lifecycle.Release(slug, archive=true)` from the engagement-close hook.
 
 The existing `sandbox` service in `docker-compose.yml` stays as the
-**dev / single-engagement** entry point. The per-engagement spawner is
-opt-in via `RAPTIX_PER_ENGAGEMENT_SANDBOX=1` so existing dogfood
-runs are unchanged.
+**dev / single-engagement** entry point.
+
+## Implementation status (2026-10-07)
+
+The per-engagement spawner described below is a **design, not an
+implementation** — there is no `RAPTIX_PER_ENGAGEMENT_SANDBOX` code path
+(the variable was documentation-only and has been dropped). What is
+enforced today, mechanically:
+
+- **Workspace scoping** — the launcher bind-mounts the engagement dir at
+  `/workspace` (`RAPTIX_ENGAGEMENT_WORKSPACE`, `apps/launcher/cmd/start.go`).
+  Without the launcher, the shared tree is mounted and the fence below is
+  what stands between engagements.
+- **Engagement fence** — when `RAPTIX_ENGAGEMENT` is set in a container,
+  the bash tool resolves its workspace only inside
+  `/workspace/<slug>/` and hard-errors otherwise
+  (`execution/tools/bash/bash.py`); the sandbox daemon's
+  `POST /workspace/ensure` applies the same rule
+  (`execution/sandbox/server/app.py`). Env-based enforcement, not prompt.
+- **Scoped state** — KG reads/writes are engagement-scoped at the store
+  boundary (`knowledge/graph/store.py`); tmux sessions and job trackers
+  are keyed by workspace slug.
+- **File modes** — the sandbox entrypoint runs `umask 022` (world-readable,
+  not world-writable); host tooling only ever *reads* captured workspaces.
+
+What is still shared on one host: the process namespace (`ps aux`), `/tmp`,
+`/var/log`, `/root`, and the tmux universe — the gap the spawner design
+below closes.
 
 ## Why not Firecracker / gVisor?
 

@@ -64,6 +64,10 @@ _current_workspace_path: contextvars.ContextVar[str] = contextvars.ContextVar(
     "decepticon_bash_workspace_path",
     default="/workspace",
 )
+# (sandbox id, workspace_path) pairs already confirmed to exist inside their
+# sandbox via the daemon's fenced /workspace/ensure. Process-lifetime cache:
+# one HTTP roundtrip per engagement per process, not per bash() call.
+_ensured_workspaces: set[tuple[str, str]] = set()
 
 # ─── Output size thresholds ──────────────────────────────────────────────
 INLINE_LIMIT = 15_000  # ≤15K chars: return inline; >15K: offload to <engagement>/.scratch/
@@ -304,7 +308,40 @@ def get_sandbox(config: RunnableConfig | None = None) -> HTTPSandbox | None:
     return _sandbox_default
 
 
+def _engagement_fence(workspace_path: str) -> str:
+    """Enforce the cross-engagement workspace fence.
+
+    When ``RAPTIX_ENGAGEMENT`` is set, every resolved workspace must live
+    inside ``/workspace/<slug>/`` — including the shared ``/workspace``
+    root, which is the tree every engagement sees when no per-engagement
+    bind-mount is in play. Violations raise instead of silently falling
+    back: a wrong workspace_path in the run config is a misconfiguration
+    worth surfacing, and a silent re-route to the engagement dir would
+    mask exactly the cross-engagement reads the fence exists to prevent.
+    With the env unset (legacy / dev), behavior is unchanged.
+    """
+    slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
+    if not slug:
+        return workspace_path
+    normalized_slug_path = SandboxBase._normalize_workspace_path(f"/workspace/{slug}")
+    if normalized_slug_path == "/workspace":
+        raise RuntimeError(
+            f"RAPTIX_ENGAGEMENT={slug!r} is not a valid engagement slug; "
+            "bash tools refuse to resolve a workspace without a fenced subtree. "
+            "Set RAPTIX_ENGAGEMENT to a [A-Za-z0-9][A-Za-z0-9._-]{0,127} slug."
+        )
+    fence_slug = normalized_slug_path[len("/workspace/") :]
+    error = SandboxBase.engagement_fence_error(workspace_path, fence_slug)
+    if error is not None:
+        raise RuntimeError(error)
+    return workspace_path
+
+
 def _workspace_path_from_config(config: RunnableConfig | None) -> str:
+    return _engagement_fence(_raw_workspace_path_from_config(config))
+
+
+def _raw_workspace_path_from_config(config: RunnableConfig | None) -> str:
     configurable = (config or {}).get("configurable", {})
     workspace = configurable.get("workspace_path") if isinstance(configurable, dict) else None
     if isinstance(workspace, str) and workspace.startswith("/workspace"):
@@ -336,12 +373,34 @@ def _with_workspace_kwargs(workspace_path: str) -> dict[str, str]:
 @contextlib.contextmanager
 def bash_workspace(workspace_path: str):
     """Temporarily scope bash tools to one engagement workspace."""
-    safe_path = SandboxBase._normalize_workspace_path(workspace_path)
+    safe_path = _engagement_fence(SandboxBase._normalize_workspace_path(workspace_path))
     token = _current_workspace_path.set(safe_path)
     try:
         yield
     finally:
         _current_workspace_path.reset(token)
+
+
+def _ensure_workspace_dir(workspace_path: str, sandbox: HTTPSandbox | None) -> None:
+    """Create the engagement workspace dir inside the sandbox before first use.
+
+    Best-effort and idempotent: the daemon's ``/workspace/ensure`` endpoint
+    mkdir -p's the (fenced) path. Without this, the dir only comes into
+    existence lazily on the first tmux session create (kernel/tmux.py), so
+    teardown capture that runs before any bash call finds nothing to copy.
+    A failure here must never block the agent's command — the kernel-side
+    lazy mkdir remains the fallback, and a later bash call retries.
+    """
+    if workspace_path == "/workspace" or sandbox is None:
+        return
+    try:
+        key = (str(getattr(sandbox, "id", "")), workspace_path)
+        if key in _ensured_workspaces:
+            return
+        sandbox.ensure_workspace(workspace_path)
+        _ensured_workspaces.add(key)
+    except Exception as exc:  # noqa: BLE001 — capture must never break the tool
+        log.debug("workspace ensure failed for %s: %s", workspace_path, exc)
 
 
 async def _prune_old_scratch(
@@ -468,6 +527,10 @@ async def bash(
         raise RuntimeError("HTTPSandbox not initialized. Call set_sandbox() first.")
 
     workspace_path = _workspace_path_from_config(config)
+    # Eagerly materialize the engagement dir inside the sandbox (idempotent,
+    # fenced server-side, throttled to once per workspace per process). The
+    # kernel's lazy mkdir on first session create stays as the fallback.
+    _ensure_workspace_dir(workspace_path, _sandbox)
     # Best-effort TTL prune of <engagement>/.scratch/ (throttled internally)
 
     await _prune_old_scratch(workspace_path, _sandbox)

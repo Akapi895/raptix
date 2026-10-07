@@ -296,6 +296,17 @@ class HTTPSandbox(BaseSandbox):
             )
         return out
 
+    def ensure_workspace(self, workspace_path: str) -> dict:
+        """Create ``workspace_path`` inside the sandbox container (idempotent).
+
+        The daemon normalizes + engagement-fences the path, so this is safe
+        to call with any resolved workspace: a path outside the active
+        engagement answers 403 and callers treat that as their own bug.
+        """
+        response = self._request("post", "/workspace/ensure", json={"path": workspace_path})
+        data: dict = response.json()
+        return data
+
     # ── tmux / background surface — mirrors DockerSandbox ────────────────
     # These are the methods the bash tool consumes via
     # `raptix/tools/bash/bash.py:_sandbox.execute_tmux_async(...)`

@@ -260,6 +260,10 @@ services:
       # since the HTTP-only migration; this stanza pins it explicitly so
       # ``docker compose config`` shows intent.
       - SANDBOX_DAEMON=1
+      # Engagement fence: when set (launcher pins it per engagement), the
+      # bash tool and the daemon's /workspace/ensure refuse any workspace
+      # outside /workspace/<slug>/ — env-based enforcement, not prompt.
+      - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
@@ -391,6 +395,9 @@ services:
       # 9999 is the FastAPI daemon baked into the sandbox image (see
       # ``infra/containers/sandbox-entrypoint.sh`` — daemon mode is the default).
       - SANDBOX_URL=http://sandbox:9999
+      # Engagement fence for the agent process (bash tool workspace
+      # resolution). Empty unless the launcher / harness pins it.
+      - RAPTIX_ENGAGEMENT=${RAPTIX_ENGAGEMENT:-}
       - RAPTIX_NEO4J_URI=bolt://neo4j:7687
       - RAPTIX_NEO4J_USER=neo4j
       - RAPTIX_NEO4J_PASSWORD=${NEO4J_PASSWORD:-raptix-graph}
@@ -749,8 +756,6 @@ services:
 volumes:
   postgres_data:
   langgraph_state:
-  workspace_data:
-    name: ${RAPTIX_WORKSPACE_VOLUME:-raptix_workspace_data}
   sliver_data:
   neo4j_data:
   neo4j_logs:

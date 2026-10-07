@@ -270,6 +270,13 @@ func runStart(cmd *cobra.Command, args []string) error {
 	if err := os.Setenv("RAPTIX_ENGAGEMENT_WORKSPACE", choice.WorkspacePath); err != nil {
 		return fmt.Errorf("set engagement workspace env: %w", err)
 	}
+	// Export the engagement slug too: compose interpolates it into the
+	// sandbox + langgraph containers' RAPTIX_ENGAGEMENT, which the bash
+	// tool and the sandbox daemon use as the hard workspace fence
+	// (docs/design/2026-10-07-run-isolation-reproducibility-plan.md D2).
+	if err := os.Setenv("RAPTIX_ENGAGEMENT", choice.Engagement); err != nil {
+		return fmt.Errorf("set engagement slug env: %w", err)
+	}
 
 	// 4. Spawn the opscontrol daemon BEFORE `compose up` so the
 	// langgraph socket bind-mount has a real socket to attach to.
