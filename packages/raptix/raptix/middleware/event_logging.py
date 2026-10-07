@@ -337,6 +337,9 @@ class EventLogMiddleware(AgentMiddleware):
         # every model call inside this agent's loop is emitted once. The step
         # counter itself lives on the sink — it must be shared across agents.
         self._last_prompt: dict[str, str] = {}
+        # Warning budget: a broken sink used to warn on EVERY event for the
+        # whole run, drowning everything else. Warn once per (event, log).
+        self._warned: set[tuple[str, str]] = set()
 
     # ── scope + log resolution ────────────────────────────────────────────
 
@@ -387,6 +390,13 @@ class EventLogMiddleware(AgentMiddleware):
             )
             return None, agent, sid
         self._logs[key] = event_log
+        # Run-start anchor: without this every events.jsonl begins
+        # mid-stream and a 2-of-5 missing-capture post-mortem cannot tell
+        # "the agent never started" from "the log was lost".
+        try:
+            event_log.append(EventType.AGENT_SESSION_START, {"agent": agent or ""}, agent=agent)
+        except Exception:  # noqa: BLE001 — logging must never break the run
+            pass
         return event_log, agent, sid
 
     def _safe_append(
@@ -408,11 +418,18 @@ class EventLogMiddleware(AgentMiddleware):
         try:
             event_log.append(event_type, payload, agent=agent)
         except Exception:  # noqa: BLE001 — logging must never break the run
-            log.warning(
-                "EventLogMiddleware: failed to append %s event; continuing",
-                getattr(event_type, "value", event_type),
-                exc_info=True,
+            key = (
+                getattr(event_type, "value", str(event_type)),
+                str(getattr(event_log, "path", event_log))[:200],
             )
+            if key not in self._warned:
+                self._warned.add(key)
+                log.warning(
+                    "EventLogMiddleware: failed to append %s event; "
+                    "further failures for this event/log are silent",
+                    getattr(event_type, "value", event_type),
+                    exc_info=True,
+                )
         if not telemetry:
             return
         # Mirror the same redacted event to the consent-gated telemetry sink.
@@ -460,6 +477,16 @@ class EventLogMiddleware(AgentMiddleware):
         args = getattr(request, "tool_call_args", None) or {}
         payload = {"tool": tool_name, "args": _redact_args(args)}
         self._safe_append(event_log, EventType.TOOL_CALL, payload, agent, sid)
+
+    def _emit_tool_exception(self, request: Any) -> None:
+        """Emit the failed half of a tool.call/result pair on a handler raise."""
+        event_log, agent, sid = self._context(request)
+        if event_log is None:
+            return
+        tool = getattr(request, "tool", None)
+        tool_name = getattr(tool, "name", "") if tool else ""
+        payload: dict[str, Any] = {"tool": tool_name, "status": "exception"}
+        self._safe_append(event_log, EventType.TOOL_RESULT, payload, agent, sid)
 
     def _emit_tool_result(self, request: Any, response: Any) -> None:
         event_log, agent, sid = self._context(request)
@@ -637,7 +664,14 @@ class EventLogMiddleware(AgentMiddleware):
         # emits telemetry itself (the finding path) lands in the right session.
         token = set_current_session(self._session_of(request))
         try:
-            response = handler(request)
+            try:
+                response = handler(request)
+            except Exception:
+                # An orphan tool.call is exactly the "hole" a timeline
+                # post-mortem trips over: emit the failed half before the
+                # exception continues up the middleware stack.
+                self._emit_tool_exception(request)
+                raise
         finally:
             reset_current_session(token)
         self._emit_tool_result(request, response)
@@ -649,7 +683,11 @@ class EventLogMiddleware(AgentMiddleware):
         self._emit_tool_call(request)
         token = set_current_session(self._session_of(request))
         try:
-            response = await handler(request)
+            try:
+                response = await handler(request)
+            except Exception:
+                self._emit_tool_exception(request)
+                raise
         finally:
             reset_current_session(token)
         self._emit_tool_result(request, response)

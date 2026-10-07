@@ -115,3 +115,41 @@ def test_top_level_dispatcher_routes_export_transcript(tmp_path: Path, capsys) -
 
     assert rc == EXIT_OK
     assert "# Engagement transcript: eng-1" in capsys.readouterr().out
+
+
+def test_flat_layout_is_the_primary_path(tmp_path: Path, capsys) -> None:
+    """The middleware + shutdown write flat ``<workspace>/events.jsonl``.
+
+    The reader previously looked only at ``engagements/<id>/`` — a live
+    log never existed there, so ``export-transcript`` always failed.
+    """
+    log = EventLog.for_workspace(tmp_path, "eng-flat")
+    log.append(EventType.AGENT_TURN, {"content": "flat log"}, agent="recon", ts=1_700_000_020.0)
+
+    rc = export_main(["eng-flat", "--workspace", str(tmp_path)])
+
+    assert rc == EXIT_OK
+    assert "flat log" in capsys.readouterr().out
+
+
+def test_flat_layout_wins_when_both_exist(tmp_path: Path, capsys) -> None:
+    flat = EventLog.for_workspace(tmp_path, "eng-both")
+    flat.append(EventType.AGENT_TURN, {"content": "from flat"}, agent="a", ts=1_700_000_030.0)
+    nested = EventLog(workspace_root=tmp_path, engagement_id="eng-both")
+    nested.append(EventType.AGENT_TURN, {"content": "from nested"}, agent="a", ts=1_700_000_031.0)
+
+    rc = export_main(["eng-both", "--workspace", str(tmp_path)])
+
+    assert rc == EXIT_OK
+    out = capsys.readouterr().out
+    assert "from flat" in out
+    assert "from nested" not in out
+
+
+def test_legacy_nested_layout_still_falls_back(tmp_path: Path, capsys) -> None:
+    _seed_engagement(tmp_path)  # seeds the nested engagements/<id>/ layout
+
+    rc = export_main(["eng-1", "--workspace", str(tmp_path)])
+
+    assert rc == EXIT_OK
+    assert "# Engagement transcript: eng-1" in capsys.readouterr().out

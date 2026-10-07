@@ -90,6 +90,7 @@ class EventType(str, Enum):
     ENGAGEMENT_START = "engagement.start"
     ENGAGEMENT_END = "engagement.end"
     ENGAGEMENT_CHECKPOINT = "engagement.checkpoint"
+    AGENT_SESSION_START = "agent.session.start"
     AGENT_TURN = "agent.turn"
     TOOL_CALL = "tool.call"
     TOOL_RESULT = "tool.result"

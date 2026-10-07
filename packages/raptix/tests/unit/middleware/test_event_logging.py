@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 from pathlib import Path
 
+import pytest
 from langchain_core.messages import ToolMessage
 
 from raptix.middleware.event_logging import (
@@ -12,7 +13,7 @@ from raptix.middleware.event_logging import (
     _redact_args,
     _summarize_value,
 )
-from raptix.runtime.event_log import EventType, read_events
+from raptix.runtime.event_log import EventLog, EventType, read_events
 
 # ── fakes mirroring the request/handler shapes used by other middleware tests ──
 
@@ -108,13 +109,14 @@ def test_model_call_writes_llm_call_then_response_pair(tmp_path: Path):
 
     events = list(read_events(_events_path(tmp_path, "eng-1")))
     assert [e.type for e in events] == [
+        EventType.AGENT_SESSION_START.value,
         EventType.LLM_CALL.value,
         EventType.LLM_RESPONSE.value,
     ]
-    assert events[0].payload == {"messages": 3, "model": "claude-opus"}
-    assert events[0].agent == "recon"
-    assert events[1].payload["usage"] == {"input_tokens": 5, "output_tokens": 2}
-    assert events[1].payload["stop"] == "stop"
+    assert events[1].payload == {"messages": 3, "model": "claude-opus"}
+    assert events[1].agent == "recon"
+    assert events[2].payload["usage"] == {"input_tokens": 5, "output_tokens": 2}
+    assert events[2].payload["stop"] == "stop"
 
 
 # ── tool round-trip ──────────────────────────────────────────────────────────
@@ -132,14 +134,15 @@ def test_tool_call_writes_call_then_result_pair(tmp_path: Path):
 
     events = list(read_events(_events_path(tmp_path, "eng-2")))
     assert [e.type for e in events] == [
+        EventType.AGENT_SESSION_START.value,
         EventType.TOOL_CALL.value,
         EventType.TOOL_RESULT.value,
     ]
-    assert events[0].payload["tool"] == "bash"
-    assert events[0].payload["args"]["command"] == "<str:2>"
-    assert events[0].payload["args"]["token"] == "***REDACTED***"
-    assert events[1].payload["status"] == "success"
-    assert events[1].payload["output_chars"] == len("uid=0(root)")
+    assert events[1].payload["tool"] == "bash"
+    assert events[1].payload["args"]["command"] == "<str:2>"
+    assert events[1].payload["args"]["token"] == "***REDACTED***"
+    assert events[2].payload["status"] == "success"
+    assert events[2].payload["output_chars"] == len("uid=0(root)")
 
 
 def test_finding_tool_writes_finding_after_successful_result(tmp_path: Path):
@@ -152,14 +155,15 @@ def test_finding_tool_writes_finding_after_successful_result(tmp_path: Path):
     mw.wrap_tool_call(req, lambda _r: result)
 
     events = list(read_events(_events_path(tmp_path, "eng-3")))
-    # B3: order is tool.call -> tool.result -> finding.created (finding emitted
-    # only after a successful result, never before the tool runs).
+    # B3: order is session.start -> tool.call -> tool.result -> finding.created
+    # (finding emitted only after a successful result, never before the tool runs).
     assert [e.type for e in events] == [
+        EventType.AGENT_SESSION_START.value,
         EventType.TOOL_CALL.value,
         EventType.TOOL_RESULT.value,
         EventType.FINDING_CREATED.value,
     ]
-    assert events[2].payload == {"tool": "validate_finding"}
+    assert events[3].payload == {"tool": "validate_finding"}
 
 
 def test_failed_finding_tool_does_not_write_finding_created(tmp_path: Path):
@@ -176,6 +180,7 @@ def test_failed_finding_tool_does_not_write_finding_created(tmp_path: Path):
 
     events = list(read_events(_events_path(tmp_path, "eng-3b")))
     assert [e.type for e in events] == [
+        EventType.AGENT_SESSION_START.value,
         EventType.TOOL_CALL.value,
         EventType.TOOL_RESULT.value,
     ]
@@ -193,7 +198,11 @@ def test_finding_tool_command_result_does_not_write_finding_created(tmp_path: Pa
     mw.wrap_tool_call(req, lambda _r: command_result)
 
     types = [e.type for e in read_events(_events_path(tmp_path, "eng-3c"))]
-    assert types == [EventType.TOOL_CALL.value, EventType.TOOL_RESULT.value]
+    assert types == [
+        EventType.AGENT_SESSION_START.value,
+        EventType.TOOL_CALL.value,
+        EventType.TOOL_RESULT.value,
+    ]
     assert EventType.FINDING_CREATED.value not in types
 
 
@@ -258,6 +267,7 @@ def test_async_hooks_write_events(tmp_path: Path):
 
     types = [e.type for e in read_events(_events_path(tmp_path, "eng-7"))]
     assert types == [
+        EventType.AGENT_SESSION_START.value,
         EventType.LLM_CALL.value,
         EventType.LLM_RESPONSE.value,
         EventType.TOOL_CALL.value,
@@ -489,3 +499,85 @@ def test_declared_org_is_masked_in_the_trajectory(tmp_path: Path):
     out = red.redact("Workspace: /workspace/codeantai-new — the CodeAnt AI portal")
     assert "CodeAnt" not in out
     assert out.count("<ORG_") == 2  # slug and prose name are distinct placeholders
+
+
+# ── PR-B: orphan tool.call fix + run-start anchor + warning budget ───────────
+
+
+def test_handler_exception_emits_tool_result_exception(tmp_path: Path):
+    mw = EventLogMiddleware()
+    req = _ToolRequest(tmp_path, "eng-err", tool="bash", args={}, agent="recon")
+
+    def _boom(_r):
+        raise RuntimeError("sandbox died")
+
+    with pytest.raises(RuntimeError, match="sandbox died"):
+        mw.wrap_tool_call(req, _boom)
+
+    types = [e.type for e in read_events(_events_path(tmp_path, "eng-err"))]
+    # No orphan tool.call: the failed half is on disk before the exception
+    # continues up the middleware stack.
+    assert types == [
+        EventType.AGENT_SESSION_START.value,
+        EventType.TOOL_CALL.value,
+        EventType.TOOL_RESULT.value,
+    ]
+    events = list(read_events(_events_path(tmp_path, "eng-err")))
+    assert events[2].payload == {"tool": "bash", "status": "exception"}
+
+
+async def test_async_handler_exception_emits_tool_result_exception(tmp_path: Path):
+    mw = EventLogMiddleware()
+    req = _ToolRequest(tmp_path, "eng-erra", tool="bash", args={}, agent="recon")
+
+    async def _boom(_r):
+        raise RuntimeError("sandbox died")
+
+    with pytest.raises(RuntimeError, match="sandbox died"):
+        await mw.awrap_tool_call(req, _boom)
+
+    types = [e.type for e in read_events(_events_path(tmp_path, "eng-erra"))]
+    assert types == [
+        EventType.AGENT_SESSION_START.value,
+        EventType.TOOL_CALL.value,
+        EventType.TOOL_RESULT.value,
+    ]
+
+
+def test_agent_session_start_emitted_once_per_scope(tmp_path: Path):
+    mw = EventLogMiddleware()
+    mreq = _ModelRequest(tmp_path, "eng-once", messages=[], model="m", agent="a")
+    treq = _ToolRequest(tmp_path, "eng-once", tool="bash", args={}, agent="a")
+
+    mw.wrap_model_call(mreq, lambda _r: type("R", (), {})())
+    mw.wrap_tool_call(
+        treq,
+        lambda _r: ToolMessage(content="ok", tool_call_id="t", name="bash", status="success"),
+    )
+
+    events = list(read_events(_events_path(tmp_path, "eng-once")))
+    starts = [e for e in events if e.type == EventType.AGENT_SESSION_START.value]
+    assert len(starts) == 1
+    assert starts[0].payload == {"agent": "a"}
+    assert events[0].type == EventType.AGENT_SESSION_START.value
+
+
+def test_append_failure_warns_at_most_once_per_event_and_log(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+):
+    bad = _events_path(tmp_path, "eng-warn")
+    bad.mkdir(parents=True)  # append's open() will fail forever
+
+    from raptix.middleware import event_logging as _el
+
+    warnings: list[tuple] = []
+    monkeypatch.setattr(_el.log, "warning", lambda *a, **k: warnings.append(a), raising=False)
+
+    mw = EventLogMiddleware()
+    log = EventLog.for_workspace(tmp_path, "eng-warn")
+    for _ in range(100):
+        mw._safe_append(log, EventType.TOOL_CALL, {"tool": "bash"}, "recon")
+
+    # One warning per (event_type, log) pair, not one per failed append —
+    # a broken sink used to warn on every event for the whole run.
+    assert len(warnings) == 1
