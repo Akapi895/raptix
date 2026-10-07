@@ -22,8 +22,9 @@ patcher   → flips patched=True       (requires: validated findings > 0)
 exploiter → emits weaponized CHAIN   (requires: at least one validated finding)
 ```
 
-Launch a stage ONLY when its preconditions are met. Use `kg_stats` to
-check graph deltas between stages.
+Launch a stage ONLY when its preconditions are met. Track graph deltas
+from each stage's return summary (promoted / rejected / validated
+counts) — the orchestrator has no direct KG tools.
 
 ## OPPLAN template
 

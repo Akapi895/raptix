@@ -235,31 +235,16 @@ frida -U -n TargetApp -e "ObjC.classes.LicenseManager['- isPremiumUser'].impleme
 Capture Burp traffic screenshot showing decrypted HTTPS after pinning
 bypass. Save keychain dump to `/workspace/evidence/mobile/<bundle-id>/keychain.txt`.
 
-```python
-kg_add_node(
-    kind="finding",
-    label="iOS SSL pinning bypassable",
-    props={
-        "key": f"ios-ssl-pin::{bundle_id}",
-        "severity": "high",
-        "cvss": 7.4,
-        "bundle_id": bundle_id,
-        "bypass_method": "objection+ssl-kill-switch",
-        "traffic_captured": True,
-    },
-)
+Note each finding in your findings record (your role has no direct KG
+write tool — the orchestrator owns graph writes):
 
-kg_add_node(
-    kind="finding",
-    label="iOS keychain kSecAttrAccessibleAlways item",
-    props={
-        "key": f"ios-keychain-acl::{bundle_id}",
-        "severity": "critical",
-        "service": "<service-name>",
-        "account": "<account-name>",
-        "accessible_class": "kSecAttrAccessibleAlways",
-    },
-)
+```
+finding | iOS SSL pinning bypassable | severity high, cvss 7.4 |
+bundle_id <bundle_id> | bypass_method objection+ssl-kill-switch | traffic_captured true
+
+finding | iOS keychain kSecAttrAccessibleAlways item | severity critical |
+service <service-name> | account <account-name> |
+accessible_class kSecAttrAccessibleAlways
 ```
 
 ## ZFP

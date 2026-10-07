@@ -18,7 +18,7 @@ kerberoast in some engagements (zero-auth pre-recon win).
 ## 1. Identify vulnerable users
 From BloodHound:
 ```
-kg_query(kind="user", filter="dontreqpreauth=true and enabled=true")
+bhce_cypher("MATCH (u:User {dontreqpreauth:true, enabled:true}) RETURN u.name")
 ```
 
 Direct LDAP (if you have any cred or anonymous-bind allowed):
@@ -78,8 +78,9 @@ Without LDAP, your userlist comes from:
 
 ## 5. Promote
 ```
-kg_add_node(kind="credential", label="USER:CRACKED_PW",
-            props={"source":"asrep-roast","preauth":"disabled"})
+kg_record('[{"kind": "Credential", "key": "credential::<user>",
+  "label": "<USER>:<CRACKED_PW>",
+  "props": {"source": "asrep-roast", "preauth": "disabled"}}]')
 ```
 
 ## OPSEC

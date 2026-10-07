@@ -18,4 +18,5 @@ metadata:
 ## Graph guidance
 - Add `enables` edges for each pivot.
 - Lower weights for direct pivots; higher for speculative pivots.
-- Run `plan_attack_chains` and then `suggest_objectives_from_chains`.
+- Record the complete chain as an `AttackPath` observation via
+  `kg_record`; chain planning is not on your tool surface.

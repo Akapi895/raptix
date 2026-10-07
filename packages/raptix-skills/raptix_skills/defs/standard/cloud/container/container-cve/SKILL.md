@@ -107,7 +107,7 @@ spec:
 ## Workflow
 
 1. `cve_lookup` the runtime version (e.g., `runC 1.1.5`) and intersect with the catalog above.
-2. `cve_poc_lookup` for a working PoC.
+2. `research_cve` with the CVE id(s) for a working PoC.
 3. Try in a copy of the target environment first; container CVE exploits are often kernel-version-fragile.
 4. If exploit yields root on host → see `k8s-pod-escape` for the post-escape pivot.
 

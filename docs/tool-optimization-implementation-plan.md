@@ -746,12 +746,13 @@ Scope decisions worth remembering:
 - Fixed en route: pre-existing `_StubStore` route typo in
   `test_kg_summary_unit.py` (`HAS_VULP` → `HAS_VULN`) that had quietly
   broken the "full engagement" summary test.
-- Deferred to T9: the skills corpus still teaches the old surface —
-  `kg_query`/`kg_stats` playbook references across SKILL.md files and
-  one `slither_ingest` mention in `standard/contracts/SKILL.md` line 39.
-  Refresh them together with `make build-skill-graph` /
-  `make audit-skills-strict` (one deliberate skills pass, no piecemeal
-  `content_sha256` churn).
+- Skills corpus refresh (was deferred to a single skills pass): DONE in
+  the post-T13 follow-up — every SKILL.md now teaches the consolidated
+  surface (`kg_record`, `research_cve`, `lookup_payload`,
+  `search_security_references`, `generate_report`, `inspect_evidence`,
+  `persist_artifact`) with a findings-record guidance line for
+  KG-less roles; `make audit-skills-strict` (323 files, 0 violations),
+  `make build-skill-graph` + `--check`, and the 267 skill tests pass.
 
 Test surface: new `test_semantic_tools.py` (projection behaviors and
 error paths, fake-store based) and `test_kg_slot.py` (`_make_kg` role
@@ -871,8 +872,9 @@ Scope decisions worth remembering:
   `search_security_references`.
 - Prompts updated in place: `analyst.md` (generate_report / semantic
   references / inspect_evidence), `exploit.md` CVE-research checklist,
-  `raptix.md` skill tool-chain citation. Skills corpus references are
-  deferred to the single T9 skills pass, same as T4.
+  `raptix.md` skill tool-chain citation. Skills corpus references were
+  deferred to a single skills pass (same as T4) — landed in the
+  post-T13 follow-up.
 
 Test surface: new `test_semantic_references.py` (fan-out, aliasing,
 envelope trust, clamps); `test_tools_wrappers.py` /
@@ -1814,6 +1816,41 @@ the soft file budget.
 | T11 | ~300 | eval harness |
 | T12 | ~80 | enable exposure (feature flag + rollout) |
 | T13 | ~400 | domain pluginization |
+
+---
+
+## Post-T13 follow-up — skills corpus refresh (docs only)
+
+The T4 and T5 deferred notes ("one deliberate skills pass") landed as a
+single docs-only change after T13: 56 SKILL.md files under
+`packages/raptix-skills` updated so every skill teaches the consolidated
+surface. No runtime code, no frontmatter schema changes, no metadata
+edits — `content_sha256` churn is confined to the one pass, as intended.
+
+- **KG writes:** all `kg_add_node`/`kg_add_edge`/`kg_query`/
+  `kg_neighbors`/`kg_stats`/`kg_dedupe_findings`/`bh_cypher`/
+  `get_attack_context`/`laps_ingest` playbook snippets rewritten to
+  `kg_record` (entity/relationship/observation forms) or — for roles
+  without a KG write tool (analyst, wireless_operator, ics_operator,
+  most domain operators) — to a structured findings-record guidance
+  line stating that the orchestrator owns graph writes.
+- **References/research:** `ref_*`, `payload_search`, `cve_poc_lookup`,
+  `h1_search`, `oneliner_search`, `killchain_lookup`,
+  `methodology_lookup` call sites rewritten to `research_cve`,
+  `lookup_payload`, and `search_security_references`.
+- **Reporting/evidence:** `format_bounty_report`/`report_*` collapsed
+  to `generate_report`; `verify_evidence`/`persist_evidence` →
+  `inspect_evidence`/`persist_artifact`.
+- **Retired KG analyzers** (`kg_analyze_*`, `kg_scan_solidity`,
+  `kg_triage_binary`, `slither_ingest`) replaced with inline analysis
+  guidance; retired parser and ingest entry points replaced with a
+  "execution output auto-parses" statement where the role owns the
+  executor.
+- **Verification:** `uv run python -m raptix.skills.audit --mode strict`
+  (323 files, 0 violations); `raptix.skills.engine.builder
+  --frozen-built-at` rebuilt `skills.cypher` (2137 nodes, 5773 edges),
+  `--check` confirms the committed artifact matches; 267 skill-related
+  unit tests pass.
 
 ---
 

@@ -36,8 +36,9 @@ metadata:
 1. Map the target: `bash("find /workspace/src -name '*.sol' | head -50")`
 2. `solidity_scan_file` on each file
 3. Run slither: `bash("cd /workspace && slither . --json slither.json")`
-4. `slither_ingest("/workspace/slither.json")`
-5. `kg_query(kind="vulnerability", min_severity="high")` to see the highs
+4. `kg_ingest_slither("/workspace/slither.json")`
+5. Review the highs from `slither.json` via bash (no graph-read tool
+   on this surface — parse the JSON directly)
 6. For each high, generate a Foundry PoC via `foundry_reentrancy_test` etc.
 7. `bash("forge test -vvv --match-contract Test_")` to run
 8. Promote passing PoCs as validated findings

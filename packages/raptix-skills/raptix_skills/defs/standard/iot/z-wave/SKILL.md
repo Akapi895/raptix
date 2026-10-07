@@ -175,18 +175,15 @@ sha256sum "$EVIDENCE"/* >> "$EVIDENCE/sha256.txt"
 ```
 
 ```python
-kg_add_node(
-    kind="finding",
-    label=f"Z-Wave S0 network key extracted NodeID={node_id}",
-    props={
-        "key": f"z-wave::s0::{home_id}",
-        "home_id": home_id,
-        "node_id": node_id,
-        "s0_network_key_hex": s0_key.hex(),
-        "security_class": "S0",
-        "frequency_mhz": 908.42,
-        "source": "gr-zwave+ezwave",
-    },
+kg_record(
+    '[{"kind": "Finding", "key": f"z-wave::s0::{home_id}",'
+    '  "label": f"Z-Wave S0 network key extracted NodeID={node_id}",'
+    '  "props": {"home_id": home_id,'
+    '            "node_id": node_id,'
+    '            "s0_network_key_hex": s0_key.hex(),'
+    '            "security_class": "S0",'
+    '            "frequency_mhz": 908.42,'
+    '            "source": "gr-zwave+ezwave"}}]'
 )
 ```
 

@@ -185,17 +185,14 @@ sha256sum "$EVIDENCE"/* >> "$EVIDENCE/sha256.txt"
 ```
 
 ```python
-kg_add_node(
-    kind="finding",
-    label=f"Zigbee Touchlink abuse on PAN {pan_id:#06x}",
-    props={
-        "key": f"zigbee-touchlink::{pan_id}",
-        "pan_id": pan_id,
-        "channel": channel,
-        "nwk_key_hex": nwk_key.hex() if nwk_key else None,
-        "touchlink_reset_success": True,
-        "source": "killerbee+scapy",
-    },
+kg_record(
+    '[{"kind": "Finding", "key": f"zigbee-touchlink::{pan_id}",'
+    '  "label": f"Zigbee Touchlink abuse on PAN {pan_id:#06x}",'
+    '  "props": {"pan_id": pan_id,'
+    '            "channel": channel,'
+    '            "nwk_key_hex": nwk_key.hex() if nwk_key else None,'
+    '            "touchlink_reset_success": True,'
+    '            "source": "killerbee+scapy"}}]'
 )
 ```
 

@@ -23,14 +23,14 @@ or retyped) is the primary failure mode — guard against it explicitly.
 
 ## 1. Entry Point
 
-Before decompiling anything, state the question in writing:
+Before decompiling anything, state the question in writing in your
+analysis notes (`/workspace/analysis/<binary>.md` — your role has no
+KG write tool):
 
 ```
-kg_add_node("hypothesis", "deep-analysis target",
-  props={"question": "<exact question, e.g. 'what does sub_401A20 do'>",
-         "binary": "/workspace/target",
-         "entry_function": "<hex addr or name>",
-         "key": "deep-analysis:entry"})
+analysis-note | deep-analysis target |
+question <exact question, e.g. 'what does sub_401A20 do'> |
+binary /workspace/target | entry_function <hex addr or name>
 ```
 
 Commit to one question. Do not pivot mid-session unless the current
@@ -90,18 +90,18 @@ After each batch of tool calls, answer explicitly:
 
 1. Is the current function still the right place to dig?
 2. Have I renamed every local/param I now understand?
-3. Have I documented what this function does (even partially) in the KG?
+3. Have I documented what this function does (even partially) in your
+   analysis notes?
 4. Am I still working toward the original question, or have I drifted?
 
-If you've called into a callee 3+ levels deep without updating the KG,
-that's context-rot — surface the findings upward before going deeper.
+If you've called into a callee 3+ levels deep without updating your
+notes, that's context-rot — surface the findings upward before going
+deeper.
 
 ```
-kg_add_node("note", "deep-analysis progress",
-  props={"function": "decrypt_config_blob",
-         "finding": "RC4 variant — XOR stream cipher, 16-byte key from .rdata:0x40D0C0",
-         "status": "complete",
-         "key": "deep-analysis:decrypt_config_blob"})
+analysis-note | deep-analysis progress | function decrypt_config_blob |
+finding RC4 variant — XOR stream cipher, 16-byte key from .rdata:0x40D0C0 |
+status complete
 ```
 
 ## 4. Per-Question Strategies
@@ -206,20 +206,19 @@ When you see pointer arithmetic into a struct you don't have a definition for:
 ## 7. Completion Gate
 
 The deep-analysis session is done when:
-- The original question is answered and documented in KG
+- The original question is answered and documented in your analysis
+  notes
 - All functions touched have at least a rename + one-line comment
 - Crypto primitives identified (or confirmed absent)
 - C2 config location/format documented (if applicable)
 - Struct definitions created for all major data types
 
 ```
-kg_add_node("finding", "deep-analysis complete",
-  props={"question": "<original question>",
-         "answer": "<concise answer>",
-         "key_functions": ["decrypt_config_blob", "build_beacon_packet"],
-         "crypto": "ChaCha20 — key at .data:0x40E0A0",
-         "c2_format": "TLV over TCP port 4444",
-         "key": "deep-analysis:complete"})
+finding | deep-analysis complete | question <original question> |
+answer <concise answer> |
+key_functions decrypt_config_blob, build_beacon_packet |
+crypto ChaCha20 — key at .data:0x40E0A0 |
+c2_format TLV over TCP port 4444
 ```
 
 ## Tools

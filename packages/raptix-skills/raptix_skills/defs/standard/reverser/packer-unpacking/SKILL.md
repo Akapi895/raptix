@@ -150,14 +150,12 @@ For any packer:
 | Anti-VM (CPUID hypervisor bit) | Run on bare metal or KVM w/ CPUID masking |
 
 ## 7. Promote
+Note in your findings record (your role has no KG write tool):
 ```
-kg_add_node(kind="observation", label="packed: <packer-name>",
-            props={"sample":"<sha256>","entropy":<float>,"packer":"<name>"})
-kg_add_edge(src=<sample>, dst=<observation>, kind="exhibits")
+observation | packed: <packer-name> | sample <sha256> | entropy <float> | packer <name>
 
 # After unpack, re-run triage on the dumped file
-kg_add_node(kind="artifact", label="unpacked: <sha256>",
-            props={"original":"<orig-sha256>","unpacker":"<tool>"})
+artifact | unpacked: <sha256> | original <orig-sha256> | unpacker <tool>
 ```
 
 ## Severity (not a vuln, but a triage gate)

@@ -28,10 +28,12 @@ Before committing iteration budget, evaluate the target:
 4. **Reward program**: HackerOne, Bugcrowd, Immunefi, GitHub Security Advisories,
    Google VRP. Check scope, excluded vuln classes, and reward tiers.
 
-Record the assessment as a node:
+Record the assessment (`kg_record` from your KG slot):
 ```
-kg_add_node("repo", "<name>", props={"stars": N, "downloads_weekly": N,
-  "has_security_policy": true, "advisory_count": N, "bounty_program": "hackerone"})
+kg_record('[{"kind": "Repository", "key": "repo::<name>", "label": "<name>",
+  "props": {"stars": N, "downloads_weekly": N,
+            "has_security_policy": true, "advisory_count": N,
+            "bounty_program": "hackerone"}}]')
 ```
 
 ## White-Box Methodology
@@ -54,10 +56,11 @@ Where does untrusted input enter the system? Trace these sources:
 - Deserialization of user-controlled data (pickle, YAML, JSON with class hints)
 - IPC channels, WebSocket messages, MCP tool inputs
 
-For each source, add an ENTRYPOINT node:
+For each source, record an ENTRYPOINT observation:
 ```
-kg_add_node("entrypoint", "POST /api/upload body", props={"type": "http",
-  "file": "routes/upload.py", "line": 42})
+kg_record('[{"kind": "Entrypoint", "key": "entrypoint::POST /api/upload body",
+  "label": "POST /api/upload body",
+  "props": {"type": "http", "file": "routes/upload.py", "line": 42}}]')
 ```
 
 ### Step 3 — Identify crown jewels
@@ -131,4 +134,5 @@ Bad:
 - Do NOT submit theoretical findings ("an attacker could potentially...")
 - Do NOT spam multiple low-quality reports — one rejected report damages signal
 - Do NOT submit to out-of-scope targets
-- Do NOT submit duplicate findings without checking `kg_query(kind="finding")`
+- Do NOT submit duplicate findings without checking your recorded
+  findings (workspace `findings/` + `inspect_evidence`)

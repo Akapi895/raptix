@@ -245,18 +245,16 @@ sha256sum "$EVIDENCE"/* >> "$EVIDENCE/sha256.txt"
 ```
 
 ```python
-kg_add_node(
-    kind="finding",
-    label=f"Sub-GHz fixed-code replay success at {target_freq_mhz} MHz",
-    props={
-        "key": f"sub-ghz::{target_freq_mhz}::{target_id}",
-        "frequency_mhz": target_freq_mhz,
-        "modulation": "OOK-PWM",
-        "code_type": "fixed",  # or "rolling"
-        "replay_success": True,
-        "hardware": "HackRF One",
-        "source": "hackrf+rtl433",
-    },
+kg_record(
+    '[{"kind": "Finding",'
+    '  "key": f"sub-ghz::{target_freq_mhz}::{target_id}",'
+    '  "label": f"Sub-GHz fixed-code replay success at {target_freq_mhz} MHz",'
+    '  "props": {"frequency_mhz": target_freq_mhz,'
+    '            "modulation": "OOK-PWM",'
+    '            "code_type": "fixed",  # or "rolling"'
+    '            "replay_success": True,'
+    '            "hardware": "HackRF One",'
+    '            "source": "hackrf+rtl433"}}]'
 )
 ```
 

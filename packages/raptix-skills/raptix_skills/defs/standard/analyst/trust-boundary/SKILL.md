@@ -40,8 +40,10 @@ Map the search order. Common dangerous patterns:
 
 Record each config loading point:
 ```
-kg_add_node("code_location", "loadConfig() reads .env from cwd",
-  props={"file": "src/config/settings.ts", "line": 42, "trust_level": "untrusted"})
+kg_record('[{"kind": "CodeLocation", "key": "code-location::loadConfig-cwd-env",
+  "label": "loadConfig() reads .env from cwd",
+  "props": {"file": "src/config/settings.ts", "line": 42,
+            "trust_level": "untrusted"}}]')
 ```
 
 ### 2. Environment variable injection
@@ -109,7 +111,8 @@ ENTRYPOINT (malicious .env file in cloned repo)
 Use low edge weights (0.2–0.4) for automatic/silent steps. Use higher weights
 (1.0+) for steps requiring user interaction.
 
-Then call `plan_attack_chains(top_k=5)` to surface the cheapest paths.
+Then record the chain as an `AttackPath` observation via `kg_record`;
+chain planning is not on your tool surface.
 
 ## Shell Quoting Vulnerabilities
 

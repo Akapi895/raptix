@@ -59,12 +59,12 @@ Rhino Security's canonical 21 paths — any `Allow` on these is a chain step:
 20. aws-marketplace:Subscribe (rare, but noted)
 21. sts:AssumeRole (direct)
 
-## 4. Graph promotion
-```
-kg_add_node(kind="vulnerability", label="IAM:CreateAccessKey → account takeover", props={"severity":"critical","source":"aws-iam"})
-kg_add_node(kind="crown_jewel", label="AWS Account 1234")
-kg_add_edge(src=<vuln>, dst=<crown_jewel>, kind="grants", weight=0.3)
-```
+## 4. Findings promotion
+Note the primitive in your findings record (your role has no direct
+KG write tool — the auto-ingest pipeline and the orchestrator own
+graph writes): `IAM:CreateAccessKey → account takeover` (severity
+critical, source aws-iam) reaching the crown jewel
+`AWS Account 1234` (grants, weight 0.3).
 
 ## 5. Common chains
 - Dev user has `iam:PassRole` + `lambda:CreateFunction` + a Lambda role

@@ -86,11 +86,15 @@ smbclient.py -k -no-pass 'DC@DC_IP'
 
 ## 6. Promote
 ```
-kg_add_node(kind="vulnerability", label="ADCS ESC1: <template> → DA",
-            props={"severity":"critical","ca":"<ca>","template":"<tpl>"})
-kg_add_node(kind="credential", label="administrator:NT_HASH")
-kg_add_edge(src=<vuln>, dst=<cred>, kind="grants")
-kg_add_edge(src=<cred>, dst=<crown_jewel:domain>, kind="compromises")
+kg_record('[
+  {"kind": "Vulnerability", "key": "vuln::adcs-esc1::<template>",
+   "label": "ADCS ESC1: <template> → DA",
+   "props": {"severity": "critical", "ca": "<ca>", "template": "<tpl>"},
+   "edges_out": [{"to_key": "credential::administrator", "kind": "GRANTS"}]},
+  {"kind": "Credential", "key": "credential::administrator",
+   "label": "administrator:NT_HASH",
+   "edges_out": [{"to_key": "crown-jewel::domain", "kind": "LEADS_TO"}]}
+]')
 ```
 
 ## ESC variants quick-ref

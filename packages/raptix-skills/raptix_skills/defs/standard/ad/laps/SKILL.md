@@ -65,14 +65,15 @@ GetLAPSPassword.py 'DOM/USER:PASS@DC_FQDN' \
 ```
 
 ## 4. Bulk-process result
+Parse `/tmp/laps.txt` line by line (bash `grep`/`awk`) and record each
+recovered local-admin credential (`kg_record` from your KG slot):
 ```
-laps_ingest("/tmp/laps.txt")
-```
-This adds:
-```
-kg_add_node(kind="credential", label="<host>\\Administrator:<plain>",
-            props={"source":"laps","host":"<host>","expires":"<date>"})
-kg_add_edge(src=<cred>, dst=<computer>, kind="local-admin")
+kg_record('[{"kind": "Credential",
+  "key": "credential::<host>-administrator",
+  "label": "<host>\\Administrator:<plain>",
+  "props": {"source": "laps", "host": "<host>", "expires": "<date>"},
+  "edges_out": [{"to_key": "computer::<host>",
+                 "kind": "AUTHENTICATES_TO"}]}]')
 ```
 
 ## 5. Cracking encrypted LAPS (Windows LAPS only)

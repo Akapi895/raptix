@@ -146,12 +146,11 @@ v2 requires a PUT first. Real SSRF rarely does PUT.
 - Reality check: if IMDSv2 is enforced AND your SSRF is GET-only, you cannot extract creds. Document this as the boundary and pivot elsewhere.
 
 ## 8. Promote
-```
-kg_add_node(kind="credential", label="<role-name>:<ASIA-prefix>",
-            props={"source":"imds-pivot","cloud":"aws","expires":"<ts>"})
-kg_add_edge(src=<ssrf-vuln>, dst=<cred>, kind="extracts")
-kg_add_edge(src=<cred>, dst=<crown_jewel:aws-account>, kind="grants-access")
-```
+Note in your findings record (your role has no direct KG write tool —
+the auto-ingest pipeline and the orchestrator own graph writes):
+credential `<role-name>:<ASIA-prefix>` (source imds-pivot, cloud aws,
+expires <ts>), leaked by the SSRF vuln and granting access to the
+`aws-account` crown jewel.
 
 ## OPSEC
 - AWS: IMDS access is **not** logged in CloudTrail (kernel-local). You're invisible at the cred-grab stage.

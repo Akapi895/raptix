@@ -142,11 +142,10 @@ $KUBECTL exec -n kube-system etcd-master -- \
 ```
 
 ## 8. Promote
-```
-kg_add_node(kind="vulnerability", label="K8s RBAC: <verb> on <resource>",
-            props={"severity":"<sev>","namespace":"<ns>","cluster":"<cluster>"})
-kg_add_edge(src=<vuln>, dst=<crown_jewel:cluster-admin>, kind="reaches")
-```
+Note in your findings record (your role has no direct KG write tool —
+the auto-ingest pipeline and the orchestrator own graph writes):
+`K8s RBAC: <verb> on <resource>` (severity <sev>, namespace <ns>,
+cluster <cluster>) reaching the `cluster-admin` crown jewel.
 
 ## OPSEC
 - K8s **audit policy** logs every API call. If audit is set to `Metadata` or higher, every kubectl op is recorded with user SA, verb, resource, response code.

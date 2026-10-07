@@ -9,13 +9,17 @@ metadata:
 
 # Detector Skill
 
-You promote scanner candidates into real `VULNERABILITY` nodes — or
+You promote scanner candidates into `VULNERABILITY` findings — or
 reject them as false positives — by reading the surrounding source.
-You have no bash and no scanner tools. Only graph CRUD and source reads.
+You have no bash and no scanner tools. Your surface is source reads
+(filesystem) plus `cve_lookup` / `cve_by_package`; graph reads and
+writes are not on it. State flows back to the orchestrator through
+your return summary.
 
 ## Per-candidate decision flow
 
-1. Pull candidate: `kg_query(kind="candidate", limit=20)`.
+1. Pull candidates from the task handoff — the orchestrator brief lists
+   the candidate queue (path, line, score, key per candidate).
 2. For each candidate (highest score first):
    a. Read ±30 lines around `path:line`. Prefer function boundaries.
    b. Identify: source? sink? taint path? sanitizer?
@@ -28,29 +32,31 @@ You have no bash and no scanner tools. Only graph CRUD and source reads.
 
 ## Promotion template
 
-```python
-vuln = kg_add_node(
-    "vulnerability",
-    "SQLi in product search",
-    props='{"key":"app.py:search_products:sqli","severity":"high",'
-          '"file":"/workspace/target/app.py","line":142,"cwe":["CWE-89"],'
-          '"source":"request.args.get(\\"q\\")","sink":"cursor.execute",'
-          '"evidence":"cursor.execute(f\\"SELECT * FROM products WHERE name LIKE \'%{q}%\'\\")"}',
-)
-hyp = kg_add_node(
-    "hypothesis",
-    "Unsanitized query param flows into f-string SQL",
-    props='{"key":"app.py:search_products:sqli:hyp"}',
-)
-kg_add_edge(vuln_id, candidate_id, "derived_from")
-kg_add_edge(hyp_id, vuln_id, "mapped_to")
+Emit each decision as a `kg_record`-shaped observation in your return
+summary — the orchestrator lane (which carries the KG slot) applies it
+to the graph verbatim:
+
+```json
+{"kind": "Vulnerability", "key": "app.py:search_products:sqli",
+ "label": "SQLi in product search",
+ "props": {"severity": "high", "file": "/workspace/target/app.py",
+           "line": 142, "cwe": ["CWE-89"],
+           "source": "request.args.get(\"q\")", "sink": "cursor.execute",
+           "evidence": "cursor.execute(f\"SELECT * FROM products WHERE name LIKE '%{q}%'\")"},
+ "edges_out": [{"to_key": "candidate::<candidate-key>", "kind": "DERIVED_FROM"}]}
 ```
+
+plus a companion Hypothesis observation (key
+`app.py:search_products:sqli:hyp`, label "Unsanitized query param flows
+into f-string SQL") with
+`{"to_key": "app.py:search_products:sqli", "kind": "MAPS_TO"}`.
 
 ## Rejection template
 
-Same `kg_add_node` call with the SAME `key`, plus `status="rejected"`
-and `reason="sanitized via html.escape before sink"`. Idempotent — the
-graph upsert merges the rejection on top of the original candidate.
+Same observation — SAME `kind` + `key` — with `"status": "rejected"`
+and `"reason": "sanitized via html.escape before sink"` added to
+`props`. The graph upsert is idempotent: the rejection merges on top
+of the original candidate.
 
 ## Severity calibration
 

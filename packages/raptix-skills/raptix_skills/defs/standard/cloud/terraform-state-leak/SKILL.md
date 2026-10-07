@@ -140,13 +140,11 @@ VPC using IAM keys from state (if the role has ec2:RunInstances), then
 hop through it.
 
 ## 6. Promote
-```
-kg_add_node(kind="vulnerability", label="Exposed Terraform state: <url>",
-            props={"severity":"critical","secrets_found":<n>})
-for each cred:
-  kg_add_node(kind="credential", label="<service>:<value>")
-  kg_add_edge(src=<vuln>, dst=<cred>, kind="exposes")
-```
+Note in your findings record (your role has no direct KG write tool —
+the auto-ingest pipeline and the orchestrator own graph writes):
+`Exposed Terraform state: <url>` (severity critical,
+secrets_found <n>), plus one leaked credential per service
+(`<service>:<value>` exposed by the state leak).
 
 ## OPSEC
 - Reading a public bucket / web file leaves logs only at the storage layer (S3 access logs, CloudFront access logs)

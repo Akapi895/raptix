@@ -10,8 +10,10 @@ metadata:
 # External References Skill
 
 Raptix ships with a curated catalogue of high-signal third-party
-resources. You can either query the metadata directly or fetch the
-full repo into the sandbox for grep-level access.
+resources, queried through three semantic fan-out tools:
+`research_cve`, `search_security_references`, and `lookup_payload`.
+You never pick the corpus, clone a repo, or grep manually — one call
+fans out across every corpus that matches.
 
 ## Catalogue (13 entries)
 
@@ -34,44 +36,45 @@ full repo into the sandbox for grep-level access.
 ## When to use each
 
 ### First engagement iteration
-- `ref_suggest(vuln_class="...", goal="recon")` to see which references
-  matter for your current lane. Save the suggestions to the graph.
+- `search_security_references("<your lane or vuln class>")` to see
+  which references matter right now — one call fans out across the
+  HackerOne / one-liner / methodology / kill-chain corpora.
 
 ### When you need a payload RIGHT NOW
-- `payload_search(vuln_class="ssrf", keyword="imds")` — no network
-  needed, bundled offline. Covers sqli, ssrf, xss, ssti, deser, rce,
-  xxe, idor, jwt, oauth, lfi, cmdi, graphql, prompt-injection,
-  proto-pollution.
-
-### When you need the FULL library
-- `ref_fetch("payloads-all-the-things")` — one-time clone into
-  `/workspace/.references/payloads-all-the-things/` (~30s).
-- `ref_grep("payloads-all-the-things", "DNS rebinding")` to find
-  specific variants.
+- `lookup_payload("imds", vuln_class="ssrf")` — no network needed,
+  bundled offline. Covers sqli, ssrf, xss, ssti, deser, rce, xxe,
+  idor, jwt, oauth, lfi, cmdi, graphql, prompt-injection,
+  proto-pollution, plus any extra class found in the cached
+  payloads-all-the-things clone. Curated entries rank first.
 
 ### Report calibration
-- `ref_fetch("hackerone-reports")` then `ref_grep("hackerone-reports",
-  "<your bug class>")` to find similar disclosed reports.
+- `search_security_references("<your bug class>", kinds=["h1"])` to
+  find similar disclosed reports (and what they paid).
 - Copy the report structure that got paid — it's validated by triagers.
 
 ### CVE → PoC
-- After `cve_lookup` returns a CVE ID, check `ref_fetch("trickest-cve")`
-  then `ref_grep("trickest-cve", "CVE-2024-1234")` for a working PoC.
-- Cross-reference with `penetration-testing-poc` for a second opinion.
+- After `cve_lookup` returns a CVE ID, `research_cve("CVE-2024-1234")`
+  resolves every id in the query against the local trickest-cve /
+  penetration-testing-poc index (instant, no network) and returns the
+  public PoC urls.
+- Cross-reference `search_security_references` for prior art on the
+  same bug class.
 
 ### Tool discovery
-- `ref_grep("redteam-tools", "lateral movement")` to find the right
-  tool for a phase you haven't touched yet.
+- `search_security_references("lateral movement", kinds=["killchain"])`
+  to find the right tool for a phase you haven't touched yet.
 
 ## Workflow
 
 1. Identify the vuln class or phase you're working on.
-2. `ref_suggest` to get the top 3-5 relevant references.
-3. For each, decide: metadata only, offline bundled payload, or full
-   repo clone.
-4. Use `ref_grep` to surface the specific payload / writeup.
-5. Record any borrowed payloads / patterns as `hypothesis` nodes in
-   the graph until validated.
+2. `search_security_references` to surface prior art across the
+   corpora (all four kinds, or a `kinds` subset).
+3. For payloads, `lookup_payload` — keyword and/or `vuln_class`, no
+   clone-or-grep step.
+4. For CVEs, `research_cve` — pass the id(s) inside any query text.
+5. Record any borrowed payloads / patterns as `Hypothesis`
+   observations (`kg_record` on roles carrying the KG slot) until
+   validated.
 
 ## Shannon, Strix, HexStrike, Pentagi, PentestGPT, NeuroSploit
 

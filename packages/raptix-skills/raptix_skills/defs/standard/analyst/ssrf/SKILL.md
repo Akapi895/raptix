@@ -69,8 +69,9 @@ grep -rE 'requests\.get\(|httpx\.|urllib.*urlopen|fetch\(|axios\.|http\.Get\(|UR
    - Is there an IP allowlist check *before or after* DNS resolution?
      (Only before-resolution checks are TOCTOU-safe.)
    - Is redirect following disabled? `allow_redirects=False` in requests.
-3. Each confirmed source-to-sink path → `kg_add_node(kind="vulnerability", ...)`.
-4. Link the vuln to its file+line via a code_location node.
+3. Each confirmed source-to-sink path → a `Vulnerability` observation
+   via `kg_record`.
+4. Link the vuln to its file+line via a `CodeLocation` observation.
 
 ## 5. PoC template
 
@@ -105,5 +106,5 @@ Negative control:
 
 Once validated, add an `enables` edge from the SSRF vuln to the adjacent
 IAM credential / Redis host / admin panel node. Weight 0.3 for trivial
-IMDS chains, 0.6 for bypass-required variants. Then
-`plan_attack_chains(promote=True)` to persist the complete chain.
+IMDS chains, 0.6 for bypass-required variants. Then record the
+complete chain as an `AttackPath` observation via `kg_record`.

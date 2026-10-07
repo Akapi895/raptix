@@ -38,16 +38,19 @@ metadata:
 
 ## Workflow
 1. Collect: `bash("bloodhound-python -u user -p pass -d DOMAIN -c all --zip")`
-2. `bh_ingest_zip("/workspace/bh.zip")`
+2. `bh_ingest_zip("/workspace/bh.zip")` (or `bhce_ingest_zip` against a BHCE server)
 3. `dcsync_check` — if any principal, that's instant domain compromise
-4. `kg_query(kind="user")` and filter for `hasspn=true` → Kerberoast queue
-5. `kg_query(kind="user")` and filter for `dontreqpreauth=true` → AS-REP roast
+4. `bhce_cypher("MATCH (u:User {hasspn:true}) RETURN u.name")` → Kerberoast queue
+5. `bhce_cypher("MATCH (u:User {dontreqpreauth:true}) RETURN u.name")` → AS-REP roast
 6. ADCS: `bash("certipy find -u user -p pass -dc-ip X -json")` then `adcs_audit`
-7. `plan_attack_chains` to see graph-computed domain compromise paths
+7. Domain compromise paths: shortestPath Cypher via `bhce_cypher`
+   (see the bloodhound-query playbook)
 
-## Crown jewels to add
+## Crown jewels to record
 ```
-kg_add_node(kind="crown_jewel", label="Domain Admins group")
-kg_add_node(kind="crown_jewel", label="krbtgt account")
-kg_add_node(kind="crown_jewel", label="DC: DC01.corp.local")
+kg_record('[
+  {"kind": "CrownJewel", "key": "crown-jewel::domain-admins", "label": "Domain Admins group"},
+  {"kind": "CrownJewel", "key": "crown-jewel::krbtgt", "label": "krbtgt account"},
+  {"kind": "CrownJewel", "key": "crown-jewel::dc-dc01", "label": "DC: DC01.corp.local"}
+]')
 ```

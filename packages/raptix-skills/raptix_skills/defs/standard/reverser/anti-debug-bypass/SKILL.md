@@ -163,10 +163,10 @@ Caution: patching may break self-checksums. Run static-validation YARA
 post-patch to ensure binary still loads.
 
 ## 6. Promote
+Note in your findings record (your role has no KG write tool):
 ```
-kg_add_node(kind="observation", label="anti-debug: <check-name>",
-            props={"sample":"<sha256>","check":"<name>","bypassed":<bool>})
-kg_add_edge(src=<sample>, dst=<observation>, kind="exhibits")
+observation | anti-debug: <check-name> | sample <sha256> |
+check <name> | bypassed <bool>
 ```
 
 ## OPSEC (for malware analysis)
