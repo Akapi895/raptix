@@ -192,6 +192,30 @@ class SandboxBase(BaseSandbox):
         safe_slug = re.sub(r"[^a-zA-Z0-9_.-]+", "-", slug).strip("-") or "workspace"
         return f"{safe_slug}-{digest}"
 
+    @staticmethod
+    def engagement_fence_error(workspace_path: str, engagement_slug: str) -> str | None:
+        """Return an error message when ``workspace_path`` lies outside the
+        engagement subtree, else ``None``.
+
+        The engagement fence is the cross-engagement counterpart to
+        ``_normalize_workspace_path`` (which only rejects malformed /
+        traversing paths, and fails those closed to the SHARED
+        ``/workspace`` root). Once an engagement slug is known, the shared
+        root is exactly what must be refused: a resolved workspace of
+        ``/workspace`` or ``/workspace/<other-slug>`` lets one engagement
+        read or clobber another's findings. Callers treat the returned
+        message as a hard error (bash tools raise; the daemon's
+        ``/workspace/ensure`` answers 403) — never a silent fallback.
+        """
+        prefix = f"/workspace/{engagement_slug}"
+        if workspace_path == prefix or workspace_path.startswith(prefix + "/"):
+            return None
+        return (
+            f"workspace {workspace_path!r} is outside engagement {engagement_slug!r} "
+            f"(RAPTIX_ENGAGEMENT); the allowed subtree is {prefix}/. Fix the run's "
+            "workspace_path config or the RAPTIX_ENGAGEMENT environment."
+        )
+
     def _workspace_key(self, workspace_path: str | None = None) -> str:
         return self._workspace_slug(workspace_path or self._workspace_path)
 

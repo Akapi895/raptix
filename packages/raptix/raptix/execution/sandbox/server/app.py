@@ -166,6 +166,18 @@ class ProvisionEgressRequest(BaseModel):
     )
 
 
+class EnsureWorkspaceRequest(BaseModel):
+    path: str = Field(
+        description="Virtual workspace path to create, e.g. /workspace/<engagement-slug>. "
+        "Normalized + engagement-fenced server-side.",
+    )
+
+
+class EnsureWorkspaceResponse(BaseModel):
+    path: str
+    created: bool
+
+
 class ProvisionEgressResponseModel(BaseModel):
     applied: bool
     enforce: bool
@@ -497,3 +509,53 @@ def session_log_path(
         workspace_path=req.workspace_path,
     )
     return SessionLogPathResponseModel(path=path)
+
+
+# ── Workspace materialization ─────────────────────────────────────────
+
+
+def _fenced_engagement_slug() -> str | None:
+    """The engagement slug to fence against, from the daemon's own env.
+
+    Read sandbox-side (never trusted from the wire) for the same reason
+    ``_egress_enforcement_enabled`` is: the container's environment is the
+    operator-controlled truth, not something a caller can rewrite.
+    Returns ``None`` when no engagement is pinned (legacy / dev root mode).
+    """
+    slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
+    if not slug:
+        return None
+    normalized = DaemonSandbox._normalize_workspace_path(f"/workspace/{slug}")
+    if normalized == "/workspace":
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=(
+                f"RAPTIX_ENGAGEMENT={slug!r} is not a valid engagement slug; "
+                "refusing to serve an unfenced workspace root"
+            ),
+        )
+    return normalized[len("/workspace/") :]
+
+
+@app.post("/workspace/ensure", response_model=EnsureWorkspaceResponse)
+def ensure_workspace(
+    req: EnsureWorkspaceRequest,
+    _: Annotated[None, Depends(auth)],
+) -> EnsureWorkspaceResponse:
+    """mkdir -p the (normalized, engagement-fenced) workspace dir.
+
+    Lets the agent-side bash tool materialize ``/workspace/<slug>``
+    eagerly instead of waiting for the kernel's first-session lazy
+    mkdir — teardown capture that runs before any bash call used to find
+    nothing to copy. Idempotent by construction.
+    """
+    normalized = DaemonSandbox._normalize_workspace_path(req.path)
+    slug = _fenced_engagement_slug()
+    if slug is not None:
+        error = DaemonSandbox.engagement_fence_error(normalized, slug)
+        if error is not None:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=error)
+    created = not os.path.isdir(normalized)
+    if created:
+        os.makedirs(normalized, exist_ok=True)
+    return EnsureWorkspaceResponse(path=normalized, created=created)

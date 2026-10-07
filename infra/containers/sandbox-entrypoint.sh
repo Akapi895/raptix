@@ -1,10 +1,15 @@
 #!/bin/bash
-# Make /workspace world-accessible so the host user can read findings,
-# reports, and engagement files without sudo.
-# Security boundary is the container itself, not file permissions.
-chmod -R 777 /workspace 2>/dev/null || true
-# Ensure all NEW files are also world-readable/writable
-umask 0000
+# Host tooling reads captured workspaces back via `docker cp`; it never
+# needs to WRITE into a live engagement. So: world-readable only.
+# - umask 022: new files 644 / dirs 755 (host-readable, not host-writable)
+# - single chmod of the mount root: the old `chmod -R 777` ran once at
+#   container start anyway (dirs created later were never covered) and
+#   made the workspace world-WRITABLE, which let one engagement clobber
+#   another's findings on a shared tree.
+# Security boundary is the container itself; file modes only decide
+# whether the host operator can read results back without sudo.
+chmod 755 /workspace 2>/dev/null || true
+umask 022
 
 # HTTP daemon mode (default ON). The container runs the FastAPI sandbox
 # server on ``localhost:9999`` for every deployment target — dev,

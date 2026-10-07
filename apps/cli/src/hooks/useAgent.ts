@@ -772,8 +772,10 @@ export function useAgent({
         const slug = process.env.RAPTIX_ENGAGEMENT;
         if (slug) {
           configurable.engagement_name = slug;
-          configurable.workspace_path =
-            process.env.RAPTIX_WORKSPACE_PATH ?? "/workspace";
+          // Engagement-scoped, never the shared /workspace root: the whole
+          // tree is visible at the root when no per-engagement bind-mount
+          // is in play, and the bash tool's fence refuses it anyway.
+          configurable.workspace_path = `/workspace/${slug}`;
         }
         const targetValue = process.env.RAPTIX_TARGET;
         if (targetValue) {
