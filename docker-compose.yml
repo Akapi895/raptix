@@ -202,16 +202,27 @@ services:
     build:
       context: .
       dockerfile: infra/containers/sandbox.Dockerfile
-      # Opt-in executor profiles (Wave T8) — set INSTALL_WEB_TOOLS=true /
-      # INSTALL_AD_TOOLS=true / INSTALL_PIVOT_TOOLS=true in .env and run
-      # `docker compose build sandbox` to bake the profile binaries into
-      # the local sandbox image. Defaults keep the published image lean.
-      # INSTALL_REVERSING is deliberately NOT passed here — the reversing
-      # toolset stays sidecar-scoped (ghidra-mcp service below).
+      # Opt-in executor profiles (Wave T8 + TC-2/5/7) — set INSTALL_*=true
+      # in .env and run `docker compose build sandbox` to bake the profile
+      # binaries into the local sandbox image. Defaults keep the published
+      # image lean. INSTALL_REVERSING is deliberately NOT passed here —
+      # the reversing toolset stays sidecar-scoped (ghidra-mcp service
+      # below).
       args:
         INSTALL_WEB_TOOLS: ${INSTALL_WEB_TOOLS:-false}
         INSTALL_AD_TOOLS: ${INSTALL_AD_TOOLS:-false}
         INSTALL_PIVOT_TOOLS: ${INSTALL_PIVOT_TOOLS:-false}
+        # TC-3: the Nuclei template corpus must be pinned (a
+        # nuclei-templates release tag) — the web-profile build refuses
+        # to run without it, so no benchmark silently depends on a
+        # runtime-fetched corpus.
+        NUCLEI_TEMPLATES_VERSION: ${NUCLEI_TEMPLATES_VERSION:-}
+        # TC-5: offline credential recovery (john + pinned dictionary).
+        INSTALL_CREDENTIAL_TOOLS: ${INSTALL_CREDENTIAL_TOOLS:-false}
+        # TC-7: appliance/network-device enumeration (Net-SNMP).
+        INSTALL_NETWORK_EXTRA: ${INSTALL_NETWORK_EXTRA:-false}
+        # TC-8: smart-contract static analysis (pinned slither).
+        INSTALL_CONTRACTS_TOOLS: ${INSTALL_CONTRACTS_TOOLS:-false}
         # Source-revision stamp; the lab harness verifies it against HEAD.
         RAPTIX_REPO_HEAD: ${RAPTIX_REPO_HEAD:-}
     container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-sandbox

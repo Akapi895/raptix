@@ -225,13 +225,20 @@ ENV GHIDRA_INSTALL_DIR=/opt/ghidra \
 # Each profile writes /opt/raptix/tool-versions/<profile>.tsv — the
 # dpkg name + version manifest feeding execution provenance (Wave T6's
 # build_execution_provenance tool_version / tool_data_version fields).
-# Nuclei's template corpus is NOT in the apt package (it is fetched at
-# runtime by ``nuclei -update``); its manifest row records that honestly
-# instead of pinning a corpus this image does not ship.
+#
+# TC-3: Nuclei's template corpus is PINNED, not runtime-fetched. The
+# build refuses to run without NUCLEI_TEMPLATES_VERSION set to a
+# nuclei-templates release tag, so no benchmark silently depends on a
+# mutable corpus; the manifest records the pinned tag + corpus path.
 ARG INSTALL_WEB_TOOLS=false
+ARG NUCLEI_TEMPLATES_VERSION=""
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
     if [ "$INSTALL_WEB_TOOLS" = "true" ]; then \
+        if [ -z "$NUCLEI_TEMPLATES_VERSION" ]; then \
+            echo "NUCLEI_TEMPLATES_VERSION must be pinned to a nuclei-templates release tag (TC-3) — refusing an unpinned web-profile build" >&2; \
+            exit 1; \
+        fi && \
         apt-get update && \
         apt-get install -y --no-install-recommends --no-install-suggests \
             # ── sandbox-web: host probe → crawl → fuzz → vuln scan → TLS audit ──
@@ -244,8 +251,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
         dpkg-query -W -f='${Package}\t${Version}\n' \
             httpx-toolkit katana ffuf nuclei testssl.sh \
             > /opt/raptix/tool-versions/sandbox-web.tsv && \
-        printf 'nuclei-templates\truntime-fetched (nuclei -update)\n' \
-            >> /opt/raptix/tool-versions/sandbox-web.tsv ; \
+        printf 'nuclei-templates\t%s (pinned corpus at /opt/raptix/nuclei-templates)\n' \
+            "$NUCLEI_TEMPLATES_VERSION" \
+            >> /opt/raptix/tool-versions/sandbox-web.tsv && \
+        curl -fsSL -o /tmp/nuclei-templates.tar.gz \
+            "https://github.com/projectdiscovery/nuclei-templates/archive/refs/tags/${NUCLEI_TEMPLATES_VERSION}.tar.gz" && \
+        mkdir -p /opt/raptix/nuclei-templates && \
+        tar -xzf /tmp/nuclei-templates.tar.gz -C /opt/raptix/nuclei-templates --strip-components=1 && \
+        rm /tmp/nuclei-templates.tar.gz ; \
     else \
         echo "INSTALL_WEB_TOOLS=false — skipping sandbox-web profile" ; \
     fi
@@ -288,6 +301,67 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
         echo "INSTALL_PIVOT_TOOLS=false — skipping sandbox-pivot profile" ; \
     fi
 
+# ── TC-5: offline credential recovery profile (opt-in) ──────────────
+# john against hashes extracted by access.credential_dump / AS-REP
+# workflows. The dictionary is the repo-pinned benchmark wordlist
+# (sandbox-wordlist.txt, copied below) — rockyou.txt is deliberately
+# NOT assumed to exist (TC-5 item 2).
+ARG INSTALL_CREDENTIAL_TOOLS=false
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
+    if [ "$INSTALL_CREDENTIAL_TOOLS" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends --no-install-suggests \
+            john && \
+        mkdir -p /opt/raptix/tool-versions && \
+        dpkg-query -W -f='${Package}\t${Version}\n' \
+            john \
+            > /opt/raptix/tool-versions/sandbox-credentials.tsv ; \
+    else \
+        echo "INSTALL_CREDENTIAL_TOOLS=false — skipping sandbox-credentials profile" ; \
+    fi
+
+# ── TC-7: appliance/network-device enumeration profile (opt-in) ─────
+# Net-SNMP utilities (snmpwalk) for SNMP v1/v2c/v3 enumeration of
+# printers, switches, and appliances — coverage the SMB/LDAP stack
+# does not overlap.
+ARG INSTALL_NETWORK_EXTRA=false
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
+    if [ "$INSTALL_NETWORK_EXTRA" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends --no-install-suggests \
+            snmp && \
+        mkdir -p /opt/raptix/tool-versions && \
+        dpkg-query -W -f='${Package}\t${Version}\n' \
+            snmp \
+            > /opt/raptix/tool-versions/sandbox-network-extra.tsv ; \
+    else \
+        echo "INSTALL_NETWORK_EXTRA=false — skipping sandbox-network-extra profile" ; \
+    fi
+
+# ── TC-8: smart-contract audit profile (opt-in) ─────────────────────
+# Slither (pinned pip version) for static Solidity analysis — the
+# offline pattern scanner in plugins/contracts stays the zero-dep tier;
+# this profile adds the real analyzer + the version manifest.
+ARG INSTALL_CONTRACTS_TOOLS=false
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked,id=sandbox-apt-lists \
+    if [ "$INSTALL_CONTRACTS_TOOLS" = "true" ]; then \
+        apt-get update && \
+        apt-get install -y --no-install-recommends --no-install-suggests \
+            python3-venv && \
+        python3 -m venv /opt/raptix/contracts-venv && \
+        /opt/raptix/contracts-venv/bin/pip install --no-cache-dir \
+            "slither-analyzer==0.11.6" && \
+        ln -s /opt/raptix/contracts-venv/bin/slither /usr/local/bin/slither && \
+        mkdir -p /opt/raptix/tool-versions && \
+        /opt/raptix/contracts-venv/bin/slither --version \
+            > /opt/raptix/tool-versions/sandbox-contracts.tsv ; \
+    else \
+        echo "INSTALL_CONTRACTS_TOOLS=false — skipping sandbox-contracts profile" ; \
+    fi
+
 # Ship only the modules the daemon actually imports:
 #   - raptix/__init__.py     — package marker (light-weight, just reads __version__)
 #   - raptix/execution/sandbox/kernel/ — shared sandbox primitives: TmuxSessionManager,
@@ -317,6 +391,10 @@ COPY packages/raptix/raptix/execution/sandbox/server /opt/raptix/execution/sandb
 # (never langchain/langgraph), so it is safe to ship to the lean sandbox.
 COPY packages/raptix/raptix/execution/sandbox/web /opt/raptix/execution/sandbox/web
 COPY packages/raptix-core/raptix_core /opt/raptix_core
+# TC-5: the pinned benchmark dictionary for the credentials profile —
+# versioned with the checkout, so cracking benchmarks never depend on a
+# mutable corpus and the JohnAdapter's wordlist path always exists.
+COPY infra/containers/sandbox-wordlist.txt /opt/raptix/share/wordlists/benchmark-dict.txt
 ENV PYTHONPATH=/opt
 
 # Install the Playwright templates' node deps LOCALLY (in their own dir) so the
