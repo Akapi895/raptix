@@ -104,6 +104,27 @@ def _glyph(configured: bool, active: bool) -> str:
     return "·       "
 
 
+def _record_path_status() -> str:
+    """Probe the full-fidelity recorder path with the runtime's own opener.
+
+    Silent capture loss (a pinned-but-unusable ``RAPTIX_RUNTIME__RECORD_PATH``)
+    previously produced empty record files that nobody noticed until the
+    post-mortem. Reporting it here makes the capture channel doctor-visible;
+    opening with :func:`raptix.runtime.recording.open_record` exercises the
+    exact code path the run will use.
+    """
+    raw = os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "").strip()
+    if not raw:
+        return "off (set RAPTIX_RUNTIME__RECORD_PATH to capture full transcripts)"
+    try:
+        from raptix.runtime.recording import open_record  # noqa: PLC0415
+
+        sink = open_record(Path(raw))
+    except Exception as exc:  # noqa: BLE001 — report, don't crash the doctor
+        return f"→ {raw} (UNWRITABLE: {exc})"
+    return f"→ {sink.path} (writable)"
+
+
 def _render_text(inv: AuthInventory) -> str:
     lines: list[str] = ["Raptix auth status", "=" * 22, ""]
     for kind in _KIND_ORDER:
@@ -131,6 +152,8 @@ def _render_text(inv: AuthInventory) -> str:
         for s in idle:
             lines.append(f"  - {s.label}  [{s.method.value}]")
         lines.append("")
+    lines.append("Runtime capture (full-fidelity record.jsonl):")
+    lines.append(f"  {_record_path_status()}")
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -140,6 +163,7 @@ def _render_json(inv: AuthInventory) -> str:
         "priority_explicit": inv.priority_explicit,
         "resolved_chain": [m.value for m in inv.resolved_chain],
         "configured_but_idle": [s.method.value for s in inv.configured_but_idle],
+        "record_path": _record_path_status(),
         "methods": [
             {
                 "method": s.method.value,

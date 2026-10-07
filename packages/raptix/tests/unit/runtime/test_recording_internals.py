@@ -30,7 +30,9 @@ from raptix.runtime.recording import (
     RecordingMiddleware,
     ReplayMiddleware,
     ReplayMismatchError,
+    _normalize_usage,
     _serialize_ai_response,
+    _serialize_command_response,
     _serialize_messages,
     _serialize_model_request,
     _serialize_tool_request,
@@ -382,3 +384,258 @@ def test_replay_skips_blank_lines(tmp_path: Path):
     )
     replay = open_replay(path)
     assert replay.stats["model_calls"] == 2
+
+
+# ---------------------------------------------------------------- envelope (PR-A)
+
+
+def _stateful_model_request(state: dict | None = None) -> SimpleNamespace:
+    return SimpleNamespace(
+        system_message=SimpleNamespace(content="sys"),
+        model=SimpleNamespace(name="m1"),
+        messages=[HumanMessage(content="hi")],
+        tools=[],
+        state=state or {},
+        runtime=SimpleNamespace(agent_name=""),
+    )
+
+
+def test_record_entry_carries_observability_envelope(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    req = _stateful_model_request(
+        {
+            "engagement_name": "lab-x",
+            "workspace_path": "/workspace/lab-x",
+            "active_objective_id": "OBJ-3",
+        }
+    )
+    rec = RecordingMiddleware(path=rec_path, role="recon")
+    rec.wrap_model_call(req, lambda _r: AIMessage(content="hello"))
+    _close(rec)
+    line = json.loads(rec_path.read_text(encoding="utf-8").strip())
+    assert line["agent"] == "recon"
+    assert line["engagement"] == "lab-x"
+    assert line["workspace"] == "/workspace/lab-x"
+    assert line["objective_id"] == "OBJ-3"
+    assert "T" in line["ts"]  # ISO-8601 timestamp
+    assert isinstance(line["dur_ms"], int)
+    assert line["req_hash"].startswith("sha256:")
+
+
+def test_envelope_agent_falls_back_to_runtime_name(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    req = _stateful_model_request()
+    req.runtime = SimpleNamespace(agent_name="exploiter")
+    rec = RecordingMiddleware(path=rec_path)  # no role
+    rec.wrap_model_call(req, lambda _r: AIMessage(content="x"))
+    _close(rec)
+    line = json.loads(rec_path.read_text(encoding="utf-8").strip())
+    assert line["agent"] == "exploiter"
+
+
+def test_envelope_falls_back_to_process_env(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    monkeypatch.setenv("RAPTIX_ENGAGEMENT_ID", "env-eng")
+    monkeypatch.setenv("RAPTIX_WORKSPACE_PATH", "/workspace/env-eng")
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path, role="recon")
+    rec.wrap_model_call(_stateful_model_request(), lambda _r: AIMessage(content="x"))
+    _close(rec)
+    line = json.loads(rec_path.read_text(encoding="utf-8").strip())
+    assert line["engagement"] == "env-eng"
+    assert line["workspace"] == "/workspace/env-eng"
+
+
+# ---------------------------------------------------------------- usage (PR-A)
+
+
+def test_usage_normalization_fallback_chain():
+    um = {"input_tokens": 1, "output_tokens": 2}
+    assert _normalize_usage(SimpleNamespace(usage_metadata=um)) == (um, "usage_metadata")
+    assert _normalize_usage(
+        SimpleNamespace(usage_metadata=None, response_metadata={"token_usage": um})
+    ) == (um, "response_metadata")
+    assert _normalize_usage(
+        SimpleNamespace(usage_metadata=None, response_metadata={"usage": um})
+    ) == (um, "response_metadata")
+    assert _normalize_usage(
+        SimpleNamespace(
+            usage_metadata=None, response_metadata=None, additional_kwargs={"usage": um}
+        )
+    ) == (um, "additional_kwargs")
+    assert _normalize_usage(AIMessage(content="x")) == (None, "absent")
+
+
+def test_serialize_ai_response_records_usage_provenance():
+    full = {"input_tokens": 3, "output_tokens": 5, "total_tokens": 8}
+    out = _serialize_ai_response(AIMessage(content="hi", usage_metadata=full))
+    assert out["usage"] == full
+    assert out["usage_source"] == "usage_metadata"
+    bare = _serialize_ai_response(AIMessage(content="hi"))
+    assert bare["usage"] is None
+    assert bare["usage_source"] == "absent"
+
+
+# ---------------------------------------------------------------- Command (PR-A)
+
+
+def test_command_response_serializes_subagent_report():
+    from langgraph.types import Command
+
+    cmd = Command(
+        update={
+            "messages": [ToolMessage(content="sub report", tool_call_id="t1")],
+            "dispatch_ledger": {"d1": {"outcome": {"status": "success"}}},
+            "other": 1,
+        }
+    )
+    out = _serialize_command_response(cmd)
+    assert out["type"] == "command"
+    assert out["update_keys"] == ["dispatch_ledger", "messages", "other"]
+    assert out["messages"][0]["content"] == "sub report"
+    assert out["dispatch_ledger"]["d1"]["outcome"]["status"] == "success"
+
+
+def test_record_task_command_keeps_subagent_report(tmp_path: Path):
+    from langgraph.types import Command
+
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path)
+    cmd = Command(update={"messages": [ToolMessage(content="sub report", tool_call_id="tc")]})
+    rec.wrap_tool_call(_tool_request("task"), lambda _r: cmd)
+    _close(rec)
+    line = json.loads(rec_path.read_text(encoding="utf-8").strip())
+    assert line["response"]["type"] == "command"
+    assert line["response"]["messages"][0]["content"] == "sub report"
+
+
+# ---------------------------------------------------------------- errors (PR-A)
+
+
+def test_model_call_failure_recorded_then_reraised(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path)
+
+    def _boom(_r):
+        raise RuntimeError("provider down")
+
+    with pytest.raises(RuntimeError, match="provider down"):
+        rec.wrap_model_call(_model_request(), _boom)
+    _close(rec)
+    line = json.loads(rec_path.read_text(encoding="utf-8").strip())
+    assert line["response"]["type"] == "error"
+    assert line["response"]["error"] == "RuntimeError"
+    assert "provider down" in line["response"]["detail"]
+
+
+def test_tool_call_failure_recorded_then_reraised(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path)
+
+    def _boom(_r):
+        raise ValueError("tool exploded")
+
+    with pytest.raises(ValueError, match="tool exploded"):
+        rec.wrap_tool_call(_tool_request(), _boom)
+    _close(rec)
+    line = json.loads(rec_path.read_text(encoding="utf-8").strip())
+    assert line["response"]["type"] == "error"
+    assert line["response"]["error"] == "ValueError"
+
+
+def test_replay_skips_error_entries(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path)
+    ok_req = _model_request("ok", "m1")
+    rec.wrap_model_call(ok_req, lambda _r: AIMessage(content="fine"))
+
+    def _boom(_r):
+        raise RuntimeError("down")
+
+    fail_req = _model_request("fail", "m1")
+    with pytest.raises(RuntimeError):
+        rec.wrap_model_call(fail_req, _boom)
+    _close(rec)
+
+    rep = ReplayMiddleware(path=rec_path, strict=True)
+    served = rep.wrap_model_call(ok_req, _boom_sync)
+    assert served.content == "fine"
+    with pytest.raises(ReplayMismatchError):
+        rep.wrap_model_call(fail_req, _boom_sync)
+
+
+# ---------------------------------------------------------------- sink (PR-A)
+
+
+def test_sink_poison_never_breaks_the_run(tmp_path: Path):
+    rec_path = tmp_path / "rec.jsonl"
+    rec = RecordingMiddleware(path=rec_path)
+    rec._sink.close()  # simulate an unusable sink
+    resp = ToolMessage(content="REAL", tool_call_id="t", name="bash", status="success")
+    out = rec.wrap_tool_call(_tool_request(), lambda _r: resp)
+    assert out is resp  # live result returned unchanged
+    assert rec._sink.poisoned
+    resp2 = ToolMessage(content="R2", tool_call_id="t2", name="nmap", status="success")
+    out2 = rec.wrap_tool_call(_tool_request("nmap"), lambda _r: resp2)
+    assert out2 is resp2  # later calls short-circuit too
+
+
+def test_sinks_shared_per_path_seq_is_global(tmp_path: Path):
+    rec_path = tmp_path / "shared.jsonl"
+    m1 = RecordingMiddleware(path=rec_path, role="a")
+    m2 = RecordingMiddleware(path=rec_path, role="b")
+    assert m1._sink is m2._sink
+    m1.wrap_model_call(_model_request("one", "m"), lambda _r: AIMessage(content="1"))
+    m2.wrap_model_call(_model_request("two", "m"), lambda _r: AIMessage(content="2"))
+    m1.wrap_tool_call(
+        _tool_request(),
+        lambda _r: ToolMessage(content="t", tool_call_id="x", name="bash", status="success"),
+    )
+    _close(m1)
+    lines = [json.loads(line) for line in rec_path.read_text(encoding="utf-8").strip().splitlines()]
+    assert [entry["seq"] for entry in lines] == [0, 1, 2]
+    assert [entry["agent"] for entry in lines] == ["a", "b", "a"]
+
+
+def test_seq_continues_from_existing_file(tmp_path: Path):
+    rec_path = tmp_path / "cont.jsonl"
+    m1 = RecordingMiddleware(path=rec_path)
+    m1.wrap_model_call(_model_request("a", "m"), lambda _r: AIMessage(content="x"))
+    _close(m1)
+    m2 = RecordingMiddleware(path=rec_path)
+    m2.wrap_model_call(_model_request("b", "m"), lambda _r: AIMessage(content="y"))
+    _close(m2)
+    seqs = [
+        json.loads(line)["seq"]
+        for line in rec_path.read_text(encoding="utf-8").strip().splitlines()
+    ]
+    assert seqs == [0, 1]
+
+
+# ---------------------------------------------------------------- pre-flight (PR-A)
+
+
+def test_make_record_unset_env_returns_none(monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.delenv("RAPTIX_RUNTIME__RECORD_PATH", raising=False)
+    from raptix.intelligence.agents.middleware_slots import _make_record
+
+    assert _make_record(role="recon") is None
+
+
+def test_make_record_unusable_path_fails_loud(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    blocker = tmp_path / "blocker"
+    blocker.write_text("a file where a directory is needed", encoding="utf-8")
+    monkeypatch.setenv("RAPTIX_RUNTIME__RECORD_PATH", str(blocker / "nested" / "rec.jsonl"))
+    from raptix.intelligence.agents.middleware_slots import _make_record
+
+    with pytest.raises(RuntimeError, match="RAPTIX_RUNTIME__RECORD_PATH"):
+        _make_record(role="recon")
+
+
+def test_make_record_threads_role(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    monkeypatch.setenv("RAPTIX_RUNTIME__RECORD_PATH", str(tmp_path / "rec.jsonl"))
+    from raptix.intelligence.agents.middleware_slots import _make_record
+
+    mw = _make_record(role="recon")
+    assert mw is not None
+    assert mw._role == "recon"
+    mw._sink.close()

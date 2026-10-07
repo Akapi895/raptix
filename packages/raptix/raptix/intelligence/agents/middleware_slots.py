@@ -414,21 +414,30 @@ def _make_patch_tool_calls(**_: Any):
     return PatchToolCallsMiddleware()
 
 
-def _make_record(**_: Any):
+def _make_record(*, role: str = "", **_: Any):
     """Full-fidelity run recording — opt-in via ``RAPTIX_RUNTIME__RECORD_PATH``.
 
     Returns None (slot skipped) unless the env var names a record file, so
     default engagements assemble byte-identical stacks and pay zero
-    recording cost. When set, every agent appends its model + tool
-    round-trips to the same JSONL (per-instance seq counters; readers
-    must tolerate interleaved lines from concurrent agents). The
-    middleware returns responses unchanged — observability only.
+    recording cost. When set, the sink is opened EAGERLY and an unusable
+    path fails agent build with the env var named — a silent no-op here is
+    exactly how capture was lost without anyone noticing. Every agent
+    appends its model + tool round-trips to the same JSONL through a shared
+    per-path sink (single global seq per process); entries carry an
+    agent/engagement/objective envelope that replay ignores.
     """
     import os
 
-    if not os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "").strip():
+    record_path = os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "").strip()
+    if not record_path:
         return None
-    return RecordingMiddleware()
+    try:
+        return RecordingMiddleware(role=role)
+    except Exception as exc:
+        raise RuntimeError(
+            f"RAPTIX_RUNTIME__RECORD_PATH={record_path!r} is not usable: {exc}. "
+            "Fix the path or unset the variable."
+        ) from exc
 
 
 def _make_event_log(*, role: str = "", **_: Any):

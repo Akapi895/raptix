@@ -190,6 +190,12 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "outcome": outcome,
             }
         }
+        if context.objective_id:
+            # Stamp the key the RoE guardrail and the run recorder read —
+            # nothing set it before, so both logged an empty objective_id
+            # forever. The Command update lands in the parent thread state
+            # and propagates to the child via the existing state copy.
+            updates["active_objective_id"] = context.objective_id
         return Command(update=updates)
 
     def _release(self, key: tuple[str, str]) -> None:
