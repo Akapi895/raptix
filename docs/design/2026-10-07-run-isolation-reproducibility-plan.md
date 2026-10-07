@@ -1,7 +1,7 @@
 # Run Isolation & Reproducibility — Fix Plan
 
 - **Date:** 2026-10-07
-- **Status:** Proposed
+- **Status:** Implemented (PR-D `5166713`, PR-E `dda4750`, PR-F `fe841da`, PR-G `d475656`)
 - **Scope:** enforce run isolation (workspace, KG, images) and run
   reproducibility (clean baseline per run, auditable injections) with
   mechanism-level controls — env, code, daemon, entrypoint — never prompt-only.
