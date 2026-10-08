@@ -186,11 +186,17 @@ class KGMiddleware(AgentMiddleware):
 
     @override
     def wrap_model_call(self, request: Any, handler: Any) -> Any:
-        return handler(self._inject_kg_context(request))
+        from raptix.intelligence.context.blocks import owned_scope
+
+        with owned_scope():
+            return handler(self._inject_kg_context(request))
 
     @override
     async def awrap_model_call(self, request: Any, handler: Any) -> Any:
-        return await handler(self._inject_kg_context(request))
+        from raptix.intelligence.context.blocks import owned_scope
+
+        with owned_scope():
+            return await handler(self._inject_kg_context(request))
 
     def _inject_kg_context(self, request: Any) -> Any:
         """Append the KG static prompt + dynamic summary to the system
@@ -213,13 +219,38 @@ class KGMiddleware(AgentMiddleware):
             "text": "\n\n" + KG_SYSTEM_PROMPT,
             "cache_control": {"type": "ephemeral"},
         }
-        injected_blocks: list[dict[str, Any]] = [static_block]
+        from raptix.intelligence.context.blocks import emit_block
+
+        injected_blocks: list[dict[str, Any]] = [emit_block("kg", "instructions", static_block)]
         if summary:
-            injected_blocks.append({"type": "text", "text": "\n\n" + summary})
+            injected_blocks.append(
+                emit_block(
+                    "kg",
+                    "summary",
+                    {"type": "text", "text": "\n\n" + summary},
+                    source_revision=get("kg_revision"),
+                    compact="Canonical KG summary is recoverable below; use the KG tools for current facts.",
+                    priority=2,
+                )
+            )
         if operational:
-            injected_blocks.append({"type": "text", "text": "\n\n" + operational})
+            injected_blocks.append(
+                emit_block(
+                    "kg",
+                    "operational",
+                    {"type": "text", "text": "\n\n" + operational},
+                    source_revision=get("kg_revision"),
+                )
+            )
         if planning:
-            injected_blocks.append({"type": "text", "text": "\n\n" + planning})
+            injected_blocks.append(
+                emit_block(
+                    "kg",
+                    "planning",
+                    {"type": "text", "text": "\n\n" + planning},
+                    source_revision=get("kg_revision"),
+                )
+            )
 
         if request.system_message is not None:
             new_content = [

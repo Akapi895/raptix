@@ -19,8 +19,9 @@ C3a/C3b data because it is the largest and most invasive change).
 ## Decision
 
 - **C3a — manifest (observational).** `intelligence/context/manifest.py`
-  enumerates each request's system block and messages, hashes them, estimates
-  chars/tokens and records `context_epoch`/`active_objective_id`. A
+  enumerates each request's individual system blocks, messages/tool calls and
+  tool schemas, hashes them, estimates chars/tokens and records source ownership,
+  revisions, `context_epoch`, task-state revision and objective identity. A
   `ContextManifestMiddleware` in the new `context-manifest` slot (just outside
   RECORD, so it observes the fully assembled request) logs the rendered
   manifest. It never mutates the request. Flag `RAPTIX_CONTEXT_MANIFEST=1`.
@@ -34,12 +35,34 @@ C3a/C3b data because it is the largest and most invasive change).
   `RAPTIX_CONTEXT_MASK_AFTER_TURNS` (default 10) and
   `RAPTIX_CONTEXT_MASK_MIN_CHARS` (default 4000) are validated at build time and
   fail the engagement, naming the env, on an invalid value.
+  Age counts later human/assistant turns, not batches of tool messages. Scratch
+  references are content-addressed and verified by exact read-back, so reused
+  message IDs cannot point to a different payload. Work is bounded by time,
+  eight candidate messages and one megabyte per request. The manifest observes
+  the final request after masking/assembly; raw checkpoint history stays intact.
 - **Slot.** `MiddlewareSlot.CONTEXT_MANIFEST`, in the base set, factory returns
-  None unless a flag is on, so default runs assemble an identical stack.
-- **C3c deferred.** Assembly unification (declaring block ownership via the
-  manifest API and migrating overlay injections to budgeted emission) is gated
-  by the plan itself on C3a/C3b measurement data and is the largest PR; it is
-  not implemented here. This ADR is the manifest/masking half.
+  None unless manifest, masking or assembly is on. With all off, default runs
+  assemble an identical stack.
+- **C3c — request-scoped assembly.** OPPLAN, KG and Skillogy declare owned
+  blocks through a request-local registry. Provenance never becomes provider
+  parameters or raw graph state. An innermost assembly pass preserves block
+  order, removes duplicate owned blocks and emits a final, per-block manifest.
+  Engagement and safety-critical injections remain unchanged and unbudgeted.
+- **Operator policy.** `RAPTIX_CONTEXT_ASSEMBLY=1` enables this pass;
+  `RAPTIX_CONTEXT_BUDGET_TOKENS=0` is the default and means no C3c size limit.
+  Positive values are a per-request token-estimate budget, not an engagement
+  spend/call cap. Only declared reducible overlays can use their adapter's
+  compact representation, and only after full text is offloaded and verified.
+  OPPLAN retains the active objective, acceptance criteria and dependencies;
+  KG/Skillogy retain retrieval guidance. Required/safety blocks and message
+  history are never cut to satisfy the budget. If these exceed the target,
+  report overflow instead of blocking or silently dropping necessary context.
+- **Evidence gate.** `benchmarks/context_eval/overlay_probe.py` exercises the
+  actual renderers on synthetic fixtures (2 and 120 objectives). Before C3c,
+  Skillogy contributed 12,570 chars; OPPLAN 4,049/11,633; KG 713/3,663. These
+  counts justify the selected adapters; they do not calibrate a production
+  limit. Masking and assembly comparisons use the final request and content
+  hashes. The default remains unlimited; Silentium is not used for tuning.
 
 ## Threat model
 
@@ -62,5 +85,5 @@ through the engagement-scoped backend (ADR-0042 fence).
 - Mask-by-default — rejected: changes agent input; plan §2.4 requires a flag.
 - Ask the model to summarize old tool output — rejected: nondeterministic and
   costs another call; C3a/C3b must be LLM-free.
-- Implement C3c now — rejected: the plan gates it on C3a/C3b data and warns it
-  is the largest PR; forcing it now is the opposite of "bám sát plan".
+- Cut unknown system text to meet a token limit — rejected: only adapter-owned
+  reducible overlays may be compacted; guardrails retain their original bytes.

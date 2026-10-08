@@ -29,6 +29,8 @@ Design notes:
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 from typing import Annotated, Any, NotRequired, cast, override
 
@@ -39,6 +41,7 @@ from langchain.agents.middleware.types import OmitFromInput
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
 from raptix.execution.tools.opplan import OPPLAN_TOOL_NAMES, build_opplan_tools
+from raptix.intelligence.context.blocks import emit_block, owned_scope
 from raptix.middleware.state_reducers import reduce_converging_value
 
 # ── State Schema ──────────────────────────────────────────────────────
@@ -299,6 +302,39 @@ def _format_opplan_status(
 # ── Middleware Class ──────────────────────────────────────────────────
 
 
+def _compact_opplan(objectives: list[dict], active: str | None) -> str:
+    current = next((o for o in objectives if o.get("id") == active), None)
+    if current is None:
+        current = next(
+            (
+                o
+                for o in sorted(objectives, key=lambda o: o.get("priority", 999))
+                if o.get("status") in {"pending", "in-progress"}
+            ),
+            objectives[0],
+        )
+    relevant = {current.get("id"), *current.get("blocked_by", [])}
+    relevant.update(o.get("id") for o in objectives if o.get("status") == "in-progress")
+    for _ in objectives:
+        additions = {
+            ref
+            for o in objectives
+            if o.get("id") in relevant
+            for ref in [*o.get("blocked_by", []), o.get("parent_id")]
+            if ref
+        }
+        if additions <= relevant:
+            break
+        relevant.update(additions)
+    return (
+        "<OPPLAN_STATUS>\nActive work and dependencies:\n"
+        + json.dumps(
+            [o for o in objectives if o.get("id") in relevant], ensure_ascii=False, default=str
+        )
+        + f"\n{len(objectives)} total objectives; other rows recoverable below.\n</OPPLAN_STATUS>"
+    )
+
+
 class OPPLANMiddleware(AgentMiddleware):
     """Domain-specific OPPLAN tracking for red team engagements.
 
@@ -324,12 +360,14 @@ class OPPLANMiddleware(AgentMiddleware):
     @override
     def wrap_model_call(self, request, handler):
         """Inject OPPLAN system prompt + dynamic progress into system message."""
-        return handler(self._inject_opplan_context(request))
+        with owned_scope():
+            return handler(self._inject_opplan_context(request))
 
     @override
     async def awrap_model_call(self, request, handler):
         """Async variant — identical logic."""
-        return await handler(self._inject_opplan_context(request))
+        with owned_scope():
+            return await handler(self._inject_opplan_context(request))
 
     def _inject_opplan_context(self, request):
         """Build request with OPPLAN context injected into system message.
@@ -359,11 +397,60 @@ class OPPLANMiddleware(AgentMiddleware):
             "text": f"\n\n{OPPLAN_SYSTEM_PROMPT}",
             "cache_control": {"type": "ephemeral"},
         }
-        injected_blocks: list[dict[str, Any]] = [static_block]
+        injected_blocks: list[dict[str, Any]] = [emit_block("opplan", "instructions", static_block)]
 
         if objectives:
             dynamic_text = _format_opplan_status(objectives, engagement, threat)
-            injected_blocks.append({"type": "text", "text": f"\n\n{dynamic_text}"})
+            active = request.state.get("active_objective_id")
+            current = next((o for o in objectives if o.get("id") == active), None)
+            if current is None:
+                current = next(
+                    (
+                        o
+                        for o in sorted(objectives, key=lambda o: o.get("priority", 999))
+                        if o.get("status") in {"pending", "in-progress"}
+                    ),
+                    objectives[0],
+                )
+            relevant = {current["id"], *current.get("blocked_by", [])}
+            for objective in objectives:
+                if objective.get("status") == "in-progress":
+                    relevant.add(objective["id"])
+            # Keep full acceptance/description/notes for active work and its
+            # dependency/ancestor closure; never character-slice these fields.
+            for _ in objectives:
+                additions = {
+                    ref
+                    for o in objectives
+                    if o.get("id") in relevant
+                    for ref in [*o.get("blocked_by", []), o.get("parent_id")]
+                    if ref
+                }
+                if additions <= relevant:
+                    break
+                relevant.update(additions)
+            compact = (
+                "<OPPLAN_STATUS>\nActive work and dependencies:\n"
+                + json.dumps(
+                    [o for o in objectives if o.get("id") in relevant],
+                    ensure_ascii=False,
+                    default=str,
+                )
+                + f"\n{len(objectives)} total objectives; other rows recoverable below.\n</OPPLAN_STATUS>"
+            )
+            revision = hashlib.sha256(
+                json.dumps(objectives, sort_keys=True, default=str).encode()
+            ).hexdigest()
+            injected_blocks.append(
+                emit_block(
+                    "opplan",
+                    "progress",
+                    {"type": "text", "text": f"\n\n{dynamic_text}"},
+                    source_revision=revision,
+                    compact=compact,
+                    priority=3,
+                )
+            )
 
         if request.system_message is not None:
             new_content = [

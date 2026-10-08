@@ -744,7 +744,15 @@ validation blocks compaction commit (via C1); base prompt contract intact.
   and migrate overlay injections (OPPLAN/KG/skillogy/engagement) to
   budgeted block emission — the largest PR; only after C3a/C3b data shows
   which blocks cost what. Explicitly out: re-owning safety-critical
-  injections.
+   injections.
+
+**Operator decision (2026-10-08).** C3c is opt-in via
+`RAPTIX_CONTEXT_ASSEMBLY=1`; `RAPTIX_CONTEXT_BUDGET_TOKENS=0` means no added
+per-request size limit. A positive value budgets estimated request tokens,
+with priority-preserving adapter compaction and verified offload, never a hard
+stop or removal of safety-critical blocks. Synthetic renderer/replay evidence
+satisfies the C3a/C3b measurement gate; a live lab is not required. Assembly
+does not cap cumulative engagement token consumption.
 
 **Never touch.** Safety-critical slot behavior; order of guardrail blocks.
 
@@ -966,6 +974,11 @@ deterministic; `redacted` record is flagged non-replayable and
 `RAPTIX_LLM__MAX_INPUT_TOKENS`, `RAPTIX_SUMMARIZATION_TRIGGER_TOKENS`,
 `RAPTIX_SUMMARIZATION_KEEP_MESSAGES`, `RAPTIX_RUNTIME__RECORD_LEVEL`,
 `RAPTIX_LLM__LOG_RAW_USAGE`.
+
+C-wave configuration additions: `RAPTIX_TRANSACTIONAL_COMPACTION`,
+`RAPTIX_CONTEXT_ASSEMBLY` (default off),
+`RAPTIX_CONTEXT_BUDGET_TOKENS` (default `0`, unlimited),
+`RAPTIX_CONTEXT_MASK_AFTER_TURNS`, `RAPTIX_CONTEXT_MASK_MIN_CHARS`.
 
 **ADR numbering starts at 0044** (latest accepted is 0043).
 

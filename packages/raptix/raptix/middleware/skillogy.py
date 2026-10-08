@@ -527,23 +527,46 @@ class SkillogyMiddleware(AgentMiddleware):
 
     @override
     def wrap_model_call(self, request, handler):
-        return handler(self._inject(request))
+        from raptix.intelligence.context.blocks import owned_scope
+
+        with owned_scope():
+            return handler(self._inject(request))
 
     @override
     async def awrap_model_call(self, request, handler):
-        return await handler(self._inject(request))
+        from raptix.intelligence.context.blocks import owned_scope
+
+        with owned_scope():
+            return await handler(self._inject(request))
 
     def _inject(self, request):
         if not self._append_policy:
             return request
         injected_text = _POLICY_PROMPT + self._phase_block
+        from raptix.intelligence.context.blocks import content_hash, emit_block
+
+        injected = [
+            emit_block(
+                "skillogy",
+                "catalog",
+                {"type": "text", "text": injected_text},
+                source_revision=content_hash(self._phase_block),
+                priority=1,
+                compact=(
+                    _POLICY_PROMPT
+                    + f'\n[Phase context]\nUse find_skill(subdomain="{self._phase}") or load_skill; full catalog below.'
+                )
+                if self._phase_block
+                else None,
+            )
+        ]
         if request.system_message is not None:
             new_content = [
                 *request.system_message.content_blocks,
-                {"type": "text", "text": injected_text},
+                *injected,
             ]
         else:
-            new_content = [{"type": "text", "text": injected_text}]
+            new_content = injected
         new_system = SystemMessage(content=new_content)
         return request.override(system_message=new_system)
 
