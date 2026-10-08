@@ -52,6 +52,11 @@ class MiddlewareSlot(StrEnum):
     # agent does not poll ``ops_status`` in a loop.
     OPSCONTROL_NOTIFICATION = "opscontrol-notification"
     BUDGET = "budget"
+    # Wave D1: per-objective token/call budget accounting (ADR-0055). Folds
+    # model usage into durable task state and emits a one-time soft-limit
+    # reminder. Env-gated off by default (RAPTIX_TASK_BUDGET), so default runs
+    # assemble byte-identical stacks.
+    TASK_BUDGET = "task-budget"
     MODEL_OVERRIDE = "model-override"
     MODEL_FALLBACK = "model-fallback"
     # Per-run LiteLLM virtual-key swap (multi-tenant cost attribution). Placed
@@ -185,6 +190,7 @@ _BASE_SLOTS: frozenset[MiddlewareSlot] = _TAIL_SLOTS | {
     MiddlewareSlot.EVENT_LOG,
     MiddlewareSlot.PROMPT_INJECTION_SHIELD,
     MiddlewareSlot.BUDGET,
+    MiddlewareSlot.TASK_BUDGET,
     MiddlewareSlot.CONTEXT_MANIFEST,
     # Full-fidelity recording for lab/benchmark analysis. Env-gated
     # (no-op unless RAPTIX_RUNTIME__RECORD_PATH is set) so every

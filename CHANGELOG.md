@@ -10,6 +10,12 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in cross-dispatch budget accounting (`RAPTIX_TASK_BUDGET`): model-call
+  token usage folds into each objective's durable task state without advancing
+  its revision, and optional soft limits emit a bounded reminder and a one-time
+  `budget_exhausted` decision entry (ADR-0055). Adds the
+  `MiddlewareSlot.TASK_BUDGET` plugin slot.
+
 - Opt-in owned context assembly (`RAPTIX_CONTEXT_ASSEMBLY`) for OPPLAN, KG and
   Skillogy. `RAPTIX_CONTEXT_BUDGET_TOKENS=0` is unlimited; positive estimate
   budgets retain required information and verified recovery references. Context

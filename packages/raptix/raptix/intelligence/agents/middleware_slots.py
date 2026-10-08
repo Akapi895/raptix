@@ -1061,6 +1061,18 @@ def _make_budget(**_: Any):
     return BudgetEnforcementMiddleware()
 
 
+def _make_task_budget(*, backend: Any = None, **_: Any):
+    """Wave D1 per-objective budget accounting; None unless the flag is truthy."""
+    from raptix.orchestration.mission.task_budget import (
+        TaskBudgetMiddleware,
+        task_budget_enabled,
+    )
+
+    if not task_budget_enabled():
+        return None
+    return TaskBudgetMiddleware(backend=backend)
+
+
 def _make_prompt_injection_shield(**_: Any):
     # UNTRUSTED_OUTPUT already injects its own quarantine system policy;
     # appending the shield's policy too would double-inject. The shield
@@ -1120,6 +1132,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.SANDBOX_NOTIFICATION: _make_sandbox_notification,
     MiddlewareSlot.OPSCONTROL_NOTIFICATION: _make_opscontrol_notification,
     MiddlewareSlot.BUDGET: _make_budget,
+    MiddlewareSlot.TASK_BUDGET: _make_task_budget,
     MiddlewareSlot.MODEL_OVERRIDE: _make_model_override,
     MiddlewareSlot.MODEL_FALLBACK: _make_model_fallback,
     MiddlewareSlot.PROXY_KEY_OVERRIDE: _make_proxy_key_override,

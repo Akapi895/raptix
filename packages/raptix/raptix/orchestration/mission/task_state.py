@@ -135,6 +135,7 @@ class Continuation(BaseModel):
 class Budget(BaseModel):
     model_calls: int = Field(default=0, ge=0, strict=True)
     input_tokens: int = Field(default=0, ge=0, strict=True)
+    output_tokens: int = Field(default=0, ge=0, strict=True)
     wall_clock_s: float = Field(default=0.0, ge=0, allow_inf_nan=False)
     attempts: int = Field(default=0, ge=0, strict=True)
 
@@ -306,6 +307,59 @@ def advance_task_state(
     return base
 
 
+def fold_task_budget(
+    backend: BackendProtocol | None,
+    objective_id: str,
+    *,
+    model_calls: int = 0,
+    input_tokens: int = 0,
+    output_tokens: int = 0,
+    decision: DecisionRecord | None = None,
+) -> TaskState | None:
+    """Accumulate usage counters without bumping ``state_revision`` (ADR-0055).
+
+    Budget accounting is not a work-state transition. Leaving the revision
+    unchanged keeps transactional-compaction source checks stable (ADR-0052)
+    while the counters still survive handoff (I-6). The read/modify/write runs
+    under the same per-document lock OPPLAN transitions use, so a concurrent
+    fold cannot lose an update. Best-effort: any failure returns ``None`` and
+    never reaches the model loop. ``decision`` is appended only once, keyed by
+    its ``action``.
+    """
+    if backend is None:
+        return None
+    try:
+        path = task_state_path(objective_id)
+        with document_lock(path):
+            old, error = _read_text(backend, path)
+            if old is None and error and not _looks_missing(error):
+                return None
+            if old is None:
+                state = TaskState(objective_id=objective_id)
+            else:
+                state = TaskState.model_validate_json(old)
+            state.budget.model_calls += model_calls
+            state.budget.input_tokens += input_tokens
+            state.budget.output_tokens += output_tokens
+            if decision is not None and not any(
+                entry.action == decision.action for entry in state.decision_record
+            ):
+                state.decision_record.append(decision)
+            state.saved_at = _now()
+            state.updated_by = "budget"
+            content = state.bounded().model_dump_json(indent=2)
+            if len(content.encode("utf-8")) > _MAX_DOCUMENT_BYTES:
+                return None
+            if old is None:
+                backend.write(path, content)
+            elif old != content:
+                backend.edit(path, old, content)
+            return state
+    except Exception as exc:  # noqa: BLE001 — accounting never blocks the model loop
+        log.debug("task-budget fold failed: %s", type(exc).__name__)
+        return None
+
+
 def persist_task_state_for_objectives(
     backend: BackendProtocol | None,
     objectives: list[dict],
@@ -354,6 +408,7 @@ __all__ = [
     "WorkState",
     "WorkStatus",
     "advance_task_state",
+    "fold_task_budget",
     "persist_task_state_for_objectives",
     "read_task_state",
     "task_state_enabled",
