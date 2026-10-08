@@ -20,6 +20,7 @@ import posixpath
 import re
 import threading
 import uuid
+from collections.abc import Callable
 from datetime import datetime, timezone
 from enum import StrEnum
 from typing import Any, Literal
@@ -140,6 +141,14 @@ class Budget(BaseModel):
     attempts: int = Field(default=0, ge=0, strict=True)
 
 
+class OwnerLease(BaseModel):
+    """Single-owner lease on an objective's work (ADR-0057, Wave D3)."""
+
+    token: str = Field(min_length=1, max_length=128)
+    owner: str = Field(default="", max_length=128)
+    expires_at: float = Field(ge=0, allow_inf_nan=False)
+
+
 class WorkerResult(BaseModel):
     model_config = ConfigDict(extra="forbid")
     objective_id: str
@@ -167,6 +176,7 @@ class TaskState(BaseModel):
     decision_record: list[DecisionRecord] = Field(default_factory=list)
     continuation: Continuation = Field(default_factory=Continuation)
     budget: Budget = Field(default_factory=Budget)
+    owner_lease: OwnerLease | None = None
     applied_dispatches: list[str] = Field(default_factory=list, max_length=768)
 
     @field_validator("evidence_refs", "decision_record")
@@ -307,6 +317,52 @@ def advance_task_state(
     return base
 
 
+class TaskStateRefused(Exception):
+    """A locked task-state mutation declined by its own invariant (ADR-0057)."""
+
+
+def mutate_task_state(
+    backend: BackendProtocol | None,
+    objective_id: str,
+    mutate: Callable[[TaskState], None],
+) -> TaskState | None:
+    """Locked, revision-neutral read-modify-write of one objective's state.
+
+    Used by accounting and lease mutations, which must not advance
+    ``state_revision`` (that would invalidate transactional compaction). A
+    mutation that detects a conflicting invariant raises ``TaskStateRefused``,
+    which propagates to the caller unchanged; every other failure is swallowed
+    as ``None``. Reads and writes share the per-document lock OPPLAN uses.
+    """
+    if backend is None:
+        return None
+    path = task_state_path(objective_id)
+    with document_lock(path):
+        try:
+            old, error = _read_text(backend, path)
+            if old is None and error and not _looks_missing(error):
+                return None
+            if old is None:
+                state = TaskState(objective_id=objective_id)
+            else:
+                state = TaskState.model_validate_json(old)
+            mutate(state)
+            state.saved_at = _now()
+            content = state.bounded().model_dump_json(indent=2)
+            if len(content.encode("utf-8")) > _MAX_DOCUMENT_BYTES:
+                return None
+            if old is None:
+                backend.write(path, content)
+            elif old != content:
+                backend.edit(path, old, content)
+            return state
+        except TaskStateRefused:
+            raise
+        except Exception as exc:  # noqa: BLE001 — mutation never blocks the model loop
+            log.debug("task-state mutation failed: %s", type(exc).__name__)
+            return None
+
+
 def fold_task_budget(
     backend: BackendProtocol | None,
     objective_id: str,
@@ -320,44 +376,21 @@ def fold_task_budget(
 
     Budget accounting is not a work-state transition. Leaving the revision
     unchanged keeps transactional-compaction source checks stable (ADR-0052)
-    while the counters still survive handoff (I-6). The read/modify/write runs
-    under the same per-document lock OPPLAN transitions use, so a concurrent
-    fold cannot lose an update. Best-effort: any failure returns ``None`` and
-    never reaches the model loop. ``decision`` is appended only once, keyed by
-    its ``action``.
+    while the counters still survive handoff (I-6). ``decision`` is appended
+    only once, keyed by its ``action``.
     """
-    if backend is None:
-        return None
-    try:
-        path = task_state_path(objective_id)
-        with document_lock(path):
-            old, error = _read_text(backend, path)
-            if old is None and error and not _looks_missing(error):
-                return None
-            if old is None:
-                state = TaskState(objective_id=objective_id)
-            else:
-                state = TaskState.model_validate_json(old)
-            state.budget.model_calls += model_calls
-            state.budget.input_tokens += input_tokens
-            state.budget.output_tokens += output_tokens
-            if decision is not None and not any(
-                entry.action == decision.action for entry in state.decision_record
-            ):
-                state.decision_record.append(decision)
-            state.saved_at = _now()
-            state.updated_by = "budget"
-            content = state.bounded().model_dump_json(indent=2)
-            if len(content.encode("utf-8")) > _MAX_DOCUMENT_BYTES:
-                return None
-            if old is None:
-                backend.write(path, content)
-            elif old != content:
-                backend.edit(path, old, content)
-            return state
-    except Exception as exc:  # noqa: BLE001 — accounting never blocks the model loop
-        log.debug("task-budget fold failed: %s", type(exc).__name__)
-        return None
+
+    def mutate(state: TaskState) -> None:
+        state.budget.model_calls += model_calls
+        state.budget.input_tokens += input_tokens
+        state.budget.output_tokens += output_tokens
+        if decision is not None and not any(
+            entry.action == decision.action for entry in state.decision_record
+        ):
+            state.decision_record.append(decision)
+        state.updated_by = "budget"
+
+    return mutate_task_state(backend, objective_id, mutate)
 
 
 def persist_task_state_for_objectives(
@@ -401,14 +434,17 @@ __all__ = [
     "Continuation",
     "DecisionRecord",
     "EvidenceRef",
+    "OwnerLease",
     "TASK_STATE_DIR",
     "TASK_STATE_SCHEMA_VERSION",
     "TaskState",
     "TaskStateBundle",
+    "TaskStateRefused",
     "WorkState",
     "WorkStatus",
     "advance_task_state",
     "fold_task_budget",
+    "mutate_task_state",
     "persist_task_state_for_objectives",
     "read_task_state",
     "task_state_enabled",

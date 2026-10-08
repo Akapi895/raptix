@@ -76,6 +76,12 @@ def _handoff_enabled() -> bool:
     return os.environ.get("RAPTIX_DISPATCH_HANDOFF", "0").strip().lower() in {"1", "true", "yes"}
 
 
+def _handoff_lease_enabled() -> bool:
+    from raptix.orchestration.mission.handoff import handoff_enabled
+
+    return handoff_enabled()
+
+
 class DispatchState(SubagentTranscriptState, ObjectiveContextState):
     dispatch_ledger: NotRequired[Annotated[dict, OmitFromInput, merge_dispatch_ledger]]
 
@@ -163,6 +169,11 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "dispatch_ledger_full",
                 "Thread dispatch ledger is full; start a new thread",
             )
+        if _handoff_lease_enabled() and objective_id:
+            token = f"{dispatch_id}:{int(prior.get('attempt', 0)) + 1}"
+            held = self._task_io._bounded(self._claim_lease, runtime, objective_id, token)
+            if held:
+                return _reply(runtime, "handoff_lease_held", held)
         config = getattr(runtime, "config", None) or {}
         scope = (config.get("configurable") or {}).get("thread_id")
         scope = str(scope or runtime.state.get("engagement_name") or id(runtime.state))
@@ -243,6 +254,13 @@ class DispatchMiddleware(SubAgentMiddleware):
         updates["active_objective_id"] = context.objective_id or ""
         if _handoff_enabled():
             self._task_io._bounded(self._merge_task_state, runtime, context, outcome, worker_result)
+        if _handoff_lease_enabled() and context.objective_id:
+            self._task_io._bounded(
+                self._release_lease,
+                runtime,
+                context.objective_id,
+                f"{context.dispatch_id}:{context.attempt}",
+            )
         return Command(update=updates)
 
     def _task_state_backend_for(self, runtime: ToolRuntime) -> Any:
@@ -252,6 +270,22 @@ class DispatchMiddleware(SubAgentMiddleware):
         except Exception as exc:  # noqa: BLE001 — handoff must not affect dispatch
             log.debug("handoff backend unavailable: %s", type(exc).__name__)
             return None
+
+    def _claim_lease(self, runtime: ToolRuntime, objective_id: str, token: str) -> str | None:
+        from raptix.orchestration.mission.handoff import claim_lease
+
+        backend = self._task_state_backend_for(runtime)
+        if backend is None:
+            return None
+        return claim_lease(backend, objective_id, token=token, owner="dispatch")
+
+    def _release_lease(self, runtime: ToolRuntime, objective_id: str, token: str) -> None:
+        from raptix.orchestration.mission.handoff import release_lease
+
+        backend = self._task_state_backend_for(runtime)
+        if backend is None:
+            return
+        release_lease(backend, objective_id, token)
 
     def _handoff_description(
         self, description: str, runtime: ToolRuntime, objective_id: str | None
@@ -303,14 +337,9 @@ class DispatchMiddleware(SubAgentMiddleware):
                     f"- {entry.action[:80]}: {entry.outcome} ({entry.reason[:80]})"
                     for entry in task_state.decision_record[-4:]
                 )
-            from raptix.middleware.execution_ledger import (
-                _load_entries,
-                ledger_path,
-                reconcile_receipts,
-            )
+            from raptix.orchestration.mission.handoff import pending_executions
 
-            receipts = reconcile_receipts(_load_entries(backend, ledger_path(objective_id)))
-            pending = [entry for entry in receipts if entry.get("kind") == "outcome_unknown"]
+            pending = pending_executions(backend, objective_id)
             if pending:
                 lines.append("Unknown executions: reconcile before any retry.")
                 lines.extend(f"- {entry['action_hash']}" for entry in pending[:4])
@@ -349,6 +378,13 @@ class DispatchMiddleware(SubAgentMiddleware):
         backend = self._task_state_backend_for(runtime)
         if backend is None:
             return
+        if _handoff_lease_enabled():
+            from raptix.orchestration.mission.handoff import lease_owner
+
+            token = f"{context.dispatch_id}:{context.attempt}"
+            if not lease_owner(backend, context.objective_id, token):
+                log.debug("handoff fold skipped: lease no longer owned")
+                return
         try:
             state = getattr(runtime, "state", None) or {}
             objective = next(

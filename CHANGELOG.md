@@ -10,6 +10,12 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in safe handoff policy (`RAPTIX_TASK_HANDOFF`, default off): an
+  objective owner lease refuses concurrent owners and stale-owner writes, and
+  dangling execution receipts are surfaced as `outcome_unknown` for
+  reconciliation instead of re-running. Handoff triggers are evaluated, never
+  automatic (ADR-0057, threat model included).
+
 - Opt-in observational progress signals (`RAPTIX_PROGRESS_OBSERVE`): the
   tried-edge observer tracks bounded per-action fingerprints and adds a single
   reminder when repeated actions change neither result nor task-state revision.
