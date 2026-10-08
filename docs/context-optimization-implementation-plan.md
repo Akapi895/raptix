@@ -842,6 +842,13 @@ WorkerInput bundle instead of re-running.
 **Gate.** Requires explicit sign-off (threat model: a mid-flight handoff
 with side-effecting tool gaps). Never auto-handoff by default.
 
+**Operator decision (2026-10-08).** D3 ships default-off
+(`RAPTIX_TASK_HANDOFF`): the objective owner lease and `outcome_unknown`
+resume reconciliation are implemented behind the flag, triggers are evaluated
+but never executed automatically, and the threat model is recorded in
+ADR-0057. Sign-off covers the default-off implementation only; enabling the
+flag in a live engagement is a separate operator decision.
+
 **Tests.** lease taken before continue; old owner cannot write after
 handover; unknown outcomes surfaced, never silently re-executed.
 
@@ -970,7 +977,7 @@ deterministic; `redacted` record is flagged non-replayable and
 `RAPTIX_TASK_STATE`, `RAPTIX_EXECUTION_LEDGER`, `RAPTIX_DISPATCH_HANDOFF`,
 `RAPTIX_SUMMARY_STRUCTURED`, `RAPTIX_CONTEXT_MANIFEST`,
 `RAPTIX_CONTEXT_MASK`, `RAPTIX_TASK_BUDGET`, `RAPTIX_PROGRESS_OBSERVE`,
-`RAPTIX_SKILL_DEDUPE_SCOPE=thread|instance`,
+`RAPTIX_TASK_HANDOFF`, `RAPTIX_SKILL_DEDUPE_SCOPE=thread|instance`,
 `RAPTIX_LLM__MAX_INPUT_TOKENS`, `RAPTIX_SUMMARIZATION_TRIGGER_TOKENS`,
 `RAPTIX_SUMMARIZATION_KEEP_MESSAGES`, `RAPTIX_RUNTIME__RECORD_LEVEL`,
 `RAPTIX_LLM__LOG_RAW_USAGE`.
