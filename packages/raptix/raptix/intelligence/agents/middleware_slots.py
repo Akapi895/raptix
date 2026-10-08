@@ -23,6 +23,7 @@ needs an entry in ``SLOTS_PER_ROLE``.
 from __future__ import annotations
 
 import copy
+import hashlib
 import logging
 import os
 import uuid
@@ -47,6 +48,11 @@ from langgraph.types import Command
 
 from raptix.core.dispatch_context import active_dispatch
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
+from raptix.intelligence.context.summary_contract import (
+    STRUCTURED_SUMMARY_PROMPT,
+    has_required_headers,
+    validate_structured_summary,
+)
 from raptix.middleware import (
     EngagementContextMiddleware,
     FilesystemMiddleware,
@@ -94,6 +100,23 @@ logger = logging.getLogger(__name__)
 # summary generation raises (langchain/agents/middleware/summarization.py).
 # A compaction event carrying it must be dropped, never applied (ADR-0046).
 _SUMMARY_ERROR_MARKER = "Error generating summary:"
+
+
+def _transactional_compaction_enabled() -> bool:
+    return os.environ.get("RAPTIX_TRANSACTIONAL_COMPACTION", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
+
+def _structured_summary_enabled() -> bool:
+    return os.environ.get("RAPTIX_SUMMARY_STRUCTURED", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+
 
 # ─────────────────────────────────────────────────────────────────────
 # Skills sources — role-specific
@@ -417,6 +440,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
         trigger_override: Any = None,
         keep_override: Any = None,
         role: str = "",
+        task_state_backend: Any = None,
     ) -> None:
         super().__init__()
         self._inner = inner
@@ -433,6 +457,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
         self._capacity = capacity
         self._trigger_override = trigger_override
         self._keep_override = keep_override
+        self._task_state_backend = task_state_backend
         self._worker_instance_id = f"{role or 'worker'}:{uuid.uuid4().hex}"
 
     @property
@@ -474,7 +499,113 @@ class _SafeSummarizationProxy(AgentMiddleware):
         message = event.get("summary_message") if isinstance(event, dict) else None
         return _failed_summary_message(message)
 
-    def _stamp_identity(self, event: dict, request: Any) -> dict:
+    def _objective_id(self, request: Any) -> str | None:
+        dispatch = active_dispatch.get()
+        if dispatch is not None and dispatch.objective_id:
+            return dispatch.objective_id
+        state = getattr(request, "state", None) or {}
+        return state.get("active_objective_id") or None
+
+    def _verify_backend(self, request: Any) -> Any:
+        """Resolve the scoped task-state backend, or None when unavailable."""
+        if self._task_state_backend is None:
+            return None
+        try:
+            from types import SimpleNamespace
+
+            from raptix.orchestration.mission.task_state import scoped_task_backend
+
+            runtime = getattr(request, "runtime", None)
+            merged = SimpleNamespace(
+                state=getattr(request, "state", None) or {},
+                config=getattr(runtime, "config", None),
+            )
+            return scoped_task_backend(self._task_state_backend, merged)
+        except Exception as exc:  # noqa: BLE001 — verification is best-effort
+            logger.debug("Compaction backend unavailable: %s", type(exc).__name__)
+            return None
+
+    def _task_revision(self, request: Any) -> int:
+        objective_id = self._objective_id(request)
+        backend = self._verify_backend(request)
+        if not objective_id or backend is None:
+            return 0
+        try:
+            from raptix.orchestration.mission.task_state import read_task_state
+
+            bundle = read_task_state(backend, objective_id)
+            return bundle.state.state_revision if bundle.state is not None else 0
+        except Exception as exc:  # noqa: BLE001 — best-effort
+            logger.debug("Task-state revision unavailable: %s", type(exc).__name__)
+            return 0
+
+    def _source_snapshot(self, request: Any) -> dict:
+        """Capture the pre-compaction source revision (ADR-0052)."""
+        state = getattr(request, "state", None) or {}
+        messages = state.get("messages", getattr(request, "messages", []))
+        ids = (
+            [str(msg.id) for msg in messages if getattr(msg, "id", None)]
+            if isinstance(messages, list)
+            else []
+        )
+        return {
+            "message_ids_hash": hashlib.sha256("\n".join(ids).encode()).hexdigest(),
+            "task_revision": self._task_revision(request),
+        }
+
+    def _evidence_context(self, request: Any) -> tuple[list[str], list[str], Any]:
+        """Gather task-state evidence refs + ledger action hashes for C2."""
+        objective_id = self._objective_id(request)
+        backend = self._verify_backend(request)
+        if not objective_id or backend is None:
+            return [], [], backend
+        refs: list[str] = []
+        hashes: list[str] = []
+        try:
+            from raptix.middleware.execution_ledger import _load_entries, ledger_path
+            from raptix.orchestration.mission.task_state import read_task_state
+
+            state = read_task_state(backend, objective_id).state
+            if state is not None:
+                refs = [ref.ref for ref in state.evidence_refs]
+            entries = _load_entries(backend, ledger_path(objective_id))
+            hashes = [str(entry["action_hash"]) for entry in entries if entry.get("action_hash")]
+        except Exception as exc:  # noqa: BLE001 — best-effort
+            logger.debug("Structured-summary references unavailable: %s", type(exc).__name__)
+        return refs, hashes, backend
+
+    def _commit_rejection(self, event: dict, request: Any, snapshot: dict) -> str | None:
+        """Return a reason to reject the compaction, or None to commit (ADR-0052)."""
+        message = event.get("summary_message")
+        content = getattr(message, "content", "")
+        if not isinstance(content, str):
+            return None
+        if _structured_summary_enabled():
+            refs, hashes, backend = self._evidence_context(request)
+            ok, errors = validate_structured_summary(
+                content, action_hashes=hashes, evidence_refs=refs, backend=backend
+            )
+            if not ok:
+                return "structured summary validation failed: " + "; ".join(errors[:3])
+        if not _transactional_compaction_enabled():
+            return None
+        if not has_required_headers(content):
+            return "summary is missing required section headers"
+        file_path = event.get("file_path")
+        if not file_path:
+            return "offload produced no recovery reference"
+        backend = self._verify_backend(request)
+        if backend is not None and backend.read(file_path, offset=0, limit=1).error:
+            return f"offload pointer {file_path} is not readable"
+        state = getattr(request, "state", None) or {}
+        claimed = event.get("context_epoch")
+        if isinstance(claimed, int) and claimed <= state.get("context_epoch", 0):
+            return "stale compaction epoch"
+        if snapshot.get("task_revision") != self._task_revision(request):
+            return "source revision changed during compaction"
+        return None
+
+    def _stamp_identity(self, event: dict, request: Any, snapshot: dict | None = None) -> dict:
         """Additive identity fields for a persisted compaction event (ADR-0046).
 
         ``thread_id``/``worker_instance_id`` come from the run config; the
@@ -511,12 +642,17 @@ class _SafeSummarizationProxy(AgentMiddleware):
             "thread_id": str(thread_id) if thread_id is not None else None,
             "worker_instance_id": worker_id,
             "context_epoch": epoch,
-            "source_revision": 0,  # replaced by task-state revision in Wave B
+            "source_revision": (snapshot or {}).get("task_revision", 0),
             "covered_message_ids": covered,
         }
 
-    def _finalize(self, result: Any, request: Any) -> Any:
-        """Strip failed summaries / stamp identity on a compaction event."""
+    @staticmethod
+    def _strip_event(result: Any, update: dict) -> Any:
+        new_update = {k: v for k, v in update.items() if k != "_summarization_event"}
+        return ExtendedModelResponse(result.model_response, command=Command(update=new_update))
+
+    def _finalize(self, result: Any, request: Any, snapshot: dict | None = None) -> Any:
+        """Validate, then commit or strip a compaction event (ADR-0052)."""
         command = getattr(result, "command", None)
         update = getattr(command, "update", None) if command is not None else None
         if not isinstance(update, dict) or "_summarization_event" not in update:
@@ -528,10 +664,17 @@ class _SafeSummarizationProxy(AgentMiddleware):
                 "the compaction event so the failed summary never replaces "
                 "live context."
             )
-            new_update = {k: v for k, v in update.items() if k != "_summarization_event"}
-            return ExtendedModelResponse(result.model_response, command=Command(update=new_update))
+            return self._strip_event(result, update)
         if isinstance(event, dict):
-            stamped = {**event, **self._stamp_identity(event, request)}
+            reason = self._commit_rejection(event, request, snapshot or {})
+            if reason is not None:
+                logger.warning(
+                    "Refusing to commit compaction (%s); keeping the "
+                    "uncompacted effective context.",
+                    reason,
+                )
+                return self._strip_event(result, update)
+            stamped = {**event, **self._stamp_identity(event, request, snapshot)}
             return ExtendedModelResponse(
                 result.model_response,
                 command=Command(
@@ -558,6 +701,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
             started = True
             return handler(req)
 
+        snapshot = self._source_snapshot(request)
         try:
             result = self._scoped_inner(request).wrap_model_call(request, tracked)
         except Exception:
@@ -571,7 +715,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
                 exc_info=True,
             )
             return handler(request)
-        return self._finalize(result, request)
+        return self._finalize(result, request, snapshot)
 
     async def awrap_model_call(self, request: Any, handler: Callable[[Any], Awaitable[Any]]) -> Any:
         started = False
@@ -587,6 +731,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
             started = True
             return await handler(req)
 
+        snapshot = self._source_snapshot(request)
         try:
             result = await self._scoped_inner(request).awrap_model_call(request, tracked)
         except Exception:
@@ -598,7 +743,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
                 exc_info=True,
             )
             return await handler(request)
-        return self._finalize(result, request)
+        return self._finalize(result, request, snapshot)
 
 
 class _EngagementSummarizationBackend(CompositeBackend):
@@ -703,6 +848,10 @@ def _make_summarization(*, backend: Any, llm: Any, role: str = "", **_: Any):
         summarization_backend = _EngagementSummarizationBackend(backend)
     model = _apply_capacity_profile(llm)
     inner = create_summarization_middleware(model, summarization_backend)
+    if _structured_summary_enabled():
+        inner._lc_helper.summary_prompt = (
+            inner._lc_helper.summary_prompt + STRUCTURED_SUMMARY_PROMPT
+        )
     trigger, keep, overridden = _summarization_overrides(model)
     if overridden:
         inner._lc_helper = _rebuild_summary_helper(inner._lc_helper, model, trigger, keep)
@@ -716,6 +865,7 @@ def _make_summarization(*, backend: Any, llm: Any, role: str = "", **_: Any):
         if os.environ.get("RAPTIX_SUMMARIZATION_KEEP_MESSAGES", "").strip()
         else None,
         role=role,
+        task_state_backend=backend,
     )
 
 

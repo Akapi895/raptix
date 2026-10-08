@@ -10,6 +10,13 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in transactional compaction (`RAPTIX_TRANSACTIONAL_COMPACTION`): a
+  compaction commits only when its offload pointer is readable, the summary
+  keeps the required sections, the source task-state revision is unchanged, and
+  the event epoch is current (ADR-0052).
+- Opt-in structured compaction summaries (`RAPTIX_SUMMARY_STRUCTURED`): a
+  deterministic validator gates committed summaries on resolvable evidence and
+  ledger references (ADR-0053).
 - Opt-in per-objective task state, execution receipts and dispatch handoff bundles
   (`RAPTIX_TASK_STATE`, `RAPTIX_EXECUTION_LEDGER`, `RAPTIX_DISPATCH_HANDOFF`).
   Add the `MiddlewareSlot.EXECUTION_LEDGER` plugin slot; existing public names
