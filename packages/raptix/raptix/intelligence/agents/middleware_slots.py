@@ -173,27 +173,32 @@ def _make_engagement_context(**_: Any):
     return EngagementContextMiddleware()
 
 
-def _make_tried_edges(*, role: str, **_: Any):
+def _make_tried_edges(*, role: str, backend: Any = None, **_: Any):
     import os
 
-    if os.environ.get("RAPTIX_KG_TRIED_EDGES", "0").strip().lower() not in {
-        "1",
-        "true",
-        "yes",
-    }:
+    def _flag(name: str) -> bool:
+        return os.environ.get(name, "0").strip().lower() in {"1", "true", "yes"}
+
+    kg_enabled = _flag("RAPTIX_KG_TRIED_EDGES")
+    if not kg_enabled and not _flag("RAPTIX_PROGRESS_OBSERVE"):
         return None
-    from raptix.knowledge.graph.store import (
-        KGStore,
-        KGStoreConfigError,
-        KGStoreUnavailableError,
-    )
     from raptix.middleware.tried_edges import TriedEdgesMiddleware
 
-    try:
-        return TriedEdgesMiddleware(store=KGStore.from_env(), role=role)
-    except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
-        logger.debug("tried-edge slot skipped: %s", exc)
-        return None
+    store = None
+    if kg_enabled:
+        from raptix.knowledge.graph.store import (
+            KGStore,
+            KGStoreConfigError,
+            KGStoreUnavailableError,
+        )
+
+        try:
+            store = KGStore.from_env()
+        except (KGStoreConfigError, KGStoreUnavailableError, ImportError) as exc:
+            logger.debug("tried-edge store unavailable: %s", exc)
+            if not _flag("RAPTIX_PROGRESS_OBSERVE"):
+                return None
+    return TriedEdgesMiddleware(store=store, role=role, backend=backend)
 
 
 def _make_roe_guardrail(*, role: str, **_: Any):

@@ -10,6 +10,11 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in observational progress signals (`RAPTIX_PROGRESS_OBSERVE`): the
+  tried-edge observer tracks bounded per-action fingerprints and adds a single
+  reminder when repeated actions change neither result nor task-state revision.
+  It never blocks or alters a call (ADR-0056).
+
 - Opt-in cross-dispatch budget accounting (`RAPTIX_TASK_BUDGET`): model-call
   token usage folds into each objective's durable task state without advancing
   its revision, and optional soft limits emit a bounded reminder and a one-time
