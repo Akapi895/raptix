@@ -62,6 +62,11 @@ class MiddlewareSlot(StrEnum):
     SUMMARIZATION = "summarization"
     PROMPT_CACHING = "prompt-caching"
     PATCH_TOOL_CALLS = "patch-tool-calls"
+    # Wave C3: per-request context manifest (observational) and deterministic
+    # masking of old tool results. Both env-gated off by default; the factory
+    # returns None unless RAPTIX_CONTEXT_MANIFEST or RAPTIX_CONTEXT_MASK is set,
+    # so default runs assemble an identical stack.
+    CONTEXT_MANIFEST = "context-manifest"
     # Full-fidelity run recording (model requests/responses + tool
     # calls/results as JSONL). Declared LAST so the recorder sits
     # innermost — closest to the runtime — and observes the exact
@@ -180,6 +185,7 @@ _BASE_SLOTS: frozenset[MiddlewareSlot] = _TAIL_SLOTS | {
     MiddlewareSlot.EVENT_LOG,
     MiddlewareSlot.PROMPT_INJECTION_SHIELD,
     MiddlewareSlot.BUDGET,
+    MiddlewareSlot.CONTEXT_MANIFEST,
     # Full-fidelity recording for lab/benchmark analysis. Env-gated
     # (no-op unless RAPTIX_RUNTIME__RECORD_PATH is set) so every
     # agent gets it without changing default-run behavior.

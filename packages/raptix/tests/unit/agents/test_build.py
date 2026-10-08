@@ -607,6 +607,7 @@ def test_middleware_slot_enum_order_is_assembly_order():
         "summarization",
         "prompt-caching",
         "patch-tool-calls",
+        "context-manifest",
         "record",
     ]
 

@@ -10,6 +10,9 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in context manifest (`RAPTIX_CONTEXT_MANIFEST`) and deterministic masking
+  of old, large tool results (`RAPTIX_CONTEXT_MASK`) with scratch offload;
+  guardrail envelopes and control markers are never masked (ADR-0054).
 - Opt-in transactional compaction (`RAPTIX_TRANSACTIONAL_COMPACTION`): a
   compaction commits only when its offload pointer is readable, the summary
   keeps the required sections, the source task-state revision is unchanged, and

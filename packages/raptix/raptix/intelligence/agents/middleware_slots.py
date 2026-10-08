@@ -877,6 +877,19 @@ def _make_patch_tool_calls(**_: Any):
     return PatchToolCallsMiddleware()
 
 
+def _make_context_manifest(*, backend: Any = None, **_: Any):
+    """Wave C3 manifest + masking; None unless one of its flags is truthy."""
+    flags = (
+        os.environ.get("RAPTIX_CONTEXT_MANIFEST", "0").strip().lower(),
+        os.environ.get("RAPTIX_CONTEXT_MASK", "0").strip().lower(),
+    )
+    if not any(flag in {"1", "true", "yes"} for flag in flags):
+        return None
+    from raptix.middleware.context_manifest import ContextManifestMiddleware
+
+    return ContextManifestMiddleware(backend=backend)
+
+
 def _make_record(*, role: str = "", **_: Any):
     """Full-fidelity run recording — opt-in via ``RAPTIX_RUNTIME__RECORD_PATH``.
 
@@ -979,6 +992,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.SUMMARIZATION: _make_summarization,
     MiddlewareSlot.PROMPT_CACHING: _make_prompt_caching,
     MiddlewareSlot.PATCH_TOOL_CALLS: _make_patch_tool_calls,
+    MiddlewareSlot.CONTEXT_MANIFEST: _make_context_manifest,
     MiddlewareSlot.RECORD: _make_record,
 }
 """Slot → factory mapping. Plugin overrides shallow-merge into this
