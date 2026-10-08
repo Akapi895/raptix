@@ -86,6 +86,10 @@ workspace/
 test-results*/
 generated/
 
+# Pentest run exports — heavy artifacts stay local, analysis only in git
+benchmarks/*/run-*/logs/
+benchmarks/*/run-*/analysis/record*.jsonl
+
 # Local reference corpus — dev-only, ~34 MB (PayloadsAllTheThings + OWASP WSTG).
 # Runtime corpora are fetched into ~/.raptix/references/ by
 # raptix/tools/references/fetch.py. Real skill bundles live in raptix/skills/.
