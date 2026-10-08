@@ -47,7 +47,14 @@ LABEL org.opencontainers.image.revision="${RAPTIX_REPO_HEAD}"
 # Neo4j driver onto the framework wheel so the KG health check works
 # inside the container. The default ``pip install raptix`` install
 # stays lean for library consumers.
-RUN uv sync --no-dev --frozen --extra neo4j --extra runtime-persistence
+# uv's default 30s HTTP timeout is too short for slow networks (WSL2 /
+# corporate links) during the full frozen sync of this large lockfile;
+# large wheels (rich, grpcio, cryptography) stall and abort the build.
+ENV UV_HTTP_TIMEOUT=600
+# BuildKit cache mount: wheels persist across builds/PRs — a changed
+# packages/ tree re-syncs the venv but never redownloads the lockfile.
+RUN --mount=type=cache,target=/root/.cache/uv,sharing=locked,id=langgraph-uv \
+    uv sync --no-dev --frozen --extra neo4j --extra runtime-persistence
 
 # uv sync creates /app/.venv but does NOT modify PATH. Prepend
 # the venv's bin/ so ``langgraph`` and any other workspace-installed
