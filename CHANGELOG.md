@@ -8,6 +8,13 @@ design spec, §13.4).
 
 ## [Unreleased]
 
+### Added
+
+- Opt-in per-objective task state, execution receipts and dispatch handoff bundles
+  (`RAPTIX_TASK_STATE`, `RAPTIX_EXECUTION_LEDGER`, `RAPTIX_DISPATCH_HANDOFF`).
+  Add the `MiddlewareSlot.EXECUTION_LEDGER` plugin slot; existing public names
+  and the default-off middleware stack remain compatible (ADRs 0049–0051).
+
 ### Fixed
 
 - Preserve model content, tool calls and usage through LangChain ModelResponse

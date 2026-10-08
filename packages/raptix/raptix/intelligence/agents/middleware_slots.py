@@ -302,6 +302,18 @@ def _make_kg_autoingest(*, sandbox: Any = None, role: str, **_: Any):
         return None
 
 
+def _make_execution_ledger(*, backend: Any = None, role: str, **_: Any):
+    """Wave B2 fail-safe execution receipts; None unless the flag is truthy."""
+    if not any(
+        os.environ.get(flag, "0").strip().lower() in {"1", "true", "yes"}
+        for flag in ("RAPTIX_EXECUTION_LEDGER", "RAPTIX_DISPATCH_HANDOFF")
+    ):
+        return None
+    from raptix.middleware.execution_ledger import ExecutionLedgerMiddleware
+
+    return ExecutionLedgerMiddleware(role=role, backend=backend)
+
+
 def _make_sandbox_notification(*, sandbox: Any = None, **_: Any):
     if sandbox is None:
         raise ValueError(
@@ -806,6 +818,7 @@ DEFAULT_SLOT_FACTORIES: dict[MiddlewareSlot, SlotFactory] = {
     MiddlewareSlot.OPPLAN: _make_opplan,
     MiddlewareSlot.KG: _make_kg,
     MiddlewareSlot.KG_AUTOINGEST: _make_kg_autoingest,
+    MiddlewareSlot.EXECUTION_LEDGER: _make_execution_ledger,
     MiddlewareSlot.EVENT_LOG: _make_event_log,
     MiddlewareSlot.SANDBOX_NOTIFICATION: _make_sandbox_notification,
     MiddlewareSlot.OPSCONTROL_NOTIFICATION: _make_opscontrol_notification,

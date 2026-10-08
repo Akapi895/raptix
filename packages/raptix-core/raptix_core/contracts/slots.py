@@ -39,6 +39,11 @@ class MiddlewareSlot(StrEnum):
     OPPLAN = "opplan"
     KG = "kg"
     KG_AUTOINGEST = "kg-autoingest"
+    # Wave B2: fail-safe execution receipts (planned/started → terminal) for
+    # every side-effecting tool call. Env-gated off by default
+    # (RAPTIX_EXECUTION_LEDGER), so default runs assemble byte-identical
+    # stacks. Observational only — never alters the tool result.
+    EXECUTION_LEDGER = "execution-ledger"
     EVENT_LOG = "event-log"
     SANDBOX_NOTIFICATION = "sandbox-notification"
     # ADR-0006: the orchestrator-only middleware that turns opscontrol
@@ -167,6 +172,7 @@ _BASE_SLOTS: frozenset[MiddlewareSlot] = _TAIL_SLOTS | {
     MiddlewareSlot.FILESYSTEM,
     MiddlewareSlot.UNTRUSTED_OUTPUT,
     MiddlewareSlot.ROE_GUARDRAIL,
+    MiddlewareSlot.EXECUTION_LEDGER,
     # Additive / no-op-safe slots every agent gets: structured event
     # logging, the prompt-injection shield (deny-list wrap; coexists
     # with UNTRUSTED_OUTPUT's allow-list via dedup in the shield), and

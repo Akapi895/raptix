@@ -92,6 +92,7 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     ("raptix_core.protocols", "AgentProtocol"),
     # raptix_core.contracts.slots
     ("raptix_core.contracts.slots", "MiddlewareSlot"),
+    ("raptix_core.contracts.slots", "MiddlewareSlot.EXECUTION_LEDGER"),
     ("raptix_core.contracts.slots", "SAFETY_CRITICAL_SLOTS"),
     ("raptix_core.contracts.slots", "SLOTS_PER_ROLE"),
     # raptix_core.contracts.contributions
@@ -142,7 +143,9 @@ def test_public_name_importable(module_name: str, attr: str) -> None:
     in the same commit.
     """
     module = importlib.import_module(module_name)
-    value: Any = getattr(module, attr, None)
+    value: Any = module
+    for component in attr.split("."):
+        value = getattr(value, component, None)
     assert value is not None, (
         f"{module_name}.{attr} returned None — accidental removal? "
         f"If intentional, update this manifest + CHANGELOG together."
@@ -157,7 +160,7 @@ def test_manifest_count_unchanged() -> None:
     a major-version bump is an audit signal.
     """
     # Update this number deliberately when adding/removing public names.
-    expected = 95
+    expected = 96
     actual = len(CORE_PUBLIC_API)
     assert actual == expected, (
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "
