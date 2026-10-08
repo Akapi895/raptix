@@ -224,6 +224,8 @@ def _persist_opplan_to_backend(
     objectives: list[dict],
     engagement_name: str,
     threat_profile: str,
+    *,
+    observed_kg_revision: str | None = None,
 ) -> None:
     """Write the current OPPLAN to ``/workspace/plan/opplan.json`` via backend.
 
@@ -254,6 +256,17 @@ def _persist_opplan_to_backend(
         )
         if error:
             log.warning("OPPLAN persistence failed for workspace=%s: %s", workspace_path, error)
+            return
+        # Wave B1: refresh durable per-objective task state through the same
+        # scoped backend (a different file). Lazy import avoids an
+        # execution.tools.opplan <-> orchestration.mission import cycle.
+        from raptix.orchestration.mission.task_state import (
+            persist_task_state_for_objectives,
+        )
+
+        persist_task_state_for_objectives(
+            scoped_backend, objectives, observed_kg_revision=observed_kg_revision
+        )
     except Exception as e:  # noqa: BLE001 — best-effort persistence
         log.warning("OPPLAN persistence failed for workspace=%s: %s", workspace_path, e)
 
@@ -499,6 +512,7 @@ def build_opplan_tools(
             objectives,
             engagement_name or state.get("engagement_name", ""),
             threat_profile or state.get("threat_profile", ""),
+            observed_kg_revision=state.get("kg_revision"),
         )
 
         return Command(update=update)
@@ -857,6 +871,7 @@ def build_opplan_tools(
             objectives,
             state.get("engagement_name", ""),
             state.get("threat_profile", ""),
+            observed_kg_revision=state.get("kg_revision"),
         )
 
         return Command(
@@ -1018,6 +1033,7 @@ def build_opplan_tools(
             objectives,
             state.get("engagement_name", ""),
             state.get("threat_profile", ""),
+            observed_kg_revision=state.get("kg_revision"),
         )
 
         return Command(
@@ -1097,6 +1113,7 @@ def build_opplan_tools(
             objectives,
             state.get("engagement_name", ""),
             state.get("threat_profile", ""),
+            observed_kg_revision=state.get("kg_revision"),
         )
 
         return Command(
