@@ -65,7 +65,7 @@ export const Banner = React.memo(function Banner() {
       <Box flexDirection="column">
         <Text color="red">{BANNER_LOGO}</Text>
         <Text color="red" bold>
-          {"       D E C E P T I C O N"}
+          {"       R A P T I X"}
         </Text>
       </Box>
     );
@@ -75,7 +75,7 @@ export const Banner = React.memo(function Banner() {
   return (
     <Box marginTop={1} marginBottom={1}>
       <Text color="red" bold>
-        {"D E C E P T I C O N"}
+        {"R A P T I X"}
       </Text>
     </Box>
   );
