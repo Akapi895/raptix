@@ -322,6 +322,68 @@ class TestLoadSkillTool:
         assert "load_skill failed" in data["error"]
 
 
+class TestLoadSkillDedupeScope:
+    """ADR-0048 — `loaded_keys` scope: instance (legacy) vs conversation."""
+
+    @staticmethod
+    def _backend() -> _StubBackend:
+        return _StubBackend(
+            load_response={"name": "x", "path": "/skills/x/SKILL.md", "body": "BODY-CONTENT"}
+        )
+
+    def test_thread_scope_dedupes_within_same_thread(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RAPTIX_SKILL_DEDUPE_SCOPE", "thread")
+        monkeypatch.setattr(sk, "_resolve_thread_key", lambda: "thread:t1")
+        tool = _make_load_skill_tool(self._backend())
+
+        first = tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+        second = tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+        forced = tool.invoke({"name_or_path": "/skills/x/SKILL.md", "force": True})
+
+        assert "BODY-CONTENT" in first
+        assert json.loads(second)["already_loaded"]  # pointer, not the body
+        assert "BODY-CONTENT" in forced  # force refreshes
+
+    def test_thread_scope_fresh_thread_gets_body(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RAPTIX_SKILL_DEDUPE_SCOPE", "thread")
+        holder = {"key": "thread:t1"}
+        monkeypatch.setattr(sk, "_resolve_thread_key", lambda: holder["key"])
+        tool = _make_load_skill_tool(self._backend())
+
+        assert "BODY-CONTENT" in tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+        holder["key"] = "thread:t2"  # a fresh dispatch on the same instance
+        fresh = tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+        assert "BODY-CONTENT" in fresh, "a fresh thread must not get a stale pointer"
+
+    def test_instance_scope_keeps_legacy_cross_thread_suppression(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.delenv("RAPTIX_SKILL_DEDUPE_SCOPE", raising=False)
+        holder = {"key": "thread:t1"}
+        monkeypatch.setattr(sk, "_resolve_thread_key", lambda: holder["key"])
+        tool = _make_load_skill_tool(self._backend())
+
+        assert "BODY-CONTENT" in tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+        holder["key"] = "thread:t2"
+        second = tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+        assert json.loads(second)["already_loaded"]  # legacy behavior preserved
+
+    def test_thread_cache_eviction_bound(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("RAPTIX_SKILL_DEDUPE_SCOPE", "thread")
+        monkeypatch.setattr(sk, "_SKILL_DEDUPE_MAX_THREADS", 2)
+        holder = {"key": "thread:t1"}
+        monkeypatch.setattr(sk, "_resolve_thread_key", lambda: holder["key"])
+        tool = _make_load_skill_tool(self._backend())
+
+        for key in ("thread:t1", "thread:t2", "thread:t3"):
+            holder["key"] = key
+            assert "BODY-CONTENT" in tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+
+        # t1 was evicted (FIFO) → it gets the body again.
+        holder["key"] = "thread:t1"
+        assert "BODY-CONTENT" in tool.invoke({"name_or_path": "/skills/x/SKILL.md"})
+
+
 class TestTraverseTool:
     def test_happy_path_returns_rows(self) -> None:
         rows = [{"labels": ["Skill"], "key": "neighbor", "depth": 1, "edge_chain": ["IN_PHASE"]}]

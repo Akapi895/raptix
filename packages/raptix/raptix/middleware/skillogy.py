@@ -40,12 +40,15 @@ from __future__ import annotations
 import json
 import logging
 import os
+import uuid
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from typing_extensions import override
+
+from raptix.core.dispatch_context import active_dispatch
 
 log = logging.getLogger(__name__)
 
@@ -150,6 +153,45 @@ def _resolve_skillogy_api_key() -> str | None:
 
 _USE_SKILLOGY_FALSY: frozenset[str] = frozenset({"0", "false", "no", "off"})
 
+# Bounded number of conversation scopes retained by the skill-load dedupe
+# cache. FIFO eviction keeps a long-lived server from growing without bound.
+_SKILL_DEDUPE_MAX_THREADS = 64
+
+
+def _dedupe_scope() -> str:
+    """Which scope the load_skill dedupe cache uses (ADR-0048, WP-A5).
+
+    ``instance`` (default) preserves the legacy per-middleware behavior;
+    ``thread`` scopes the cache to the conversation so a fresh dispatch no
+    longer receives a stale "already in your context" pointer.
+    """
+    return os.environ.get("RAPTIX_SKILL_DEDUPE_SCOPE", "instance").strip().lower()
+
+
+def _resolve_thread_key() -> str:
+    """Conversation identity for the thread-scoped dedupe cache.
+
+    Falls back to a per-call session id when there is no run context (library
+    use) — never deduping without a stable conversation identity.
+    """
+    from langgraph.config import get_config
+
+    try:
+        cfg = get_config()
+        thread_id = (cfg or {}).get("configurable", {}).get("thread_id")
+        if thread_id:
+            dispatch = active_dispatch.get()
+            return json.dumps(
+                [
+                    str(thread_id),
+                    dispatch.dispatch_id if dispatch else None,
+                    dispatch.attempt if dispatch else None,
+                ]
+            )
+    except RuntimeError:
+        log.debug("Skill dedupe has no runnable conversation identity")
+    return f"session:{uuid.uuid4().hex}"
+
 
 def _is_enabled() -> bool:
     # Skillogy is the canonical skill-retrieval backend; the in-process
@@ -193,17 +235,27 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
     _acl_kwargs: dict[str, Any] = (
         {"allowed_path_prefixes": allowed_path_prefixes} if allowed_path_prefixes else {}
     )
-    # Per-middleware-instance (== per agent instance) record of skills whose
-    # body was already returned in this conversation, keyed by both the raw
-    # argument and the resolved canonical path. A repeat load gets a short
-    # pointer instead of the full body — live-run evidence (Silentium lab,
-    # 2026-10) showed identical SKILL.md bodies being re-fetched up to 11
-    # times across turns of the same agent, paying the full token cost each
-    # time for content already in context. A fresh agent instance starts
-    # with an empty set, so each dispatch generation still receives the
-    # body it needs. ``force=True`` re-fetches after a context compaction
-    # dropped the earlier body.
-    loaded_keys: set[str] = set()
+    # Skill-load dedupe cache (ADR-0048, WP-A5). Records skills whose body was
+    # already returned, keyed by both the raw argument and the resolved
+    # canonical path, so a repeat load gets a short pointer instead of the full
+    # body (live-run evidence showed identical SKILL.md bodies re-fetched).
+    #
+    # The legacy `instance` scope keys this to the shared middleware instance
+    # (== agent instance), which is wrong once a compiled graph serves many
+    # dispatches/threads: a fresh dispatch could receive a stale pointer to
+    # content from an earlier conversation. The `thread` scope keys it to the
+    # conversation instead. Default stays `instance` (zero behavior change) so
+    # recorded replays stay byte-stable; the ADR tracks the intended flip.
+    instance_loaded_keys: set[str] = set()
+    thread_loaded_keys: dict[str, set[str]] = {}
+
+    def _loaded_keys_for_call() -> set[str]:
+        if _dedupe_scope() != "thread":
+            return instance_loaded_keys
+        key = _resolve_thread_key()
+        if key not in thread_loaded_keys and len(thread_loaded_keys) >= _SKILL_DEDUPE_MAX_THREADS:
+            thread_loaded_keys.pop(next(iter(thread_loaded_keys)))
+        return thread_loaded_keys.setdefault(key, set())
 
     def _already_loaded_payload(key: str) -> str:
         return json.dumps(
@@ -238,6 +290,7 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
         compaction dropped it.
         """
         try:
+            loaded_keys = _loaded_keys_for_call()
             if not force and name_or_path in loaded_keys:
                 return _already_loaded_payload(name_or_path)
             if name_or_path.startswith("/skills/"):
