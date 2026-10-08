@@ -1,4 +1,4 @@
-name: "Decepticon security scan (example)"
+name: "Raptix security scan (example)"
 
 on:
   workflow_dispatch:
@@ -9,10 +9,10 @@ permissions:
   security-events: write
 
 jobs:
-  decepticon-scan:
+  raptix-scan:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    if: ${{ vars.ENABLE_DECEPTICON_SCAN == 'true' }}
+    if: ${{ vars.ENABLE_RAPTIX_SCAN == 'true' }}
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
         with:
@@ -27,9 +27,9 @@ jobs:
             exit 0
           fi
 
-      - name: Decepticon scan
+      - name: Raptix scan
         if: ${{ env.ANTHROPIC_API_KEY != '' }}
-        uses: ./.github/actions/decepticon-scan
+        uses: ./.github/actions/raptix-scan
         with:
           target: "./"
           scan-mode: "quick"

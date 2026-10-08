@@ -5,7 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from decepticon.skillogy.builder.stix_bootstrap import ensure_stix_bundle
+from raptix.skills.engine.builder.stix_bootstrap import ensure_stix_bundle
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -1,8 +1,8 @@
 # SKILL.md Canonical Schema
 
 This is the authoring contract for every `SKILL.md` file in
-`packages/decepticon/decepticon/skills/**`. CI runs
-`python -m decepticon.skill_audit` against the tree; any violation listed
+`packages/raptix-skills/raptix_skills/defs/**`. CI runs
+`python -m raptix.skill_audit` against the tree; any violation listed
 below either fails the build (after Phase 0 completes) or surfaces as a
 warning (during Phase 0 cleanup).
 

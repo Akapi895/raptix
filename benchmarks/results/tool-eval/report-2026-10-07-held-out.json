@@ -1,0 +1,369 @@
+{
+  "fixtures": "D:\\.VTNet\\phase-2\\raptix\\packages\\raptix-core\\tests\\fixtures\\capabilities\\held-out.jsonl",
+  "generated_at": "2026-10-06T19:51:10+00:00",
+  "thresholds_frozen_at": "2026-10-07",
+  "scenario_count": 4,
+  "tiers": {
+    "A": {
+      "tier": "A",
+      "kind": "registry correctness",
+      "llm_required": false,
+      "cases": [
+        {
+          "scenario_id": "osint-passive-enrich",
+          "capability_id": "analyst.propose_patch",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'osint_operator' not allowed (allowed: ['analyst', 'patcher'])"
+        },
+        {
+          "scenario_id": "osint-passive-enrich",
+          "capability_id": "network.discover_subdomains",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "osint-passive-enrich",
+          "capability_id": "osint.enrich_domain",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "recon-subdomain-sweep",
+          "capability_id": "network.discover_subdomains",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "recon-subdomain-sweep",
+          "capability_id": "recon.detect_tech_stack",
+          "expectation": "eligible",
+          "passed": true,
+          "detail": "eligible"
+        },
+        {
+          "scenario_id": "exploit-credential-dump",
+          "capability_id": "access.credential_dump",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "unmet requirements: credential.available"
+        },
+        {
+          "scenario_id": "exploit-credential-dump",
+          "capability_id": "access.move_laterally",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "unmet requirements: credential.available"
+        },
+        {
+          "scenario_id": "exploit-credential-dump",
+          "capability_id": "defense.generate_brief",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'exploit' not allowed (allowed: ['blue_cell'])"
+        },
+        {
+          "scenario_id": "analyst-patch-loop",
+          "capability_id": "access.credential_dump",
+          "expectation": "ineligible",
+          "passed": true,
+          "detail": "role 'analyst' not allowed (allowed: ['exploit'])"
+        },
+        {
+          "scenario_id": "analyst-patch-loop",
+          "capability_id": "analyst.propose_patch",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "analyst-patch-loop",
+          "capability_id": "analyst.verify_patch",
+          "expectation": "available",
+          "passed": true,
+          "detail": "eligible=True status=available"
+        },
+        {
+          "scenario_id": "analyst-patch-loop",
+          "capability_id": "web.scan_secrets",
+          "expectation": "eligible",
+          "passed": true,
+          "detail": "eligible"
+        }
+      ],
+      "pass_rate": 1.0,
+      "meets_threshold": true
+    },
+    "B": {
+      "tier": "B",
+      "kind": "tool-selection",
+      "llm_required": true,
+      "policy": "scripted",
+      "mode": "scripted (pipeline validation only)",
+      "cases": [
+        {
+          "scenario_id": "osint-passive-enrich",
+          "selected": [
+            "web_search",
+            "web_fetch"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 0.0,
+          "task_success": true
+        },
+        {
+          "scenario_id": "recon-subdomain-sweep",
+          "selected": [
+            "web_search"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 0.0,
+          "task_success": true
+        },
+        {
+          "scenario_id": "exploit-credential-dump",
+          "selected": [
+            "bash"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 1.0,
+          "task_success": true
+        },
+        {
+          "scenario_id": "analyst-patch-loop",
+          "selected": [
+            "web_fetch"
+          ],
+          "selection_precision": 1.0,
+          "invalid_selection_rate": 0.0,
+          "unnecessary_tool_calls": 0,
+          "bash_fallback_rate": 0.0,
+          "task_success": true
+        }
+      ],
+      "selection_precision": 1.0,
+      "invalid_selection_rate": 0.0,
+      "task_success_rate": 1.0,
+      "pending_live_run": true,
+      "meets_threshold": null
+    },
+    "C": {
+      "tier": "C",
+      "kind": "executor chain",
+      "llm_required": false,
+      "cases": [
+        {
+          "scenario_id": "recon-subdomain-sweep",
+          "case_id": "subfinder-acme",
+          "capability_id": "network.discover_subdomains",
+          "passed": true,
+          "detail": "ok"
+        }
+      ],
+      "pass_rate": 1.0,
+      "meets_threshold": true
+    },
+    "D": {
+      "tier": "D",
+      "kind": "end-to-end",
+      "llm_required": true,
+      "pending_live_run": true,
+      "note": "requires the live stack (mission \u2192 planner \u2192 worker \u2192 executor \u2192 AKG)"
+    }
+  },
+  "exposure_comparison": [
+    {
+      "scenario_id": "osint-passive-enrich",
+      "role": "osint_operator",
+      "config": "A",
+      "surface_size": 25,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 22,
+      "task_success_proxy": true,
+      "schema_chars": 28023
+    },
+    {
+      "scenario_id": "osint-passive-enrich",
+      "role": "osint_operator",
+      "config": "B",
+      "surface_size": 25,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 22,
+      "task_success_proxy": true,
+      "schema_chars": 28023
+    },
+    {
+      "scenario_id": "osint-passive-enrich",
+      "role": "osint_operator",
+      "config": "C",
+      "surface_size": 30,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 6,
+      "task_success_proxy": true,
+      "schema_chars": 28058
+    },
+    {
+      "scenario_id": "recon-subdomain-sweep",
+      "role": "recon",
+      "config": "A",
+      "surface_size": 19,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 17,
+      "task_success_proxy": true,
+      "schema_chars": 19882
+    },
+    {
+      "scenario_id": "recon-subdomain-sweep",
+      "role": "recon",
+      "config": "B",
+      "surface_size": 19,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 17,
+      "task_success_proxy": true,
+      "schema_chars": 19882
+    },
+    {
+      "scenario_id": "recon-subdomain-sweep",
+      "role": "recon",
+      "config": "C",
+      "surface_size": 21,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 2,
+      "task_success_proxy": true,
+      "schema_chars": 22142
+    },
+    {
+      "scenario_id": "exploit-credential-dump",
+      "role": "exploit",
+      "config": "A",
+      "surface_size": 17,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 16251
+    },
+    {
+      "scenario_id": "exploit-credential-dump",
+      "role": "exploit",
+      "config": "B",
+      "surface_size": 17,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 0,
+      "task_success_proxy": true,
+      "schema_chars": 16251
+    },
+    {
+      "scenario_id": "exploit-credential-dump",
+      "role": "exploit",
+      "config": "C",
+      "surface_size": 23,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 4,
+      "task_success_proxy": true,
+      "schema_chars": 26606
+    },
+    {
+      "scenario_id": "analyst-patch-loop",
+      "role": "analyst",
+      "config": "A",
+      "surface_size": 37,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 34,
+      "task_success_proxy": true,
+      "schema_chars": 31498
+    },
+    {
+      "scenario_id": "analyst-patch-loop",
+      "role": "analyst",
+      "config": "B",
+      "surface_size": 37,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 34,
+      "task_success_proxy": true,
+      "schema_chars": 31498
+    },
+    {
+      "scenario_id": "analyst-patch-loop",
+      "role": "analyst",
+      "config": "C",
+      "surface_size": 51,
+      "capability_exposure_recall": 1.0,
+      "forbidden_exposure_rate": 0.0,
+      "discovery_latency": 6,
+      "task_success_proxy": true,
+      "schema_chars": 43256
+    }
+  ],
+  "per_config": {
+    "A": {
+      "surface_size_max": 37,
+      "capability_exposure_recall_min": 1.0,
+      "forbidden_exposure_rate_max": 0.0,
+      "task_success_proxy": 1.0,
+      "discovery_latency_max": 34,
+      "schema_chars_min": 16251,
+      "schema_chars_max": 31498
+    },
+    "B": {
+      "surface_size_max": 37,
+      "capability_exposure_recall_min": 1.0,
+      "forbidden_exposure_rate_max": 0.0,
+      "task_success_proxy": 1.0,
+      "discovery_latency_max": 34,
+      "schema_chars_min": 16251,
+      "schema_chars_max": 31498
+    },
+    "C": {
+      "surface_size_max": 51,
+      "capability_exposure_recall_min": 1.0,
+      "forbidden_exposure_rate_max": 0.0,
+      "task_success_proxy": 1.0,
+      "discovery_latency_max": 6,
+      "schema_chars_min": 22142,
+      "schema_chars_max": 43256
+    }
+  },
+  "gates": {
+    "non_regression": {
+      "failures": [],
+      "ok": true,
+      "rule": "recall(config) >= recall(A) - 0.05 for every scenario"
+    },
+    "config_B": {
+      "capability_exposure_recall_min": 1.0,
+      "recall_ok": null,
+      "forbidden_ok": true,
+      "success_proxy_ok": null,
+      "latency_ok": null,
+      "note": "B filters A's pinned surface; recall/success/latency floors are inherited from A and gated via non_regression instead"
+    },
+    "config_C": {
+      "capability_exposure_recall_min": 1.0,
+      "recall_ok": true,
+      "forbidden_ok": true,
+      "success_proxy_ok": true,
+      "latency_ok": false
+    },
+    "ok": false
+  }
+}

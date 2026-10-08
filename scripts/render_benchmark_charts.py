@@ -1,6 +1,6 @@
 """Render PNG charts for the XBOW benchmark write-ups.
 
-Outputs go to assets/benchmark/. Re-run after updating numbers:
+Outputs go to assets/benchmarks/. Re-run after updating numbers:
     python scripts/render_benchmark_charts.py
 """
 
@@ -15,7 +15,7 @@ import numpy as np
 # Data — keep in one place so the script is the single source of truth.
 # ---------------------------------------------------------------------------
 
-OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "benchmark"
+OUT_DIR = Path(__file__).resolve().parents[1] / "assets" / "benchmarks"
 OUT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Leaderboard — XBOW publishers only.
@@ -27,7 +27,7 @@ LEADERBOARD = [
     ("XBOW (commercial)", 85.00, "other"),
     ("Cyber-AutoAgent (archived)", 84.62, "other"),
     ("MAPTA", 76.90, "other"),
-    ("Decepticon", 98.08, "us"),
+    ("Raptix", 98.08, "us"),
     ("PentestAgent", 50.00, "other"),
     ("AutoPT", 46.00, "other"),
     ("VulnBot", 6.00, "other"),
@@ -37,20 +37,20 @@ LEADERBOARD = [
 DIFFICULTY = {
     "Strix": [100.0, 96.0, 75.0],
     "PentestGPT": [91.1, 74.5, 62.5],
-    "Decepticon": [100.0, 98.0, 87.5],  # L2 sweep ongoing (1 fail), L3 ongoing (1 fail)
+    "Raptix": [100.0, 98.0, 87.5],  # L2 sweep ongoing (1 fail), L3 ongoing (1 fail)
 }
 LEVELS = ["L1 (Easy)", "L2 (Medium)", "L3 (Hard)"]
 
-# Decepticon — all-level pass/fail (L1+L2+L3 combined view).
+# Raptix — all-level pass/fail (L1+L2+L3 combined view).
 # L2 sweep still has 1 outstanding fail; L3 still has 1 outstanding fail.
-DECEPTICON_PIE = [
+RAPTIX_PIE = [
     ("L1 passed (45 / 45)", 45, "#27ae60"),
     ("L2 passed (50 / 51)", 50, "#2ecc71"),
     ("L3 passed (7 / 8)", 7, "#16a085"),
     ("Not solved (2 / 104)", 2, "#bdc3c7"),
 ]
 
-# Decepticon attack-class coverage — L1 + L2 + L3 totals.
+# Raptix attack-class coverage — L1 + L2 + L3 totals.
 COVERAGE = [
     ("XSS", 14),  # 8 L1 + 3 L2 + 3 L3
     ("Command Injection", 8),  # 6 L1 + 2 L2
@@ -81,7 +81,7 @@ COVERAGE = [
 # Chart helpers.
 # ---------------------------------------------------------------------------
 
-US_COLOR = "#e74c3c"  # Decepticon red
+US_COLOR = "#e74c3c"  # Raptix red
 BAR_COLOR = "#3498db"  # everyone else
 
 plt.rcParams.update(
@@ -125,7 +125,7 @@ def chart_leaderboard() -> Path:
             fontweight="bold" if u else "normal",
             color=US_COLOR if u else "#222",
         )
-    # Bold the Decepticon y-tick label.
+    # Bold the Raptix y-tick label.
     for tick, u in zip(ax.get_yticklabels(), is_us):
         if u:
             tick.set_fontweight("bold")
@@ -137,7 +137,7 @@ def chart_leaderboard() -> Path:
     fig.text(
         0.01,
         0.01,
-        "Shannon: white-box, hint-removed.  Decepticon: black-box, vulnerability tags as hint — 102 / 104.",
+        "Shannon: white-box, hint-removed.  Raptix: black-box, vulnerability tags as hint — 102 / 104.",
         fontsize=8,
         style="italic",
         color="#555",
@@ -157,7 +157,7 @@ def chart_difficulty() -> Path:
     width = 0.25
 
     fig, ax = plt.subplots(figsize=(9, 5))
-    palette = {"Strix": "#3498db", "PentestGPT": "#9b59b6", "Decepticon": US_COLOR}
+    palette = {"Strix": "#3498db", "PentestGPT": "#9b59b6", "Raptix": US_COLOR}
     for i, sys in enumerate(systems):
         offset = (i - 1) * width
         bars = ax.bar(
@@ -171,23 +171,23 @@ def chart_difficulty() -> Path:
     ax.set_xticklabels(LEVELS)
     ax.set_ylim(0, 110)
     ax.set_ylabel("Pass rate (%)")
-    ax.set_title("Pass Rate by Difficulty — Strix · PentestGPT · Decepticon")
+    ax.set_title("Pass Rate by Difficulty — Strix · PentestGPT · Raptix")
     ax.legend(loc="upper right", frameon=False)
     ax.grid(axis="y", linestyle=":", alpha=0.4)
     return save(fig, "difficulty.png")
 
 
 # ---------------------------------------------------------------------------
-# 3) Decepticon donut by difficulty.
+# 3) Raptix donut by difficulty.
 # ---------------------------------------------------------------------------
 
 
-def chart_decepticon_donut() -> Path:
-    labels = [r[0] for r in DECEPTICON_PIE]
-    sizes = [r[1] for r in DECEPTICON_PIE]
-    colors = [r[2] for r in DECEPTICON_PIE]
+def chart_raptix_donut() -> Path:
+    labels = [r[0] for r in RAPTIX_PIE]
+    sizes = [r[1] for r in RAPTIX_PIE]
+    colors = [r[2] for r in RAPTIX_PIE]
     total = sum(sizes)
-    passed = sum(n for lab, n, _ in DECEPTICON_PIE if "Not solved" not in lab)
+    passed = sum(n for lab, n, _ in RAPTIX_PIE if "Not solved" not in lab)
 
     fig, ax = plt.subplots(figsize=(8, 7))
     wedges, _ = ax.pie(
@@ -237,7 +237,7 @@ def chart_decepticon_donut() -> Path:
         fontsize=10,
     )
     ax.set_title(
-        "Decepticon — XBOW Validation Benchmark",
+        "Raptix — XBOW Validation Benchmark",
         fontsize=14,
         fontweight="bold",
         pad=18,
@@ -250,11 +250,11 @@ def chart_decepticon_donut() -> Path:
         fontsize=9,
         color="#6c757d",
     )
-    return save(fig, "decepticon_donut.png")
+    return save(fig, "raptix_donut.png")
 
 
 # ---------------------------------------------------------------------------
-# 4) Decepticon attack-class coverage.
+# 4) Raptix attack-class coverage.
 # ---------------------------------------------------------------------------
 
 
@@ -269,12 +269,12 @@ def chart_coverage() -> Path:
         ax.text(v + 0.15, bar.get_y() + bar.get_height() / 2, str(v), va="center", fontsize=9)
     ax.set_xlim(0, max(values) + 2)
     ax.set_xlabel("Confirmed end-to-end exploits (L1 + L2 + L3)")
-    ax.set_title("Decepticon — Web Attack Class Coverage on XBOW (L1 + L2 + L3)")
+    ax.set_title("Raptix — Web Attack Class Coverage on XBOW (L1 + L2 + L3)")
     ax.grid(axis="x", linestyle=":", alpha=0.4)
     fig.text(
         0.01,
         0.01,
-        "Per-level breakdown lives in benchmark/results/README.md (Confirmed Exploit Coverage matrix).",
+        "Per-level breakdown lives in benchmarks/results/README.md (Confirmed Exploit Coverage matrix).",
         fontsize=8,
         style="italic",
         color="#555",
@@ -283,7 +283,7 @@ def chart_coverage() -> Path:
 
 
 def main() -> None:
-    for fn in (chart_leaderboard, chart_difficulty, chart_decepticon_donut, chart_coverage):
+    for fn in (chart_leaderboard, chart_difficulty, chart_raptix_donut, chart_coverage):
         path = fn()
         print(f"wrote {path.relative_to(OUT_DIR.parents[1])}")
 

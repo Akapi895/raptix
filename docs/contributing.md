@@ -9,8 +9,8 @@ Contributions are welcome — whether you're a security researcher, AI engineer,
 **Prerequisites**: Docker, Docker Compose v2, and [uv](https://docs.astral.sh/uv/) (for Python tooling locally).
 
 ```bash
-git clone https://github.com/PurpleAILAB/Decepticon.git
-cd Decepticon
+git clone https://github.com/Akapi895/raptix.git
+cd Raptix
 
 # Copy and configure environment
 cp .env.example .env
@@ -30,7 +30,7 @@ make dogfood
 ## Project Structure
 
 ```
-decepticon/          # Core Python package (LangGraph agents, middleware, tools)
+raptix/          # Core Python package (LangGraph agents, middleware, tools)
 ├── agents/          # Agent factory functions (create_*_agent)
 ├── core/            # Config, engagement document schemas, logging, streaming helpers
 ├── llm/             # Model profiles, LiteLLM configuration
@@ -39,13 +39,17 @@ decepticon/          # Core Python package (LangGraph agents, middleware, tools)
 
 skills/              # Skill library (SKILL.md files organized by kill chain phase)
 
-clients/
+apps/
 ├── cli/             # TypeScript/Ink terminal UI
-├── web/             # Next.js 16 web dashboard
-└── shared/          # Shared streaming utilities (@decepticon/streaming)
+├── web/             # web-raptix dashboard (React 19 + Vite + Fastify server)
+├── desktop/         # Electron shell
+├── launcher/        # Go launcher + ops-control daemon
+└── shared/          # Shared streaming utilities (@raptix/streaming)
 
-config/              # LiteLLM proxy config (litellm.yaml)
-containers/          # Dockerfile per service
+infra/
+├── config/          # LiteLLM proxy config (litellm.yaml)
+├── containers/      # Dockerfile per service
+└── telemetry-gateway/
 ```
 
 ---
@@ -73,59 +77,59 @@ Minimum Python version: **3.13**
 ## Adding an Agent
 
 1. Create the agent module. Pick a bundle:
-   - `decepticon/agents/standard/{name}.py` for OSS-blessed agents shipped by default
-   - `decepticon/agents/plugins/{name}.py` to demonstrate the community-plugin shape
+   - `raptix/intelligence/agents/standard/{name}.py` for OSS-blessed agents shipped by default
+   - `raptix/intelligence/agents/plugins/{name}.py` to demonstrate the community-plugin shape
    The file exposes a `create_{name}_agent()` factory.
 2. Follow the middleware stack pattern from an existing agent (e.g., `standard/recon.py`)
 3. Define the agent's skill sources in the `SkillsMiddleware` configuration
 4. **Subagents only**: add a module-level `SUBAGENT_SPEC = SubAgentSpec(...)`
    declaring `parent_agents=(...)`, `bundle=...`, and `priority=...`. Register
-   it under `[project.entry-points."decepticon.subagents"]` in `pyproject.toml`.
+   it under `[project.entry-points."raptix.subagents"]` in `pyproject.toml`.
    The relevant main agent picks it up automatically via
-   `load_subagents_for_parent(...)`. See `decepticon/plugin_loader.py` for the
+   `load_subagents_for_parent(...)`. See `raptix/plugin_loader.py` for the
    contract.
 5. Create a skills directory at `skills/{bundle}/{name}/` mirroring the agent
    bundle (`standard/` or `plugins/`).
 
 ### Activating plugin bundles
 
-Decepticon defaults to the lean `standard` bundle. To activate additional
+Raptix defaults to the lean `standard` bundle. To activate additional
 bundles (e.g. the `plugins` bundle that ships `vulnresearch`), use the
 4-tier hierarchy (highest precedence wins):
 
-1. **`DECEPTICON_PLUGINS` env var** — runtime override:
+1. **`RAPTIX_PLUGINS` env var** — runtime override:
    ```bash
-   DECEPTICON_PLUGINS=standard,plugins langgraph dev   # or "*" for all
+   RAPTIX_PLUGINS=standard,plugins langgraph dev   # or "*" for all
    ```
-2. **`.decepticon.toml` in CWD** — per-checkout opt-in:
+2. **`.raptix.toml` in CWD** — per-checkout opt-in:
    ```toml
    [plugins]
    enabled = ["standard", "plugins"]
    ```
 3. **`pyproject.toml` in CWD** — project-default opt-in:
    ```toml
-   [tool.decepticon.plugins]
+   [tool.raptix.plugins]
    enabled = ["standard", "plugins"]
    ```
 4. **Hardcoded default** — `["standard"]`.
 
 The OSS repo itself ships with both bundles enabled via the project-level
 `pyproject.toml` (so `make dev` / `make benchmark` work out of the box).
-End-user installs that just `pip install decepticon` get the lean
+End-user installs that just `pip install raptix` get the lean
 `standard`-only default (neo4j and other heavy features are opt-in extras,
-e.g. `decepticon[neo4j]`). Downstream Docker images override via
-`ENV DECEPTICON_PLUGINS=standard,vendor` to activate their own bundle.
+e.g. `raptix[neo4j]`). Downstream Docker images override via
+`ENV RAPTIX_PLUGINS=standard,vendor` to activate their own bundle.
 
 The OSS-shipped `langgraph.json` matches the lean default — it only
 lists the 10 `standard` graphs. To expose plugin graphs to LangGraph
 Platform, emit the manifest dynamically:
 
 ```bash
-LANGSERVE_GRAPHS="$(python -m decepticon.graph_registry)" langgraph dev
+LANGSERVE_GRAPHS="$(python -m raptix.graph_registry)" langgraph dev
 ```
 
 That CLI emits the merged manifest of every active bundle plus any
-external `decepticon.agents` entry-points.
+external `raptix.agents` entry-points.
 
 ---
 
@@ -143,7 +147,7 @@ No registration required. Skills are discovered automatically from the agent's c
 
 ## Testing
 
-Python tests live in `decepticon/tests/`. Run inside Docker for a clean environment:
+Python tests live in `raptix/tests/`. Run inside Docker for a clean environment:
 
 ```bash
 make test            # pytest in container
@@ -153,10 +157,10 @@ make test-local      # pytest locally (requires: uv sync --dev)
 CLI tests run via `make quality-cli` (typecheck + build + vitest), or directly:
 
 ```bash
-npm run test --workspace=@decepticon/cli
+npm run test --workspace=@raptix/cli
 ```
 
-When adding a new agent or tool, add corresponding tests in `decepticon/tests/`.
+When adding a new agent or tool, add corresponding tests in `raptix/tests/`.
 
 ---
 

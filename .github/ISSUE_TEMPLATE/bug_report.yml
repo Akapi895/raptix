@@ -1,5 +1,5 @@
 name: Bug Report
-description: Report a bug in Decepticon
+description: Report a bug in Raptix
 labels: ["bug"]
 body:
   - type: markdown
@@ -21,7 +21,7 @@ body:
       label: Steps to Reproduce
       description: Steps to reproduce the behavior.
       placeholder: |
-        1. Run `decepticon ...`
+        1. Run `raptix ...`
         2. Start an engagement with ...
         3. See error ...
     validations:
@@ -49,7 +49,7 @@ body:
       label: Environment
       description: Version and platform information.
       placeholder: |
-        - Decepticon version: (run `decepticon --version`)
+        - Raptix version: (run `raptix --version`)
         - OS: (e.g., Ubuntu 24.04, macOS 15, Windows 11 + WSL2)
         - Docker version: (run `docker --version`)
         - Installation method: (curl installer / git clone)
@@ -60,7 +60,7 @@ body:
     id: logs
     attributes:
       label: Logs
-      description: Relevant log output (run `decepticon logs` or `make logs`).
+      description: Relevant log output (run `raptix logs` or `make logs`).
       render: shell
 
   - type: textarea

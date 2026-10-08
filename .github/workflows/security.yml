@@ -5,7 +5,7 @@ name: Security
 # findings all land in the Security tab as SARIF:
 #
 #   * CodeQL            deep SAST (Python + JS/TS), security-and-quality queries
-#   * Semgrep           repo-specific invariants (.semgrep/decepticon-rules.yml),
+#   * Semgrep           repo-specific invariants (.semgrep/raptix-rules.yml),
 #                       hard gate on ERROR-severity findings
 #   * Trivy             dependency CVEs (fs) + IaC/Dockerfile misconfig (config)
 #   * TruffleHog        verified-secret detection across the PR diff
@@ -82,17 +82,17 @@ jobs:
       # Blocks the run on ERROR-severity findings from the repo's own rules
       # (e.g. no hardcoded default LiteLLM key). Public rule packs are covered
       # by CodeQL's security-and-quality suite and are not re-run here.
-      - name: Custom Decepticon rules (blocking on ERROR)
+      - name: Custom Raptix rules (blocking on ERROR)
         run: |
           semgrep scan \
             --error \
             --metrics=off \
             --severity=ERROR \
             --sarif --sarif-output=semgrep.sarif \
-            --config=.semgrep/decepticon-rules.yml \
+            --config=.semgrep/raptix-rules.yml \
             --exclude=node_modules --exclude=.venv --exclude=dist --exclude=build \
-            --exclude=benchmark/xbow-validation-benchmarks \
-            --exclude=benchmark/MHBench
+            --exclude=benchmarks/xbow-validation-benchmarks \
+            --exclude=benchmarks/MHBench
       - name: Upload Semgrep SARIF
         if: always()
         uses: github/codeql-action/upload-sarif@dd903d2e4f5405488e5ef1422510ee31c8b32357 # v3.36.2

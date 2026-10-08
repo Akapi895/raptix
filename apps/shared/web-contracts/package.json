@@ -1,0 +1,30 @@
+{
+  "name": "@raptix/web-contracts",
+  "version": "0.1.0",
+  "description": "Shared browser/API wire contracts (DTOs and boundary validators) for web-raptix and web-raptix-server. Pure ESM; no React, Next, Prisma, LangGraph SDK or secrets.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "@raptix/streaming": "*"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.7"
+  }
+}

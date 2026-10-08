@@ -1,6 +1,6 @@
 # Agents
 
-Decepticon ships a **multi-agent stack** organized by kill chain phase: three orchestrators (Decepticon, Vulnresearch, Soundwave), a roster of specialist sub-agents under Decepticon (recon → exploit → post-exploit → domain operators), the five-stage Vulnresearch pipeline (`scanner → detector → verifier → patcher → exploiter`), and the `blue_cell` defense agent for the Offensive Vaccine loop. Each agent starts with a **fresh context window** per objective — no accumulated noise, no context degradation. Findings persist to disk (`workspace/`) and the knowledge graph, not agent memory.
+Raptix ships a **multi-agent stack** organized by kill chain phase: three orchestrators (Raptix, Vulnresearch, Soundwave), a roster of specialist sub-agents under Raptix (recon → exploit → post-exploit → domain operators), the five-stage Vulnresearch pipeline (`scanner → detector → verifier → patcher → exploiter`), and the `blue_cell` defense agent for the Offensive Vaccine loop. Each agent starts with a **fresh context window** per objective — no accumulated noise, no context degradation. Findings persist to disk (`workspace/`) and the knowledge graph, not agent memory.
 
 ---
 
@@ -10,9 +10,9 @@ Decepticon ships a **multi-agent stack** organized by kill chain phase: three or
 
 | Agent | Role |
 |-------|------|
-| **Decepticon** | Main red-team orchestrator. Reads the OPPLAN, dispatches objectives to specialist sub-agents, and tracks status transitions. Sub-agents: `recon`, `exploit`, `postexploit`, `analyst`, `reverser`, `contract_auditor`, `cloud_hunter`, `ad_operator`, `phisher`, `mobile_operator`, `wireless_operator`, `osint_operator`, `iot_operator`, `ics_operator`, `forensicator`, `supply_chain_operator`. |
+| **Raptix** | Main red-team orchestrator. Reads the OPPLAN, dispatches objectives to specialist sub-agents, and tracks status transitions. Sub-agents: `recon`, `exploit`, `postexploit`, `analyst`, `reverser`, `contract_auditor`, `cloud_hunter`, `ad_operator`, `phisher`, `mobile_operator`, `wireless_operator`, `osint_operator`, `iot_operator`, `ics_operator`, `forensicator`, `supply_chain_operator`. |
 | **Vulnresearch** | Vulnerability research orchestrator — runs the five-stage pipeline (`scanner → detector → verifier → patcher → exploiter`) with state passed between stages exclusively through the knowledge graph. |
-| **Soundwave** | Engagement planner. Standalone graph (not a sub-agent of Decepticon). Interviews the operator and writes the eight-document engagement bundle — RoE, Threat Profile, CONOPS, Deconfliction, Contact, Data Handling, Abort, Cleanup. The orchestrator builds the OPPLAN. |
+| **Soundwave** | Engagement planner. Standalone graph (not a sub-agent of Raptix). Interviews the operator and writes the eight-document engagement bundle — RoE, Threat Profile, CONOPS, Deconfliction, Contact, Data Handling, Abort, Cleanup. The orchestrator builds the OPPLAN. |
 
 ### Reconnaissance
 
@@ -74,7 +74,7 @@ This prevents context window bloat and token accumulation across a long engageme
 
 ## Middleware Stack
 
-Each agent assembles its middleware stack from a fixed set of named **slots** (`MiddlewareSlot`). The enum declaration order is the canonical assembly order — every factory walks the enum top-to-bottom and instantiates only the slots its role opts into via `SLOTS_PER_ROLE`. Plugins replace or disable slots by name (`PluginBundle.replaced_middleware` / `disabled_middleware`); slot definitions and the per-role mapping live in `decepticon_core.contracts.slots`, the langchain-bound factories in `decepticon.agents.middleware_slots`.
+Each agent assembles its middleware stack from a fixed set of named **slots** (`MiddlewareSlot`). The enum declaration order is the canonical assembly order — every factory walks the enum top-to-bottom and instantiates only the slots its role opts into via `SLOTS_PER_ROLE`. Plugins replace or disable slots by name (`PluginBundle.replaced_middleware` / `disabled_middleware`); slot definitions and the per-role mapping live in `raptix_core.contracts.slots`, the langchain-bound factories in `raptix.intelligence.agents.middleware_slots`.
 
 ### Safety stack (every agent)
 
@@ -82,7 +82,7 @@ These slots are part of the base set every role receives — they are the engage
 
 | Middleware | Slot | Purpose |
 |------------|------|---------|
-| `RoEGuardrailMiddleware` | `roe-guardrail` | Legal/safety gate on tool calls — extracts the target, evaluates it against the Rules of Engagement, and appends to a chained audit log (`<workspace>/audit/roe-decisions.jsonl`, or `DECEPTICON_ROE_AUDIT_PATH`). A fast-fail command-parse gate; the authoritative scope boundary is the egress layer (sandbox nftables, on by default for `enforce` mode, opt-out via `DECEPTICON_EGRESS_DISABLE`). The pre-rename name `RoEEnforcementMiddleware` / slot `roe-enforcement` stays as a compat alias until 2.0.0. |
+| `RoEGuardrailMiddleware` | `roe-guardrail` | Legal/safety gate on tool calls — extracts the target, evaluates it against the Rules of Engagement, and appends to a chained audit log (`<workspace>/audit/roe-decisions.jsonl`, or `RAPTIX_ROE_AUDIT_PATH`). A fast-fail command-parse gate; the authoritative scope boundary is the egress layer (sandbox nftables, on by default for `enforce` mode, opt-out via `RAPTIX_EGRESS_DISABLE`). The pre-rename name `RoEEnforcementMiddleware` / slot `roe-enforcement` stays as a compat alias until 2.0.0. |
 | `UntrustedOutputMiddleware` | `untrusted-output` | Quarantines attacker-influenceable tool output (bash stdout, file reads, KG queries) inside a `<UNTRUSTED_TOOL_OUTPUT>` envelope so hostile content can't re-author the agent's instructions. |
 | `PromptInjectionShieldMiddleware` | `prompt-injection-shield` | Deny-list wrap of attacker-controlled tool output (HTTP bodies, banners, file reads); dedups against `UNTRUSTED_OUTPUT` and does not re-inject the system policy. |
 | `EventLogMiddleware` | `event-log` | Structured event logging for every model and tool call. |
@@ -94,7 +94,7 @@ Bash-executing agents and the orchestrator additionally get:
 |------------|------|---------|
 | `EngagementContextMiddleware` | `engagement-context` | Injects engagement metadata (slug, workspace) and per-challenge state (target URL, tags, flag format, mission brief) into every model call. Carries RoE scope into tool calls — it is **safety-critical**. |
 | `SandboxNotificationMiddleware` | `sandbox-notification` | Tracks background-job completion and emits the CLI's `Background command` event. Bash agents only. |
-| `HITLApprovalMiddleware` | `hitl-approval` | Operator-approval gate for high-impact actions (credential dumping, destructive ops). **Opt-in** — skipped unless `DECEPTICON_HITL__ENABLED` is set to a truthy value (off by default so engagements don't freeze waiting on a human). |
+| `HITLApprovalMiddleware` | `hitl-approval` | Operator-approval gate for high-impact actions (credential dumping, destructive ops). **Opt-in** — skipped unless `RAPTIX_HITL__ENABLED` is set to a truthy value (off by default so engagements don't freeze waiting on a human). |
 
 ### Framework middleware
 
@@ -102,7 +102,7 @@ Bash-executing agents and the orchestrator additionally get:
 |------------|------|---------|
 | `SkillsMiddleware` | `skills` | Loads `SKILL.md` frontmatter, filters by agent role, and injects matching skill descriptions into the system prompt. Full skill content is fetched on demand via the `load_skill` tool — `read_file` / `bash cat` **do not** resolve `/skills/*` (that tree is served in-process by a local `FilesystemBackend`, not the sandbox). |
 | `FilesystemMiddleware` | `filesystem` | Provides `read_file`, `write_file`, `edit_file`, `ls`, `glob`, `grep` tools backed by the sandbox filesystem. Execute is intentionally stripped — agents use the dedicated `bash` tool for command execution. |
-| `SubAgentMiddleware` | `subagent` | Allows orchestrators (Decepticon, Vulnresearch) to delegate objectives to specialist sub-agents via the `task()` tool. |
+| `SubAgentMiddleware` | `subagent` | Allows orchestrators (Raptix, Vulnresearch) to delegate objectives to specialist sub-agents via the `task()` tool. |
 | `OPPLANMiddleware` | `opplan` | Injects the current OPPLAN progress table into every LLM call and provides CRUD tools for objective management. |
 | `ModelOverrideMiddleware` | `model-override` | Per-objective model selection. Orchestrator only. |
 | `ModelFallbackMiddleware` | `model-fallback` | Switches to a fallback model on provider outage, rate limit, or context overflow. Conditional — skipped when no fallback chain is configured. |
@@ -112,13 +112,13 @@ Bash-executing agents and the orchestrator additionally get:
 
 ### Safety-critical slots
 
-`SAFETY_CRITICAL_SLOTS` — `engagement-context`, `roe-guardrail`, `untrusted-output`, `prompt-injection-shield`, `sandbox-notification`, `hitl-approval` — can only be replaced or disabled by a plugin when `DECEPTICON_ALLOW_SAFETY_OVERRIDES=1` is set in the environment. The gate is enforced by `build_middleware` in `decepticon.agents.build`; without it, an override raises `SafetyOverrideViolation`. Replacement is fine if the new middleware honours the same contract — the gate exists so an accidentally-installed plugin can't silently subvert the safety story.
+`SAFETY_CRITICAL_SLOTS` — `engagement-context`, `roe-guardrail`, `untrusted-output`, `prompt-injection-shield`, `sandbox-notification`, `hitl-approval` — can only be replaced or disabled by a plugin when `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set in the environment. The gate is enforced by `build_middleware` in `raptix.intelligence.agents.build`; without it, an override raises `SafetyOverrideViolation`. Replacement is fine if the new middleware honours the same contract — the gate exists so an accidentally-installed plugin can't silently subvert the safety story.
 
 ### Stack per Agent Role
 
-Each diagram lists the slots a role instantiates, in `MiddlewareSlot` enum order (the order they wrap each call). `HITLApproval` appears in the bash-agent and orchestrator stacks but is opt-in — skipped at runtime unless `DECEPTICON_HITL__ENABLED` is truthy.
+Each diagram lists the slots a role instantiates, in `MiddlewareSlot` enum order (the order they wrap each call). `HITLApproval` appears in the bash-agent and orchestrator stacks but is opt-in — skipped at runtime unless `RAPTIX_HITL__ENABLED` is truthy.
 
-**Decepticon (Orchestrator)** — full stack with engagement context, sub-agent dispatch, and per-objective model override. No `SandboxNotification`.
+**Raptix (Orchestrator)** — full stack with engagement context, sub-agent dispatch, and per-objective model override. No `SandboxNotification`.
 
 ```
 EngagementContext → RoEEnforcement → HITLApproval → UntrustedOutput → PromptInjectionShield

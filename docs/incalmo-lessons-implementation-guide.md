@@ -12,7 +12,7 @@
 
 ## Global rules (recap — full text in AGENTS.md)
 
-- **Never touch** the exploit-execution path (`tools/bash/*`, sandbox dispatch, Sliver/msf/impacket) or the guardrail stack (`SafeCommand`, `middleware/roe.py`, `EngagementContext`, `middleware/egress.py`, `middleware/hitl.py`, `.semgrep/decepticon-no-*`).
+- **Never touch** the exploit-execution path (`tools/bash/*`, sandbox dispatch, Sliver/msf/impacket) or the guardrail stack (`SafeCommand`, `middleware/roe.py`, `EngagementContext`, `middleware/egress.py`, `middleware/hitl.py`, `.semgrep/raptix-no-*`).
 - **Fail-safe hooks**: any post-tool hook wraps work in try/except and returns the original tool result unchanged on error — a hook failure can never break/alter/delay tool execution.
 - **KG is canonical**; auto-ingest is an added trusted write path, not a second source of truth.
 - **Per WP**: one ADR (`docs/adr/`, follow 0001/0002) + one PR ≤400 runtime lines / ≤10 files / one concern.
@@ -34,7 +34,7 @@
 4. **WP-L2b** (extend parsers) — narrow; only real gaps.
 5. **WP-L9** (structure knob) — lowest; likely defer until an in-scope toggle exists.
 
-Repo anchors: middleware use `wrap_tool_call`/`awrap_tool_call`/`after_model`/`wrap_model_call` hooks (see `middleware/kg.py`, `middleware/event_logging.py`); `KGMiddleware` (`middleware/kg.py`) provides `kg_ingest`, KG-context injection (`_inject_kg_context`), and `KGStore` (`middleware/kg_internal/store.py`). Its scoped scanner adapters live in `middleware/kg_internal/ingest.py` (nmap/httpx/nuclei/SARIF); the broader legacy `kg_ingest_*` tools in `tools/research/tools.py` use a compatibility shim. `MiddlewareSlot` and `SLOTS_PER_ROLE` live in `decepticon_core.contracts.slots`, default factories in `agents/middleware_slots.py`, assembled by `agents/build.py::build_middleware`. Scanner files live in the HTTP sandbox, not the LangGraph container.
+Repo anchors: middleware use `wrap_tool_call`/`awrap_tool_call`/`after_model`/`wrap_model_call` hooks (see `middleware/kg.py`, `middleware/event_logging.py`); `KGMiddleware` (`middleware/kg.py`) provides `kg_ingest`, KG-context injection (`_inject_kg_context`), and `KGStore` (`knowledge/graph/store.py`). Its scoped scanner adapters live in `knowledge/graph/ingest.py` (nmap/httpx/nuclei/SARIF); the broader legacy `kg_ingest_*` tools in `tools/research/tools.py` use a compatibility shim. `MiddlewareSlot` and `SLOTS_PER_ROLE` live in `raptix_core.contracts.slots`, default factories in `agents/middleware_slots.py`, assembled by `agents/build.py::build_middleware`. Scanner files live in the HTTP sandbox, not the LangGraph container.
 
 ---
 
@@ -46,10 +46,10 @@ call `kg_ingest`. This makes downstream state trustworthy (kills a class of
 "claimed progress but KG empty" loops).
 
 **In scope**
-- New middleware `packages/decepticon/decepticon/middleware/kg_autoingest.py`.
-- Register a new `MiddlewareSlot` member + add it to `SLOTS_PER_ROLE` for network roles only (`recon`, `exploit`, `postexploit`, `ad_operator`, `cloud_hunter`) in `decepticon_core.contracts.slots`.
+- New middleware `packages/raptix/raptix/middleware/kg_autoingest.py`.
+- Register a new `MiddlewareSlot` member + add it to `SLOTS_PER_ROLE` for network roles only (`recon`, `exploit`, `postexploit`, `ad_operator`, `cloud_hunter`) in `raptix_core.contracts.slots`.
 - Register its default factory in `agents/middleware_slots.py`; `agents/build.py::build_middleware` assembles it without special-case logic.
-- A **curated allowlist** mapping `{tool/command signature → existing scoped adapter}` in `middleware/kg_internal/ingest.py`, without modifying legacy parsers.
+- A **curated allowlist** mapping `{tool/command signature → existing scoped adapter}` in `knowledge/graph/ingest.py`, without modifying legacy parsers.
 
 **Out of scope (do NOT touch)**
 - `tools/bash/*`, sandbox dispatch, any guardrail middleware.
@@ -62,7 +62,7 @@ call `kg_ingest`. This makes downstream state trustworthy (kills a class of
   2. `try:` detect a successful foreground tool call from `request`; locate its output — prefer an explicit absolute workspace file (`nmap -oX <f>`, `nuclei -jsonl -o <f>`, `httpx -json -o <f>`); read bounded bytes via the HTTP sandbox and call the matching scoped adapter. For nmap XML stdout, capture bounded text to a temp file, ingest, delete.
   3. `except Exception:` log at debug; **always `return result`** (original, unchanged).
 - Start with `nmap`, `httpx`, `nuclei`: their scoped KGStore adapters already exist. Do not assume legacy `masscan`, `subfinder`, `crackmapexec` parsers are interchangeable; leave them manual until a safe scoped write path and output location are verified.
-- Gate behind `DECEPTICON_KG_AUTOINGEST` (default **off** for initial release; enable with `=1` after validation in a test engagement).
+- Gate behind `RAPTIX_KG_AUTOINGEST` (default **off** for initial release; enable with `=1` after validation in a test engagement).
 
 **Honest caveats**
 - The hard part is *reliably locating tool output*; the existing ingesters are file-path based. Only auto-ingest where the output path is unambiguous. Bound any temp-file work; never block on it.
@@ -81,10 +81,10 @@ post-tool middleware that calls the scoped KGStore adapters after allowlisted
 network scanners (nmap/httpx/nuclei).
 New file `middleware/kg_autoingest.py` implementing `awrap_tool_call` that runs the
 tool via `handler`, then ingests in a try/except that ALWAYS returns the original
-result unchanged. Register a new `MiddlewareSlot` in `decepticon_core.contracts.slots`
+result unchanged. Register a new `MiddlewareSlot` in `raptix_core.contracts.slots`
 (network roles only) and its factory in `agents/middleware_slots.py`. Reuse existing
-`middleware/kg_internal/ingest.py` adapters; do not modify `tools/bash/*` or guardrails.
-Gate on `DECEPTICON_KG_AUTOINGEST` (default off). Write an ADR (`docs/adr/`) and T0
+`knowledge/graph/ingest.py` adapters; do not modify `tools/bash/*` or guardrails.
+Gate on `RAPTIX_KG_AUTOINGEST` (default off). Write an ADR (`docs/adr/`) and T0
 unit tests including a fail-safe test (ingester raises → tool result unchanged, no
 exception) + a T1 replay test. One PR ≤400 runtime lines, one concern. Follow
 `../AGENTS.md` non-negotiables.
@@ -138,7 +138,7 @@ action is blocked. One PR ≤400 lines, one concern. Follow `../AGENTS.md`.
 **Objective.** Reduce parse/format failures at decision points by enforcing
 structured output at the model-call seam.
 
-**Reality check (why investigate-first).** Decepticon has **no explicit decode seam** —
+**Reality check (why investigate-first).** Raptix has **no explicit decode seam** —
 tool-calling is delegated to `langchain.agents.create_agent`. LangChain function-calling
 already validates the tool schema, so the marginal value is smaller than for a raw
 text-tag agent, and **it only fixes format, not decision quality**. Provider support
@@ -163,7 +163,7 @@ for grammar/JSON-schema varies across the LiteLLM fleet.
 <details><summary>Sub-agent brief (paste)</summary>
 
 Do WP-L6 from the guide, INVESTIGATE-FIRST. Step 1: write a short memo mapping
-Decepticon's model-call/tool-calling path (`agents/build.py` create_agent, `llm/`,
+Raptix's model-call/tool-calling path (`agents/build.py` create_agent, `llm/`,
 `wrap_model_call` middleware) and measure the current parse/format-error rate from
 logs. Only if a clean provider-agnostic seam exists AND errors are non-negligible,
 Step 2: add a `wrap_model_call` middleware enforcing provider-side structured output,
@@ -208,7 +208,7 @@ node type is needed, invoke the `graph-db-writes` skill and edit `graph_db/schem
 ## WP-L9 — Per-role structure knob (lowest priority; likely defer)  ·  Value: Low · Risk: Low
 
 **Objective.** A per-role config to dial *interface structure* (distinct from
-`DECEPTICON_MODEL_PROFILE`, which is model tier). Default = current behavior (no-op).
+`RAPTIX_MODEL_PROFILE`, which is model tier). Default = current behavior (no-op).
 
 **Recommendation: DEFER.** A structure knob is only meaningful once there is an
 in-scope, structured alternative to toggle (e.g. once L1/L3 exist — both OUT of scope).
@@ -216,13 +216,13 @@ Adding an inert knob now is config surface with no payoff. Deliver a one-paragra
 recording the decision unless a specific in-scope safe change needs the toggle.
 
 **If built anyway**: a config field + read site, default no-op; **must not** be
-conflated with `DECEPTICON_MODEL_PROFILE`. Flag-gated, T0 test that default = current
+conflated with `RAPTIX_MODEL_PROFILE`. Flag-gated, T0 test that default = current
 behavior.
 
 <details><summary>Sub-agent brief (paste)</summary>
 
 WP-L9 is DEFER by default: write a one-paragraph note that a per-role structure knob
-(distinct from `DECEPTICON_MODEL_PROFILE`) has no payoff until an in-scope structured
+(distinct from `RAPTIX_MODEL_PROFILE`) has no payoff until an in-scope structured
 alternative exists (L1/L3 are out of scope). Only implement if a specific in-scope
 change needs the toggle; if so, add a default-no-op config field + T0 test. Follow `../AGENTS.md`.
 </details>
@@ -233,11 +233,11 @@ change needs the toggle; if so, add a default-no-op config field + T0 test. Foll
 
 | WP | In scope (files) | Never touch | Value | Risk | Effort | Dispatch |
 |----|------------------|-------------|-------|------|--------|----------|
-| **L2a** | new `middleware/kg_autoingest.py`, `decepticon_core/contracts/slots.py`, `agents/middleware_slots.py` | `tools/bash/*`, guardrails, `middleware/kg.py` logic | High | Low | Low-Med | 1st |
+| **L2a** | new `middleware/kg_autoingest.py`, `raptix_core/contracts/slots.py`, `agents/middleware_slots.py` | `tools/bash/*`, guardrails, `middleware/kg.py` logic | High | Low | Low-Med | 1st |
 | **L7-obs** | `middleware/kg.py::_inject_kg_context`, `tools/research/chain.py`/`_state.py`, `KGStore` | any blocking/gating | Med | Med | Low | 2nd |
 | **L6** | memo → maybe `wrap_model_call` middleware, `agents/build.py`, `llm/` | decision content, LiteLLM routing | Med (format) | Low | Med | 3rd (may defer) |
 | **L2b** | `tools/research/tools.py`, (maybe) `graph_db/schema_keys.py` | existing ingesters | Med | Med | Ongoing | 4th |
-| **L9** | config field (default no-op) | `DECEPTICON_MODEL_PROFILE` semantics | Low | Low | Low | defer |
+| **L9** | config field (default no-op) | `RAPTIX_MODEL_PROFILE` semantics | Low | Low | Low | defer |
 
 **Orchestration note (for the human dispatcher):** hand each WP to a separate
 sub-agent as its own ADR + PR. Do not let one sub-agent bundle two WPs (violates

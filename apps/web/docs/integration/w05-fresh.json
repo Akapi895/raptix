@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "lane": "fresh",
+  "workspace": "C:\\Users\\tuanp\\AppData\\Local\\Temp\\opencode\\raptix-w05-fresh-1790905771008",
+  "migration": {
+    "preservedRows": 15,
+    "beforeHash": "576a7a8c7ce78f2dfa2b51ca8af37510be2537b2640308ce9314881c975b4ca4",
+    "afterHash": "576a7a8c7ce78f2dfa2b51ca8af37510be2537b2640308ce9314881c975b4ca4",
+    "preservedMigrationChecksums": 4
+  },
+  "steps": [
+    {
+      "command": "cmd.exe /d /c npm run prisma:migrate",
+      "exitCode": 0
+    },
+    {
+      "command": "C:\\Users\\tuanp\\AppData\\Local\\Author Software\\nvm\\installs\\v24.18.0\\node.exe --import tsx tests/w05-live.ts",
+      "exitCode": 0
+    }
+  ],
+  "checks": [
+    "owned immutable/context-bound thread identity, concurrent binding, unproven legacy pointer and target lock",
+    "six concurrent first-binding/target-PATCH races cannot bind a stale target",
+    "12 concurrent duplicate intents reserve once; stable canonical fingerprint and different intent conflicts",
+    "private reservation token, uncertainty retains active slot, acceptance idempotence, verified-run release and no rejected replay",
+    "multiple planning/execution threads, independent thread slots, stale creating becomes uncertain without releasing reservation",
+    "two distinct concurrent intents on one thread have one durable active-slot winner",
+    "persisted client recreation and real route recovery; no token/context/path/payload leaks, cross-owner denial and no submission API",
+    "persisted context mismatch fails closed instead of rebinding a hydrated thread"
+  ],
+  "engagementId": "cmuqb22ar0001bsficpp1iez4",
+  "requestId": "restart-4eeff9fb-7ffb-45cf-ab5e-b1b04f7d78e4",
+  "accepted": {
+    "engagementId": "cmuqb22940000bsfi9dts2z9n",
+    "requestId": "intent-4eeff9fb-7ffb-45cf-ab5e-b1b04f7d78e4",
+    "runId": "d8f74799-af48-48a5-9944-23bdc84f826f"
+  },
+  "processRestart": {
+    "initial": "creating",
+    "restarted": "uncertain",
+    "acceptedRunPreserved": true
+  }
+}

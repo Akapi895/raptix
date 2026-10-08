@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────────────
-# Decepticon — Windows installer (PowerShell)
+# Raptix — Windows installer (PowerShell)
 #
 # The Windows-native counterpart of scripts/install.sh. Windows 10/11 ship
 # Windows PowerShell 5.1; this script also runs unchanged under PowerShell 7+.
@@ -8,16 +8,16 @@
 #   irm https://decepticon.red/install.ps1 | iex
 #
 # Environment variables:
-#   DECEPTICON_VERSION   — install a specific version (default: latest)
-#   DECEPTICON_HOME      — install directory (default: %USERPROFILE%\.decepticon)
+#   RAPTIX_VERSION   — install a specific version (default: latest)
+#   RAPTIX_HOME      — install directory (default: %USERPROFILE%\.raptix)
 #   SKIP_PULL            — set to "true" to skip the Docker image pull
-#   DECEPTICON_SKIP_VERIFY — set to "1" to opt out of checksum verification
+#   RAPTIX_SKIP_VERIFY — set to "1" to opt out of checksum verification
 # ─────────────────────────────────────────────────────────────────────
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$Repo        = 'BitterSecurity/Decepticon'
+$Repo        = 'Akapi895/raptix'
 $Branch      = if ($env:BRANCH) { $env:BRANCH } else { 'main' }
 $RawBase     = "https://raw.githubusercontent.com/$Repo/$Branch"
 $ReleaseBase = "https://github.com/$Repo/releases/download"
@@ -64,15 +64,15 @@ function Get-Arch {
 
 # ── Version resolution ───────────────────────────────────────────────
 function Resolve-Version {
-    if ($env:DECEPTICON_VERSION) { return $env:DECEPTICON_VERSION }
+    if ($env:RAPTIX_VERSION) { return $env:RAPTIX_VERSION }
     Write-Info 'Fetching latest version...'
     try {
         $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/$Repo/releases/latest" `
-            -Headers @{ 'User-Agent' = 'decepticon-installer' }
+            -Headers @{ 'User-Agent' = 'raptix-installer' }
         return ($rel.tag_name -replace '^v', '')
     } catch {
         Write-Err 'Could not resolve a release version automatically.'
-        Write-Err "Set DECEPTICON_VERSION explicitly from https://github.com/$Repo/releases"
+        Write-Err "Set RAPTIX_VERSION explicitly from https://github.com/$Repo/releases"
         exit 1
     }
 }
@@ -84,8 +84,8 @@ function Assert-Sha256 {
     param($Path, $Expected, $Label)
     if (-not $Expected) {
         Write-Err "Integrity check failed: no checksum recorded for $Label."
-        if ($env:DECEPTICON_SKIP_VERIFY -eq '1') {
-            Write-Warn '  -> skipping verification (DECEPTICON_SKIP_VERIFY=1).'
+        if ($env:RAPTIX_SKIP_VERIFY -eq '1') {
+            Write-Warn '  -> skipping verification (RAPTIX_SKIP_VERIFY=1).'
             return
         }
         exit 1
@@ -102,7 +102,7 @@ function Assert-Sha256 {
 # ── Main ─────────────────────────────────────────────────────────────
 function Main {
     Write-Host ''
-    Write-Host 'Decepticon' -ForegroundColor White -NoNewline
+    Write-Host 'Raptix' -ForegroundColor White -NoNewline
     Write-Host ' - Windows Installer'
     Write-Host ''
 
@@ -110,47 +110,59 @@ function Main {
 
     $version    = Resolve-Version
     $arch       = Get-Arch
-    $installDir = if ($env:DECEPTICON_HOME) { $env:DECEPTICON_HOME } else { Join-Path $env:USERPROFILE '.decepticon' }
+    $installDir = if ($env:RAPTIX_HOME) { $env:RAPTIX_HOME } else { Join-Path $env:USERPROFILE '.raptix' }
     $binDir     = Join-Path $installDir 'bin'
 
-    Write-Info "Installing Decepticon $version  (windows/$arch)"
+    Write-Info "Installing Raptix $version  (windows/$arch)"
     Write-Info "Directory: $installDir"
     Write-Host ''
 
-    New-Item -ItemType Directory -Force -Path $installDir, $binDir, (Join-Path $installDir 'config'), (Join-Path $installDir 'workspace') | Out-Null
+    New-Item -ItemType Directory -Force -Path $installDir, $binDir, (Join-Path $installDir 'infra/config'), (Join-Path $installDir 'workspace') | Out-Null
 
     # ── Config files (pinned to the release tag) ─────────────────────
     $rawBase = "https://raw.githubusercontent.com/$Repo/v$version"
+    $stage = Join-Path $installDir '.config-stage'
+    New-Item -ItemType Directory -Force -Path $stage, (Join-Path $stage 'infra/config') | Out-Null
     Write-Info 'Downloading configuration files...'
-    Invoke-WebRequest -Uri "$rawBase/docker-compose.yml" -OutFile (Join-Path $installDir 'docker-compose.yml')
-    Invoke-WebRequest -Uri "$rawBase/.env.example"       -OutFile (Join-Path $installDir '.env.example')
-    Invoke-WebRequest -Uri "$rawBase/config/litellm.yaml" -OutFile (Join-Path $installDir 'config\litellm.yaml')
+    Invoke-WebRequest -Uri "$rawBase/docker-compose.yml" -OutFile (Join-Path $stage 'docker-compose.yml')
+    Invoke-WebRequest -Uri "$rawBase/docker-compose.web-raptix.yml" -OutFile (Join-Path $stage 'docker-compose.web-raptix.yml')
+    Invoke-WebRequest -Uri "$rawBase/.env.example"       -OutFile (Join-Path $stage '.env.example')
+    Invoke-WebRequest -Uri "$rawBase/infra/config/litellm.yaml" -OutFile (Join-Path $stage 'infra/config/litellm.yaml')
 
     # Verify config files against the release-pinned manifest.
-    if ($env:DECEPTICON_SKIP_VERIFY -ne '1') {
-        $manifestPath = Join-Path $installDir '.config-checksums.txt'
+    if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
+        $manifestPath = Join-Path $stage '.config-checksums.txt'
         try {
             Invoke-WebRequest -Uri "$ReleaseBase/v$version/config-checksums.txt" -OutFile $manifestPath
         } catch {
             Write-Err "Failed to download config-checksums.txt for v$version (pre-1.0.27 release?)."
-            Write-Err 'Install a newer release or set DECEPTICON_SKIP_VERIFY=1 to opt out.'
+            Write-Err 'Install a newer release or set RAPTIX_SKIP_VERIFY=1 to opt out.'
             exit 1
         }
         Write-Info 'Verifying configuration files against release manifest...'
+        if (-not (Select-String -LiteralPath $manifestPath -Pattern '^[0-9a-fA-F]{64}\s+\*?docker-compose\.web-raptix\.yml$' -Quiet)) {
+            Write-Err 'Release manifest does not cover docker-compose.web-raptix.yml; use a new-stack release.'
+            exit 1
+        }
         foreach ($line in Get-Content $manifestPath) {
             $parts = $line -split '\s+', 2 | Where-Object { $_ }
             if ($parts.Count -ne 2) { continue }
-            $target = Join-Path $installDir ($parts[1].Trim())
-            if (Test-Path $target) { Assert-Sha256 $target $parts[0].Trim() $parts[1].Trim() }
+            $target = Join-Path $stage ($parts[1].Trim())
+            if (-not (Test-Path $target)) { Write-Err "Manifest file missing: $($parts[1])"; exit 1 }
+            Assert-Sha256 $target $parts[0].Trim() $parts[1].Trim()
         }
         Remove-Item $manifestPath -ErrorAction SilentlyContinue
     }
+    foreach ($file in @('docker-compose.yml', 'docker-compose.web-raptix.yml', '.env.example', 'infra/config/litellm.yaml')) {
+        Move-Item -LiteralPath (Join-Path $stage $file) -Destination (Join-Path $installDir $file) -Force
+    }
+    Remove-Item -LiteralPath $stage -Recurse -Force
     Set-Content -Path (Join-Path $installDir '.version') -Value $version
     Write-Success 'Configuration files downloaded.'
 
     # ── Launcher binary ──────────────────────────────────────────────
-    $binaryName = "decepticon-windows-$arch.exe"
-    $binaryPath = Join-Path $binDir 'decepticon.exe'
+    $binaryName = "raptix-windows-$arch.exe"
+    $binaryPath = Join-Path $binDir 'raptix.exe'
     Write-Info "Downloading launcher binary ($binaryName)..."
     try {
         Invoke-WebRequest -Uri "$ReleaseBase/v$version/$binaryName" -OutFile $binaryPath
@@ -158,8 +170,8 @@ function Main {
         Write-Err "No launcher binary for windows/$arch in v$version."
         exit 1
     }
-    if ($env:DECEPTICON_SKIP_VERIFY -ne '1') {
-        $sumsPath = Join-Path $env:TEMP 'decepticon-checksums.txt'
+    if ($env:RAPTIX_SKIP_VERIFY -ne '1') {
+        $sumsPath = Join-Path $env:TEMP 'raptix-checksums.txt'
         try {
             Invoke-WebRequest -Uri "$ReleaseBase/v$version/checksums.txt" -OutFile $sumsPath
             $expected = $null
@@ -170,7 +182,7 @@ function Main {
             Remove-Item $sumsPath -ErrorAction SilentlyContinue
             Assert-Sha256 $binaryPath $expected $binaryName
         } catch {
-            Write-Err 'Failed to verify launcher binary; set DECEPTICON_SKIP_VERIFY=1 to opt out.'
+            Write-Err 'Failed to verify launcher binary; set RAPTIX_SKIP_VERIFY=1 to opt out.'
             exit 1
         }
     }
@@ -191,19 +203,19 @@ function Main {
         Write-Host ''
         Write-Info 'Pulling Docker images (this may take a few minutes)...'
         Push-Location $installDir
-        $env:DECEPTICON_VERSION = $version
-        $env:DECEPTICON_HOME    = $installDir
-        try { docker compose --profile cli pull } catch { Write-Warn 'Warning: failed to pull some images - run "decepticon update" later.' }
+        $env:RAPTIX_VERSION = $version
+        $env:RAPTIX_HOME    = $installDir
+        try { docker compose --profile cli pull } catch { Write-Warn 'Warning: failed to pull some images - run "raptix update" later.' }
         Pop-Location
     }
 
     Write-Host ''
     Write-Success '─────────────────────────────────────────────'
-    Write-Success '  Decepticon installed successfully!'
+    Write-Success '  Raptix installed successfully!'
     Write-Success '─────────────────────────────────────────────'
     Write-Host ''
-    Write-Host '  1. Configure your API keys:  ' -NoNewline; Write-Host 'decepticon onboard' -ForegroundColor White
-    Write-Host '  2. Start Decepticon:         ' -NoNewline; Write-Host 'decepticon' -ForegroundColor White
+    Write-Host '  1. Configure your API keys:  ' -NoNewline; Write-Host 'raptix onboard' -ForegroundColor White
+    Write-Host '  2. Start Raptix:         ' -NoNewline; Write-Host 'raptix' -ForegroundColor White
     Write-Host ''
     Write-Info '  Open a new terminal so the updated PATH takes effect.'
     Write-Host ''

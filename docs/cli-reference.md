@@ -4,28 +4,28 @@
 
 | Command | Description |
 |---------|-------------|
-| `decepticon` | Start the core services and open the terminal UI |
-| `decepticon onboard` | Interactive setup wizard (provider, API key, model profile, LangSmith) |
-| `decepticon onboard --reset` | Reconfigure even if `.env` already exists |
-| `decepticon stop` | Stop all services |
-| `decepticon status` | Show service status |
-| `decepticon logs [service]` | Follow service logs (default: `langgraph`) |
-| `decepticon kg-health` | Diagnose the Neo4j knowledge graph |
-| `decepticon update` | Explicitly refresh config files, Docker images, and the launcher binary when a release is available |
-| `decepticon remove` | Uninstall Decepticon completely |
-| `decepticon --version` | Show installed version |
+| `raptix` | Start the core services and open the terminal UI |
+| `raptix onboard` | Interactive setup wizard (provider, API key, model profile, LangSmith) |
+| `raptix onboard --reset` | Reconfigure even if `.env` already exists |
+| `raptix stop` | Stop all services |
+| `raptix status` | Show service status |
+| `raptix logs [service]` | Follow service logs (default: `langgraph`) |
+| `raptix kg-health` | Diagnose the Neo4j knowledge graph |
+| `raptix update` | Explicitly refresh config files, Docker images, and the launcher binary when a release is available |
+| `raptix remove` | Uninstall Raptix completely |
+| `raptix --version` | Show installed version |
 
 > **Web dashboard** is *dynamic-spawn* — it does **not** come up with the default stack. Start it from inside the CLI with the `/web` slash command (which runs `docker compose --profile web up -d web`), then open `http://localhost:3000` (configurable via `WEB_PORT` in `.env`). See [Web Dashboard](web-dashboard.md).
 
-### `decepticon logs` — Service names
+### `raptix logs` — Service names
 
 ```bash
-decepticon logs             # langgraph (default)
-decepticon logs litellm     # LiteLLM proxy
-decepticon logs postgres    # PostgreSQL
-decepticon logs neo4j       # Neo4j graph database
-decepticon logs sandbox     # Kali Linux sandbox
-decepticon logs web         # Web dashboard
+raptix logs             # langgraph (default)
+raptix logs litellm     # LiteLLM proxy
+raptix logs postgres    # PostgreSQL
+raptix logs neo4j       # Neo4j graph database
+raptix logs sandbox     # Kali Linux sandbox
+raptix logs web         # Web dashboard
 ```
 
 ---
@@ -90,7 +90,7 @@ Available inside the interactive terminal UI:
 
 ## Environment Variables
 
-These can be set in your `.env` file (configure with `decepticon onboard`) or as shell environment variables.
+These can be set in your `.env` file (configure with `raptix onboard`) or as shell environment variables.
 
 ### Required (at least one LLM key)
 
@@ -105,14 +105,14 @@ These can be set in your `.env` file (configure with `decepticon onboard`) or as
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DECEPTICON_MODEL_PROFILE` | `eco` | Tier preset: `eco` (per-agent), `max` (all HIGH), or `test` (all LOW) |
-| `DECEPTICON_AUTH_PRIORITY` | (built-in order; see [Models](models.md)) | Comma-separated AuthMethod priority — first method primary, rest are fallbacks. When unset, the factory's built-in `_DEFAULT_AUTH_PRIORITY` order applies. Methods whose credential isn't configured are skipped at runtime. |
-| `DECEPTICON_AUTH_CLAUDE_CODE` | `false` | Set `true` to route Anthropic models via Claude Code OAuth (`auth/claude-*` in LiteLLM) |
-| `DECEPTICON_AUTH_CHATGPT` | `false` | Set `true` to route OpenAI models via ChatGPT subscription OAuth (`auth/gpt-*`) |
-| `DECEPTICON_AUTH_GEMINI` | `false` | Set `true` to route Google models via Gemini Advanced OAuth (`gemini-sub/*`) |
-| `DECEPTICON_AUTH_COPILOT` | `false` | Set `true` for Microsoft Copilot Pro OAuth (`copilot/*`) |
-| `DECEPTICON_AUTH_GROK` | `false` | Set `true` for xAI SuperGrok OAuth (`grok-sub/*`) |
-| `DECEPTICON_AUTH_PERPLEXITY` | `false` | Set `true` for Perplexity Pro OAuth (`pplx-sub/*`) |
+| `RAPTIX_MODEL_PROFILE` | `eco` | Tier preset: `eco` (per-agent), `max` (all HIGH), or `test` (all LOW) |
+| `RAPTIX_AUTH_PRIORITY` | (built-in order; see [Models](models.md)) | Comma-separated AuthMethod priority — first method primary, rest are fallbacks. When unset, the factory's built-in `_DEFAULT_AUTH_PRIORITY` order applies. Methods whose credential isn't configured are skipped at runtime. |
+| `RAPTIX_AUTH_CLAUDE_CODE` | `false` | Set `true` to route Anthropic models via Claude Code OAuth (`auth/claude-*` in LiteLLM) |
+| `RAPTIX_AUTH_CHATGPT` | `false` | Set `true` to route OpenAI models via ChatGPT subscription OAuth (`auth/gpt-*`) |
+| `RAPTIX_AUTH_GEMINI` | `false` | Set `true` to route Google models via Gemini Advanced OAuth (`gemini-sub/*`) |
+| `RAPTIX_AUTH_COPILOT` | `false` | Set `true` for Microsoft Copilot Pro OAuth (`copilot/*`) |
+| `RAPTIX_AUTH_GROK` | `false` | Set `true` for xAI SuperGrok OAuth (`grok-sub/*`) |
+| `RAPTIX_AUTH_PERPLEXITY` | `false` | Set `true` for Perplexity Pro OAuth (`pplx-sub/*`) |
 | `OLLAMA_API_BASE` / `OLLAMA_MODEL` | unset | When set, registers `ollama_chat/<OLLAMA_MODEL>` and enables the `ollama_local` AuthMethod |
 
 See [Models](models.md) for the full Tier × AuthMethod matrix and chain examples.
@@ -121,10 +121,10 @@ See [Models](models.md) for the full Tier × AuthMethod matrix and chain example
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `LITELLM_MASTER_KEY` | `sk-decepticon-master` | LiteLLM proxy auth key |
-| `LITELLM_SALT_KEY` | `sk-decepticon-salt-change-me` | LiteLLM salt (change in production) |
-| `POSTGRES_PASSWORD` | `decepticon` | PostgreSQL password |
-| `NEO4J_PASSWORD` | `decepticon-graph` | Neo4j password |
+| `LITELLM_MASTER_KEY` | `sk-raptix-master` | LiteLLM proxy auth key |
+| `LITELLM_SALT_KEY` | `sk-raptix-salt-change-me` | LiteLLM salt (change in production) |
+| `POSTGRES_PASSWORD` | `raptix` | PostgreSQL password |
+| `NEO4J_PASSWORD` | `raptix-graph` | Neo4j password |
 
 ### Ports (optional)
 
@@ -154,10 +154,10 @@ Currently allowlisted workloads (the agent can call `ops_start("X")` for any of 
 |----------|-------------|
 | `LANGSMITH_TRACING` | Set to `true` to enable LangSmith tracing |
 | `LANGSMITH_API_KEY` | LangSmith API key |
-| `LANGSMITH_PROJECT` | LangSmith project name (default: `decepticon`) |
+| `LANGSMITH_PROJECT` | LangSmith project name (default: `raptix`) |
 
 ### Debug
 
 | Variable | Description |
 |----------|-------------|
-| `DECEPTICON_DEBUG` | Set to `true` for verbose debug output |
+| `RAPTIX_DEBUG` | Set to `true` for verbose debug output |

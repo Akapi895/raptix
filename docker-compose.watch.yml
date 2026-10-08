@@ -14,54 +14,76 @@ services:
       watch:
         - action: sync
           # Phase 0 of the core/framework/sdk split relocated the source
-          # tree to packages/decepticon/decepticon/. The Dockerfile
+          # tree to packages/raptix/raptix/. The Dockerfile
           # COPY now pulls packages/, and uv sync installs editable from
           # there — hot-reload mirrors the same path inside the image.
-          # Skills live under packages/decepticon/decepticon/skills,
-          # so this sync covers them too — no dedicated entry needed.
-          path: ./packages/decepticon/decepticon
-          target: /app/packages/decepticon/decepticon
+          path: ./packages/raptix/raptix
+          target: /app/packages/raptix/raptix
         - action: sync
-          # decepticon-core changes also live-sync into the editable
+          # raptix-core changes also live-sync into the editable
           # install so plugin registry / role registry tweaks land
           # without a full image rebuild.
-          path: ./packages/decepticon-core/decepticon_core
-          target: /app/packages/decepticon-core/decepticon_core
+          path: ./packages/raptix-core/raptix_core
+          target: /app/packages/raptix-core/raptix_core
+        - action: sync
+          # The skill corpus moved to its own workspace member in W9
+          # (packages/raptix-skills); sync it so SKILL.md edits
+          # hot-reload like the runtime tree.
+          path: ./packages/raptix-skills/raptix_skills
+          target: /app/packages/raptix-skills/raptix_skills
         - action: sync
           path: ./langgraph.json
           target: /app/langgraph.json
+        - action: sync
+          path: ./plugins
+          target: /app/plugins
+          ignore:
+            - "**/pyproject.toml"
+            - "**/__pycache__/"
+            - "**/tests/"
+        - action: rebuild
+          path: ./plugins/contracts/pyproject.toml
+        - action: rebuild
+          path: ./plugins/reversing/pyproject.toml
+        - action: rebuild
+          path: ./plugins/mobile/pyproject.toml
+        - action: rebuild
+          path: ./plugins/iot/pyproject.toml
+        - action: rebuild
+          path: ./plugins/ics/pyproject.toml
+        - action: rebuild
+          path: ./plugins/wireless/pyproject.toml
+        - action: rebuild
+          path: ./plugins/cloud/pyproject.toml
+        - action: rebuild
+          path: ./plugins/phishing/pyproject.toml
+        - action: rebuild
+          path: ./plugins/active-directory/pyproject.toml
+        - action: rebuild
+          path: ./plugins/web/pyproject.toml
+        - action: rebuild
+          path: ./plugins/network/pyproject.toml
         - action: rebuild
           # Any workspace pyproject change forces a rebuild — uv sync
           # must re-resolve the dependency closure.
           path: ./pyproject.toml
         - action: rebuild
-          path: ./packages/decepticon/pyproject.toml
+          path: ./packages/raptix/pyproject.toml
         - action: rebuild
-          path: ./packages/decepticon-core/pyproject.toml
+          path: ./packages/raptix-core/pyproject.toml
         - action: rebuild
-          path: ./containers/langgraph.Dockerfile
+          path: ./infra/containers/langgraph.Dockerfile
 
-  web:
-    develop:
-      watch:
-        - action: sync
-          path: ./clients/web/src
-          target: /app/clients/web/src
-        - action: sync
-          path: ./clients/web/public
-          target: /app/clients/web/public
-        - action: rebuild
-          path: ./clients/web/package.json
-        - action: rebuild
-          path: ./containers/web.Dockerfile
+  # web service: retired with W20 — the web-raptix stack has its own
+  # Vite dev server (make webraptix-dev) outside compose watch.
 
   cli:
     develop:
       watch:
         - action: sync
-          path: ./clients/cli/src
+          path: ./apps/cli/src
           target: /app/src
         - action: rebuild
-          path: ./clients/cli/package.json
+          path: ./apps/cli/package.json
         - action: rebuild
-          path: ./containers/cli.Dockerfile
+          path: ./infra/containers/cli.Dockerfile

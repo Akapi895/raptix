@@ -33,7 +33,7 @@ existing CODEOWNERS strategy already say so. This ADR makes the bar
 ## Decision
 
 We adopt `docs/QUALITY_BAR.md` as the closed contract for what
-"100% quality" means for Decepticon. The bar:
+"100% quality" means for Raptix. The bar:
 
 1. Restates the [Karpathy Four](../QUALITY_BAR.md#the-karpathy-four)
    (Think Before Coding / Simplicity First / Surgical Changes /
@@ -95,7 +95,7 @@ it is closed for the same reasons.
   Rejected — ADR-0003 is a process document; the bar is a code
   document. Mixing the two dilutes both.
 - **CI-enforce every banned pattern via linters / semgrep rules.**
-  Partial adoption (some patterns *are* in `.semgrep/decepticon-rules.yml`),
+  Partial adoption (some patterns *are* in `.semgrep/raptix-rules.yml`),
   but rejected as a sole strategy: many slop signatures (vague test
   names, premature kwargs, single-use helpers, comments that
   translate the next line) are review-judgment calls. Pretending a
@@ -106,7 +106,7 @@ it is closed for the same reasons.
   PR that doesn't is not. Per-author tiering creates a political
   surface this project does not need.
 - **Reject all AI-assisted PRs.** Rejected as unenforceable and
-  philosophically inconsistent with what Decepticon *is*. The right
+  philosophically inconsistent with what Raptix *is*. The right
   move is to demand the assisting human do the work the assistant
   cannot.
 

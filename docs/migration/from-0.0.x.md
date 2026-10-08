@@ -1,6 +1,6 @@
-# Migration: `decepticon` 0.0.x → core/framework/sdk split
+# Migration: `raptix` 0.0.x → core/framework/sdk split
 
-The Decepticon OSS package split into three coordinated wheels in the
+The Raptix OSS package split into three coordinated wheels in the
 post-0.0.x cycle. The redesign is documented in full at
 [`docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md`](../superpowers/specs/2026-05-23-core-framework-sdk-split-design.md);
 this guide is the consumer-facing migration list.
@@ -8,20 +8,20 @@ this guide is the consumer-facing migration list.
 ## What changed
 
 ```text
-decepticon                         (was: monolithic wheel)
+raptix                         (was: monolithic wheel)
     │
-    ├── decepticon-core            NEW — contract layer (pure types,
+    ├── raptix-core            NEW — contract layer (pure types,
     │                                    protocols, registries, plugin
     │                                    contracts). Zero langchain /
     │                                    langgraph / deepagents runtime
     │                                    dependency.
     │
-    ├── decepticon                 the opinionated framework (16 agent
+    ├── raptix                 the opinionated framework (16 agent
     │                              factories, 11 middleware impls,
     │                              tools, LLM router, sandbox client).
-    │                              Depends on decepticon-core.
+    │                              Depends on raptix-core.
     │
-    └── decepticon-sdk             NEW — plugin author entrypoint.
+    └── raptix-sdk             NEW — plugin author entrypoint.
                                    Re-exports the core public API +
                                    pytest fixtures + scaffolding CLI.
 ```
@@ -31,32 +31,32 @@ Pin-and-install advice:
 | Consumer | Install | Why |
 |----------|---------|-----|
 | End-user running the stack | unchanged — Docker images bundle all three | identical UX |
-| Library consumer (commercial product, downstream framework) | `pip install decepticon` | composes agents, ships custom bundles |
-| Plugin author (community / commercial) | `pip install decepticon-sdk` | protocols + scaffolding + fixtures |
-| Type-check-only context | `pip install decepticon-core` | zero runtime deps; cheapest pin |
+| Library consumer (commercial product, downstream framework) | `pip install raptix` | composes agents, ships custom bundles |
+| Plugin author (community / commercial) | `pip install raptix-sdk` | protocols + scaffolding + fixtures |
+| Type-check-only context | `pip install raptix-core` | zero runtime deps; cheapest pin |
 
 ## Import-path mapping
 
 Every legacy path keeps working for one release via the Phase 1
 shim layer. `decepticon.compat.register_legacy_imports()` runs at
-import time of `decepticon` and emits a single `DeprecationWarning`
+import time of `raptix` and emits a single `DeprecationWarning`
 listing the table below so the migration list shows up in test logs.
 
-Opt out of the warning with `DECEPTICON_NO_COMPAT=1` in the environment.
+Opt out of the warning with `RAPTIX_NO_COMPAT=1` in the environment.
 
 | Legacy path | Canonical path |
 |-------------|----------------|
-| `decepticon.core.schemas` | `decepticon_core.types.engagement` |
-| `decepticon.llm.models` | `decepticon_core.types.llm` |
-| `decepticon.tools.research.graph` | `decepticon_core.types.kg` |
-| `decepticon.plugin_loader` | `decepticon_core.plugin_loader` |
-| `decepticon.core.config` | `decepticon_core.utils.config` |
-| `decepticon.core.logging` | `decepticon_core.utils.logging` |
-| `decepticon.agents.middleware_slots.MiddlewareSlot` | `decepticon_core.contracts.slots.MiddlewareSlot` |
-| `decepticon.agents.middleware_slots.SAFETY_CRITICAL_SLOTS` | `decepticon_core.contracts.slots.SAFETY_CRITICAL_SLOTS` |
-| `decepticon.agents.middleware_slots.SLOTS_PER_ROLE` | `decepticon_core.contracts.slots.SLOTS_PER_ROLE` |
+| `raptix.core.schemas` | `raptix_core.types.engagement` |
+| `raptix.llm.models` | `raptix_core.types.llm` |
+| `raptix.tools.research.graph` | `raptix_core.types.kg` |
+| `raptix.plugin_loader` | `raptix_core.plugin_loader` |
+| `raptix.core.config` | `raptix_core.utils.config` |
+| `raptix.core.logging` | `raptix_core.utils.logging` |
+| `raptix.agents.middleware_slots.MiddlewareSlot` | `raptix_core.contracts.slots.MiddlewareSlot` |
+| `raptix.agents.middleware_slots.SAFETY_CRITICAL_SLOTS` | `raptix_core.contracts.slots.SAFETY_CRITICAL_SLOTS` |
+| `raptix.agents.middleware_slots.SLOTS_PER_ROLE` | `raptix_core.contracts.slots.SLOTS_PER_ROLE` |
 
-The framework's `decepticon.agents.middleware_slots` module keeps the
+The framework's `raptix.agents.middleware_slots` module keeps the
 `DEFAULT_SLOT_FACTORIES` and `skills_sources_for()` exports (those
 need langchain at import time, so they stay framework-side).
 
@@ -64,13 +64,13 @@ The shims are **removed at `2.0.0`** — migrate before then.
 
 ## New public surface for plugin authors
 
-Plugin authors should import from `decepticon_sdk`:
+Plugin authors should import from `raptix_sdk`:
 
 ```python
 # One import covers protocols, contributions, registries, plugin
 # loader contracts, and slot definitions. Spec §6.3 — the "single
 # import line" promise of the SDK package.
-from decepticon_sdk import (
+from raptix_sdk import (
     # Runtime-checkable protocols
     BackendProtocol, MiddlewareProtocol, ToolProtocol,
     CallbackProtocol, LLMProtocol, SandboxProtocol, AgentProtocol,
@@ -90,10 +90,10 @@ from decepticon_sdk import (
 )
 ```
 
-Test fakes live under `decepticon_sdk.testing`:
+Test fakes live under `raptix_sdk.testing`:
 
 ```python
-from decepticon_sdk.testing import FakeBackend, FakeLLM, FakeSandbox
+from raptix_sdk.testing import FakeBackend, FakeLLM, FakeSandbox
 
 backend = FakeBackend({"/skills/recon/index.md": "..."})
 llm = FakeLLM(responses=["mocked output"])
@@ -112,7 +112,7 @@ are sorted by descending prefix length so the longest match wins —
 tenant-specific paths override generic defaults deterministically.
 
 ```python
-from decepticon.backends import make_agent_backend
+from raptix.backends import make_agent_backend
 
 backend = make_agent_backend(
     sandbox,
@@ -130,7 +130,7 @@ and LLM factory see them as first-class. Idempotent on identical
 parameters; multi-process workers all succeed silently.
 
 ```python
-from decepticon_sdk import RoleRegistry, MiddlewareSlot
+from raptix_sdk import RoleRegistry, MiddlewareSlot
 
 RoleRegistry.register(
     "apt",
@@ -151,7 +151,7 @@ Read-only audit-log primitive. Returns a `RoleResolution` frozen
 dataclass (hashable + cacheable on run ID per spec §16.4 #1).
 
 ```python
-from decepticon_sdk import PluginRegistry
+from raptix_sdk import PluginRegistry
 
 reg = PluginRegistry.load()
 for plugin in reg.list_plugins():
@@ -170,7 +170,7 @@ their own tools / middleware safety-critical, but cannot remove
 safety on OSS names.
 
 ```python
-from decepticon_sdk import SafetyDeclaration
+from raptix_sdk import SafetyDeclaration
 
 SAFETY_FOR_MY_PLUGIN = SafetyDeclaration(
     tools=("my_dangerous_tool",),
@@ -183,7 +183,7 @@ SAFETY_FOR_MY_PLUGIN = SafetyDeclaration(
 The SDK ships a scaffolder. From any directory:
 
 ```bash
-decepticon-sdk plugin new \
+raptix-sdk plugin new \
     --kind=middleware \
     --name=my-plugin \
     --path=./my-plugin
@@ -195,7 +195,7 @@ pip install dist/*.whl
 
 Six plugin kinds are supported: `tool`, `middleware`, `agent`,
 `callback`, `skill`, `prompt`. Runnable examples per kind live under
-[`packages/decepticon-sdk/examples/`](../../packages/decepticon-sdk/examples/).
+[`packages/raptix-sdk/examples/`](../../packages/raptix-sdk/examples/).
 
 ## Removal timeline
 
@@ -203,4 +203,4 @@ Six plugin kinds are supported: `tool`, `middleware`, `agent`,
 |---------|------------------|
 | `decepticon.compat` shims (legacy import paths) | `2.0.0` |
 | `PluginBundle` aggregate shape (replaced by focused contributions) | `2.0.0` |
-| `decepticon.agents.middleware_slots.MiddlewareSlot` re-export | `2.0.0` |
+| `raptix.agents.middleware_slots.MiddlewareSlot` re-export | `2.0.0` |

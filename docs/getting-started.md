@@ -7,7 +7,7 @@
   - **Tier-mapped API keys** (works out of the box): Anthropic, OpenAI, Google Gemini, MiniMax, DeepSeek, xAI, Mistral, OpenRouter, Nvidia NIM
   - **Local LLM**: Ollama (`OLLAMA_API_BASE` + `OLLAMA_MODEL`)
   - **Subscription OAuth** (no per-token billing): Claude Max/Pro/Team, ChatGPT Pro/Plus/Team, Gemini Advanced, Microsoft Copilot Pro, xAI SuperGrok, Perplexity Pro
-  - **Other providers** (Groq, Cohere, Together, Fireworks, Perplexity API, Azure, AWS Bedrock, Replicate, custom OpenAI-compatible gateway): supported via `DECEPTICON_MODEL` / `DECEPTICON_LITELLM_MODELS` ad-hoc registration
+  - **Other providers** (Groq, Cohere, Together, Fireworks, Perplexity API, Azure, AWS Bedrock, Replicate, custom OpenAI-compatible gateway): supported via `RAPTIX_MODEL` / `RAPTIX_LITELLM_MODELS` ad-hoc registration
 
 That's it. Everything else runs inside containers.
 
@@ -19,14 +19,14 @@ That's it. Everything else runs inside containers.
 curl -fsSL https://decepticon.red/install | bash
 ```
 
-This installs the `decepticon` CLI to your system.
+This installs the `raptix` CLI to your system.
 
 ---
 
 ## Configure
 
 ```bash
-decepticon onboard
+raptix onboard
 ```
 
 The interactive setup wizard guides you through:
@@ -39,7 +39,7 @@ The interactive setup wizard guides you through:
 
 For detailed provider setup including OAuth configuration, see [Setup Guide](setup-guide.md).
 
-Configuration is saved to `~/.decepticon/.env`. Run `decepticon onboard --reset` to reconfigure.
+Configuration is saved to `~/.raptix/.env`. Run `raptix onboard --reset` to reconfigure.
 
 ---
 
@@ -47,7 +47,7 @@ Configuration is saved to `~/.decepticon/.env`. Run `decepticon onboard --reset`
 
 **Terminal CLI** (default):
 ```bash
-decepticon
+raptix
 ```
 
 Starts the core management and sandbox services, then opens the interactive terminal UI. Specialist services such as the C2 server and web dashboard start on demand.
@@ -60,7 +60,7 @@ From the terminal UI, run `/web` (or `/web up`) to start the dashboard. It is th
 
 ## First Real Engagement
 
-1. Launch Decepticon (`decepticon`). To use the browser UI, run `/web` and open <http://localhost:3000>.
+1. Launch Raptix (`raptix`). To use the browser UI, run `/web` and open <http://localhost:3000>.
 2. The **Soundwave** agent interviews you to define the engagement:
    - Target scope (IP range, URL, Git repo, file upload, or local path)
    - Threat actor profile
@@ -69,14 +69,14 @@ From the terminal UI, run `/web` (or `/web up`) to start the dashboard. It is th
 4. The orchestrator builds the OPPLAN from the bundle — you review and approve it
 5. The autonomous loop begins
 
-> **Important**: Only run Decepticon against systems you own or have explicit written authorization to test. See the disclaimer in the main README.
+> **Important**: Only run Raptix against systems you own or have explicit written authorization to test. See the disclaimer in the main README.
 
 ---
 
 ## Stopping Services
 
 ```bash
-decepticon stop     # Stop all services, keep data
+raptix stop     # Stop all services, keep data
 make clean          # Stop + remove all volumes (resets everything)
 ```
 
@@ -85,10 +85,10 @@ make clean          # Stop + remove all volumes (resets everything)
 ## Check Service Status
 
 ```bash
-decepticon status        # Show running services
-decepticon logs          # Follow LangGraph logs (default)
-decepticon logs litellm  # Follow a specific service's logs
-decepticon kg-health     # Diagnose the Neo4j knowledge graph
+raptix status        # Show running services
+raptix logs          # Follow LangGraph logs (default)
+raptix logs litellm  # Follow a specific service's logs
+raptix kg-health     # Diagnose the Neo4j knowledge graph
 ```
 
 ---
@@ -103,4 +103,4 @@ decepticon kg-health     # Diagnose the Neo4j knowledge graph
 | Model profiles and fallback chain | [Models](models.md) |
 | Engagement workflow (RoE → Execution) | [Engagement Workflow](engagement-workflow.md) |
 | Web dashboard features | [Web Dashboard](web-dashboard.md) |
-| Contributing to Decepticon | [Contributing](contributing.md) |
+| Contributing to Raptix | [Contributing](contributing.md) |

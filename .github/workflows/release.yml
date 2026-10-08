@@ -11,19 +11,19 @@ permissions:
   attestations: write
 
 jobs:
-  # Publish all three workspace wheels (decepticon-core, decepticon,
-  # decepticon-sdk) to PyPI via Trusted Publishing (OIDC). Lockstep
-  # release per spec §13.1 — all three share one version string and
+  # Publish workspace wheels, including skills and domain packs,
+  # to PyPI via Trusted Publishing (OIDC). Lockstep
+  # release per spec §13.1 — all members share one version string and
   # publish in one job so the dependency closure is consistent.
   #
   # PyPI side requires a Trusted Publisher config per project on
   # pypi.org before the first successful publish:
-  #   - decepticon-core  -> repo BitterSecurity/Decepticon, workflow release.yml
-  #   - decepticon       -> same
-  #   - decepticon-sdk   -> same
+  #   - raptix-core  -> repo BitterSecurity/Raptix, workflow release.yml
+  #   - raptix       -> same
+  #   - raptix-sdk   -> same
   # See: https://docs.pypi.org/trusted-publishers/
   publish-pypi:
-    name: Publish three workspace wheels to PyPI
+    name: Publish workspace wheels to PyPI
     runs-on: ubuntu-latest
     environment: pypi-release
     permissions:
@@ -43,26 +43,25 @@ jobs:
       - name: Stamp version from the tag across the workspace
         run: |
           version="${GITHUB_REF_NAME#v}"
-          # All four pyprojects share one version string per spec §13.1
+          # All workspace pyprojects share one version string per spec §13.1
           # (lockstep release). Root umbrella stays at the sentinel since
           # it doesn't ship as a wheel, but stamping it keeps uv build
           # invariants happy.
           sed -i 's/^version = "[^"]*"/version = "'"$version"'"/' \
               pyproject.toml \
-              packages/decepticon-core/pyproject.toml \
-              packages/decepticon/pyproject.toml \
-              packages/decepticon-sdk/pyproject.toml
+              packages/*/pyproject.toml \
+              plugins/*/pyproject.toml
 
-      - name: Build three workspace wheels + sdists
+      - name: Build workspace wheels + sdists
         run: |
           # uv build --all-packages from the workspace root produces wheel
           # + sdist for every workspace member into ./dist/:
-          #   dist/decepticon_core-<v>-py3-none-any.whl  + .tar.gz
-          #   dist/decepticon-<v>-py3-none-any.whl       + .tar.gz
-          #   dist/decepticon_sdk-<v>-py3-none-any.whl   + .tar.gz
+          #   dist/raptix_core-<v>-py3-none-any.whl  + .tar.gz
+          #   dist/raptix-<v>-py3-none-any.whl       + .tar.gz
+          #   dist/raptix_sdk-<v>-py3-none-any.whl   + .tar.gz
           uv build --all-packages
 
-      - name: Publish to PyPI (all three wheels atomically)
+      - name: Publish workspace distributions to PyPI
         uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
         with:
           # Idempotent re-runs: if a version is already on PyPI (e.g. a
@@ -70,7 +69,7 @@ jobs:
           # skip the upload instead of failing the workflow. PyPI itself
           # still forbids overwriting an existing version's files.
           skip-existing: true
-          # ``dist/`` carries wheels + sdists for all three packages — the
+          # ``dist/`` carries wheels + sdists for all workspace packages — the
           # gh-action-pypi-publish step uploads every artifact found there
           # in one transaction.
           packages-dir: dist
@@ -89,11 +88,11 @@ jobs:
         with:
           # Read the toolchain from go.mod (single source of truth) so the
           # release build never drifts from the launcher's declared version.
-          go-version-file: clients/launcher/go.mod
-          cache-dependency-path: clients/launcher/go.sum
+          go-version-file: apps/launcher/go.mod
+          cache-dependency-path: apps/launcher/go.sum
 
       - name: Run tests
-        working-directory: clients/launcher
+        working-directory: apps/launcher
         run: go test ./...
 
       - name: Run GoReleaser
@@ -101,7 +100,7 @@ jobs:
         with:
           version: "~> v2"
           args: release --clean
-          workdir: clients/launcher
+          workdir: apps/launcher
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -116,7 +115,7 @@ jobs:
       - name: Generate config manifest
         run: |
           set -euo pipefail
-          sha256sum docker-compose.yml config/litellm.yaml .env.example > config-checksums.txt
+          sha256sum docker-compose.yml docker-compose.web-raptix.yml infra/config/litellm.yaml .env.example > config-checksums.txt
           cat config-checksums.txt
 
       - name: Upload config manifest to draft release
@@ -142,22 +141,28 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: decepticon-litellm
-            dockerfile: containers/litellm.Dockerfile
+          - image: raptix-litellm
+            dockerfile: infra/containers/litellm.Dockerfile
             platforms: linux/amd64,linux/arm64
-          - image: decepticon-langgraph
-            dockerfile: containers/langgraph.Dockerfile
+          - image: raptix-langgraph
+            dockerfile: infra/containers/langgraph.Dockerfile
             platforms: linux/amd64,linux/arm64
-          - image: decepticon-cli
-            dockerfile: containers/cli.Dockerfile
+          - image: raptix-cli
+            dockerfile: infra/containers/cli.Dockerfile
             platforms: linux/amd64,linux/arm64
           # Skillogy server: lean python:3.13-slim (no Kali/heavy apt layers),
           # so multi-arch under QEMU is cheap like cli/langgraph. The compose
           # `skillogy` service has no `profiles:`, so it is ALWAYS started by
-          # `decepticon start` — it MUST be published or every start fails to
-          # pull ghcr.io/bittersecurity/decepticon-skillogy:<version>.
-          - image: decepticon-skillogy
-            dockerfile: containers/skillogy.Dockerfile
+          # `raptix start` — it MUST be published or every start fails to
+          # pull ghcr.io/akapi895/raptix-skillogy:<version>.
+          - image: raptix-skillogy
+            dockerfile: infra/containers/skillogy.Dockerfile
+            platforms: linux/amd64,linux/arm64
+          - image: raptix-web-raptix-ui
+            dockerfile: infra/containers/web-raptix.Dockerfile
+            platforms: linux/amd64,linux/arm64
+          - image: raptix-web-raptix-api
+            dockerfile: infra/containers/web-raptix-server.Dockerfile
             platforms: linux/amd64,linux/arm64
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
@@ -199,14 +204,16 @@ jobs:
           # Stamp the package version into images at build time. langgraph +
           # cli Dockerfiles read this ARG to sed-patch pyproject.toml /
           # package.json from the "0.0.0" sentinel; litellm ignores it
-          # (no ARG declared) which is harmless.
+          # (no ARG declared) which is harmless. RAPTIX_REPO_HEAD stamps
+          # the source revision as an OCI label the lab harness verifies.
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
+            RAPTIX_REPO_HEAD=${{ github.sha }}
           # Only publish the version tag here — `:latest` is promoted by the
           # publish-release job AFTER every image has been verified on GHCR,
           # so a half-finished release never updates the moving tag.
           tags: |
-            ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }}
+            ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -216,12 +223,12 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           cosign sign --yes \
-            "ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+            "ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
 
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }}
+          image: ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }}
           format: cyclonedx-json
           output-file: sbom-${{ matrix.image }}.cdx.json
 
@@ -229,7 +236,7 @@ jobs:
       # `--tlog-upload` flag controls whether the entry is also pushed to
       # the public Sigstore Rekor transparency log.
       #
-      # decepticon-sandbox: SBOM is ~7 MB (Kali rolling base + full pentest
+      # raptix-sandbox: SBOM is ~7 MB (Kali rolling base + full pentest
       # toolchain ⇒ thousands of dpkg components). Rekor's per-entry size
       # cap (~5 MiB) deterministically rejects the upload, so we attach
       # the attestation to the OCI artifact only. Verifiers can still run
@@ -247,12 +254,12 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
         run: |
           set -uo pipefail
-          target="ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+          target="ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
           predicate="sbom-${{ matrix.image }}.cdx.json"
           extra=()
-          if [ "${{ matrix.image }}" = "decepticon-sandbox" ]; then
+          if [ "${{ matrix.image }}" = "raptix-sandbox" ]; then
             extra+=(--tlog-upload=false)
-            echo "decepticon-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
+            echo "raptix-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
           fi
           for attempt in 1 2 3 4 5; do
             echo "Attestation attempt ${attempt}/5 for ${target}"
@@ -278,7 +285,7 @@ jobs:
           path: sbom-${{ matrix.image }}.cdx.json
 
   # Sandbox + c2-sliver: split per platform onto native runners. Same
-  # rationale as docker-web below — these images sit on Kali rolling
+  # rationale as docker-heavy-merge below — these images sit on Kali rolling
   # with heavy apt layers (Python, Node, sliver, ~25 dpkg postinst
   # scripts), which under QEMU emulation pushed sandbox's arm64 build
   # over 25 minutes. Native runners drop it to ~5 min. Per-image,
@@ -291,20 +298,20 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - image: decepticon-sandbox
-            dockerfile: containers/sandbox.Dockerfile
+          - image: raptix-sandbox
+            dockerfile: infra/containers/sandbox.Dockerfile
             platform: amd64
             runs-on: ubuntu-latest
-          - image: decepticon-sandbox
-            dockerfile: containers/sandbox.Dockerfile
+          - image: raptix-sandbox
+            dockerfile: infra/containers/sandbox.Dockerfile
             platform: arm64
             runs-on: ubuntu-24.04-arm
-          - image: decepticon-c2-sliver
-            dockerfile: containers/c2-sliver.Dockerfile
+          - image: raptix-c2-sliver
+            dockerfile: infra/containers/c2-sliver.Dockerfile
             platform: amd64
             runs-on: ubuntu-latest
-          - image: decepticon-c2-sliver
-            dockerfile: containers/c2-sliver.Dockerfile
+          - image: raptix-c2-sliver
+            dockerfile: infra/containers/c2-sliver.Dockerfile
             platform: arm64
             runs-on: ubuntu-24.04-arm
     runs-on: ${{ matrix.runs-on }}
@@ -331,8 +338,8 @@ jobs:
           file: ${{ matrix.dockerfile }}
           platforms: linux/${{ matrix.platform }}
           provenance: mode=max
-          sbom: ${{ matrix.image != 'decepticon-sandbox' }}
-          outputs: type=image,name=ghcr.io/bittersecurity/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
+          sbom: ${{ matrix.image != 'raptix-sandbox' }}
+          outputs: type=image,name=ghcr.io/akapi895/${{ matrix.image }},push-by-digest=true,name-canonical=true,push=true
           cache-from: type=gha,scope=${{ matrix.image }}-${{ matrix.platform }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}-${{ matrix.platform }}
 
@@ -351,7 +358,7 @@ jobs:
           retention-days: 1
 
   # Per-image manifest assembly. Same retry+warning policy on the SBOM
-  # attestation as docker / docker-web-merge — see those for context.
+  # attestation as docker / docker-heavy-merge — see those for context.
   # The sandbox-specific --tlog-upload=false fall-through (Rekor entry
   # size cap on the Kali SBOM) is preserved here too.
   docker-heavy-merge:
@@ -360,7 +367,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        image: [decepticon-sandbox, decepticon-c2-sliver]
+        image: [raptix-sandbox, raptix-c2-sliver]
     runs-on: ubuntu-latest
     environment: pypi-release
     steps:
@@ -394,10 +401,10 @@ jobs:
         run: |
           # shellcheck disable=SC2046  # intentional word-split: one image ref arg per digest file
           docker buildx imagetools create \
-            --tag ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }} \
-            $(printf 'ghcr.io/bittersecurity/${{ matrix.image }}@sha256:%s ' *)
+            --tag ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }} \
+            $(printf 'ghcr.io/akapi895/${{ matrix.image }}@sha256:%s ' *)
           digest=$(docker buildx imagetools inspect \
-            ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }} \
+            ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }} \
             --format '{{json .Manifest}}' | jq -r '.digest')
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
@@ -407,12 +414,12 @@ jobs:
           DIGEST: ${{ steps.manifest.outputs.digest }}
         run: |
           cosign sign --yes \
-            "ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+            "ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
 
       - name: Generate CycloneDX SBOM
         uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
         with:
-          image: ghcr.io/bittersecurity/${{ matrix.image }}:${{ steps.version.outputs.version }}
+          image: ghcr.io/akapi895/${{ matrix.image }}:${{ steps.version.outputs.version }}
           format: cyclonedx-json
           output-file: sbom-${{ matrix.image }}.cdx.json
 
@@ -422,12 +429,12 @@ jobs:
           DIGEST: ${{ steps.manifest.outputs.digest }}
         run: |
           set -uo pipefail
-          target="ghcr.io/bittersecurity/${{ matrix.image }}@${DIGEST}"
+          target="ghcr.io/akapi895/${{ matrix.image }}@${DIGEST}"
           predicate="sbom-${{ matrix.image }}.cdx.json"
           extra=()
-          if [ "${{ matrix.image }}" = "decepticon-sandbox" ]; then
+          if [ "${{ matrix.image }}" = "raptix-sandbox" ]; then
             extra+=(--tlog-upload=false)
-            echo "decepticon-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
+            echo "raptix-sandbox: SBOM exceeds Rekor entry size cap; attaching attestation to OCI only (--tlog-upload=false)."
           fi
           for attempt in 1 2 3 4 5; do
             echo "Attestation attempt ${attempt}/5 for ${target}"
@@ -452,160 +459,9 @@ jobs:
           name: sbom-${{ matrix.image }}
           path: sbom-${{ matrix.image }}.cdx.json
 
-  # Web image: split per platform onto native runners. arm64 emulation
-  # used to dominate the release (~21 min for web alone vs <5 min for
-  # everything else). Each runner builds and pushes by digest only;
-  # docker-web-merge stitches the digests into a multi-arch manifest.
-  # Pattern: https://docs.docker.com/build/ci/github-actions/multi-platform/
-  docker-web:
-    name: Build & push decepticon-web (${{ matrix.platform }})
-    environment: pypi-release
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: amd64
-            runs-on: ubuntu-latest
-          - platform: arm64
-            runs-on: ubuntu-24.04-arm
-    runs-on: ${{ matrix.runs-on }}
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
-
-      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract version from tag
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Build & push by digest
-        id: build
-        uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
-        with:
-          context: .
-          file: containers/web.Dockerfile
-          platforms: linux/${{ matrix.platform }}
-          provenance: mode=max
-          sbom: true
-          # Stamps web + cli package.json with the release version at build
-          # time (web image embeds clients/cli for the terminal-server PTY).
-          build-args: |
-            VERSION=${{ steps.version.outputs.version }}
-          outputs: type=image,name=ghcr.io/bittersecurity/decepticon-web,push-by-digest=true,name-canonical=true,push=true
-          cache-from: type=gha,scope=web-${{ matrix.platform }}
-          cache-to: type=gha,mode=max,scope=web-${{ matrix.platform }}
-
-      - name: Export digest
-        run: |
-          mkdir -p ${{ runner.temp }}/digests
-          digest='${{ steps.build.outputs.digest }}'
-          touch "${{ runner.temp }}/digests/${digest#sha256:}"
-
-      - name: Upload digest
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: web-digest-${{ matrix.platform }}
-          path: ${{ runner.temp }}/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
-  docker-web-merge:
-    name: Merge web manifest + sign + SBOM
-    needs: docker-web
-    runs-on: ubuntu-latest
-    environment: pypi-release
-    steps:
-      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-
-      - uses: docker/setup-buildx-action@d7f5e7f509e45cec5c76c4d5afdd7de93d0b3df5 # v4.1.0
-
-      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract version from tag
-        id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-
-      - name: Install cosign
-        uses: sigstore/cosign-installer@398d4b0eeef1380460a10c8013a76f728fb906ac # v3.9.1
-
-      - name: Download digests
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with:
-          path: ${{ runner.temp }}/digests
-          pattern: web-digest-*
-          merge-multiple: true
-
-      - name: Create multi-arch manifest
-        id: manifest
-        working-directory: ${{ runner.temp }}/digests
-        run: |
-          # Same rule as the docker matrix: only the version tag here.
-          # `:latest` is promoted by publish-release after verification.
-          # shellcheck disable=SC2046  # intentional word-split: one image ref arg per digest file
-          docker buildx imagetools create \
-            --tag ghcr.io/bittersecurity/decepticon-web:${{ steps.version.outputs.version }} \
-            $(printf 'ghcr.io/bittersecurity/decepticon-web@sha256:%s ' *)
-          digest=$(docker buildx imagetools inspect \
-            ghcr.io/bittersecurity/decepticon-web:${{ steps.version.outputs.version }} \
-            --format '{{json .Manifest}}' | jq -r '.digest')
-          echo "digest=$digest" >> "$GITHUB_OUTPUT"
-
-      - name: Cosign sign manifest (keyless)
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-          DIGEST: ${{ steps.manifest.outputs.digest }}
-        run: |
-          cosign sign --yes \
-            "ghcr.io/bittersecurity/decepticon-web@${DIGEST}"
-
-      - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
-        with:
-          image: ghcr.io/bittersecurity/decepticon-web:${{ steps.version.outputs.version }}
-          format: cyclonedx-json
-          output-file: sbom-decepticon-web.cdx.json
-
-      # Same retry+warning policy as the matrix attest step above; see comment there.
-      - name: Attest SBOM with cosign
-        env:
-          COSIGN_EXPERIMENTAL: "true"
-          DIGEST: ${{ steps.manifest.outputs.digest }}
-        run: |
-          set -uo pipefail
-          target="ghcr.io/bittersecurity/decepticon-web@${DIGEST}"
-          predicate="sbom-decepticon-web.cdx.json"
-          for attempt in 1 2 3 4 5; do
-            echo "Attestation attempt ${attempt}/5 for ${target}"
-            if cosign attest --yes \
-                --predicate "${predicate}" \
-                --type cyclonedx \
-                "${target}"; then
-              echo "Attestation succeeded on attempt ${attempt}."
-              exit 0
-            fi
-            if [ "${attempt}" -lt 5 ]; then
-              delay=$((30 * attempt))
-              echo "Attestation attempt ${attempt} failed; sleeping ${delay}s..."
-              sleep "${delay}"
-            fi
-          done
-          echo "::warning title=SBOM attestation skipped::cosign attest failed after 5 retries (Sigstore Rekor unavailable). Image is signed and SBOM artifact uploaded; transparency-log entry for the SBOM is missing and can be re-attested manually."
-
-      - name: Upload SBOM artifact
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: sbom-decepticon-web
-          path: sbom-decepticon-web.cdx.json
+  # Legacy web image (raptix-web) release pipeline was retired with W20
+  # (guide §14.5). The archived GHCR image stays pullable for emergency
+  # rollback but no longer participates in new release builds.
 
   # Atomic release gate. Waits until every Docker image AND the launcher
   # binaries are pushed, verifies each :<version> manifest exists on GHCR,
@@ -614,11 +470,11 @@ jobs:
   # this job succeeds:
   #   - GitHub `releases/latest` keeps returning the previous version, so
   #     the launcher's stable channel never points at images mid-push.
-  #   - The channel tags are not moved, so a `${DECEPTICON_VERSION:-stable}`
+  #   - The channel tags are not moved, so a `${RAPTIX_VERSION:-stable}`
   #     fallback keeps resolving to the previous (working) release.
   publish-release:
     name: Verify images & publish release
-    needs: [launcher, docker, docker-heavy-merge, docker-web-merge]
+    needs: [launcher, docker, docker-heavy-merge]
     runs-on: ubuntu-latest
     environment: pypi-release
     steps:
@@ -649,18 +505,26 @@ jobs:
         run: |
           set -euo pipefail
           images=(
-            decepticon-litellm
-            decepticon-langgraph
-            decepticon-sandbox
-            decepticon-cli
-            decepticon-skillogy
-            decepticon-c2-sliver
-            decepticon-web
+            raptix-litellm
+            raptix-langgraph
+            raptix-sandbox
+            raptix-cli
+            raptix-skillogy
+            raptix-c2-sliver
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
           for img in "${images[@]}"; do
-            ref="ghcr.io/bittersecurity/${img}:${VERSION}"
+            ref="ghcr.io/akapi895/${img}:${VERSION}"
             echo "Verifying ${ref}"
             docker buildx imagetools inspect "${ref}" >/dev/null
+            case "${img}" in
+              raptix-web-raptix-*)
+                docker pull "${ref}"
+                actual=$(docker image inspect "${ref}" --format '{{ index .Config.Labels "org.opencontainers.image.version" }}')
+                test "${actual}" = "${VERSION}" || { echo "::error::Version label mismatch for ${ref}"; exit 1; }
+                ;;
+            esac
           done
 
       # Channel tags (Claude-Code-style soak model; see
@@ -678,17 +542,18 @@ jobs:
         run: |
           set -euo pipefail
           images=(
-            decepticon-litellm
-            decepticon-langgraph
-            decepticon-sandbox
-            decepticon-cli
-            decepticon-skillogy
-            decepticon-c2-sliver
-            decepticon-web
+            raptix-litellm
+            raptix-langgraph
+            raptix-sandbox
+            raptix-cli
+            raptix-skillogy
+            raptix-c2-sliver
+            raptix-web-raptix-ui
+            raptix-web-raptix-api
           )
           for img in "${images[@]}"; do
-            src="ghcr.io/bittersecurity/${img}:${VERSION}"
-            dst="ghcr.io/bittersecurity/${img}:latest"
+            src="ghcr.io/akapi895/${img}:${VERSION}"
+            dst="ghcr.io/akapi895/${img}:latest"
             echo "Promoting ${src} → ${dst}"
             docker buildx imagetools create --tag "${dst}" "${src}"
           done

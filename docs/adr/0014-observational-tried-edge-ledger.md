@@ -26,7 +26,7 @@ at most 20 recent attempts into the next system context.
 Only a trusted engagement and target from agent state are used. Tool output is
 classified into coarse fixed outcome and reason codes; raw output is never promoted
 to system instructions. Rendered KG fields are allowlisted again because other KG
-writers exist. `DECEPTICON_KG_TRIED_EDGES` defaults off and is independent of L2a's
+writers exist. `RAPTIX_KG_TRIED_EDGES` defaults off and is independent of L2a's
 flag. An absent target, unavailable KG or timeout skips observation without changing
 execution. The text suggests avoiding blind repetition; it neither denies retries
 nor changes OPPLAN transitions, action selection, or tool arguments.

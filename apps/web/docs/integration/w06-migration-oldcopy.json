@@ -1,0 +1,43 @@
+{
+  "ok": true,
+  "lane": "oldcopy",
+  "workspace": "C:\\Users\\tuanp\\AppData\\Local\\Temp\\opencode\\raptix-w05-oldcopy-1790907319297",
+  "migration": {
+    "preservedRows": 12,
+    "beforeHash": "55b6f022c8c533b141e7a1da728b33e660a7179f883ab97fede9c99f9314737c",
+    "afterHash": "55b6f022c8c533b141e7a1da728b33e660a7179f883ab97fede9c99f9314737c",
+    "preservedMigrationChecksums": 4
+  },
+  "steps": [
+    {
+      "command": "cmd.exe /d /c npm run prisma:migrate",
+      "exitCode": 0
+    },
+    {
+      "command": "C:\\Users\\tuanp\\AppData\\Local\\Author Software\\nvm\\installs\\v24.18.0\\node.exe --import tsx tests/w05-live.ts",
+      "exitCode": 0
+    }
+  ],
+  "checks": [
+    "owned immutable/context-bound thread identity, concurrent binding, unproven legacy pointer and target lock",
+    "six concurrent first-binding/target-PATCH races cannot bind a stale target",
+    "12 concurrent duplicate intents reserve once; stable canonical fingerprint and different intent conflicts",
+    "private reservation token, uncertainty retains active slot, acceptance idempotence, verified-run release and no rejected replay",
+    "multiple planning/execution threads, independent thread slots, stale creating becomes uncertain without releasing reservation",
+    "two distinct concurrent intents on one thread have one durable active-slot winner",
+    "persisted client recreation and real route recovery; no token/context/path/payload leaks, cross-owner denial and no submission API",
+    "persisted context mismatch fails closed instead of rebinding a hydrated thread"
+  ],
+  "engagementId": "cmuqbz8t30001cofigmou6pks",
+  "requestId": "restart-9b986a04-968f-46f9-ae4a-0551175798e4",
+  "accepted": {
+    "engagementId": "cmuqbz8sg0000cofi78x31zgo",
+    "requestId": "intent-9b986a04-968f-46f9-ae4a-0551175798e4",
+    "runId": "fc8db4f4-aba9-4dec-8b95-508105d4c907"
+  },
+  "processRestart": {
+    "initial": "creating",
+    "restarted": "uncertain",
+    "acceptedRunPreserved": true
+  }
+}

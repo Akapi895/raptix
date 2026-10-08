@@ -1,7 +1,7 @@
 # Architecture Decision Records
 
 This directory contains the **Architecture Decision Records** (ADRs) for
-Decepticon — short, numbered, append-only documents that capture
+Raptix — short, numbered, append-only documents that capture
 non-obvious architectural decisions, their context, and their
 consequences.
 
@@ -85,5 +85,8 @@ Use [`template.md`](template.md) as the starting point.
 | [0021](0021-b0-session-isolation-gate.md) | Gate surface-exploit fan-out on session isolation | Proposed |
 | [0022](0022-sequential-surface-exploit-dispatch.md) | Dispatch surface-exploit cells sequentially | Proposed |
 | [0023](0023-bounded-iterative-surface-reexpansion.md) | Bound iterative surface-exploit re-expansion | Proposed |
+| [0024](0024-code-owned-surface-reexpansion-bounds.md) | Wire bounded re-expansion into KG surface inventory | Proposed |
+| [0025](0025-surface-exploit-chained-surface-provenance.md) | Record chained surface provenance on confirmation | Proposed |
+| [0026](0026-bounded-parallel-surface-fanout.md) | Bound parallel surface-exploit fan-out | Proposed |
 
 Keep this index in sync when you land a new ADR.

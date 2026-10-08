@@ -2,7 +2,7 @@
 
 - **Status:** Proposed
 - **Date:** 2026-09-30
-- **Deciders:** Decepticon maintainers
+- **Deciders:** Raptix maintainers
 - **Related:** `summary/impl-plan-surface-exploit.md`, `docs/adr/0020-coverage-matrix-objectives.md`
 
 ## Context
@@ -41,31 +41,72 @@ bash behavior, exploit path, dispatch logic, or guardrail.
 ## B0 Runbook: manual testbed gate
 
 This is a manual confirmation step. Do not run it against an unauthorized
-target, and do not automate it as part of the unit suite.
+target, and do not automate it as part of the unit suite or regular CI.
 
-1. Start the authorized isolated testbed with `make dev` and select one
-   reachable web target covered by the engagement RoE.
-2. Complete engagement startup and operator approval. Run B5 so the OPPLAN
-   contains two pending cells for the same target surface, each with a
-   different `session_name` such as `se-<cell-a>` and `se-<cell-b>`.
-3. In one orchestrator turn, issue two `task("surface_exploit", ...)` calls.
-   Include the target surface, one vuln class, its own `session_name`, and a
-   role-prefixed output directory such as
-   `/workspace/se/<cell-a>/` and `/workspace/se/<cell-b>/`. Do not reuse either
-   session name or output directory.
-4. In each specialist task, use a bounded harmless probe on the authorized
-   web target and write a distinct marker file under that cell's output
-   directory. Observe the two task start/completion timestamps, sandbox
-   session status, `.sessions/<session>.log` files, and marker files.
+1. Start the authorized isolated testbed with `make dev`. The gate does not
+   need a full application exercise: it uses two bounded, local shell probes.
+2. Execute the marked `slow` and `manual` integration harness with
+   `RAPTIX_B0_LIVE=1` and `SANDBOX_URL` set to that stack's sandbox daemon:
+    `tests/local/manual/test_b0_session_isolation_live.py`.
+   It invokes the real `raptix.tools.bash.bash.ainvoke` path twice via
+   `asyncio.gather`, using `se-b0-a` and `se-b0-b` against the same real
+   sandbox. This is the bash path that specialist `task()` calls use, without
+   requiring the production orchestrator to emit parallel tasks.
+3. Each coroutine creates `/workspace/se/b0-a/` or `/workspace/se/b0-b/`,
+   changes to that workdir, records sandbox-side start/end timestamps around a
+   short sleep in its marker file, and returns the marker. It makes no web
+   request, scan, payload attempt, or target-state change.
+4. Preserve the `B0_EVIDENCE=` JSON emitted by the harness. It contains the
+   timestamp interval, marker paths, and pane-log status.
 5. Mark **go** only when all conditions hold:
-   - the two task wall-clock intervals overlap, showing real parallel work;
+   - the two sandbox-side wall-clock intervals overlap, showing real parallel
+     work;
    - neither session wedges, times out, or requires cross-session recovery;
-   - each session has its own tmux/log/workdir state and marker file;
-   - neither log, history, cwd, output, nor `[STALE]` signal appears in the
-     other cell's session.
-6. Mark **no-go** on any overlap failure, tmux wedge, shared file/log/history,
-   cross-session `[STALE]`, or ambiguous timing. Preserve logs, stop the test
-   sessions, and do not enable B6 fan-out.
+   - each session has its own workdir and marker file, and its marker contains
+     only that cell's identity and cwd;
+   - neither tool result contains `[STALE]`, `[TIMEOUT]`, or `[ERROR]`.
+6. Pane logs at `.sessions/<session>.log` are supporting audit and
+   observability evidence, not an isolation precondition. When they are
+   present, a cross-session value or `[STALE]` in a log is **no-go**. When they
+   are absent, record `session_log="absent"` in `B0_EVIDENCE` as a separate
+   audit/observability finding; absence alone is not **no-go**.
+7. Mark **no-go** on an overlap failure, tmux wedge, shared marker/workdir,
+   cross-session marker state, tool-result `[STALE]`/timeout/error, a leaked
+   pane log when available, or ambiguous timing. Preserve available evidence,
+   stop the test sessions, and do not enable B6 fan-out.
+
+The production `decepticon` prompt retains its one-`surface_exploit`-task-per-
+turn rule while this gate runs. Only a later PR, after a recorded **go** result,
+may propose changing that dispatch rule; this ADR does not add a bypass flag or
+modify production task dispatch.
+
+## Pane-log Observability Finding
+
+The B0 harness runs with the default workspace `/workspace`. In
+`TmuxSessionManager.initialize()`, `_setup_pipe_pane_logging()` is called only
+when a newly created session uses a workspace other than `/workspace`. The
+default-workspace condition therefore skips pipe-pane setup before its
+best-effort `try`/`except` can run. This is a daemon observability defect for
+the default HTTP sandbox path: it removes audit logs and passive-read progress
+visibility for long-running commands, but it does not change session manager,
+workdir, marker, or stale-read isolation. Track and remediate it separately;
+it is not a B0 isolation blocker.
+
+## Recorded B0 Isolation Result
+
+**Verdict: GO.** The manual harness completed on the isolated `raptix-b0`
+sandbox with run ID `0bd0aa134010448187a0cc271c1df5af`.
+
+- `se-b0-a`: `/workspace/se/b0-a/marker-0bd0aa134010448187a0cc271c1df5af.json`
+  recorded `[1790772733414531246, 1790772734417591564]` ns.
+- `se-b0-b`: `/workspace/se/b0-b/marker-0bd0aa134010448187a0cc271c1df5af.json`
+  recorded `[1790772733414555373, 1790772734417594616]` ns.
+- The overlapping interval was
+  `[1790772733414555373, 1790772734417591564]` ns. Both markers carried only
+  their own session and `/workspace/se/b0-*` cwd, and the harness reported no
+  timeout, stale, error, or cross-marker state.
+- `B0_EVIDENCE` recorded both pane logs as `session_log="absent"`; this is the
+  separate observability finding above, not an isolation failure.
 
 ## Alternatives considered
 

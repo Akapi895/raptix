@@ -1,4 +1,4 @@
-// Decepticon Attack Graph — Neo4j Schema Init
+// Raptix Attack Graph — Neo4j Schema Init
 // Run once after Neo4j starts: cypher-shell < scripts/init_neo4j.cypher
 //
 // Schema follows docs/design/attack-graph-schema.md

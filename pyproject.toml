@@ -1,24 +1,26 @@
 [project]
-name = "decepticon-workspace"
+name = "raptix-workspace"
 # Workspace umbrella — never published. Per-package versions are stamped
 # from the git tag at Docker build time. This root carries only the
 # shared tooling config (ruff/basedpyright/pytest/coverage) so the dev
 # workflow runs uniformly across the three published packages under
 # ``packages/``.
 version = "0.0.0"
-description = "Decepticon monorepo workspace (core / framework / sdk split)"
+description = "Raptix monorepo workspace (core / framework / sdk split)"
 requires-python = ">=3.13"
 dependencies = [
-    "decepticon",
-    "decepticon-core",
-    "decepticon-sdk",
+    "raptix",
+    "raptix-core",
+    "raptix-sdk",
+    "raptix-skills",
 ]
 
 [project.optional-dependencies]
 # Passthrough extras so ``uv sync --extra neo4j`` from the workspace
 # root activates the framework's neo4j driver. Without this, the extra
 # is invisible at root because uv treats extras as per-project.
-neo4j = ["decepticon[neo4j]"]
+neo4j = ["raptix[neo4j]"]
+runtime-persistence = ["raptix[runtime-persistence]"]
 
 [tool.uv]
 # Virtual root — no wheel built from the workspace umbrella. Real
@@ -27,23 +29,37 @@ neo4j = ["decepticon[neo4j]"]
 package = false
 
 [tool.uv.workspace]
-members = ["packages/*"]
+members = ["packages/*", "plugins/*"]
+exclude = ["plugins/tests"]
 
 [tool.uv.sources]
-decepticon = { workspace = true }
-decepticon-core = { workspace = true }
-decepticon-sdk = { workspace = true }
+raptix = { workspace = true }
+raptix-skills = { workspace = true }
+raptix-core = { workspace = true }
+raptix-sdk = { workspace = true }
+raptix-contracts = { workspace = true }
+raptix-reversing = { workspace = true }
+raptix-defense = { workspace = true }
+raptix-mobile = { workspace = true }
+raptix-iot = { workspace = true }
+raptix-ics = { workspace = true }
+raptix-wireless = { workspace = true }
+raptix-cloud = { workspace = true }
+raptix-phishing = { workspace = true }
+raptix-active-directory = { workspace = true }
+raptix-web = { workspace = true }
+raptix-network = { workspace = true }
 
-# Project-level plugin activation, read by ``decepticon.plugin_loader``
+# Project-level plugin activation, read by ``raptix.plugin_loader``
 # from the CWD's pyproject.toml. Kept at the workspace root so the
 # in-checkout dev workflow (``make dev``, ``langgraph dev``,
 # ``make benchmark``) automatically activates both OSS bundles
 # without forcing every contributor to remember the env var.
 # OSS end-user installs that don't clone this repo fall back to the
 # hardcoded ``["standard"]`` default; downstream Docker images override via
-# ``ENV DECEPTICON_PLUGINS=standard,vendor``.
+# ``ENV RAPTIX_PLUGINS=standard,vendor``.
 
-[tool.decepticon.plugins]
+[tool.raptix.plugins]
 enabled = ["standard", "plugins"]
 
 [dependency-groups]
@@ -52,6 +68,7 @@ dev = [
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.0.0",
     "pytest-xdist>=3.6.0",
+    "langgraph-checkpoint-sqlite>=3,<4",
     "ruff>=0.4.0",
     "basedpyright>=1.37.0",
 ]
@@ -78,48 +95,50 @@ lint = [
 line-length = 100
 target-version = "py313"
 extend-exclude = [
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
-    "benchmark/results",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
+    "benchmarks/results",
 ]
 
 [tool.ruff.lint]
 # TID251 = flake8-tidy-imports banned-api. Enables the
-# decepticon-core langchain-free guarantee at lint time
+# raptix-core langchain-free guarantee at lint time
 # (complements the runtime test_no_runtime_deps subprocess check).
 select = ["E", "F", "I", "W", "TID251"]
 ignore = ["E501"]
 
 [tool.ruff.lint.isort]
 # Mark all three workspace packages as first-party so isort groups
-# them together instead of treating ``decepticon_core`` /
-# ``decepticon_sdk`` as third-party.
-known-first-party = ["decepticon", "decepticon_core", "decepticon_sdk"]
+# them together instead of treating ``raptix_core`` /
+# ``raptix_sdk`` as third-party.
+known-first-party = ["raptix", "raptix_core", "raptix_sdk"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
-# Spec §11.4: ``decepticon-core`` must never import these. The
+# Spec §11.4: ``raptix-core`` must never import these. The
 # per-file-ignores section below scopes the rule to the core layer
 # only — the framework + SDK packages legitimately use them.
-"langchain".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"langchain_core".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"langchain_anthropic".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"langchain_openai".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"langgraph".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"deepagents".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"httpx".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"fastapi".msg = "decepticon-core must stay langchain-free (spec §11.4)"
-"uvicorn".msg = "decepticon-core must stay langchain-free (spec §11.4)"
+"langchain".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"langchain_core".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"langchain_anthropic".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"langchain_openai".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"langgraph".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"deepagents".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"httpx".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"fastapi".msg = "raptix-core must stay langchain-free (spec §11.4)"
+"uvicorn".msg = "raptix-core must stay langchain-free (spec §11.4)"
 
 [tool.ruff.lint.per-file-ignores]
-# Scope banned-api to decepticon-core: the framework, SDK, LiteLLM
-# config handlers, benchmark harness, and clients legitimately depend
-# on langchain / langgraph / deepagents / httpx / fastapi.
-"packages/decepticon/**" = ["TID251"]
-"packages/decepticon-sdk/**" = ["TID251"]
-"benchmark/**" = ["TID251"]
-"clients/**" = ["TID251"]
+# Scope banned-api to raptix-core: the framework, SDK, LiteLLM
+# config handlers, benchmark harness, plugin packs, and apps
+# legitimately depend on langchain / langgraph / deepagents / httpx / fastapi.
+"packages/raptix/**" = ["TID251"]
+"packages/raptix-sdk/**" = ["TID251"]
+"benchmarks/**" = ["TID251"]
+"apps/**" = ["TID251"]
 "scripts/**" = ["TID251"]
-"config/**" = ["TID251"]
+"infra/config/**" = ["TID251"]
+"tests/local/**" = ["TID251"]
+"plugins/**" = ["TID251"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -131,18 +150,20 @@ asyncio_mode = "auto"
 # subprocess, so this is the deterministic path.
 pythonpath = [
     ".",
-    "packages/decepticon-core",
-    "packages/decepticon",
-    "packages/decepticon-sdk",
+    "packages/raptix-core",
+    "packages/raptix",
+    "packages/raptix-sdk",
 ]
 testpaths = [
-    "packages/decepticon-core/tests",
-    "packages/decepticon/tests",
-    "packages/decepticon-sdk/tests",
+    "packages/raptix-core/tests",
+    "packages/raptix/tests",
+    "packages/raptix-sdk/tests",
+    "plugins",
 ]
 markers = [
     "asyncio: mark test as async (pytest-asyncio)",
     "slow: integration-style tests that hit wall-clock timeouts or otherwise take seconds; deselected from the PR fast lane",
+    "manual: explicitly triggered live-stack gates; never part of the regular CI suite",
 ]
 addopts = [
     "--strict-markers",
@@ -151,11 +172,11 @@ addopts = [
 ]
 
 [tool.coverage.run]
-source = ["packages/decepticon/decepticon"]
+source = ["packages/raptix/raptix"]
 branch = true
 omit = [
-    "packages/decepticon/decepticon/__main__.py",
-    "packages/decepticon/decepticon/auth/providers/*",
+    "packages/raptix/raptix/__main__.py",
+    "packages/raptix/raptix/auth/providers/*",
 ]
 
 [tool.coverage.html]
@@ -175,22 +196,23 @@ skip_covered = false
 [tool.basedpyright]
 pythonVersion = "3.13"
 include = [
-    "packages/decepticon-core",
-    "packages/decepticon-core/tests",
-    "packages/decepticon",
-    "packages/decepticon/tests",
-    "packages/decepticon-sdk",
-    "packages/decepticon-sdk/tests",
-    "benchmark",
+    "packages/raptix-core",
+    "packages/raptix-core/tests",
+    "packages/raptix",
+    "packages/raptix/tests",
+    "packages/raptix-sdk",
+    "packages/raptix-sdk/tests",
+    "benchmarks",
+    "plugins",
 ]
 exclude = [
     "**/__pycache__",
     "**/node_modules",
     "reference",
-    "packages/decepticon/decepticon/auth/providers",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
-    "benchmark/results",
+    "packages/raptix/raptix/auth/providers",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
+    "benchmarks/results",
 ]
 # Use pyright "standard" semantics rather than the basedpyright "all" default —
 # the existing codebase predates basedpyright's stricter rules. As code is
@@ -238,8 +260,8 @@ reportPrivateImportUsage = "warning"
 [tool.bandit]
 exclude_dirs = [
     "tests",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     "node_modules",
     ".venv",
 ]
@@ -248,14 +270,14 @@ skips = ["B101", "B404", "B603"]
 [tool.mypy]
 python_version = "3.13"
 files = [
-    "packages/decepticon-core/decepticon_core",
-    "packages/decepticon/decepticon",
-    "packages/decepticon-sdk/decepticon_sdk",
+    "packages/raptix-core/raptix_core",
+    "packages/raptix/raptix",
+    "packages/raptix-sdk/raptix_sdk",
 ]
 exclude = [
     "tests/",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     "node_modules",
     ".venv",
 ]
@@ -313,14 +335,14 @@ ignore = [
 
 [tool.vulture]
 paths = [
-    "packages/decepticon-core/decepticon_core",
-    "packages/decepticon/decepticon",
-    "packages/decepticon-sdk/decepticon_sdk",
+    "packages/raptix-core/raptix_core",
+    "packages/raptix/raptix",
+    "packages/raptix-sdk/raptix_sdk",
 ]
 exclude = [
     "tests/",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     ".venv/",
     "node_modules/",
 ]
@@ -348,8 +370,8 @@ ignore_names = [
 [tool.deptry]
 extend_exclude = [
     "tests",
-    "benchmark/xbow-validation-benchmarks",
-    "benchmark/MHBench",
+    "benchmarks/xbow-validation-benchmarks",
+    "benchmarks/MHBench",
     "scripts",
     ".venv",
     "node_modules",

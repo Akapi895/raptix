@@ -1,0 +1,216 @@
+[project]
+name = "raptix"
+# Sentinel — replaced with the git tag at Docker build time via ARG VERSION
+# in containers/langgraph.Dockerfile. Source-tree value is intentionally
+# stable (not bumped per release) so contributors never need a manual
+# version commit before tagging.
+version = "0.0.0"
+description = "AI-powered autonomous red team testing framework"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.13"
+
+authors = [
+    { name = "Decepticon Team" }
+]
+
+keywords = [
+    "ai", "security", "red-team", "penetration-testing",
+    "llm", "langchain", "langgraph", "autonomous-agents"
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+dependencies = [
+    # Contract layer (split out in Phase 1 of the core/framework/sdk
+    # redesign — see docs/superpowers/specs/2026-05-23-core-framework-sdk-split-design.md).
+    # Workspace-resolved to the in-tree packages/raptix-core/ during
+    # dev; pinned to the same version as raptix at release time.
+    "raptix-core",
+    # Skill corpus (split out in W9) — the operator-facing SKILL.md
+    # knowledge pack resolved via raptix.execution.backends.SKILLS_LOCAL_PATH.
+    "raptix-skills",
+    # W10 contracts domain pack supplies offline scanners and generators.
+    "raptix-contracts",
+    "raptix-reversing",
+    "raptix-mobile",
+    "raptix-iot",
+    "raptix-ics",
+    "raptix-wireless",
+    "raptix-cloud",
+    "raptix-phishing",
+    "raptix-active-directory",
+    "raptix-web",
+    "raptix-network",
+    # T13 defense domain pack (CONOPS resolution — offline stdlib analysis).
+    # The SIEM/EDR detection pushers stay in this package: they POST over
+    # HTTP (requests) and plugin packs import stdlib + SDK/core only.
+    "raptix-defense",
+    # Core
+    "pydantic>=2.0.0",
+    "pydantic-settings>=2.0.0",
+    "pyyaml>=6.0.0",
+    "python-dotenv>=1.0.0",
+    # LLM
+    "langchain-core>=0.3.0",
+    "langchain-openai>=0.3.0",
+    "langchain-anthropic>=0.3.0",
+    "langgraph>=1.0.0",
+    "langgraph-cli[inmem]>=0.2.0",
+    "langgraph-sdk>=0.1.0",
+    # HTTP
+    "httpx>=0.27.0",
+    # SIEM/EDR detection pushers (execution/tools/defense) POST via requests.
+    "requests>=2.32.0",
+    "deepagents>=0.5.0",
+    # Open-web engine (raptix/execution/sandbox/web) — runs inside the sandbox, which
+    # mounts raptix as /deps/raptix, so its pure-Python parse deps ride
+    # the main install set (same rationale as the FastAPI/uvicorn note below).
+    # The network tier (curl_cffi) is heavier and stays sandbox-image-only; unit
+    # tests mock it. beautifulsoup4 backs the validator's success_selector proof.
+    "beautifulsoup4>=4.12.0",
+    # Sandbox HTTP daemon — the FastAPI app that ships inside the
+    # sandbox container and that `HTTPSandbox` (raptix/execution/backends/
+    # http_sandbox.py) talks to. Carried in the main install set
+    # because the sandbox container mounts raptix as
+    # /deps/raptix and runs `python -m raptix.execution.sandbox.server`
+    # as its entrypoint; the agent process imports nothing from these
+    # at runtime.
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    # CLI
+    "typer[all]>=0.9.0",
+    "xxhash>=3.0.0",
+    # Security
+    "defusedxml>=0.7.0",
+    # Transitive-dependency security floors (pip-audit gate). Not imported
+    # directly — pinned up to clear advisories the resolver would otherwise
+    # leave on older versions:
+    #   click        — PYSEC-2026-2132 (fixed 8.3.3)
+    #   cryptography — GHSA-537c-gmf6-5ccf / PYSEC-2026-3552 (fixed 50.0.0)
+    #   starlette    — CVE-2026-48818 / -48817 / -54283 / -54282 (fixed ≤1.3.1)
+    #   langchain    — GHSA-gr75-jv2w-4656 (fixed 1.3.9)
+    "click>=8.3.3",
+    "cryptography>=50.0.0",
+    "starlette>=1.3.1",
+    "langchain>=1.3.9",
+]
+
+[project.optional-dependencies]
+# Heavy / feature-specific deps kept out of the base install so
+# `pip install raptix` stays lean for library consumers. The neo4j
+# driver is imported lazily inside ``KGStore.__init__``
+# (raptix/knowledge/graph/store.py), so the base install
+# imports and runs everything except the KG graph tools.
+neo4j = ["neo4j>=6,<7"]
+# Durable local Agent Server checkpoints; installed in the LangGraph image.
+runtime-persistence = ["langgraph-checkpoint-sqlite>=3,<4"]
+telemetry = [
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp>=1.27",
+]
+# MCP server — exposes Decepticon engagement control over the Model
+# Context Protocol so external agents (OpenClaw, Hermes, or any MCP
+# client) can drive engagements. Provides the ``raptix-mcp`` script.
+# pyjwt[crypto] backs the JWT (OAuth 2.1 resource-server) auth mode on the
+# streamable-http transport; shared-secret + stdio modes never import it.
+mcp = ["mcp>=1.9.0", "pyjwt[crypto]>=2.10"]
+all = ["raptix[neo4j,telemetry,mcp]"]
+
+[project.scripts]
+raptix-cli = "raptix.cli.__main__:main"
+raptix-kg-health = "raptix.execution.tools.research.health:main"
+raptix-mcp = "raptix.interfaces.mcp.__main__:main"
+
+# Plugin entry-point groups consumed by ``raptix.plugin_loader``.
+# External packages (downstream or community plugins) declare their
+# contributions under these groups. See ``raptix/plugin_loader.py``
+# for the loader contract (shapes, factory kwargs, error isolation).
+#
+#   [project.entry-points."raptix.tools"]
+#   my-tools = "my_pkg.tools:get_tools"
+#
+#   [project.entry-points."raptix.middleware"]
+#   my-mw = "my_pkg.middleware:get_middleware"
+#
+#   [project.entry-points."raptix.agents"]
+#   my-agent = "my_pkg.agents.my_agent"
+#
+#   [project.entry-points."raptix.subagents"]
+#   my-subagent = "my_pkg.agents.my_subagent:SUBAGENT_SPEC"
+#
+#   [project.entry-points."raptix.callbacks"]
+#   my-cb = "my_pkg.callbacks:get_callbacks"
+
+# OSS-shipped subagents — registered here so the plugin loader picks
+# them up uniformly with external plugins. Each entry resolves to a
+# ``SubAgentSpec`` module constant declaring (name, description,
+# factory, parent_agents, bundle, priority). The main agents iterate
+# ``load_subagents_for_parent(<their-name>)`` at construction time;
+# adding a new subagent — OSS or plugin — is a pure entry-point
+# registration with no main-agent edits required.
+#
+# Bundle activation — controlled by a 4-tier hierarchy (highest wins):
+#   1. RAPTIX_PLUGINS env var (e.g. "standard,plugins,vendor" or "*")
+#   2. .raptix.toml: [plugins] enabled = [...]
+#   3. pyproject.toml: [tool.raptix.plugins] enabled = [...]
+#   4. Default: ["standard"]
+# Default keeps OSS lean. The ``plugins`` bundle (vulnresearch family)
+# is opt-in. See raptix/plugin_loader.py for the loader contract.
+
+# Default Decepticon project config — kept in OSS so this checkout's
+# native dev workflow (e.g. ``make benchmark``, ``langgraph dev``)
+# automatically activates both bundles instead of forcing every
+# developer to remember the env var. End-user OSS installs that DON'T
+# clone this repo see the hardcoded ``["standard"]`` default; downstream
+# images override via ``ENV RAPTIX_PLUGINS=standard,vendor``.
+
+[tool.raptix.plugins]
+enabled = ["standard", "plugins"]
+
+[project.entry-points."raptix.subagents"]
+# Standard bundle — attached to the ``raptix`` main agent.
+recon = "raptix.intelligence.agents.standard.recon:SUBAGENT_SPEC"
+exploit = "raptix.intelligence.agents.standard.exploit:SUBAGENT_SPEC"
+surface_exploit = "raptix.intelligence.agents.standard.surface_exploit:SUBAGENT_SPEC"
+analyst = "raptix.intelligence.agents.standard.analyst:SUBAGENT_SPEC"
+postexploit = "raptix.intelligence.agents.standard.postexploit:SUBAGENT_SPEC"
+blue_cell = "raptix.intelligence.agents.standard.blue_cell:SUBAGENT_SPEC"
+osint_operator = "raptix.intelligence.agents.standard.osint_operator:SUBAGENT_SPEC"
+forensicator = "raptix.intelligence.agents.standard.forensicator:SUBAGENT_SPEC"
+supply_chain_operator = "raptix.intelligence.agents.standard.supply_chain_operator:SUBAGENT_SPEC"
+# Plugins bundle — vulnresearch family, attached to the ``vulnresearch`` main agent.
+scanner = "raptix.intelligence.agents.plugins.scanner:SUBAGENT_SPEC"
+detector = "raptix.intelligence.agents.plugins.detector:SUBAGENT_SPEC"
+verifier = "raptix.intelligence.agents.plugins.verifier:SUBAGENT_SPEC"
+patcher = "raptix.intelligence.agents.plugins.patcher:SUBAGENT_SPEC"
+exploiter = "raptix.intelligence.agents.plugins.exploiter:SUBAGENT_SPEC"
+
+[project.entry-points."raptix.agent_composers"]
+default = "raptix.intelligence.agents.domain_composer:compose_domain_agent"
+
+[project.urls]
+Homepage = "https://github.com/Akapi895/raptix"
+Repository = "https://github.com/Akapi895/raptix"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# Source under src/ — PEP 517 src-layout so editable installs don't
+# accidentally import from the workspace root during dev.
+packages = ["raptix"]
+# The skill corpus moved to the separate raptix-skills distribution
+# (W9); nothing else needs excluding from the raptix wheel.

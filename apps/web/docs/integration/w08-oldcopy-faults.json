@@ -1,0 +1,18 @@
+{
+  "ok": true,
+  "checks": [
+    "8 simultaneous thread intents produce one acknowledged owned thread",
+    "8 simultaneous run intents dispatch once; stable replay, active-run conflict, strict input, redaction and pre-network ownership",
+    "deterministic late duplicate preflight returns the winning intent instead of a spurious active-run conflict",
+    "lost run ACK remains uncertain; metadata reconciliation restores ID without resubmit; interrupted run retains slot",
+    "durable candidate thread identity repairs lost thread ACK without duplicate creation",
+    "known rejection clears slot but does not replay, execution readiness blocks, pagination and reconciliation body are scoped",
+    "planning/execution handoff is transaction guarded; complete runtime bundle permits initial root run without OPPLAN",
+    "historical intent replay survives discovery outage; new mutation remains unavailable",
+    "fresh-only trusted context bootstrap prevents default-false authorization masking without changing user message input",
+    "actual PostgreSQL SSE owner/cursor denial, peer abort/reconnect, seconds/flags/redaction and no extra execution/cancel/slot release"
+  ],
+  "provider": "controlled HTTP fault runtime, real PostgreSQL and new Fastify service",
+  "threadCreates": 4,
+  "runCreates": 6
+}

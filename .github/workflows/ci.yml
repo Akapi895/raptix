@@ -42,12 +42,15 @@ jobs:
   # Any change to ci.yml itself triggers everything (safety net).
   changes:
     name: Detect changes
+    permissions:
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
       python: ${{ steps.app.outputs.python }}
       cli: ${{ steps.app.outputs.cli }}
-      web: ${{ steps.app.outputs.web }}
+      web-raptix: ${{ steps.app.outputs['web-raptix'] }}
       desktop: ${{ steps.app.outputs.desktop }}
       launcher: ${{ steps.app.outputs.launcher }}
       compose: ${{ steps.app.outputs.compose }}
@@ -59,9 +62,9 @@ jobs:
         with:
           filters: |
             python:
-              - 'packages/decepticon/**'
-              - 'packages/decepticon-core/**'
-              - 'packages/decepticon-sdk/**'
+              - 'packages/raptix/**'
+              - 'packages/raptix-core/**'
+              - 'packages/raptix-sdk/**'
               - 'pyproject.toml'
               - 'uv.lock'
               # tests/ and docker-compose.yml were missing here, so a
@@ -72,24 +75,28 @@ jobs:
               - 'docker-compose.yml'
               - '.github/workflows/ci.yml'
             cli:
-              - 'clients/cli/**'
-              - 'clients/shared/**'
+              - 'apps/cli/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
-            web:
-              - 'clients/web/**'
-              - 'clients/shared/**'
+            web-raptix:
+              - 'apps/web/**'
+              - 'apps/shared/**'
+              - 'infra/containers/web-raptix.Dockerfile'
+              - 'infra/containers/web-raptix-server.Dockerfile'
+              - 'infra/containers/web-raptix-proxy.conf'
+              - 'docker-compose.web-raptix.yml'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             desktop:
-              - 'clients/desktop/**'
+              - 'apps/desktop/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             launcher:
-              - 'clients/launcher/**'
+              - 'apps/launcher/**'
               - '.github/workflows/ci.yml'
             compose:
               - 'docker-compose*.yml'
@@ -101,43 +108,50 @@ jobs:
         with:
           filters: |
             langgraph:
-              - 'containers/langgraph.Dockerfile'
-              - 'packages/decepticon/**'
-              - 'packages/decepticon-core/**'
-              - 'packages/decepticon-sdk/**'
+              - 'infra/containers/langgraph.Dockerfile'
+              - 'packages/raptix/**'
+              - 'packages/raptix-core/**'
+              - 'packages/raptix-sdk/**'
               - 'pyproject.toml'
               - 'uv.lock'
               - '.github/workflows/ci.yml'
             litellm:
-              - 'containers/litellm.Dockerfile'
-              - 'config/litellm.yaml'
+              - 'infra/containers/litellm.Dockerfile'
+              - 'infra/config/litellm.yaml'
               - '.github/workflows/ci.yml'
             sandbox:
-              - 'containers/sandbox.Dockerfile'
+              - 'infra/containers/sandbox.Dockerfile'
               # Skills no longer ship in the sandbox image — they live under
-              # packages/decepticon/src/decepticon/skills and are read
+              # packages/raptix/src/raptix/skills and are read
               # in-process by the langgraph service (see
-              # packages/decepticon/src/decepticon/backends/__init__.py).
-              # Skill changes rebuild langgraph (via the packages/decepticon/**
+              # packages/raptix/src/raptix/execution/backends/__init__.py).
+              # Skill changes rebuild langgraph (via the packages/raptix/**
               # filter above), not the sandbox.
               - '.github/workflows/ci.yml'
             cli:
-              - 'containers/cli.Dockerfile'
-              - 'clients/cli/**'
-              - 'clients/shared/**'
+              - 'infra/containers/cli.Dockerfile'
+              - 'apps/cli/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
-            web:
-              - 'containers/web.Dockerfile'
-              - 'clients/web/**'
-              - 'clients/cli/**'
-              - 'clients/shared/**'
+            web-raptix:
+              - 'infra/containers/web-raptix.Dockerfile'
+              - 'infra/containers/web-raptix-proxy.conf'
+              - 'apps/web/**'
+              - 'apps/shared/**'
+              - 'package.json'
+              - 'package-lock.json'
+              - '.github/workflows/ci.yml'
+            web-raptix-server:
+              - 'infra/containers/web-raptix-server.Dockerfile'
+              - 'apps/web/**'
+              - 'apps/shared/**'
               - 'package.json'
               - 'package-lock.json'
               - '.github/workflows/ci.yml'
             c2-sliver:
-              - 'containers/c2-sliver.Dockerfile'
+              - 'infra/containers/c2-sliver.Dockerfile'
               - '.github/workflows/ci.yml'
 
   # ── Compose validation guardrail ─────────────────────────────────
@@ -156,12 +170,14 @@ jobs:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       # The compose files reference a project-local ``.env`` for the
       # runtime stack. CI doesn't ship one (and shouldn't — keys live
-      # in the user's $DECEPTICON_HOME), so the validator runs against
+      # in the user's $RAPTIX_HOME), so the validator runs against
       # an empty .env so it only catches YAML/structure drift.
       - name: Stub empty .env for config-only validation
         run: touch .env
       - name: Validate base docker-compose.yml
         run: docker compose -f docker-compose.yml config > /dev/null
+      - name: Validate new web-raptix deployment
+        run: docker compose -f docker-compose.web-raptix.yml config > /dev/null
       - name: Validate base + dev override
         run: docker compose -f docker-compose.yml -f docker-compose.dev.yml config > /dev/null
       - name: Validate base + dev + watch
@@ -170,7 +186,7 @@ jobs:
   python:
     # ubuntu-only by design: the Python backend ships and runs inside the
     # langgraph Docker image (python:3.13-slim — Linux), never natively on
-    # a developer's macOS/Windows host. The pip-installable `decepticon`
+    # a developer's macOS/Windows host. The pip-installable `raptix`
     # SDK is a thin client that routes execution to those Linux services
     # over HTTP, so there is no macOS/Windows Python runtime to validate.
     # Testing Python on macOS only bought 10x CI minutes, flakiness, and a
@@ -222,7 +238,7 @@ jobs:
       - name: Skill corpus audit (strict mode)
         run: make audit-skills-strict
       - name: Capability contracts and held-out scorecards
-        run: uv run pytest -q packages/decepticon/tests/unit/capabilities
+        run: uv run pytest -q packages/raptix/tests/unit/capabilities
       # Phase 1a graph builder — assert the checked-in skills.cypher
       # matches what the builder produces from the current SKILL.md +
       # seed YAML + pinned MITRE STIX bundle. Authors who edit a
@@ -236,8 +252,8 @@ jobs:
           ec=$?
           if [ $ec -ne 0 ]; then
             echo "::group::Diff against checked-in dump"
-            uv run python -m decepticon.skillogy.builder --frozen-built-at --out /tmp/built.cypher
-            diff -u packages/decepticon/decepticon/skills/.graph/skills.cypher /tmp/built.cypher | head -200 || true
+            uv run python -m raptix.skills.engine.builder --frozen-built-at --out /tmp/built.cypher
+            diff -u packages/raptix/raptix/skills/.graph/skills.cypher /tmp/built.cypher | head -200 || true
             echo "::endgroup::"
             exit $ec
           fi
@@ -408,18 +424,18 @@ jobs:
             macOS-X64)   npm install --no-save @rollup/rollup-darwin-x64 ;;
             Windows-X64) npm install --no-save @rollup/rollup-win32-x64-msvc ;;
           esac
-      # @decepticon/streaming now ships as a built ESM package
+      # @raptix/streaming now ships as a built ESM package
       # (package.json main → dist/index.js). cli's tsc + web's next build
       # resolve the workspace by walking that main, so the dist has to
       # exist before either downstream build runs.
       - name: Build shared streaming workspace
         if: needs.changes.outputs.cli == 'true'
-        run: npm run build --workspace=@decepticon/streaming
+        run: npm run build --workspace=@raptix/streaming
       - if: needs.changes.outputs.cli == 'true'
-        run: cd clients/cli && npm run typecheck
+        run: cd apps/cli && npm run typecheck
       - name: Run CLI tests
         if: needs.changes.outputs.cli == 'true'
-        run: cd clients/cli && npm test --if-present
+        run: cd apps/cli && npm test --if-present
 
   # Electron desktop shell: pure unit tests (config/platform/ui) exercise
   # Windows / macOS / Linux path, menu, and Docker-spawn differences. The
@@ -455,50 +471,76 @@ jobs:
       - name: Syntax-check desktop sources
         if: needs.changes.outputs.desktop == 'true'
         run: |
-          node --check clients/desktop/src/config.mjs
-          node --check clients/desktop/src/platform.mjs
-          node --check clients/desktop/src/ui.mjs
-          node --check clients/desktop/src/main.mjs
-          node --check clients/desktop/src/preload.cjs
+          node --check apps/desktop/src/config.mjs
+          node --check apps/desktop/src/platform.mjs
+          node --check apps/desktop/src/ui.mjs
+          node --check apps/desktop/src/main.mjs
+          node --check apps/desktop/src/preload.cjs
       - name: Run desktop unit tests
         if: needs.changes.outputs.desktop == 'true'
         run: npm run desktop:test
 
-  web:
-    name: Web (lint + build)
+  # New-stack (W16 cutover) lane: web-raptix UI + API quality gates. The
+  # legacy `web` (Next.js) job was retired with W20 (guide §14.5): the
+  # clients/web folder itself was removed in the W2 repo restructure.
+  web-raptix:
+    name: Web raptix (lint + test + build)
     needs: changes
-    # See the ``cli`` job for the rationale on job-level ``if`` removal +
-    # per-step ``if`` gating: the ruleset requires this status, so it must
-    # always succeed/fail rather than be skipped.
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
-      - if: needs.changes.outputs.web != 'true'
-        run: 'echo "No Web-relevant changes — emitting success."'
+      - if: needs.changes.outputs['web-raptix'] != 'true'
+        run: 'echo "No web-raptix-relevant changes — emitting success."'
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
-        if: needs.changes.outputs.web == 'true'
+        if: needs.changes.outputs['web-raptix'] == 'true'
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        if: needs.changes.outputs.web == 'true'
+        if: needs.changes.outputs['web-raptix'] == 'true'
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: package-lock.json
-      - if: needs.changes.outputs.web == 'true'
+      - if: needs.changes.outputs['web-raptix'] == 'true'
         run: npm ci
-      - name: Build shared streaming workspace
-        if: needs.changes.outputs.web == 'true'
-        run: npm run build --workspace=@decepticon/streaming
-      - name: Generate Prisma client
-        if: needs.changes.outputs.web == 'true'
-        run: cd clients/web && npx prisma generate
-      - name: Lint
-        if: needs.changes.outputs.web == 'true'
-        run: cd clients/web && npx eslint src/ --max-warnings 0
-      - name: Build
-        if: needs.changes.outputs.web == 'true'
-        run: cd clients/web && npm run build
-        env:
-          NEXT_PUBLIC_DECEPTICON_EDITION: oss
+      - name: Build shared workspaces
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: |
+          npm run build --workspace=@raptix/streaming
+          npm run build --workspace=@raptix/web-contracts
+      - name: Server Prisma generate + typecheck + lint + build + tests
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: |
+          npm run prisma:generate --workspace=@raptix/web-raptix-server
+          npm run typecheck --workspace=@raptix/web-raptix-server
+          npm run lint --workspace=@raptix/web-raptix-server
+          npm run build --workspace=@raptix/web-raptix-server
+          npm run test --workspace=@raptix/web-raptix-server
+      - name: UI typecheck + lint + build + tests
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: |
+          npm run typecheck --workspace=@raptix/web-raptix
+          npm run lint --workspace=@raptix/web-raptix
+          npm run build --workspace=@raptix/web-raptix
+          npm run test --workspace=@raptix/web-raptix
+      - name: Install Chromium for Docker mode smoke
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        working-directory: apps/web
+        run: npx playwright install --with-deps chromium
+      - name: Build Docker UI and bootstrap API images
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: |
+          docker build -f infra/containers/web-raptix.Dockerfile -t raptix-web-raptix-ui:ci .
+          docker build -f infra/containers/web-raptix-server.Dockerfile -t raptix-web-raptix-server:ci .
+      - name: Docker default real-mode smoke (bootstrap API, no DB or LLM)
+        if: needs.changes.outputs['web-raptix'] == 'true'
+        run: node apps/web/tools/verify-docker-real-mode.mjs
+      - name: Upload Docker mode smoke evidence
+        if: always() && needs.changes.outputs['web-raptix'] == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: web-raptix-docker-mode-smoke
+          path: apps/web/test-results-deployed/iw05/
+          if-no-files-found: ignore
+          retention-days: 7
 
   # Go launcher: vet + test. Mirrors what release.yml runs before GoReleaser
   # builds the binaries on tag push, so a broken `go test ./...` is caught
@@ -533,15 +575,15 @@ jobs:
           # Read the toolchain from go.mod so CI never drifts from the
           # launcher's declared version (go.mod is the single source of
           # truth; a hardcoded version here masked a 1.24/1.25 mismatch).
-          go-version-file: clients/launcher/go.mod
-          cache-dependency-path: clients/launcher/go.sum
+          go-version-file: apps/launcher/go.mod
+          cache-dependency-path: apps/launcher/go.sum
       - name: go vet
         if: needs.changes.outputs.launcher == 'true'
-        working-directory: clients/launcher
+        working-directory: apps/launcher
         run: go vet ./...
       - name: go test
         if: needs.changes.outputs.launcher == 'true'
-        working-directory: clients/launcher
+        working-directory: apps/launcher
         run: go test ./...
 
   docker-build:
@@ -560,10 +602,12 @@ jobs:
       - uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
-          file: containers/${{ matrix.image }}.Dockerfile
+          file: infra/containers/${{ matrix.image }}.Dockerfile
           push: false
           load: true
-          tags: decepticon-${{ matrix.image }}:ci
+          tags: raptix-${{ matrix.image }}:ci
+          build-args: |
+            RAPTIX_REPO_HEAD=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=${{ github.event_name == 'push' && 'max' || 'min' }}
       # Informational scan. The hotfix scope (1.0.27) keeps this as a
@@ -576,7 +620,7 @@ jobs:
       - name: Trivy image scan
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1 # 0.35.0
         with:
-          image-ref: decepticon-${{ matrix.image }}:ci
+          image-ref: raptix-${{ matrix.image }}:ci
           format: sarif
           output: trivy-${{ matrix.image }}.sarif
           severity: CRITICAL,HIGH
@@ -620,7 +664,7 @@ jobs:
         uses: docker/build-push-action@f9f3042f7e2789586610d6e8b85c8f03e5195baf # v7.2.0
         with:
           context: .
-          file: containers/${{ matrix.image }}.Dockerfile
+          file: infra/containers/${{ matrix.image }}.Dockerfile
           push: false
           # `load: false` with --platform linux/arm64 keeps the image in
           # the buildx cache without trying to load a foreign-arch image
@@ -629,7 +673,9 @@ jobs:
           # Dockerfile path on the target arch.
           load: false
           platforms: linux/arm64
-          tags: decepticon-${{ matrix.image }}:ci-arm64
+          tags: raptix-${{ matrix.image }}:ci-arm64
+          build-args: |
+            RAPTIX_REPO_HEAD=${{ github.sha }}
           cache-from: type=gha,scope=arm64
           cache-to: type=gha,mode=${{ github.event_name == 'push' && 'max' || 'min' }},scope=arm64
 
@@ -702,7 +748,7 @@ jobs:
       - python
       - cli
       - desktop
-      - web
+      - web-raptix
       - launcher
       - docker-build
       - docker-build-arm64

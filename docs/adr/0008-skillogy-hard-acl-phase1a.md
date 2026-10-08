@@ -3,7 +3,7 @@
 - **Status:** Accepted
 - **Date:** 2026-06-06
 - **Deciders:** @PurpleCHOIms
-- **Related:** PR #613 (Skillogy default-on), `docs/design/skillogy-brain-redesign.md` OQ-3, `packages/decepticon/decepticon/middleware/skills.py` (legacy SkillsMiddleware), `packages/decepticon/decepticon/agents/middleware_slots.py::skills_sources_for`
+- **Related:** PR #613 (Skillogy default-on), `docs/design/skillogy-brain-redesign.md` OQ-3, `packages/raptix/raptix/middleware/skills.py` (legacy SkillsMiddleware), `packages/raptix/raptix/agents/middleware_slots.py::skills_sources_for`
 
 ## Context
 
@@ -132,6 +132,6 @@ Drop the `allowed_path_prefixes` field from the three request models
 in `server/app.py`, the three backend methods in `neo4j_backend.py`,
 the three client methods in `client/rest.py`, the middleware
 `__init__`, and the builder hook. Tests in
-`packages/decepticon/tests/unit/middleware/test_skillogy.py` +
+`packages/raptix/tests/unit/middleware/test_skillogy.py` +
 `tests/unit/skillogy/test_acl.py` would need to be deleted. The
 underlying Cypher would revert to today's unrestricted form.

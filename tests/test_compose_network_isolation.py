@@ -11,7 +11,7 @@ Invariants
 1. **Operational services never join the management network.**
    The Kali sandbox, the C2 framework, and the optional Ghidra MCP
    sidecar are sandbox-net only. Adding any of them to
-   ``decepticon-net`` collapses the management/operational boundary
+   ``raptix-net`` collapses the management/operational boundary
    that the architecture is built around (see
    ``docs/security/sandbox-isolation.md``).
 
@@ -53,7 +53,7 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parents[1]
 COMPOSE = REPO_ROOT / "docker-compose.yml"
 
-MGMT_NET = "decepticon-net"
+MGMT_NET = "raptix-net"
 SANDBOX_NET = "sandbox-net"
 
 # Services that MUST NOT touch the management network under any
@@ -235,7 +235,7 @@ def test_only_allowlisted_services_mount_docker_socket():
         msgs.append(
             f"services mounting docker.sock without an allowlist entry: {sorted(unexpected)}\n"
             "Fix: use the sandbox HTTP daemon (port 9999) instead of docker exec "
-            "(see packages/decepticon/decepticon/backends/), or — if the service runs "
+            "(see packages/raptix/raptix/backends/), or — if the service runs "
             "no agent code — add it to DOCKER_SOCKET_SERVICES with the reason."
         )
     if stale:

@@ -1,0 +1,10 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "GET",
+  "path": "/api/engagements/cmupmdkw400013togf2geknfy/graph",
+  "status": 503,
+  "contentType": "application/json",
+  "body": {
+    "error": "NEO4J_PASSWORD missing or set to the public default. Refusing to query the graph. See docs/security/neo4j-hardening.md."
+  }
+}

@@ -1,0 +1,217 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ── Target types ─────────────────────────────────────────────────────
+// Network/web attack surface targets supported by the self-hosted platform.
+
+enum TargetType {
+  web_url
+  ip_range
+}
+
+enum EngagementStatus {
+  draft
+  planning
+  running
+  completed
+  failed
+}
+
+// ── Application models ───────────────────────────────────────────────
+
+model Engagement {
+  id                     String           @id @default(cuid())
+  name                   String
+  // Operator-facing display label; falls back to `name` when unset.
+  displayName            String?
+  targetType             TargetType
+  targetValue            String
+  authorizationConfirmed Boolean          @default(false)
+  status                 EngagementStatus @default(draft)
+
+  // Self-hosted single-user mode — userId is always "local".
+  userId      String           @default("local")
+
+  // LangGraph thread tracking
+  threadId      String?
+  workspacePath String?
+  runtimeContextLockedAt DateTime?
+  threads EngagementThread[]
+  requests WebRequestLedger[]
+  campaigns Campaign[]
+  vaultSecrets VaultSecret[]
+  c2Commands C2Command[]
+
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@index([status])
+}
+
+enum ThreadKind {
+  planning
+  execution
+}
+
+enum WebRequestOperation {
+  create_thread
+  create_run
+  resume
+}
+
+enum WebRequestState {
+  creating
+  accepted
+  uncertain
+  rejected
+}
+
+model EngagementThread {
+  threadId String @id
+  engagementId String
+  assistantId String
+  kind ThreadKind
+  contextHash String
+  runtimeConfigHash String?
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  requests WebRequestLedger[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([engagementId, threadId])
+}
+
+model WebRequestLedger {
+  id String @id @default(cuid())
+  engagementId String
+  requestId String
+  operation WebRequestOperation
+  payloadHash String
+  reservationToken String
+  candidateThreadId String? @unique
+  dispatchAssistantId String?
+  dispatchKind ThreadKind?
+  dispatchConfigHash String?
+  threadId String?
+  runId String?
+  // Held through acceptance/uncertainty until runtime completion is verified.
+  activeThreadId String? @unique
+  state WebRequestState @default(creating)
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  thread EngagementThread? @relation(fields: [engagementId, threadId], references: [engagementId, threadId], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([engagementId, requestId])
+  @@unique([threadId, runId])
+  @@index([state, updatedAt])
+}
+
+
+// -- W17 vector campaigns ---------------------------------------------
+// Persisted drafts plus truthful provider jobs. The campaign provider is not
+// wired in this build; generate/deploy attempts record durable jobs with an
+// explicit unavailable status instead of fabricating Generated/Delivered.
+
+model Campaign {
+  id           String @id @default(cuid())
+  engagementId String
+  name         String
+  vector       String
+  status       String @default("draft")
+  version      Int    @default(1)
+  spec         Json
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  jobs         CampaignJob[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([engagementId, name])
+  @@index([engagementId, status])
+}
+
+model CampaignJob {
+  id         String @id @default(cuid())
+  campaignId String
+  kind       String
+  status     String @default("unavailable")
+  provider   String?
+  error      String?
+  requestId  String?
+  payloadHash String?
+  activeCampaignId String? @unique
+  providerId String?
+  providerStatus String?
+  summary Json?
+  campaignVersion Int?
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([campaignId, createdAt])
+  @@unique([campaignId, requestId])
+}
+
+
+// -- W18 credentials vault --------------------------------------------
+// Server-side encrypted secret storage (AES-256-GCM). The API returns only
+// redacted metadata; plaintext exists solely in the dedicated reveal
+// response, and every reveal is written to the engagement-scoped audit log
+// (which intentionally survives secret deletion).
+
+model VaultSecret {
+  id           String @id @default(cuid())
+  engagementId String
+  kind         String
+  label        String
+  ciphertext   String
+  iv           String
+  authTag      String
+  createdBy    String
+  engagement   Engagement @relation(fields: [engagementId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([engagementId, kind])
+}
+
+model VaultAudit {
+  id           String @id @default(cuid())
+  engagementId String
+  secretId     String
+  action       String
+  createdAt    DateTime @default(now())
+
+  @@index([engagementId, createdAt])
+}
+
+model C2Command {
+  id String @id @default(cuid())
+  engagementId String
+  engagement Engagement @relation(fields: [engagementId], references: [id], onDelete: Restrict)
+  sessionId String
+  requestId String
+  payloadHash String
+  path String
+  args Json
+  status String @default("creating")
+  exitCode Int?
+  pid Int?
+  stdout String @default("")
+  stderr String @default("")
+  stdoutTruncated Boolean @default(false)
+  stderrTruncated Boolean @default(false)
+  activeSessionId String? @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@unique([engagementId, requestId])
+  @@index([engagementId, createdAt])
+}

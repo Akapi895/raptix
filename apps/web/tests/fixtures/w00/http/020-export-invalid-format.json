@@ -1,0 +1,9 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "GET",
+  "path": "/api/engagements/cmupmdkw400013togf2geknfy/export?format=xlsx",
+  "status": 200,
+  "contentType": "text/markdown",
+  "body": "# w00-capture-assessment — Engagement Export\n\n**Status:** planning\n**Target:** http://authorized-test.invalid (web_url)\n**Created:** Thu Oct 01 2026 14:18:39 GMT+0000 (Coordinated Universal Time)\n\n## OPPLAN\n\n| ID | Title | Status |\n|---|---|---|\n| OBJ-001 | Passive recon of authorized target | planned |\n\n## Findings\n\n### FIND-001\n\n# Synthetic exposed service header\nseverity: high\n## Description\nSynthetic finding used by the isolated W00 capture run; controlled response header leak on the authorized test target.\n## Evidence\nGET http://authorized-test.invalid/ returned a controlled synthetic header.\n## Attack Vector\nUnauthenticated HTTP request to the authorized test target.\n## Affected Assets\n- http://authorized-test.invalid\n## Remediation\nRemove the synthetic header from the controlled fixture response.\n## CWE\n- CWE-200\n## MITRE\n- T1592\n\n\n### FIND-002\n\nthis file intentionally has no markdown finding structure\nseverity: absolutely-bogus\nrandom tokens: #### ??? :: //\n\n",
+  "contentDisposition": "attachment; filename=\"w00-capture-assessment-export.md\""
+}
