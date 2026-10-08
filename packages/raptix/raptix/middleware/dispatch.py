@@ -24,7 +24,10 @@ from langgraph.types import Command
 from pydantic import Field
 
 from raptix.core.dispatch_context import DispatchContext, active_dispatch
-from raptix.core.subagent_streaming import MAX_SUBAGENT_CONSECUTIVE_FAILURES
+from raptix.core.subagent_streaming import (
+    MAX_SUBAGENT_CONSECUTIVE_FAILURES,
+    PRIVATE_CHILD_STATE_KEYS,
+)
 from raptix.middleware.subagent_transcript_state import SubagentTranscriptState
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
 from raptix_core.types.dispatch_outcome import (
@@ -33,6 +36,12 @@ from raptix_core.types.dispatch_outcome import (
 )
 
 MAX_DISPATCHES = 256
+
+# Child state keys that never merge into the parent update (ADR-0044).
+# StreamingRunnable already withholds PrivateStateAttr channels before the
+# child state reaches deepagents' task tool; this second layer survives a
+# future wrapper change at the dispatch seam.
+_PARENT_PRIVATE_STATE_KEYS = PRIVATE_CHILD_STATE_KEYS
 
 
 def merge_dispatch_ledger(left: dict | None, right: dict | None) -> dict:
@@ -166,6 +175,9 @@ class DispatchMiddleware(SubAgentMiddleware):
                 )
             )
         updates = dict(result.update) if isinstance(result, Command) else {}
+        leaked = _PARENT_PRIVATE_STATE_KEYS.intersection(updates)
+        if leaked:
+            updates = {k: v for k, v in updates.items() if k not in _PARENT_PRIVATE_STATE_KEYS}
         if context.failures:
             outcome = context.failures[-1].model_dump(mode="json")
             updates["messages"] = [
@@ -198,7 +210,14 @@ class DispatchMiddleware(SubAgentMiddleware):
     @staticmethod
     def _child_runtime(runtime: ToolRuntime, context: DispatchContext) -> ToolRuntime:
         child_runtime = copy(runtime)
-        child_runtime.state = {**runtime.state, "active_objective_id": context.objective_id or ""}
+        child_runtime.state = {
+            **{
+                key: value
+                for key, value in runtime.state.items()
+                if key not in PRIVATE_CHILD_STATE_KEYS
+            },
+            "active_objective_id": context.objective_id or "",
+        }
         return child_runtime
 
     def _release(self, key: tuple[str, str]) -> None:
