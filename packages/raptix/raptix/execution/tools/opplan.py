@@ -393,6 +393,15 @@ def build_opplan_tools(
         tool_call_id: Annotated[str, InjectedToolCallId] = "",
     ) -> Command[Any]:
         """Add one objective with auto-ID generation."""
+        # Operator-pinned engagement (RAPTIX_ENGAGEMENT) is authoritative:
+        # ignore any model-supplied engagement_name so the OPPLAN metadata and
+        # the state label stay consistent with the pinned-engagement fence in
+        # bash_workspace. Without this, a model-authored slug (e.g. derived
+        # from the target IP) propagates into sub-agent state and every bash
+        # dispatch is refused with "does not match the pinned engagement".
+        pinned_engagement = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
+        if pinned_engagement:
+            engagement_name = pinned_engagement
         counter = state.get("objective_counter", 0) + 1
         obj_id = f"OBJ-{counter:03d}"
 

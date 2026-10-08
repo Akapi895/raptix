@@ -162,6 +162,18 @@ def _hydrate_engagement_state(state: Any) -> dict[str, Any] | None:
         if isinstance(cfg_slug, str) and cfg_slug:
             updates["engagement_name"] = cfg_slug
             engagement_label = cfg_slug
+    if not engagement_label:
+        # Operator-pinned engagement (launcher / RAPTIX_ENGAGEMENT) is the
+        # authoritative identity when the caller sent neither a state value
+        # nor a configurable one (e.g. raw CLI threads). Seeding it here keeps
+        # the bash_workspace fence comparison consistent: without it the first
+        # OPPLAN tool call lets the model author its own slug, which then
+        # propagates into every sub-agent and trips the pinned-engagement
+        # fence (bash.py) on all bash dispatches.
+        env_slug = os.environ.get("RAPTIX_ENGAGEMENT", "").strip()
+        if env_slug:
+            updates["engagement_name"] = env_slug
+            engagement_label = env_slug
 
     if not get("workspace_path"):
         cfg_workspace = configurable.get("workspace_path")
