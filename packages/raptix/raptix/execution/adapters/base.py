@@ -1,4 +1,4 @@
-﻿"""Adapter layer foundations (Wave T7 of the tool-optimization plan).
+"""Adapter layer foundations (Wave T7 of the tool-optimization plan).
 
 An adapter translates one :class:`CapabilityRequest` into the
 :class:`ExecutionSpec` a sandbox executor runs â€” nothing more. It never

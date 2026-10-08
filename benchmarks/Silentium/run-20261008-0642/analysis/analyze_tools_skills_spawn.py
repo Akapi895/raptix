@@ -14,12 +14,46 @@ with open(PATH, encoding="utf-8") as f:
         entries.append(e)
 
 SEC_TOOLS = [
-    "nmap", "gobuster", "nikto", "sqlmap", "nuclei", "ssh", "sshpass", "scp",
-    "curl", "wget", "nc", "ncat", "socat", "netexec", "nxc", "enum4linux",
-    "smbclient", "ldapsearch", "hydra", "john", "hashcat", "wpscan", "ffuf",
-    "dirb", "whatweb", "dnsrecon", "dig", "whois", "snmpwalk", "openssl",
-    "python3", "pip", "tmux", "git", "mysql", "psql", "sqlite3", "base64",
-    "openssl", "ddddocr",
+    "nmap",
+    "gobuster",
+    "nikto",
+    "sqlmap",
+    "nuclei",
+    "ssh",
+    "sshpass",
+    "scp",
+    "curl",
+    "wget",
+    "nc",
+    "ncat",
+    "socat",
+    "netexec",
+    "nxc",
+    "enum4linux",
+    "smbclient",
+    "ldapsearch",
+    "hydra",
+    "john",
+    "hashcat",
+    "wpscan",
+    "ffuf",
+    "dirb",
+    "whatweb",
+    "dnsrecon",
+    "dig",
+    "whois",
+    "snmpwalk",
+    "openssl",
+    "python3",
+    "pip",
+    "tmux",
+    "git",
+    "mysql",
+    "psql",
+    "sqlite3",
+    "base64",
+    "openssl",
+    "ddddocr",
 ]
 
 # ---- 1. bash command inventory
@@ -70,7 +104,9 @@ for e in entries:
         sess = re.search(r"session name:\s*([\w.-]+)", json.dumps(args))
         obj = re.search(r"OBJ-\d+", blob)
         ts = e.get("ts")
-        seq_dispatch.append((ts, name, sess.group(1) if sess else "?", obj.group(0) if obj else "?"))
+        seq_dispatch.append(
+            (ts, name, sess.group(1) if sess else "?", obj.group(0) if obj else "?")
+        )
 for ts, name, sess, obj in seq_dispatch:
     t = ts[:19] if isinstance(ts, str) else ts
     print(f"  {t}  agent={name or '?':14s} session={sess:24s} {obj}")
@@ -87,7 +123,7 @@ for e in entries:
         resp = str((e.get("response") or {}).get("content") or "")
         ok = "ERR" if ("error" in resp[:80].lower() or "no skill" in resp[:80].lower()) else "ok"
         n = len(resp)
-        print(f"  {e.get('ts','')[:19]} [{e.get('agent','?'):11s}] {ok:3s} {n:>6d}B  {p}")
+        print(f"  {e.get('ts', '')[:19]} [{e.get('agent', '?'):11s}] {ok:3s} {n:>6d}B  {p}")
 
 print("\n=== FIND_SKILL queries ===")
 for e in entries:
@@ -98,4 +134,6 @@ for e in entries:
         args = req.get("args") or {}
         resp = str((e.get("response") or {}).get("content") or "")
         nl = resp.count("\n")
-        print(f"  {e.get('ts','')[:19]} [{e.get('agent','?'):11s}] q={str(args)[:70]}  ~{nl} lines")
+        print(
+            f"  {e.get('ts', '')[:19]} [{e.get('agent', '?'):11s}] q={str(args)[:70]}  ~{nl} lines"
+        )

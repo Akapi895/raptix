@@ -1,4 +1,4 @@
-﻿"""TC-2 placement-aware health checks â€” deterministic, fake-runner tests.
+"""TC-2 placement-aware health checks â€” deterministic, fake-runner tests.
 
 The checker must distinguish what import/PATH probing cannot: a binary
 present only on the host vs. inside the sandbox, an enabled build flag
