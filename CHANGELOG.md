@@ -10,6 +10,11 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in owned context assembly (`RAPTIX_CONTEXT_ASSEMBLY`) for OPPLAN, KG and
+  Skillogy. `RAPTIX_CONTEXT_BUDGET_TOKENS=0` is unlimited; positive estimate
+  budgets retain required information and verified recovery references. Context
+  manifests now identify each overlay and its source revision (ADR-0054).
+
 - Opt-in context manifest (`RAPTIX_CONTEXT_MANIFEST`) and deterministic masking
   of old, large tool results (`RAPTIX_CONTEXT_MASK`) with scratch offload;
   guardrail envelopes and control markers are never masked (ADR-0054).
@@ -26,6 +31,10 @@ design spec, §13.4).
   and the default-off middleware stack remain compatible (ADRs 0049–0051).
 
 ### Fixed
+
+- Validate compaction before submitting a summary to the model; reject changed
+  revisions and unverifiable references, correctly format structured JSON prompts,
+  and preserve status markers and exact content behind masking references.
 
 - Preserve model content, tool calls and usage through LangChain ModelResponse
   recording; propagate validated dispatch objectives to child graphs and audit

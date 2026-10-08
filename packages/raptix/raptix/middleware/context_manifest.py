@@ -15,6 +15,7 @@ from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
 
+from raptix.intelligence.context.assembly import assemble_request
 from raptix.intelligence.context.manifest import build_manifest, render_manifest
 from raptix.intelligence.context.masking import mask_messages
 
@@ -46,6 +47,18 @@ class ContextManifestMiddleware(AgentMiddleware):
         # instead of being silently swallowed by the call-time fail-safe.
         self._after_turns = _positive_int("RAPTIX_CONTEXT_MASK_AFTER_TURNS", 10)
         self._min_chars = _positive_int("RAPTIX_CONTEXT_MASK_MIN_CHARS", 4000)
+        raw = os.environ.get("RAPTIX_CONTEXT_BUDGET_TOKENS", "0").strip()
+        try:
+            self._budget_tokens = int(raw)
+        except ValueError as exc:
+            raise RuntimeError(
+                "RAPTIX_CONTEXT_BUDGET_TOKENS must be a nonnegative integer"
+            ) from exc
+        if self._budget_tokens < 0:
+            raise RuntimeError("RAPTIX_CONTEXT_BUDGET_TOKENS must be a nonnegative integer")
+        from raptix.middleware.execution_ledger import ExecutionLedgerMiddleware
+
+        self._io = ExecutionLedgerMiddleware(role="context-io", backend=backend)
 
     def wrap_model_call(self, request: Any, handler: Any) -> Any:
         return handler(self._process(request))
@@ -54,17 +67,54 @@ class ContextManifestMiddleware(AgentMiddleware):
         return await handler(self._process(request))
 
     def _process(self, request: Any) -> Any:
-        if _enabled("RAPTIX_CONTEXT_MANIFEST"):
-            try:
-                log.info("%s", render_manifest(build_manifest(request)))
-            except Exception as exc:  # noqa: BLE001 — observation never blocks
-                log.debug("context manifest skipped: %s", type(exc).__name__)
         if _enabled("RAPTIX_CONTEXT_MASK"):
             try:
                 request = self._mask(request)
             except Exception as exc:  # noqa: BLE001 — masking never blocks a call
                 log.debug("context masking skipped: %s", type(exc).__name__)
+        if _enabled("RAPTIX_CONTEXT_ASSEMBLY"):
+            assembled = self._io._bounded(self._assemble, request)
+            if assembled is not None:
+                request = assembled
+        if _enabled("RAPTIX_CONTEXT_MANIFEST"):
+            try:
+                manifest = build_manifest(request)
+                manifest["task_state_revision"] = self._io._bounded(self._task_revision, request)
+                manifest["budget_tokens"] = self._budget_tokens
+                manifest["budget_overflow"] = bool(
+                    self._budget_tokens and manifest["total_token_estimate"] > self._budget_tokens
+                )
+                log.info("%s", render_manifest(manifest))
+            except Exception as exc:  # noqa: BLE001 — observation never blocks
+                log.debug("context manifest skipped: %s", type(exc).__name__)
         return request
+
+    def _task_revision(self, request: Any) -> int | None:
+        from raptix.core.dispatch_context import active_dispatch
+        from raptix.orchestration.mission.task_state import read_task_state
+
+        dispatch = active_dispatch.get()
+        objective = (dispatch.objective_id if dispatch else None) or request.state.get(
+            "active_objective_id"
+        )
+        if not objective:
+            return None
+        backend = self._scoped_backend(request)
+        if backend is None:
+            return None
+        # Observation must not materialize the filesystem wrapper's root marker.
+        backend._root_ensured = True
+        bundle = read_task_state(backend, objective)
+        if bundle.error:
+            return None
+        return bundle.state.state_revision if bundle.state else 0
+
+    def _assemble(self, request: Any) -> Any:
+        return assemble_request(
+            request,
+            budget_tokens=self._budget_tokens,
+            backend=self._scoped_backend(request) if self._budget_tokens else None,
+        )
 
     def _scoped_backend(self, request: Any) -> Any:
         if self._backend is None:
@@ -83,12 +133,17 @@ class ContextManifestMiddleware(AgentMiddleware):
             return None
 
     def _mask(self, request: Any) -> Any:
-        messages, count = mask_messages(
-            list(getattr(request, "messages", None) or []),
-            backend=self._scoped_backend(request),
-            after_turns=self._after_turns,
-            min_chars=self._min_chars,
+        outcome = self._io._bounded(
+            lambda: mask_messages(
+                list(getattr(request, "messages", None) or []),
+                backend=self._scoped_backend(request),
+                after_turns=self._after_turns,
+                min_chars=self._min_chars,
+            )
         )
+        if outcome is None:
+            return request
+        messages, count = outcome
         if count:
             log.info("context masking: %d old tool result(s) masked", count)
             return request.override(messages=messages)

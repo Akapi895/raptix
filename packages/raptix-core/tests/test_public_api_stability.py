@@ -93,6 +93,7 @@ CORE_PUBLIC_API: tuple[tuple[str, str], ...] = (
     # raptix_core.contracts.slots
     ("raptix_core.contracts.slots", "MiddlewareSlot"),
     ("raptix_core.contracts.slots", "MiddlewareSlot.EXECUTION_LEDGER"),
+    ("raptix_core.contracts.slots", "MiddlewareSlot.CONTEXT_MANIFEST"),
     ("raptix_core.contracts.slots", "SAFETY_CRITICAL_SLOTS"),
     ("raptix_core.contracts.slots", "SLOTS_PER_ROLE"),
     # raptix_core.contracts.contributions
@@ -160,7 +161,7 @@ def test_manifest_count_unchanged() -> None:
     a major-version bump is an audit signal.
     """
     # Update this number deliberately when adding/removing public names.
-    expected = 96
+    expected = 97
     actual = len(CORE_PUBLIC_API)
     assert actual == expected, (
         f"CORE_PUBLIC_API has {actual} entries, expected {expected}. "
