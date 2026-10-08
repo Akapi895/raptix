@@ -1,15 +1,15 @@
 # Release Process
 
-How Decepticon is versioned and released.
+How Raptix is versioned and released.
 
 ## Versioning
 
-Decepticon follows [Semantic Versioning](https://semver.org/). Releases are
+Raptix follows [Semantic Versioning](https://semver.org/). Releases are
 tagged `vMAJOR.MINOR.PATCH` (e.g. `v1.1.1`); pre-releases use a suffix
 (e.g. `v1.2.0-rc.1`).
 
-The `version` field in `pyproject.toml`, `clients/cli/package.json`, and
-`clients/web/package.json` is a permanent `0.0.0` **sentinel**. The real
+The `version` field in `pyproject.toml`, `apps/cli/package.json`, and
+`apps/web/package.json` is a permanent `0.0.0` **sentinel**. The real
 version is stamped from the git tag at build time — `release.yml` rewrites the
 sentinel for the PyPI build and passes `--build-arg VERSION=<tag>` into the
 Docker images. There is no version-bump commit to make before tagging.
@@ -74,7 +74,7 @@ flow above also still works for out-of-band releases.
 
 | Job | Output |
 |-----|--------|
-| `publish-pypi` | Builds the wheel + sdist and publishes the `decepticon` package to PyPI via Trusted Publishing (OIDC — no API token). |
+| `publish-pypi` | Builds the wheel + sdist and publishes the `raptix` package to PyPI via Trusted Publishing (OIDC — no API token). |
 | `launcher` | Builds the Go launcher binaries with GoReleaser (which drafts the GitHub release) and uploads `config-checksums.txt`, a SHA-256 integrity manifest for `docker-compose.yml`, `config/litellm.yaml`, and `.env.example`. |
 | `docker` | Builds and pushes the multi-arch `litellm`, `langgraph`, `cli`, and `skillogy` images. |
 | `docker-heavy` / `docker-heavy-merge` | Builds `sandbox` and `c2-sliver` on native amd64/arm64 runners (the Kali base is too slow under QEMU), then merges the per-arch digests into manifests. |
@@ -94,7 +94,7 @@ their compose stack to the digest form instead of the moving `:stable` /
 `:latest` channel tags:
 
 ```yaml
-image: ghcr.io/bittersecurity/decepticon-litellm@sha256:<digest>
+image: ghcr.io/akapi895/raptix-litellm@sha256:<digest>
 ```
 
 The digest is the manifest-list digest, so it covers all published platforms.

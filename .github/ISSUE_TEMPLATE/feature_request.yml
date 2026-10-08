@@ -33,11 +33,11 @@ body:
     id: area
     attributes:
       label: Area
-      description: Which part of Decepticon does this relate to?
+      description: Which part of Raptix does this relate to?
       options:
         - Agent (recon/exploit/post-exploit)
         - CLI (terminal UI)
-        - Orchestrator (Decepticon/Ralph loop)
+        - Orchestrator (Raptix/Ralph loop)
         - Skills (knowledge base)
         - Docker / Infrastructure
         - Installer / Setup

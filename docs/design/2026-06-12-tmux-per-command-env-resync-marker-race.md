@@ -1,19 +1,19 @@
 # tmux bash tool: per-command env re-sync races the PS1 completion marker
 
 **Date:** 2026-06-12
-**Component:** `decepticon/sandbox_kernel/tmux.py` (`TmuxSessionManager`)
+**Component:** `raptix/sandbox_kernel/tmux.py` (`TmuxSessionManager`)
 **Severity:** high — silently drops command output (data loss, not just a hang)
 
 ## Symptom
 
 On an already-established (cached-alive) bash session, network/slow commands
 (`whois` chasing registrar referrals, `crt.sh`/`curl`, `subfinder`, `dig ANY`)
-returned **only their echoed input plus a stray `export DECEPTICON_SKIP_BOOT=1`
+returned **only their echoed input plus a stray `export RAPTIX_SKIP_BOOT=1`
 line and a `[cwd:…]` marker** — never the command's real stdout:
 
 ```
 $ whois semrush.com 2>&1 | head -50
-export DECEPTICON_SKIP_BOOT=1
+export RAPTIX_SKIP_BOOT=1
 whois semrush.com 2>&1 | head -50
 [cwd: /workspace/…]
 ```
@@ -33,7 +33,7 @@ segment between the last two markers (`_extract_output`).
 
 `execute()` calls `initialize()` on every non-input command. For a cached-alive
 session `initialize()` called **`_sync_passthrough_env()`**, which sends an
-`export DECEPTICON_… HTTP_PROXY=…` line *as its own shell command* — and that
+`export RAPTIX_… HTTP_PROXY=…` line *as its own shell command* — and that
 export **produces its own PS1 completion marker**.
 
 The race:
@@ -46,21 +46,21 @@ The race:
    marker appears — *not* the user command's.
 5. `_extract_output()` runs against the segment ending at the export's marker:
    the user command has only been *echoed*, its output has not appeared yet, so
-   the tool returns the `export DECEPTICON_SKIP_BOOT=1` + command echo and
+   the tool returns the `export RAPTIX_SKIP_BOOT=1` + command echo and
    reports success.
 
 Fast commands happen to win the race (their marker lands within the same poll
 tick); slower/network commands lose it deterministically.
 
-`DECEPTICON_SKIP_BOOT` itself is benign — it is the intentional session-init env
-(set so `python3` subprocesses skip `decepticon/__init__.py`'s boot). It only
+`RAPTIX_SKIP_BOOT` itself is benign — it is the intentional session-init env
+(set so `python3` subprocesses skip `raptix/__init__.py`'s boot). It only
 *leaked into output* because the per-command export polluted the pane and the
 race surfaced its echo.
 
 ## Fix
 
 Do not re-sync passthrough env per command. The passthrough env (proxy vars +
-`DECEPTICON_*`) is exported once at session creation and **persists for the life
+`RAPTIX_*`) is exported once at session creation and **persists for the life
 of the persistent shell**; a cached-alive session is, by construction, one this
 manager already created and synced (`_cached_pane_is_alive()` requires
 membership in `_initialized`, which is only added after the creation-path sync).

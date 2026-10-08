@@ -1,6 +1,6 @@
 # Red Team Operations — 전체 가이드
 
-> Decepticon 에이전트의 운영 프레임워크 문서.
+> Raptix 에이전트의 운영 프레임워크 문서.
 > 참조: MITRE ATT&CK, TIBER-EU, NIST SP 800-53 CA-8, DORA, PTES
 
 ---
@@ -18,7 +18,7 @@
 | **산출물** | 취약점 목록 + 심각도 + 개선 권고 | 공격 내러티브, 탐지 갭 분석, 조직 대응 평가, 전략적 권고 |
 | **통보** | IT/보안팀 전체 인지 | White Team(Control Team)만 인지 |
 
-**Decepticon 관점**: 스캐너가 아닌 Red Team 에이전트. 목표 지향 운영, OPSEC, 다단계 공격 체인, 조직 대응 검증이 핵심.
+**Raptix 관점**: 스캐너가 아닌 Red Team 에이전트. 목표 지향 운영, OPSEC, 다단계 공격 체인, 조직 대응 검증이 핵심.
 
 ---
 
@@ -28,7 +28,7 @@
 - 이해관계자 합의, 위협 모델링, RoE 작성
 - 성공 기준/범위/디컨플릭션 정의
 - 산업별 위협 환경 기반 적대자 프로필 선택
-- **Decepticon**: Soundwave가 8개 계획 문서(RoE, Threat Profile, CONOPS, Deconfliction, Contact, Data Handling, Abort, Cleanup)를 작성 → 오케스트레이터가 OPPLAN 구성
+- **Raptix**: Soundwave가 8개 계획 문서(RoE, Threat Profile, CONOPS, Deconfliction, Contact, Data Handling, Abort, Cleanup)를 작성 → 오케스트레이터가 OPPLAN 구성
 
 ### Phase 1: Reconnaissance (TA0043)
 - Passive: OSINT, DNS, 소셜 미디어, 유출 자격증명, CT 로그
@@ -132,7 +132,7 @@
 - **Micro Emulation Plans**: 소규모 자동화 가능한 일반 위협 행동 계획
 - **프로세스**: 인텔 수집 → 계획 개발 → 에뮬레이션 실행 → 탐지 평가 → 갭 분석
 
-**Decepticon 적용**: CONOPS의 위협 행위자 프로필이 ATT&CK 그룹에 매핑되어야 하며, OPPLAN은 에뮬레이션급 TTP 시퀀스를 포함해야 함.
+**Raptix 적용**: CONOPS의 위협 행위자 프로필이 ATT&CK 그룹에 매핑되어야 하며, OPPLAN은 에뮬레이션급 TTP 시퀀스를 포함해야 함.
 
 ---
 
@@ -232,7 +232,7 @@
 
 ---
 
-## 9. Decepticon 에이전트 역량 갭 분석
+## 9. Raptix 에이전트 역량 갭 분석
 
 ### 현재 커버리지 (스킬 기준)
 
@@ -261,7 +261,7 @@
 
 ### 우선 확장 로드맵
 1. **즉시**: Initial Access 스킬 (피싱 오케스트레이션, 페이로드)
-2. **단기**: red-run 익스플로잇 스킬 Decepticon 포맷 적응
+2. **단기**: red-run 익스플로잇 스킬 Raptix 포맷 적응
 3. **중기**: C2 인프라, 지속성/횡이동 체이닝, Purple Team 워크플로우
 4. **장기**: 클라우드 Red Team (AWS/Azure), 물리 보안, 위협 인텔 피드 통합
 

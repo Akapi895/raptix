@@ -1,0 +1,27 @@
+{
+  "schema": "raptix.target-resources/1",
+  "platform": "linux",
+  "note": "TC-4 packaging half (ADR-0043). Digests verified by download + sha256 at packaging time (2026-10-07); a manifest entry without a verified sha256 is a defect. The transfer/execution path for these resources is NOT implemented — it is gated on the ADR-0043 threat-model review.",
+  "resources": [
+    {
+      "id": "linpeas",
+      "kind": "pe_enumerator",
+      "version": "20261006-4cf2d06d",
+      "architectures": ["amd64"],
+      "upstream_url": "https://github.com/peass-ng/PEASS-ng/releases/download/20261006-4cf2d06d/linpeas_linux_amd64",
+      "sha256": "8ee83b25e7417f71e603bb3ac0086fc0c3982c941a9579314ed59671c3462215",
+      "size_bytes": 4304464,
+      "output_format": "peas_txt"
+    },
+    {
+      "id": "pspy64",
+      "kind": "process_watcher",
+      "version": "v1.2.1",
+      "architectures": ["amd64"],
+      "upstream_url": "https://github.com/DominicBreuker/pspy/releases/download/v1.2.1/pspy64",
+      "sha256": "c93f29a5cc1347bdb90e14a12424e6469c8cfea9a20b800bc249755f0043a3bb",
+      "size_bytes": 3104768,
+      "output_format": "pspy_log"
+    }
+  ]
+}

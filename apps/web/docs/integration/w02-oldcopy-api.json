@@ -1,0 +1,351 @@
+{
+  "ok": true,
+  "dbLane": "oldcopy",
+  "workspace": "C:\\Users\\tuanp\\AppData\\Local\\Temp\\opencode\\raptix-w02-oldcopy-1790875738856",
+  "raceStatuses": [
+    201,
+    409
+  ],
+  "originalProjectIds": [
+    "cmuoxzo1s00003to25t4ettep"
+  ],
+  "results": [
+    {
+      "method": "GET",
+      "url": "/api/engagements",
+      "expected": 200,
+      "status": 200,
+      "payload": [
+        {
+          "id": "cmuoxzo1s00003to25t4ettep",
+          "workspaceSlug": "test-ui",
+          "displayName": "test-ui",
+          "targetType": "web_url",
+          "targetValue": "https://example.com",
+          "authorizationConfirmed": true,
+          "metadataState": "verified",
+          "lifecycleStatus": "draft",
+          "findingCount": null,
+          "assetCount": null,
+          "activeAgentCount": null,
+          "createdAt": "2026-10-01T02:55:59.872Z",
+          "updatedAt": "2026-10-01T02:56:00.100Z",
+          "source": "api"
+        }
+      ]
+    },
+    {
+      "method": "POST",
+      "url": "/api/engagements",
+      "expected": 400,
+      "status": 400,
+      "payload": {
+        "statusCode": 400,
+        "error": {
+          "code": "bad_request",
+          "message": "Explicit authorization confirmation is required"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/engagements",
+      "expected": 400,
+      "status": 400,
+      "payload": {
+        "statusCode": 400,
+        "error": {
+          "code": "bad_request",
+          "message": "Invalid project name — must be 3-64 chars, lowercase letters / digits / internal hyphens"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/engagements",
+      "expected": 400,
+      "status": 400,
+      "payload": {
+        "statusCode": 400,
+        "error": {
+          "code": "bad_request",
+          "message": "Invalid web_url target — only http: and https: schemes are supported"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/engagements",
+      "expected": 400,
+      "status": 400,
+      "payload": {
+        "statusCode": 400,
+        "error": {
+          "code": "bad_request",
+          "message": "Unknown field \"userId\" is not accepted"
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/engagements",
+      "expected": 201,
+      "status": 201,
+      "payload": {
+        "id": "cmupt6c9200008wfiexliz58o",
+        "workspaceSlug": "w02-oldcopy-1790875739208",
+        "displayName": "Controlled API test",
+        "targetType": "web_url",
+        "targetValue": "http://authorized-test.invalid",
+        "authorizationConfirmed": true,
+        "metadataState": "verified",
+        "lifecycleStatus": "draft",
+        "findingCount": null,
+        "assetCount": null,
+        "activeAgentCount": null,
+        "createdAt": "2026-10-01T17:28:59.271Z",
+        "updatedAt": "2026-10-01T17:28:59.271Z",
+        "source": "api"
+      }
+    },
+    {
+      "method": "GET",
+      "url": "/api/engagements/cmupt6c9200008wfiexliz58o",
+      "expected": 200,
+      "status": 200,
+      "payload": {
+        "id": "cmupt6c9200008wfiexliz58o",
+        "workspaceSlug": "w02-oldcopy-1790875739208",
+        "displayName": "Controlled API test",
+        "targetType": "web_url",
+        "targetValue": "http://authorized-test.invalid",
+        "authorizationConfirmed": true,
+        "metadataState": "verified",
+        "lifecycleStatus": "draft",
+        "findingCount": null,
+        "assetCount": null,
+        "activeAgentCount": null,
+        "createdAt": "2026-10-01T17:28:59.271Z",
+        "updatedAt": "2026-10-01T17:28:59.271Z",
+        "source": "api"
+      }
+    },
+    {
+      "method": "POST",
+      "url": "/api/engagements",
+      "expected": 409,
+      "status": 409,
+      "payload": {
+        "statusCode": 409,
+        "error": {
+          "code": "conflict",
+          "message": "An engagement named \"w02-oldcopy-1790875739208\" already exists for this owner"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/engagements/cmupt6c9200008wfiexliz58o",
+      "expected": 200,
+      "status": 200,
+      "payload": {
+        "id": "cmupt6c9200008wfiexliz58o",
+        "workspaceSlug": "w02-oldcopy-1790875739208",
+        "displayName": "Changed display only",
+        "targetType": "web_url",
+        "targetValue": "http://authorized-test.invalid",
+        "authorizationConfirmed": true,
+        "metadataState": "verified",
+        "lifecycleStatus": "draft",
+        "findingCount": null,
+        "assetCount": null,
+        "activeAgentCount": null,
+        "createdAt": "2026-10-01T17:28:59.271Z",
+        "updatedAt": "2026-10-01T17:28:59.343Z",
+        "source": "api"
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/engagements/cmupt6c9200008wfiexliz58o",
+      "expected": 400,
+      "status": 400,
+      "payload": {
+        "statusCode": 400,
+        "error": {
+          "code": "bad_request",
+          "message": "Project name is immutable — it is the workspace slug; create a new project instead"
+        }
+      }
+    },
+    {
+      "method": "PATCH",
+      "url": "/api/engagements/cmupt6c9200008wfiexliz58o",
+      "expected": 400,
+      "status": 400,
+      "payload": {
+        "statusCode": 400,
+        "error": {
+          "code": "bad_request",
+          "message": "threadId is runtime-authority and cannot be set from requests"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "url": "/api/engagements/unknown-id",
+      "expected": 404,
+      "status": 404,
+      "payload": {
+        "statusCode": 404,
+        "error": {
+          "code": "not_found",
+          "message": "Project not found"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "url": "/api/engagements",
+      "expected": 200,
+      "status": 200,
+      "payload": [
+        {
+          "id": "cmupt6cc100028wfi6hvn5qwz",
+          "workspaceSlug": "w02-oldcopy-1790875739208-race",
+          "displayName": "Controlled API test",
+          "targetType": "web_url",
+          "targetValue": "http://authorized-test.invalid",
+          "authorizationConfirmed": true,
+          "metadataState": "verified",
+          "lifecycleStatus": "draft",
+          "findingCount": null,
+          "assetCount": null,
+          "activeAgentCount": null,
+          "createdAt": "2026-10-01T17:28:59.377Z",
+          "updatedAt": "2026-10-01T17:28:59.377Z",
+          "source": "api"
+        },
+        {
+          "id": "cmupt6c9200008wfiexliz58o",
+          "workspaceSlug": "w02-oldcopy-1790875739208",
+          "displayName": "Changed display only",
+          "targetType": "web_url",
+          "targetValue": "http://authorized-test.invalid",
+          "authorizationConfirmed": true,
+          "metadataState": "verified",
+          "lifecycleStatus": "draft",
+          "findingCount": null,
+          "assetCount": null,
+          "activeAgentCount": null,
+          "createdAt": "2026-10-01T17:28:59.271Z",
+          "updatedAt": "2026-10-01T17:28:59.343Z",
+          "source": "api"
+        },
+        {
+          "id": "cmuoxzo1s00003to25t4ettep",
+          "workspaceSlug": "test-ui",
+          "displayName": "test-ui",
+          "targetType": "web_url",
+          "targetValue": "https://example.com",
+          "authorizationConfirmed": true,
+          "metadataState": "verified",
+          "lifecycleStatus": "draft",
+          "findingCount": null,
+          "assetCount": null,
+          "activeAgentCount": null,
+          "createdAt": "2026-10-01T02:55:59.872Z",
+          "updatedAt": "2026-10-01T02:56:00.100Z",
+          "source": "api"
+        }
+      ]
+    },
+    {
+      "method": "GET",
+      "url": "/api/capabilities",
+      "expected": 200,
+      "status": 200,
+      "payload": {
+        "version": 1,
+        "mode": "local-single-user",
+        "capabilities": {
+          "agents": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "projects": {
+            "supported": true,
+            "available": true
+          },
+          "planning": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "threads": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "runs": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "approvals": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "artifacts": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "findings": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "graphs": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          },
+          "reports": {
+            "supported": false,
+            "available": false,
+            "reason": "service_missing"
+          }
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "url": "/api/health/ready",
+      "expected": 503,
+      "status": 503,
+      "payload": {
+        "status": "degraded",
+        "service": "web-raptix-server",
+        "checks": {
+          "bootstrap": {
+            "status": "ok"
+          },
+          "integrations": {
+            "status": "not_connected",
+            "reason": "service_missing"
+          },
+          "database": {
+            "status": "ok"
+          },
+          "runtime": {
+            "status": "not_connected",
+            "reason": "service_missing"
+          }
+        }
+      }
+    }
+  ]
+}

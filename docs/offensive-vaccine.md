@@ -6,11 +6,11 @@ This is a planned product direction, not an active implementation in the current
 
 Most offensive security tools treat the attack as the destination. Find a vulnerability, write a report, close the ticket.
 
-Decepticon treats the attack as Step 1.
+Raptix treats the attack as Step 1.
 
 The **Offensive Vaccine** is intended to become a closed feedback loop: attack → defend → verify. Every vulnerability discovered should become a test case for the defense system. A future defense component applies a mitigation, then the attacker verifies the defense actually holds. If it doesn't, the loop continues.
 
-The name is intentional. A biological vaccine works by exposing the immune system to controlled doses of a pathogen, training it to respond. Decepticon does the same thing to your infrastructure — relentless, structured exposure builds real immunity.
+The name is intentional. A biological vaccine works by exposing the immune system to controlled doses of a pathogen, training it to respond. Raptix does the same thing to your infrastructure — relentless, structured exposure builds real immunity.
 
 ---
 

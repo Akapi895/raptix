@@ -3,7 +3,7 @@
 > Branch: `feat/web-search-engine` (worktree). Supersedes #605 (ADR-0010) and
 > #650 (`web_search`) — both rewritten from scratch per maintainer decision
 > (2026-06-15). Precisely references `fivetaku/insane-search` for the engine,
-> but **inverts its governance** to fit Decepticon's RoE / network-isolation
+> but **inverts its governance** to fit Raptix's RoE / network-isolation
 > invariants.
 
 ## 0. Decisions locked
@@ -31,12 +31,12 @@ Transferable, already site-agnostic — port with attribution:
 - **Capability-matched executor** (`executor.py`): which browser tier for which
   WAF capability tag.
 - **No-Site-Name bias linter** (`bias_check.py`): CI gate forbidding hardcoded
-  site domains/brands/selectors in the engine. Maps 1:1 to Decepticon's
+  site domains/brands/selectors in the engine. Maps 1:1 to Raptix's
   generic-skill scoping rule.
 
-## 2. What we invert (Decepticon governance)
+## 2. What we invert (Raptix governance)
 
-| insane-search | Decepticon |
+| insane-search | Raptix |
 |---|---|
 | anti-allowlist "try everything" | every hop gated by `evaluate_target`, **fail-closed** |
 | in-process browser/curl | **runs inside the sandbox** (sandbox-net) |
@@ -59,7 +59,7 @@ web_search(query) / web_fetch(url)   [management process — the @tool wrapper]
   │     (web_search: provider-allowlisted + OSINT target-exempt + audited;
   │      web_fetch: target-gated)
   │  2. dispatch into sandbox via the bash surface:
-  │     execute_tmux("python3 -m decepticon_web <verb> <args> --json")
+  │     execute_tmux("python3 -m raptix_web <verb> <args> --json")
   ▼
 [sandbox container, sandbox-net]
   engine: probe → detect → grid → (browser fallback) → validate
@@ -79,17 +79,17 @@ the authoritative sandbox-edge nftables egress allowlist. Stealth/browser tiers
 can only reach in-scope, allowlisted destinations.
 
 Open question for the ADR: the engine ships as a sandbox-side package. Decide its
-home — `containers/sandbox/` payload vs a `decepticon` subpackage copied into the
-image. Leaning: a self-contained `decepticon/sandbox_web/` engine package
+home — `containers/sandbox/` payload vs a `raptix` subpackage copied into the
+image. Leaning: a self-contained `raptix/sandbox_web/` engine package
 installed into the sandbox image (testable in-repo, shipped to sandbox).
 
 ## 4. Module layout (proposed)
 
 ```
-packages/decepticon/decepticon/
+packages/raptix/raptix/
   sandbox_web/                 # the engine — runs INSIDE the sandbox
     __init__.py                # fetch() public contract
-    __main__.py                # `python3 -m decepticon_web <verb> ...` CLI (JSON out)
+    __main__.py                # `python3 -m raptix_web <verb> ...` CLI (JSON out)
     validators.py              # Verdict + 4-layer validate()  [port]
     waf_detector.py            # ranking detect() + profile loader  [port]
     waf_profiles.yaml          # WAF product profiles  [port, site-agnostic]
@@ -140,7 +140,7 @@ containers/sandbox/...        # install engine deps + package into image
   out-of-scope hops, UntrustedOutput wrapping, audit emission through the real
   tool entrypoint (not just the library helper — #650's test gap).
 - `bias_check` runs in CI (new gate) + locally.
-- All under `packages/decepticon/tests/unit/...` so `make ci-test` collects them
+- All under `packages/raptix/tests/unit/...` so `make ci-test` collects them
   (the #651 lesson).
 
 ## 7. Disposition of #605 / #650

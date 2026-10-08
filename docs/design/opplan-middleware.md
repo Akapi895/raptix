@@ -2,11 +2,11 @@
 
 ## Context
 
-**Claude Code : Coding = Decepticon : Red Team Testing**
+**Claude Code : Coding = Raptix : Red Team Testing**
 
 Claude Code의 V2 Task 시스템(`TaskCreate`, `TaskGet`, `TaskUpdate`, `TaskList`)은
 코딩 작업을 위한 개별 CRUD 기반 태스크 추적 도구다.
-Decepticon은 레드팀 테스트 도메인에 특화된 에이전트이므로,
+Raptix은 레드팀 테스트 도메인에 특화된 에이전트이므로,
 **OPPLAN(Operations Plan)** 이라는 도메인 특화 태스크 추적 시스템을 구현한다.
 
 ### Claude Code Task 시스템 → OPPLAN 매핑
@@ -31,7 +31,7 @@ Decepticon은 레드팀 테스트 도메인에 특화된 에이전트이므로,
 
 ### 변경 동기
 
-현재 오케스트레이터(`decepticon.py`)는:
+현재 오케스트레이터(`raptix.py`)는:
 1. `TodoListMiddleware` — 범용 todo 추적 (도메인 맥락 없음)
 2. `write_file("opplan.json")` — 수동 JSON 파일 작성으로 OPPLAN 업데이트
 3. 별도 `planner` 서브에이전트 — OPPLAN 생성을 포함한 모든 계획 문서 담당
@@ -50,7 +50,7 @@ OPPLANMiddleware로 전환하면:
 ### 에이전트 역할 재정의
 
 ```
-Decepticon (오케스트레이터) — 메가트론
+Raptix (오케스트레이터) — 메가트론
     │
     │  OPPLAN 직접 제어: create_opplan, add_objective,
     │  get_objective, list_objectives, update_objective
@@ -72,7 +72,7 @@ OPPLAN 생성 책임은 오케스트레이터로 이전.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ Decepticon Orchestrator                                         │
+│ Raptix Orchestrator                                         │
 │                                                                 │
 │ [Planning Phase] — Claude Code EnterPlanMode 대응               │
 │   1. 사용자 인터뷰 (타겟, 범위, 위협 모델)                       │
@@ -118,7 +118,7 @@ OPPLAN이 LangGraph state에 존재하므로:
 
 ## Implementation
 
-### File: `decepticon/middleware/opplan.py`
+### File: `raptix/middleware/opplan.py`
 
 #### State Schema
 
@@ -533,40 +533,40 @@ def after_model(self, state, runtime):
 
 | File | Description |
 |---|---|
-| `decepticon/middleware/opplan.py` | OPPLANMiddleware 구현 (5-tool CRUD) |
-| `decepticon/agents/soundwave.py` | Soundwave 에이전트 (planner.py에서 리네임 + 역할 축소) |
-| `decepticon/agents/prompts/soundwave.md` | Soundwave 프롬프트 |
+| `raptix/middleware/opplan.py` | OPPLANMiddleware 구현 (5-tool CRUD) |
+| `raptix/agents/soundwave.py` | Soundwave 에이전트 (planner.py에서 리네임 + 역할 축소) |
+| `raptix/agents/prompts/soundwave.md` | Soundwave 프롬프트 |
 
 #### Modified Files
 
 | File | Change |
 |---|---|
-| `decepticon/middleware/__init__.py` | `OPPLANMiddleware` export 추가 |
-| `decepticon/agents/decepticon.py` | `TodoListMiddleware` → `OPPLANMiddleware`, planner → soundwave |
-| `decepticon/agents/prompts/decepticon.md` | OPPLAN 도구 사용 + Soundwave 역할 반영 |
+| `raptix/middleware/__init__.py` | `OPPLANMiddleware` export 추가 |
+| `raptix/agents/raptix.py` | `TodoListMiddleware` → `OPPLANMiddleware`, planner → soundwave |
+| `raptix/agents/prompts/decepticon.md` | OPPLAN 도구 사용 + Soundwave 역할 반영 |
 
 #### Removed Files
 
 | File | Reason |
 |---|---|
-| `decepticon/agents/planner.py` | `soundwave.py`로 교체 |
-| `decepticon/agents/prompts/planning.md` | `soundwave.md`로 교체 |
+| `raptix/agents/planner.py` | `soundwave.py`로 교체 |
+| `raptix/agents/prompts/planning.md` | `soundwave.md`로 교체 |
 
 #### Unchanged Files
 
 | File | Reason |
 |---|---|
-| `decepticon/core/schemas.py` | `Objective`, `OPPLAN` 스키마 재사용 (변경 없음) |
-| `decepticon/agents/recon.py` | OPPLANMiddleware 불필요 (서브에이전트) |
-| `decepticon/agents/exploit.py` | OPPLANMiddleware 불필요 (서브에이전트) |
-| `decepticon/agents/postexploit.py` | OPPLANMiddleware 불필요 (서브에이전트) |
+| `raptix/core/schemas.py` | `Objective`, `OPPLAN` 스키마 재사용 (변경 없음) |
+| `raptix/agents/recon.py` | OPPLANMiddleware 불필요 (서브에이전트) |
+| `raptix/agents/exploit.py` | OPPLANMiddleware 불필요 (서브에이전트) |
+| `raptix/agents/postexploit.py` | OPPLANMiddleware 불필요 (서브에이전트) |
 
 ### Orchestrator Middleware Stack
 
 ```python
 # Before
 middleware = [
-    DecepticonSkillsMiddleware(...),
+    RaptixSkillsMiddleware(...),
     FilesystemMiddlewareNoExecute(...),
     SubAgentMiddleware(..., subagents=[planner, recon, exploit, postexploit]),
     TodoListMiddleware(),  # ← 제거
@@ -575,7 +575,7 @@ middleware = [
 # After
 middleware = [
     EngagementContextMiddleware(),
-    DecepticonSkillsMiddleware(...),
+    RaptixSkillsMiddleware(...),
     FilesystemMiddlewareNoExecute(...),
     SubAgentMiddleware(..., subagents=[recon, exploit, postexploit, analyst, reverser, contract_auditor, cloud_hunter, ad_operator]),
     OPPLANMiddleware(),  # ← 교체 (5-tool CRUD)
@@ -607,7 +607,7 @@ middleware = [
 
 ### 1. TaskCreate vs add_objective
 
-| 속성 | Claude Code `TaskCreate` | Decepticon `add_objective` |
+| 속성 | Claude Code `TaskCreate` | Raptix `add_objective` |
 |---|---|---|
 | ID 생성 | auto-increment (1, 2, 3, ...) | `OBJ-{counter:03d}` (OBJ-001, OBJ-002, ...) |
 | 스키마 | `{subject, description, activeForm}` | `{title, phase, description, acceptance_criteria, priority, mitre, risk_level, ...}` |
@@ -617,7 +617,7 @@ middleware = [
 
 ### 2. TaskGet vs get_objective
 
-| 속성 | Claude Code `TaskGet` | Decepticon `get_objective` |
+| 속성 | Claude Code `TaskGet` | Raptix `get_objective` |
 |---|---|---|
 | 조회 | 단일 task by ID | 단일 objective by ID |
 | 용도 | staleness 방지 (update 전 조회) | 동일 |
@@ -625,14 +625,14 @@ middleware = [
 
 ### 3. TaskList vs list_objectives
 
-| 속성 | Claude Code `TaskList` | Decepticon `list_objectives` |
+| 속성 | Claude Code `TaskList` | Raptix `list_objectives` |
 |---|---|---|
 | 응답 | `tasks: Array<{id, subject, status, owner, blockedBy}>` | 진행 테이블 + 다음 objective 추천 |
 | 필터 | 없음 (전체 반환) | 선택적 phase/status 필터 가능 |
 
 ### 4. TaskUpdate vs update_objective
 
-| 속성 | Claude Code `TaskUpdate` | Decepticon `update_objective` |
+| 속성 | Claude Code `TaskUpdate` | Raptix `update_objective` |
 |---|---|---|
 | 상태 | pending/in_progress/completed/deleted | pending/in-progress/passed/blocked/out-of-scope |
 | 전이 검증 | 없음 (자유 전이) | 엄격한 FSM (blocked→in-progress 재시도만 허용) |
@@ -648,7 +648,7 @@ Claude Code TodoListMiddleware:
   wrap_model_call → 정적 시스템 프롬프트만 주입 (도구 사용법)
   현재 tasks는 프롬프트에 주입되지 않음
 
-Decepticon OPPLANMiddleware:
+Raptix OPPLANMiddleware:
   wrap_model_call → 정적 프롬프트 + 동적 OPPLAN 진행 테이블
   매 LLM 호출마다 objectives 상태, progress, next objective 포함
 ```
@@ -659,7 +659,7 @@ Decepticon OPPLANMiddleware:
 ### 6. Verification Nudge
 
 Claude Code는 3+ 태스크 완료 시 검증 에이전트 spawn 권고.
-Decepticon은 모든 objective 완료 시 최종 보고서 생성 권고:
+Raptix은 모든 objective 완료 시 최종 보고서 생성 권고:
 
 ```python
 # list_objectives 응답에서

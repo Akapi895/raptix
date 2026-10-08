@@ -38,7 +38,7 @@ sandbox:
   mem_limit: 4g
   pids_limit: 1024
   volumes:
-    - ${DECEPTICON_ENGAGEMENT_WORKSPACE:-${DECEPTICON_HOME:-~/.decepticon}/workspace}:/workspace
+    - ${RAPTIX_ENGAGEMENT_WORKSPACE:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
 ```
 
 What this gets right:
@@ -68,7 +68,7 @@ What's still wrong:
 ## Target: per-engagement sandbox containers
 
 The launcher already chooses the engagement, sets
-`DECEPTICON_ENGAGEMENT_WORKSPACE`, and runs `docker compose up`. The
+`RAPTIX_ENGAGEMENT_WORKSPACE`, and runs `docker compose up`. The
 minimum-invasive evolution is one extra layer between "engagement
 chosen" and "compose up":
 
@@ -83,7 +83,7 @@ launcher.sandbox_lifecycle.Acquire(engagement_slug)
     │  - if no:  docker run, return SandboxHandle(url, token)
     │
     ▼
-SANDBOX_URL=http://decepticon-sandbox-<slug>:9999
+SANDBOX_URL=http://raptix-sandbox-<slug>:9999
 SANDBOX_TOKEN=<rotated per acquire>
     │
     ▼
@@ -95,7 +95,7 @@ agent reaches its own sandbox via the URL+token
 
 Per-engagement container properties:
 
-- Container name: `decepticon-sandbox-<engagement-slug>`.
+- Container name: `raptix-sandbox-<engagement-slug>`.
 - Per-engagement Docker network: `sandbox-net-<engagement-slug>` so
   engagement A's container cannot reach engagement B's container even
   on the same host.
@@ -111,7 +111,7 @@ Per-engagement container properties:
 
 ## Implementation sketch
 
-A new Go package under `clients/launcher/internal/sandbox`:
+A new Go package under `apps/launcher/internal/sandbox`:
 
 ```go
 package sandbox
@@ -129,7 +129,7 @@ type Lifecycle struct {
 }
 
 func (l *Lifecycle) Acquire(slug string) (*Handle, error) {
-    name := "decepticon-sandbox-" + slug
+    name := "raptix-sandbox-" + slug
     netName := "sandbox-net-" + slug
 
     // 1. Ensure per-engagement network exists.
@@ -169,7 +169,7 @@ func (l *Lifecycle) Acquire(slug string) (*Handle, error) {
 }
 
 func (l *Lifecycle) Release(slug string, archive bool) error {
-    name := "decepticon-sandbox-" + slug
+    name := "raptix-sandbox-" + slug
     if archive {
         // tar /workspace/.sessions and .scratch to .archive/<ts>.tar.zst
         l.archive(slug)
@@ -181,15 +181,45 @@ func (l *Lifecycle) Release(slug string, archive bool) error {
 }
 ```
 
-Wiring: `clients/launcher/cmd/start.go` consults `Lifecycle.Acquire(slug)`
+Wiring: `apps/launcher/cmd/start.go` consults `Lifecycle.Acquire(slug)`
 before issuing `docker compose up`, sets `SANDBOX_URL` and
 `SANDBOX_TOKEN` for the agent containers, and calls
 `Lifecycle.Release(slug, archive=true)` from the engagement-close hook.
 
 The existing `sandbox` service in `docker-compose.yml` stays as the
-**dev / single-engagement** entry point. The per-engagement spawner is
-opt-in via `DECEPTICON_PER_ENGAGEMENT_SANDBOX=1` so existing dogfood
-runs are unchanged.
+**dev / single-engagement** entry point.
+
+## Implementation status (2026-10-07)
+
+The per-engagement spawner described below is a **design, not an
+implementation** — there is no `RAPTIX_PER_ENGAGEMENT_SANDBOX` code path
+(the variable was documentation-only and has been dropped). What is
+enforced today, mechanically:
+
+- **Workspace scoping** — the launcher bind-mounts the engagement dir at
+  `/workspace` (`RAPTIX_ENGAGEMENT_WORKSPACE`, `apps/launcher/cmd/start.go`).
+  Runtime paths use that mount root, including existing `/workspace/plan` files.
+- **Deployment enforcement** — named engagements require the operator's
+  `RAPTIX_WORKSPACE_ISOLATED=1` declaration, derived by Compose from the explicit
+  engagement bind source. The daemon refuses authenticated operations on named
+  shared-root stacks and validates session/file paths. The runtime refuses bash
+  when the requested engagement differs from the deployment pin. The lab
+  harness additionally inspects both actual mounts before turn 1 (ADR-0042).
+  A cwd prefix is not filesystem isolation: peer engagement directories must
+  not be mounted in the container. Unpinned dev mode is not an evidence-run
+  isolation guarantee.
+- **Legacy volume compatibility** — `workspace_data` remains declared for old
+  `.env` references and data migration. Evidence runs require a per-engagement
+  bind source; a shared named volume is rejected by pre-flight.
+- **Scoped state** — KG reads/writes are engagement-scoped at the store
+  boundary (`knowledge/graph/store.py`); tmux sessions and job trackers
+  are keyed by workspace slug.
+- **File modes** — the sandbox entrypoint runs `umask 022` (world-readable,
+  not world-writable); host tooling only ever *reads* captured workspaces.
+
+What is still shared on one host: the process namespace (`ps aux`), `/tmp`,
+`/var/log`, `/root`, and the tmux universe — the gap the spawner design
+below closes.
 
 ## Why not Firecracker / gVisor?
 
@@ -203,32 +233,32 @@ KVM (no macOS, no Windows desktop). Multi-tenant deployers should run Firecracke
 gVisor is the middle ground: same Docker UX, intercepts every syscall
 through a user-space kernel. ~20-30% perf cost. Available as a Docker
 runtime (`runsc`). Worth offering as an opt-in
-`DECEPTICON_SANDBOX_RUNTIME=runsc` toggle in a follow-up.
+`RAPTIX_SANDBOX_RUNTIME=runsc` toggle in a follow-up.
 
 ## Verifying the hardening
 
 ```bash
 # Verify cap_drop is in effect
-docker exec decepticon-sandbox cat /proc/1/status | grep CapEff
+docker exec raptix-sandbox cat /proc/1/status | grep CapEff
 # Expect a tiny capability set, not 0x000001ffffffffff (= all caps)
 
 # Verify no-new-privileges
-docker exec decepticon-sandbox cat /proc/1/status | grep NoNewPrivs
+docker exec raptix-sandbox cat /proc/1/status | grep NoNewPrivs
 # Expect: NoNewPrivs:	1
 
 # Verify mem_limit
-docker inspect decepticon-sandbox --format '{{.HostConfig.Memory}}'
+docker inspect raptix-sandbox --format '{{.HostConfig.Memory}}'
 # Expect: 4294967296 (4 GiB)
 
 # Verify pids_limit
-docker inspect decepticon-sandbox --format '{{.HostConfig.PidsLimit}}'
+docker inspect raptix-sandbox --format '{{.HostConfig.PidsLimit}}'
 # Expect: 1024
 ```
 
 ## Future hardening
 
 1. **Per-engagement spawn (above).** This is the next major change.
-2. **`DECEPTICON_SANDBOX_RUNTIME=runsc`** opt-in for gVisor.
+2. **`RAPTIX_SANDBOX_RUNTIME=runsc`** opt-in for gVisor.
 3. **Firecracker microVM mode** for the multi-tenant pool plane.
 4. **Per-engagement Sliver C2** so engagement A's beacons don't share a
    team server with engagement B's. The `c2-sliver` service in compose
@@ -242,5 +272,5 @@ docker inspect decepticon-sandbox --format '{{.HostConfig.PidsLimit}}'
 - [gVisor](https://gvisor.dev/)
 - [`docs/security/neo4j-hardening.md`](./neo4j-hardening.md) - the
   paired control for the management-plane bridge.
-- [`docs/security/decepticon-threat-model.md`](./decepticon-threat-model.md) -
+- [`docs/security/raptix-threat-model.md`](./raptix-threat-model.md) -
   STRIDE walk that ranks per-engagement isolation as the #2 follow-up.

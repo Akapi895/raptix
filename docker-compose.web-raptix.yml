@@ -1,0 +1,70 @@
+# New-stack deployment (W16 cutover): web-raptix UI + API only.
+# This file deliberately contains NO legacy `web` (Next.js) service — the
+# cutover acceptance is "new deployed stack + legacy service stopped".
+# PostgreSQL / Neo4j / LangGraph / workspace keep running from the base
+# docker-compose.yml (data and identities preserved); this file only adds the
+# two new services on the same network and a dedicated database, so the
+# rollback window can restore the old stack with `docker start raptix-web`.
+name: raptix-web-raptix
+
+services:
+  web-raptix-api:
+    image: ghcr.io/akapi895/raptix-web-raptix-api:${RAPTIX_VERSION:-stable}
+    build:
+      context: .
+      dockerfile: infra/containers/web-raptix-server.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-api
+    env_file: .env
+    environment:
+      - PORT=8081
+      - HOST=0.0.0.0
+      # Dedicated new-stack database (own migration history; legacy `raptix_web`
+      # data is never touched). Created by `make webraptix-db-ensure`.
+      - DATABASE_URL=postgresql://raptix:${POSTGRES_PASSWORD:-raptix}@postgres:5432/raptix_web_raptix
+      - WORKSPACE_PATH=/workspace
+      - RAPTIX_RUNTIME_WORKSPACE_ROOT=/workspace
+      - LANGGRAPH_API_URL=http://langgraph:2024
+      - NEO4J_HTTP_URI=http://neo4j:7474
+      - NEO4J_USER=neo4j
+    volumes:
+      - ${RAPTIX_WORKSPACE_PATH:-${RAPTIX_HOME:-~/.raptix}/workspace}:/workspace
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:8081/api/health', r => { r.resume(); process.exit(r.statusCode < 500 ? 0 : 1); }).on('error', () => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
+    networks:
+      - raptix-net
+    restart: unless-stopped
+
+  web-raptix-ui:
+    image: ghcr.io/akapi895/raptix-web-raptix-ui:${RAPTIX_VERSION:-stable}
+    build:
+      context: .
+      dockerfile: infra/containers/web-raptix.Dockerfile
+      args:
+        VERSION: ${VERSION:-0.0.0}
+    container_name: raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}-web-raptix-ui
+    # Cutover binds the SAME host port the legacy web served (3000), so the
+    # CLI `/web` command and launcher health checks keep working unchanged.
+    ports:
+      - "127.0.0.1:${WEB_RAPTIX_PORT:-3000}:8080"
+    depends_on:
+      web-raptix-api:
+        condition: service_healthy
+    networks:
+      - raptix-net
+    restart: unless-stopped
+
+volumes:
+  workspace_data:
+    external: true
+    name: ${RAPTIX_WORKSPACE_VOLUME:-raptix_workspace_data}
+
+networks:
+  raptix-net:
+    external: true
+    name: ${RAPTIX_NETWORK:-raptix${RAPTIX_STACK_NAME:+-${RAPTIX_STACK_NAME}}_raptix-net}

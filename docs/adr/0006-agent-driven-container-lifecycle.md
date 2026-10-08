@@ -7,8 +7,8 @@
 
 ## Context
 
-decepticon already runs each engagement objective through a fresh
-specialist sub-agent.  The orchestrator agent (`decepticon`) uses
+raptix already runs each engagement objective through a fresh
+specialist sub-agent.  The orchestrator agent (`raptix`) uses
 `SubAgentMiddleware` and a `task()` tool to delegate work to
 `ad_operator`, `c2_operator`, `recon_operator`, etc., and each
 specialist receives **only** the tool surface for its own domain —
@@ -34,11 +34,11 @@ Three problems flow from that mismatch:
 
 2. **Attack-surface stretch.**  A compromised sandbox network plane
    that never needed BHCE should not have BHCE's services as
-   neighbours on `decepticon-net`.  Whatever isolation the network
+   neighbours on `raptix-net`.  Whatever isolation the network
    already provides is strictly more defensible when the unused
    service simply isn't running.
 
-3. **Agentic model mismatch.**  decepticon's own design principle is
+3. **Agentic model mismatch.**  raptix's own design principle is
    *"fresh context per objective"*.  Its specialist-spawn lifecycle
    should drive its container lifecycle, not the other way around.
    The current setup is the inversion: a static set of containers
@@ -68,7 +68,7 @@ service activation through it.  Four sub-decisions:
    bind-mounted into the langgraph container only:
 
    ```
-   /var/run/decepticon-ops.sock
+   /var/run/raptix-ops.sock
 
    POST /v1/profiles/{name}/start   → 202 Accepted (idempotent)
    POST /v1/profiles/{name}/stop    → 202 Accepted (idempotent)
@@ -76,10 +76,10 @@ service activation through it.  Four sub-decisions:
    GET  /v1/health                  → liveness
    ```
 
-   No TCP exposure, no host port, no `decepticon-net` membership.
+   No TCP exposure, no host port, no `raptix-net` membership.
    The socket-file bind mount is the capability grant; only the
    container that receives the mount can address the API.  Containers
-   on `decepticon-net` without the mount (litellm, postgres, web,
+   on `raptix-net` without the mount (litellm, postgres, web,
    neo4j, bhce, sliver) cannot reach `opscontrol`.
 
    `{name}` is matched against a server-side **allowlist** (`ad`,
@@ -92,7 +92,7 @@ service activation through it.  Four sub-decisions:
 
    **Why a host-binary daemon and not an ops-control sidecar
    container?**  Putting the daemon inside a container on
-   `decepticon-net` (the original §1 of this ADR, 2026-06-05)
+   `raptix-net` (the original §1 of this ADR, 2026-06-05)
    re-introduces the socket-bind trapdoor M1 was rejected for: a
    prompt-injection that reaches the ops-control HTTP API has
    *exactly the same hop count* to host docker as one that reaches
@@ -107,15 +107,15 @@ service activation through it.  Four sub-decisions:
    on the same shape: capability granted by a socket file bound into
    the caller, not by network membership.
 
-2. **Agent surface — `decepticon.tools.ops`.**  Three LangChain
+2. **Agent surface — `raptix.tools.ops`.**  Three LangChain
    `@tool` wrappers:
 
    - `ops_start(profile: str) -> str`
    - `ops_stop(profile: str) -> str`
    - `ops_status() -> str`
 
-   They speak HTTP to `ops-control` over `decepticon-net`.  Only the
-   orchestrator agent (`decepticon`) carries these in its toolbox —
+   They speak HTTP to `ops-control` over `raptix-net`.  Only the
+   orchestrator agent (`raptix`) carries these in its toolbox —
    specialist sub-agents do not, so a compromised sub-agent cannot
    spin up unrelated infrastructure.  The orchestrator's system
    prompt is updated to say: *"Before delegating to a specialist
@@ -150,26 +150,26 @@ the spawned services bind to.  Workloads marked **`(future)`** are
 reserved in the allowlist but their compose services are not yet
 shipped; adding one is a `(profile, services)` tuple in
 `docker-compose.yml` + one entry in the daemon's allowlist + (if the
-service is a Decepticon-built image) one row in
+service is a Raptix-built image) one row in
 `.github/workflows/release.yml`'s docker matrix.
 
 | Workload | Driven by | Compose profile | Services | Network |
 |---|---|---|---|---|
-| `ad` | `ad_operator` | `[ad]` | `bhce`, `bhce-neo4j` | `decepticon-net` |
-| `c2-sliver` | `postexploit`, `exploit` | `[c2-sliver]` | `c2-sliver` | `decepticon-net` |
-| `c2-havoc` *(future)* | `postexploit`, `exploit` | `[c2-havoc]` | havoc team server + agent profile | `decepticon-net` |
+| `ad` | `ad_operator` | `[ad]` | `bhce`, `bhce-neo4j` | `raptix-net` |
+| `c2-sliver` | `postexploit`, `exploit` | `[c2-sliver]` | `c2-sliver` | `raptix-net` |
+| `c2-havoc` *(future)* | `postexploit`, `exploit` | `[c2-havoc]` | havoc team server + agent profile | `raptix-net` |
 | `reversing` | `reverser` | `[reversing]` | `ghidra-mcp` (sandbox-derivative image) | `sandbox-net` |
-| `phishing` *(future)* | `phisher` | `[phishing]` | `gophish`, `evilginx2`, lookalike-domain proxy | `decepticon-net` |
+| `phishing` *(future)* | `phisher` | `[phishing]` | `gophish`, `evilginx2`, lookalike-domain proxy | `raptix-net` |
 | `mobile` *(future)* | `mobile_operator` | `[mobile]` | Android emulator + Frida server | `sandbox-net` |
 | `wireless` *(future)* | `wireless_operator` | `[wireless]` | HackRF / wifi rig (host-attached) | `sandbox-net` |
-| `cloud` *(future)* | `cloud_hunter` | `[cloud]` | LocalStack / minikube cloud-emulation lab | `decepticon-net` |
+| `cloud` *(future)* | `cloud_hunter` | `[cloud]` | LocalStack / minikube cloud-emulation lab | `raptix-net` |
 | `iot` *(future)* | `iot_operator` (#542) | `[iot]` | firmadyne, MQTT / CoAP brokers, IoT firmware images | `sandbox-net` |
 | `ics` *(future)* | `ics_operator` (#542) | `[ics]` | OpenPLC + Modbus / S7comm / DNP3 simulators | `sandbox-net` |
 | `forensics` *(future)* | `forensicator` (#542) | `[forensics]` | DFIR toolchain (Plaso, Volatility, sleuthkit) | `sandbox-net` |
-| `supply-chain` *(future)* | `supply_chain_operator` (#542) | `[supply-chain]` | CI/CD lab (Gitea, Drone, signing-key store) | `decepticon-net` |
+| `supply-chain` *(future)* | `supply_chain_operator` (#542) | `[supply-chain]` | CI/CD lab (Gitea, Drone, signing-key store) | `raptix-net` |
 
 Specialists whose entire toolchain runs inside the always-on
-`sandbox` container — `recon`, `analyst`, `decepticon`, `soundwave`,
+`sandbox` container — `recon`, `analyst`, `raptix`, `soundwave`,
 `detector`, `verifier`, `vulnresearch`, `patcher`, `contract_auditor`,
 `osint_operator` (#542) — do not appear in the catalog: they neither
 start nor stop any sidecar.  They consume the core plane only, so
@@ -182,11 +182,11 @@ Two cross-cutting constraints the catalog enforces:
   half of every spawn) land on `sandbox-net` so a compromised target
   cannot reach the management plane.  Defense / OSINT / orchestration
   services that the agent reads from over HTTP (BHCE, gophish admin,
-  LocalStack control APIs) land on `decepticon-net`.  A workload that
+  LocalStack control APIs) land on `raptix-net`.  A workload that
   needs both a target-facing service and a management-facing UI ships
   two compose services under the same profile, each on the
-  appropriate network — see `bhce` (decepticon-net) + `bhce-neo4j`
-  (decepticon-net only, no sandbox-net bridge) for the canonical
+  appropriate network — see `bhce` (raptix-net) + `bhce-neo4j`
+  (raptix-net only, no sandbox-net bridge) for the canonical
   pattern.
 - **Workload uniqueness.**  A specialist may drive at most one
   workload at a time per engagement: `postexploit` chooses
@@ -204,8 +204,8 @@ data, not decisions.  Extension steps for an OSS workload:
 
 1. Add the `(profile, services)` tuple to `docker-compose.yml` under
    the appropriate compose profile, choosing `sandbox-net` vs
-   `decepticon-net` per the network-placement rule above.
-2. If the workload includes a Decepticon-built image, add the matrix
+   `raptix-net` per the network-placement rule above.
+2. If the workload includes a Raptix-built image, add the matrix
    row to `.github/workflows/release.yml`.
 3. Add the workload name string to the daemon-side allowlist (default
    `(ad, c2-sliver, c2-havoc, reversing, phishing, mobile, wireless,
@@ -218,7 +218,7 @@ data, not decisions.  Extension steps for an OSS workload:
 
 Downstream / community workloads — `KubernetesBackend` namespaces,
 `CloudRunBackend` services, etc. — extend the catalog through the
-`decepticon.workload_backends` entry-point group (§5') rather than by
+`raptix.workload_backends` entry-point group (§5') rather than by
 amending this ADR.
 
 4. **HITL is an orthogonal toggle.**  An optional
@@ -240,7 +240,7 @@ amending this ADR.
      through admission-validated Sigstore policy-controller.  Covers
      managed-cluster deployments (EKS / GKE / AKS / OpenShift).
    - `CloudRunBackend` / `FargateBackend` / `NomadBackend` —
-     downstream / community plugins via the `decepticon.workload_backends`
+     downstream / community plugins via the `raptix.workload_backends`
      entry-point group.  Not shipped in OSS.
 
    The HTTP API and the `(workload, lifecycle_op)` tuple are
@@ -281,7 +281,7 @@ matches what §1'/§5' prescribe.
   per-user (or per-robot) Fly apps... each containing isolated Fly
   Machines"* because *"a compromised user environment can reach
   every other Machine if consolidated."*  The per-app isolation maps
-  directly to Decepticon's per-engagement Spot VM tier. [3]
+  directly to Raptix's per-engagement Spot VM tier. [3]
 
 The `Backend` Protocol surface (§5') and the `(workload,
 lifecycle_op)` tuple (§2) match prescribed least-privilege patterns
@@ -335,7 +335,7 @@ is amended (separate docs PR) to:
   - The agent system's "fresh context per objective" principle now
     extends to "fresh process plane per objective" — closer to the
     framework's stated philosophy.
-  - The attack surface of `decepticon-net` shrinks during the
+  - The attack surface of `raptix-net` shrinks during the
     session: services that don't need to exist aren't reachable.
   - One canonical place — `ops-control`'s allowlist — describes
     every spawnable side service.  New domains plug in by adding a
@@ -353,7 +353,7 @@ is amended (separate docs PR) to:
     POST /api/v2/tokens) becomes part of the start path, not the
     boot path.  We will run that inside the BHCE start handler in
     `ops-control` and pass the resulting token back to langgraph
-    over `decepticon-net` (HTTP — never to disk on the host).
+    over `raptix-net` (HTTP — never to disk on the host).
 
 - **Given up**
   - Predictability of `docker compose ps` for an outside observer:
@@ -405,15 +405,15 @@ is amended (separate docs PR) to:
   trapdoor the existing CLAUDE.md invariant exists to close.
 
 - **(M1') Put the daemon in an `ops-control` sidecar *container* on
-  `decepticon-net` with `/var/run/docker.sock` bind-mounted.**
+  `raptix-net` with `/var/run/docker.sock` bind-mounted.**
   Initially adopted as §1 of this ADR (2026-06-05); **revised out
   2026-06-06 — see §1' and §6.**  The narrowness of the allowlist
   HTTP API is application-layer, not architectural: a
   prompt-injection that reaches the ops-control HTTP API on
-  `decepticon-net` has the same effective control over the host
+  `raptix-net` has the same effective control over the host
   docker daemon as one that reaches langgraph directly with the
   socket bound — the hop count to host root is identical.  The
-  Decepticon-side precedent (ADR-0001, PR #236, PR #263 retiring the
+  Raptix-side precedent (ADR-0001, PR #236, PR #263 retiring the
   equivalent pattern for command execution) and the external
   validation cited in §6 converge on host-binary daemon + Unix
   socket as the correct alternative.  M1' is preserved in this list
@@ -430,7 +430,7 @@ is amended (separate docs PR) to:
 - **(M4) Move lifecycle into the host-side Go launcher
   (`clients/launcher`) and have the launcher carry the lifecycle
   daemon.**  **Adopted in revised form per §1'** (2026-06-06).  The
-  launcher gains a daemon sub-command (`decepticon opscontrol
+  launcher gains a daemon sub-command (`raptix opscontrol
   daemon`) that the onboard flow installs and supervises.  The
   original objection ("turning the launcher into a long-lived
   bidirectional control plane is a much bigger redesign") was an
@@ -447,7 +447,7 @@ is amended (separate docs PR) to:
   what we reject is **stopping there**.
 
 - **(M6) Run each domain stack as a separate compose project the
-  operator launches by hand (`decepticon-bhce`, `decepticon-c2`,
+  operator launches by hand (`raptix-bhce`, `raptix-c2`,
   etc.).**  Rejected: defeats the integrated agent experience and
   doubles the secret/network plumbing.  Better revisited if/when the
   project splits OSS core from operator-managed extensions.

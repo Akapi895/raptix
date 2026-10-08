@@ -1,0 +1,22 @@
+---
+name: chain-ssrf-to-rce
+description: Build and validate SSRF pivot chains toward metadata/infra control and final code execution impact.
+metadata:
+  subdomain: web-exploitation
+  when_to_use: "ssrf chain rce remote code execution pivot cloud metadata imds iam role gopher dns rebinding"
+  mitre_attack: T1190
+---
+
+# Chain: SSRF to RCE
+
+## Canonical path
+1. SSRF reaches metadata/internal control plane.
+2. Extract credential/token or access internal admin API.
+3. Use credential to deploy or execute payload.
+4. Confirm code execution and business impact.
+
+## Graph guidance
+- Add `enables` edges for each pivot.
+- Lower weights for direct pivots; higher for speculative pivots.
+- Record the complete chain as an `AttackPath` observation via
+  `kg_record`; chain planning is not on your tool surface.

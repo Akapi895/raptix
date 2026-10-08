@@ -1,0 +1,16 @@
+[project]
+name = "raptix-phishing"
+version = "0.0.0"
+requires-python = ">=3.13"
+dependencies = ["raptix-sdk"]
+[project.entry-points."raptix.subagents"]
+phisher = "raptix_phishing.agent:SUBAGENT_SPEC"
+[project.entry-points."raptix.prompt_resources"]
+phishing = "raptix_phishing.agent:PROMPTS"
+[project.entry-points."raptix.domains"]
+phishing = "raptix_phishing:DOMAIN_PACK"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+[tool.hatch.build.targets.wheel]
+packages = ["raptix_phishing"]

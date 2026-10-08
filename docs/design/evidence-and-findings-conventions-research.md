@@ -5,11 +5,11 @@
 > **Scope:** professional pentest / red-team / bug-bounty conventions for
 > evidence-based artifact writing, shared file/workspace systems, and
 > findings recording — sourced externally and cross-checked against primary
-> standards, then mapped onto Decepticon's current behavior.
+> standards, then mapped onto Raptix's current behavior.
 
 This note answers "what does the industry actually require/recommend for
 evidence files, shared workspaces, and findings" so the redesign of
-Decepticon's agent file contract (see
+Raptix's agent file contract (see
 [`agent-file-mapping.md`](../agent-file-mapping.md) §4 inconsistencies and
 [`agent-file-conventions.md`](../agent-file-conventions.md)) is grounded in
 domain standards rather than ad-hoc choices.
@@ -39,7 +39,7 @@ findings *"undergo validation through both deterministic validators and
 specialized LLM-based agents that attempt active exploitation"* before being
 *"synthesized into final reports with validation results, severity scores,
 and exploitation evidence."* That is the evidence-first, validate-before-
-promote pattern Decepticon already uses — confirmation the architecture is
+promote pattern Raptix already uses — confirmation the architecture is
 on the right track. [AWS]
 
 ---
@@ -64,7 +64,7 @@ set** for the operator activity log and frames that log as the
 
 **Adoptable schema** — one append-only JSONL record per action:
 
-| Field | NIST term | Decepticon mapping |
+| Field | NIST term | Raptix mapping |
 |-------|-----------|--------------------|
 | `ts` | date and time | already in `timeline.jsonl` / `events.jsonl` |
 | `actor` | assessor's name | **gap** — should be the *agent name* (recon/exploit/…) |
@@ -88,10 +88,10 @@ NIST enumerates the audit-trail artifacts a store must securely retain:
 > Assessment results report; Corrective action plan or Plan of Action and
 > Milestones (POA&M)." [NIST]
 
-This maps almost 1:1 onto Decepticon's workspace tree: `plan/` (ROEs,
+This maps almost 1:1 onto Raptix's workspace tree: `plan/` (ROEs,
 CONOPS), `recon/`+raw tool output (results from automated tools), `findings/`
 (other findings), `report/` (assessment results report). **The one gap is
-the POA&M / corrective-action plan** — Decepticon produces remediation inside
+the POA&M / corrective-action plan** — Raptix produces remediation inside
 findings/report but has no dedicated remediation-tracking artifact.
 
 ---
@@ -137,7 +137,7 @@ Faraday adds the per-finding fields an autonomous system needs for state:
 Resolution, Impact, Resolution, Policy Violations, References, Creation
 Date.* [Faraday]
 
-> Decepticon's `finding-protocol` operational template (id, severity, title,
+> Raptix's `finding-protocol` operational template (id, severity, title,
 > agent, objective_id, discovered_at, evidence_pointer + Description/Evidence/
 > Next) is a lean subset. The exploit-reporting heavyweight template (CVSS
 > 4.0 vector, CWE, MITRE) adds the rest. **Both are well within industry
@@ -181,7 +181,7 @@ vocabulary:
   governed by `vrt.schema.json`). [Bugcrowd VRT]
 - CVSS ranges can auto-prefill the P1–P5 technical severity. [Bugcrowd]
 
-This is directly relevant to Decepticon's *recon-observes / orchestrator-
+This is directly relevant to Raptix's *recon-observes / orchestrator-
 classifies* split: the VRT category tree is exactly the kind of mapping the
 orchestrator's domain-router skills already encode informally. Adopting VRT
 identifiers would make classifications interoperable and auditable.
@@ -203,7 +203,7 @@ HackerOne requires the PoC to address three things:
 
 **Text-not-screenshot** for requests/responses is the convention an
 autonomous system should prefer anyway — text is greppable, diffable, and
-machine-replayable. This validates Decepticon's "save raw evidence to
+machine-replayable. This validates Raptix's "save raw evidence to
 `findings/evidence/FIND-NNN_*.txt`, reference the path, never inline > 20
 lines" rule.
 
@@ -212,7 +212,7 @@ lines" rule.
 HackerOne's submission uses structured fields — **Asset (type)**, **Report
 Template** (Markdown pre-defined structure), and **Weakness/Issue Type**
 (category). [HackerOne] An automated submitter populates exactly these; a
-Decepticon finding already carries the equivalents (target, finding template,
+Raptix finding already carries the equivalents (target, finding template,
 vuln class).
 
 ---
@@ -229,12 +229,12 @@ machine-followable:
 - **Faraday** links every vulnerability to *at least one host, optionally a
   service*, and stores web-vuln reproducibility as `Request`, `Response`,
   `Method`, `Path`, `Data` fields. [Faraday]
-- **Bugcrowd / Decepticon** convention: every shell/credential row carries a
+- **Bugcrowd / Raptix** convention: every shell/credential row carries a
   `finding_id` back-reference; the finding's Evidence table lists the
   artifact path.
 
 **Adoptable rule:** an evidence file is never orphaned and a finding never
-asserts without a pointer. Decepticon already encodes this
+asserts without a pointer. Raptix already encodes this
 (`SHELL-NNN.finding_id → FIND-NNN`, `evidence_pointer` frontmatter) — the
 research confirms it's the right invariant and suggests tightening it into a
 validated constraint.
@@ -253,11 +253,11 @@ tools already consume:
 > "SHOULD end with the extension `.sarif`" (MAY add `.json`). [SARIF]
 
 SARIF is the lingua franca for static/dynamic analysis results (GitHub code
-scanning, DefectDojo import, etc.). Decepticon's analyst *ingests* SARIF via
+scanning, DefectDojo import, etc.). Raptix's analyst *ingests* SARIF via
 `kg_ingest("sarif", ...)` **and already emits** it: `tools/reporting/sarif.py`
 `render_sarif()` serializes the engagement KG (Vulnerability/Finding nodes
 populated from `findings/FIND-NNN.md`) to SARIF v2.1.0, and the
-`decepticon scan --sarif-output` CLI path exposes it. So this is **already
+`raptix scan --sarif-output` CLI path exposes it. So this is **already
 aligned**, not a gap.
 
 ### 5.2 MITRE ATT&CK Navigator layers — coverage / attack-path
@@ -267,7 +267,7 @@ aligned**, not a gap.
 > `ics-attack`); each technique annotation is keyed by `techniqueID` in
 > canonical `T####` / `T####.###` (sub-technique) format. [MITRE]
 
-Decepticon findings already carry MITRE technique fields and build attack-
+Raptix findings already carry MITRE technique fields and build attack-
 path narratives (`findings/attack-paths/PATH-NNN.md` with per-step T-IDs), and
 it **already emits** an ATT&CK Navigator layer: `tools/defense/brief.py`
 `export_attack_navigator()` / `build_navigator_layer()` writes a v4.5 layer
@@ -296,20 +296,20 @@ system can mirror as its directory/relational layout:
 - **PwnDoc / Sysreptor:** project → fixed finding schema (§3.1), with
   templates for reusable finding definitions.
 
-Decepticon's workspace (`plan/`, `recon/`, `exploit/`, `post-exploit/`,
+Raptix's workspace (`plan/`, `recon/`, `exploit/`, `post-exploit/`,
 `findings/`, `report/`) is **phase-organized**, while Faraday is
 **asset-organized** (host→service→finding). For a kill-chain agent the
 phase organization is the right primary axis, but the research suggests the
 **knowledge graph** (Host/Service/Finding nodes) should carry the
-asset-organized view in parallel — which Decepticon's `kg_record` schema
+asset-organized view in parallel — which Raptix's `kg_record` schema
 already does. The two views are complementary: files for human/handoff,
 graph for asset-relational queries.
 
 ---
 
-## 7. Mapping to Decepticon: alignment & gaps
+## 7. Mapping to Raptix: alignment & gaps
 
-| Convention (sourced) | Decepticon today | Verdict |
+| Convention (sourced) | Raptix today | Verdict |
 |----------------------|------------------|---------|
 | Append-only activity log w/ NIST fields | `timeline.jsonl` + `events.jsonl` | **Aligned**; add `actor=agent`, `tool`, `command`, `target` to reach NIST minimum |
 | Tamper-evident chain-of-custody | `audit.jsonl` HMAC-chained (RoE decisions) | **Ahead of NIST** — extend hash-chaining to the activity log |
@@ -383,7 +383,7 @@ follow-up.
 
 **Open questions for the redesign:**
 1. How should append-only operator logs be made tamper-evident
-   (hash-chaining / signed entries)? Decepticon's `audit.jsonl` already
+   (hash-chaining / signed entries)? Raptix's `audit.jsonl` already
    answers this for RoE decisions — extend the pattern.
 2. What conventions govern **AI-agent-generated** evidence specifically —
    provenance/attestation of *which agent* produced a finding, automated PoC
@@ -393,7 +393,7 @@ follow-up.
    linkage that extends the NIST/SARIF/Faraday models verified here —
    especially for attack-path narratives and purple-team detection-gap
    reporting?
-4. Should Decepticon target DefectDojo unified import / OCSF in addition to
+4. Should Raptix target DefectDojo unified import / OCSF in addition to
    SARIF for downstream interoperability?
 
 ---

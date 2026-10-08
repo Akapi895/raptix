@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────
-# Decepticon — One-line installer
+# Raptix — One-line installer
 #
 # Usage:
 #   curl -fsSL https://decepticon.red/install | bash
@@ -9,22 +9,22 @@
 #   CHANNEL              — Update channel (default: stable):
 #                            stable — newest final release baked >= SOAK days
 #                            latest — newest final release, immediately
-#   DECEPTICON_STABLE_SOAK_DAYS — stable soak window (default: 7)
+#   RAPTIX_STABLE_SOAK_DAYS — stable soak window (default: 7)
 #   VERSION              — Install a specific version (overrides CHANNEL)
-#   DECEPTICON_HOME      — Install directory (default: ~/.decepticon)
+#   RAPTIX_HOME      — Install directory (default: ~/.raptix)
 #   SKIP_PULL            — Skip Docker image pull (default: false)
 # ─────────────────────────────────────────────────────────────────────
 
 set -euo pipefail
 
 # ── Constants ─────────────────────────────────────────────────────
-REPO="BitterSecurity/Decepticon"
+REPO="Akapi895/raptix"
 BRANCH="${BRANCH:-main}"
 
 # Update channel (Claude-Code-style soak model; both are final-only):
 #   stable (default) — newest FINAL release baked >= STABLE_SOAK_DAYS
 #   latest           — newest FINAL release, immediately
-# Decepticon defaults to stable (conservative for a security tool); the
+# Raptix defaults to stable (conservative for a security tool); the
 # channel *semantics* match Claude Code, only the default differs.
 # Default + any unrecognized value resolves to stable.
 CHANNEL="$(printf '%s' "${CHANNEL:-stable}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]')"
@@ -33,7 +33,7 @@ case "$CHANNEL" in
     *) CHANNEL="stable" ;;
 esac
 # Days the stable channel waits before adopting a final release.
-STABLE_SOAK_DAYS="${DECEPTICON_STABLE_SOAK_DAYS:-7}"
+STABLE_SOAK_DAYS="${RAPTIX_STABLE_SOAK_DAYS:-7}"
 RAW_BASE="https://raw.githubusercontent.com/$REPO/$BRANCH"
 # release asset base — same host every install, used for binary +
 # checksum manifests. raw.githubusercontent.com hosts the source-tree
@@ -64,9 +64,9 @@ preflight() {
     fi
 
     # Container runtime — Docker (preferred) OR Podman 4.4+ (compose v2
-    # compatible). Honor explicit DECEPTICON_CONTAINER_RUNTIME override
+    # compatible). Honor explicit RAPTIX_CONTAINER_RUNTIME override
     # if the user is on a non-default setup (e.g. nerdctl, Rancher Desktop).
-    local rt="${DECEPTICON_CONTAINER_RUNTIME:-}"
+    local rt="${RAPTIX_CONTAINER_RUNTIME:-}"
     if [[ -z "$rt" ]]; then
         if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
             rt="docker"
@@ -77,11 +77,11 @@ preflight() {
             echo -e "${DIM}Install one of:${NC}"
             echo -e "${DIM}  Docker:  ${NC}https://docs.docker.com/get-docker/"
             echo -e "${DIM}  Podman:  ${NC}https://podman.io/docs/installation"
-            echo -e "${DIM}  …or set DECEPTICON_CONTAINER_RUNTIME=nerdctl${NC}"
+            echo -e "${DIM}  …or set RAPTIX_CONTAINER_RUNTIME=nerdctl${NC}"
             exit 1
         fi
     elif ! command -v "$rt" >/dev/null 2>&1 || ! "$rt" info >/dev/null 2>&1; then
-        error "Error: DECEPTICON_CONTAINER_RUNTIME=$rt requested but unusable."
+        error "Error: RAPTIX_CONTAINER_RUNTIME=$rt requested but unusable."
         exit 1
     fi
     info "Container runtime: $rt"
@@ -130,11 +130,11 @@ assert_sha256() {
     local file="$1" expected="$2" label="$3"
     if [[ -z "$expected" ]]; then
         error "Integrity check failed: no checksum recorded for $label."
-        error "The release at v${DECEPTICON_VERSION} predates checksum verification."
+        error "The release at v${RAPTIX_VERSION} predates checksum verification."
         error "Either install a newer release (>=1.0.27) or set"
-        error "  DECEPTICON_SKIP_VERIFY=1   to explicitly opt out (NOT recommended)."
-        [[ "${DECEPTICON_SKIP_VERIFY:-}" == "1" ]] || exit 1
-        warn "  → skipping verification because DECEPTICON_SKIP_VERIFY=1."
+        error "  RAPTIX_SKIP_VERIFY=1   to explicitly opt out (NOT recommended)."
+        [[ "${RAPTIX_SKIP_VERIFY:-}" == "1" ]] || exit 1
+        warn "  → skipping verification because RAPTIX_SKIP_VERIFY=1."
         return
     fi
     local actual
@@ -192,7 +192,7 @@ print(best or "")
 
 resolve_version() {
     if [[ -n "${VERSION:-}" ]]; then
-        DECEPTICON_VERSION="$VERSION"
+        RAPTIX_VERSION="$VERSION"
         return
     fi
 
@@ -212,65 +212,73 @@ resolve_version() {
 
     if [[ -z "$resolved" ]]; then
         # No releases at all — fall back to the moving channel image tag.
-        DECEPTICON_VERSION="$CHANNEL"
+        RAPTIX_VERSION="$CHANNEL"
         info "No releases found, using the :$CHANNEL image tag."
     else
-        DECEPTICON_VERSION="$resolved"
+        RAPTIX_VERSION="$resolved"
         # Pin config downloads to the release tag (not the moving main branch)
-        RAW_BASE="https://raw.githubusercontent.com/$REPO/v$DECEPTICON_VERSION"
+        RAW_BASE="https://raw.githubusercontent.com/$REPO/v$RAPTIX_VERSION"
     fi
 }
 
 # ── Download files ────────────────────────────────────────────────
 download_files() {
     local install_dir="$1"
+    local stage="$install_dir/.config-stage"
+    mkdir -p "$stage/infra/config"
 
     info "Downloading configuration files..."
 
     # docker-compose.yml (always overwrite — this is infrastructure, not user config)
-    curl -fsSL "$RAW_BASE/docker-compose.yml" -o "$install_dir/docker-compose.yml"
+    curl -fsSL "$RAW_BASE/docker-compose.yml" -o "$stage/docker-compose.yml"
+    curl -fsSL "$RAW_BASE/docker-compose.web-raptix.yml" -o "$stage/docker-compose.web-raptix.yml"
 
     # .env.example — reference template only. Do NOT auto-create .env: the
     # onboard wizard checks for the file's presence to decide whether to run,
     # so a pre-seeded template would silently skip first-time configuration.
-    curl -fsSL "$RAW_BASE/.env.example" -o "$install_dir/.env.example"
+    curl -fsSL "$RAW_BASE/.env.example" -o "$stage/.env.example"
 
     # Existing .env (upgrade path) — preserve user's keys, just ensure
-    # DECEPTICON_HOME points at the current install dir.
+    # RAPTIX_HOME points at the current install dir.
     if [[ -f "$install_dir/.env" ]]; then
-        if ! grep -q "^DECEPTICON_HOME=" "$install_dir/.env" 2>/dev/null; then
-            echo "DECEPTICON_HOME=$install_dir" >> "$install_dir/.env"
+        if ! grep -q "^RAPTIX_HOME=" "$install_dir/.env" 2>/dev/null; then
+            echo "RAPTIX_HOME=$install_dir" >> "$install_dir/.env"
         fi
-        # Record the update channel so future `decepticon update` runs and
+        # Record the update channel so future `raptix update` runs and
         # the launch-time self-update track the same stream. An existing
         # value is preserved (the user's prior choice wins).
-        if ! grep -q "^DECEPTICON_CHANNEL=" "$install_dir/.env" 2>/dev/null; then
-            echo "DECEPTICON_CHANNEL=$CHANNEL" >> "$install_dir/.env"
+        if ! grep -q "^RAPTIX_CHANNEL=" "$install_dir/.env" 2>/dev/null; then
+            echo "RAPTIX_CHANNEL=$CHANNEL" >> "$install_dir/.env"
         fi
         info ".env already exists, preserving your configuration."
     else
-        info "No .env yet — run 'decepticon onboard' to create one."
+        info "No .env yet — run 'raptix onboard' to create one."
         if [[ "$CHANNEL" == "latest" ]]; then
-            info "After onboarding, set DECEPTICON_CHANNEL=latest in .env to keep tracking the latest channel."
+            info "After onboarding, set RAPTIX_CHANNEL=latest in .env to keep tracking the latest channel."
         fi
     fi
 
     # LiteLLM config
-    mkdir -p "$install_dir/config"
-    curl -fsSL "$RAW_BASE/config/litellm.yaml" -o "$install_dir/config/litellm.yaml"
+    mkdir -p "$install_dir/infra/config"
+    curl -fsSL "$RAW_BASE/infra/config/litellm.yaml" -o "$stage/infra/config/litellm.yaml"
 
     # Workspace directory (bind-mounted into containers)
     mkdir -p "$install_dir/workspace"
 
-    # Verify the three files we just wrote against the release-pinned
+    # Verify all four staged files against the release-pinned
     # config-checksums.txt manifest before announcing success. raw.* is
     # served from GitHub's CDN; GitHub Releases assets carry the manifest
     # for the same tag. Cross-checking closes the "tampered raw download"
     # vector that previously let an attacker swap docker-compose.yml.
-    verify_config_manifest "$install_dir"
+    verify_config_manifest "$stage"
+    for file in docker-compose.yml docker-compose.web-raptix.yml .env.example infra/config/litellm.yaml; do
+        mv "$stage/$file" "$install_dir/$file"
+    done
+    rm -f "$stage/.config-checksums.txt"
+    rmdir "$stage/infra/config" "$stage/infra" "$stage"
 
     # Version marker
-    echo "$DECEPTICON_VERSION" > "$install_dir/.version"
+    echo "$RAPTIX_VERSION" > "$install_dir/.version"
 }
 
 # Download config-checksums.txt for the resolved release tag, then verify
@@ -279,7 +287,7 @@ download_files() {
 # release job (.github/workflows/release.yml).
 verify_config_manifest() {
     local install_dir="$1"
-    if [[ "$DECEPTICON_VERSION" == "latest" || "$DECEPTICON_VERSION" == "stable" ]]; then
+    if [[ "$RAPTIX_VERSION" == "latest" || "$RAPTIX_VERSION" == "stable" ]]; then
         # resolve_version's fallback path. No release tag → no manifest.
         # We already abort the launcher download in that branch, so this
         # path is only hit when someone runs the installer with branch-
@@ -287,22 +295,26 @@ verify_config_manifest() {
         warn "No release tag resolved — skipping config manifest verification."
         return
     fi
-    local manifest_url="$RELEASE_BASE/v${DECEPTICON_VERSION}/config-checksums.txt"
+    local manifest_url="$RELEASE_BASE/v${RAPTIX_VERSION}/config-checksums.txt"
     local manifest="$install_dir/.config-checksums.txt"
     if ! curl -fsSL "$manifest_url" -o "$manifest" 2>/dev/null; then
-        error "Failed to download config-checksums.txt from release v${DECEPTICON_VERSION}."
+        error "Failed to download config-checksums.txt from release v${RAPTIX_VERSION}."
         error "  url: $manifest_url"
         error "Release predates checksum verification (<1.0.27) — refusing to install."
-        error "Either install a newer release, or opt out with DECEPTICON_SKIP_VERIFY=1."
-        [[ "${DECEPTICON_SKIP_VERIFY:-}" == "1" ]] || exit 1
-        warn "Skipping config manifest verification (DECEPTICON_SKIP_VERIFY=1)."
+        error "Either install a newer release, or opt out with RAPTIX_SKIP_VERIFY=1."
+        [[ "${RAPTIX_SKIP_VERIFY:-}" == "1" ]] || exit 1
+        warn "Skipping config manifest verification (RAPTIX_SKIP_VERIFY=1)."
         return
     fi
     info "Verifying configuration files against release manifest..."
+    if ! grep -Eq '^[0-9a-fA-F]{64}[[:space:]]+\*?docker-compose\.web-raptix\.yml$' "$manifest"; then
+        error "Release manifest does not cover docker-compose.web-raptix.yml; use a new-stack release."
+        exit 1
+    fi
     while IFS=' ' read -r expected _ path; do
         [[ -z "$expected" || -z "$path" ]] && continue
         # path is whatever the release job recorded (e.g. "docker-compose.yml",
-        # "config/litellm.yaml", ".env.example"). Resolve relative to install_dir.
+        # "infra/config/litellm.yaml", ".env.example"). Resolve relative to install_dir.
         local target="$install_dir/$path"
         if [[ ! -f "$target" ]]; then
             # .env.example may be absent if download_files skipped it; for now
@@ -336,9 +348,9 @@ create_launcher() {
             ;;
     esac
 
-    local binary_name="decepticon-${os}-${arch}"
+    local binary_name="raptix-${os}-${arch}"
 
-    if [[ "$DECEPTICON_VERSION" == "latest" || "$DECEPTICON_VERSION" == "stable" ]]; then
+    if [[ "$RAPTIX_VERSION" == "latest" || "$RAPTIX_VERSION" == "stable" ]]; then
         error "Could not resolve a release version automatically."
         error "Set VERSION explicitly with a tag from:"
         error "  https://github.com/$REPO/releases"
@@ -346,10 +358,10 @@ create_launcher() {
         exit 1
     fi
 
-    local download_url="$RELEASE_BASE/v${DECEPTICON_VERSION}/${binary_name}"
+    local download_url="$RELEASE_BASE/v${RAPTIX_VERSION}/${binary_name}"
     info "Downloading launcher binary ($binary_name)..."
-    if ! curl -fsSL "$download_url" -o "$bin_dir/decepticon" 2>/dev/null; then
-        error "No launcher binary for ${os}/${arch} in v${DECEPTICON_VERSION}."
+    if ! curl -fsSL "$download_url" -o "$bin_dir/raptix" 2>/dev/null; then
+        error "No launcher binary for ${os}/${arch} in v${RAPTIX_VERSION}."
         error "Supported targets: linux/amd64, linux/arm64, darwin/amd64, darwin/arm64."
         error "If you need another target, please open an issue."
         exit 1
@@ -359,25 +371,25 @@ create_launcher() {
     # asset for the same tag. The OSS launcher executes as the user's
     # session entry point — pinning its integrity is the highest-value
     # check in the installer.
-    verify_launcher_binary "$bin_dir/decepticon" "$binary_name"
+    verify_launcher_binary "$bin_dir/raptix" "$binary_name"
 
-    chmod 755 "$bin_dir/decepticon"
+    chmod 755 "$bin_dir/raptix"
 }
 
 # Download the GoReleaser-produced checksums.txt, extract the line for
 # our binary, and compare. Aborts on mismatch.
 verify_launcher_binary() {
     local binary_path="$1" binary_name="$2"
-    local checksums_url="$RELEASE_BASE/v${DECEPTICON_VERSION}/checksums.txt"
+    local checksums_url="$RELEASE_BASE/v${RAPTIX_VERSION}/checksums.txt"
     local tmp
     tmp=$(mktemp)
     if ! curl -fsSL "$checksums_url" -o "$tmp" 2>/dev/null; then
         rm -f "$tmp"
-        error "Failed to download checksums.txt from release v${DECEPTICON_VERSION}."
+        error "Failed to download checksums.txt from release v${RAPTIX_VERSION}."
         error "Release predates checksum verification (<1.0.27) — refusing to install."
-        error "Either install a newer release, or opt out with DECEPTICON_SKIP_VERIFY=1."
-        [[ "${DECEPTICON_SKIP_VERIFY:-}" == "1" ]] || exit 1
-        warn "Skipping launcher binary verification (DECEPTICON_SKIP_VERIFY=1)."
+        error "Either install a newer release, or opt out with RAPTIX_SKIP_VERIFY=1."
+        [[ "${RAPTIX_SKIP_VERIFY:-}" == "1" ]] || exit 1
+        warn "Skipping launcher binary verification (RAPTIX_SKIP_VERIFY=1)."
         return
     fi
     local expected
@@ -386,9 +398,9 @@ verify_launcher_binary() {
     assert_sha256 "$binary_path" "$expected" "$binary_name"
 }
 
-# ── Detect stale `decepticon` in PATH ─────────────────────────────
+# ── Detect stale `raptix` in PATH ─────────────────────────────
 # A previous install via `npm link`, manual symlink, or alternate package
-# manager can leave a `decepticon` executable elsewhere on PATH. That stale
+# manager can leave a `raptix` executable elsewhere on PATH. That stale
 # entry will shadow our launcher and produce confusing errors (e.g. node
 # MODULE_NOT_FOUND). Surface the conflict so the user can clean it up.
 detect_stale_launcher() {
@@ -401,18 +413,18 @@ detect_stale_launcher() {
         # Dedupe — PATH often lists the same dir twice (.bashrc + .profile etc.)
         case "$seen" in *":$d:"*) continue;; esac
         seen="$seen$d:"
-        if [[ -e "$d/decepticon" && "$d" != "$bin_dir" ]]; then
-            found+=("$d/decepticon")
+        if [[ -e "$d/raptix" && "$d" != "$bin_dir" ]]; then
+            found+=("$d/raptix")
         fi
     done
 
     if [[ ${#found[@]} -gt 0 ]]; then
         echo ""
-        warn "Found other 'decepticon' executable(s) on PATH:"
+        warn "Found other 'raptix' executable(s) on PATH:"
         for f in "${found[@]}"; do
             echo "  $f"
         done
-        warn "These may shadow the launcher just installed at $bin_dir/decepticon."
+        warn "These may shadow the launcher just installed at $bin_dir/raptix."
         echo -e "${DIM}Remove them, then run 'hash -r' or restart your shell.${NC}"
     fi
 }
@@ -443,7 +455,7 @@ setup_path() {
             local fish_config="$XDG_CONFIG_HOME/fish/config.fish"
             if [[ -f "$fish_config" ]]; then
                 if ! grep -q "$bin_dir" "$fish_config" 2>/dev/null; then
-                    echo -e "\n# decepticon" >> "$fish_config"
+                    echo -e "\n# raptix" >> "$fish_config"
                     echo "fish_add_path $bin_dir" >> "$fish_config"
                     info "Added to PATH in $fish_config"
                 fi
@@ -453,7 +465,7 @@ setup_path() {
             local zshrc="${ZDOTDIR:-$HOME}/.zshrc"
             if [[ -f "$zshrc" ]] || [[ -w "$(dirname "$zshrc")" ]]; then
                 if ! grep -q "$bin_dir" "$zshrc" 2>/dev/null; then
-                    echo -e "\n# decepticon" >> "$zshrc"
+                    echo -e "\n# raptix" >> "$zshrc"
                     echo "$path_export" >> "$zshrc"
                     info "Added to PATH in $zshrc"
                 fi
@@ -468,7 +480,7 @@ setup_path() {
 
             if [[ -f "$target" ]] || [[ -w "$(dirname "$target")" ]]; then
                 if ! grep -q "$bin_dir" "$target" 2>/dev/null; then
-                    echo -e "\n# decepticon" >> "$target"
+                    echo -e "\n# raptix" >> "$target"
                     echo "$path_export" >> "$target"
                     info "Added to PATH in $target"
                 fi
@@ -490,24 +502,24 @@ pull_images() {
     info "Pulling Docker images (this may take a few minutes)..."
     # No --env-file: .env doesn't exist yet (onboard hasn't run). All
     # ${VAR} interpolations in docker-compose.yml have :-defaults, and we
-    # inject DECEPTICON_VERSION/HOME explicitly so the image tags resolve.
+    # inject RAPTIX_VERSION/HOME explicitly so the image tags resolve.
     (cd "$install_dir" && \
-        DECEPTICON_VERSION="$DECEPTICON_VERSION" \
-        DECEPTICON_HOME="$install_dir" \
+        RAPTIX_VERSION="$RAPTIX_VERSION" \
+        RAPTIX_HOME="$install_dir" \
         docker compose --profile cli pull) || {
         warn "Warning: Failed to pull some images."
-        info "You can pull them manually later: decepticon update"
+        info "You can pull them manually later: raptix update"
     }
 }
 
 # ── Main ──────────────────────────────────────────────────────────
 main() {
-    local install_dir="${DECEPTICON_HOME:-$HOME/.decepticon}"
+    local install_dir="${RAPTIX_HOME:-$HOME/.raptix}"
     local bin_dir="$HOME/.local/bin"
 
 
     echo ""
-    echo -e "${BOLD}Decepticon${NC} — Installer"
+    echo -e "${BOLD}Raptix${NC} — Installer"
     echo ""
 
     # Pre-flight
@@ -518,7 +530,7 @@ main() {
 
     mkdir -p "$install_dir"
 
-    info "Installing Decepticon $DECEPTICON_VERSION"
+    info "Installing Raptix $RAPTIX_VERSION"
     info "Directory: $install_dir"
     echo ""
 
@@ -528,7 +540,7 @@ main() {
 
     # Launcher
     create_launcher "$bin_dir"
-    success "Launcher installed to $bin_dir/decepticon"
+    success "Launcher installed to $bin_dir/raptix"
 
     # PATH
     setup_path "$bin_dir"
@@ -543,21 +555,21 @@ main() {
     # Done
     echo ""
     echo -e "${GREEN}────────────────────────────────────────────${NC}"
-    echo -e "${GREEN}  Decepticon installed successfully!${NC}"
+    echo -e "${GREEN}  Raptix installed successfully!${NC}"
     echo -e "${GREEN}────────────────────────────────────────────${NC}"
     echo ""
     echo -e "  ${BOLD}1.${NC} Configure your API keys:"
-    echo -e "     ${BOLD}decepticon onboard${NC}"
+    echo -e "     ${BOLD}raptix onboard${NC}"
     echo ""
-    echo -e "  ${BOLD}2.${NC} Start Decepticon:"
-    echo -e "     ${BOLD}decepticon${NC}"
+    echo -e "  ${BOLD}2.${NC} Start Raptix:"
+    echo -e "     ${BOLD}raptix${NC}"
     echo ""
 
     # Reload-shell hint — always show it.
     # Two failure modes a user can hit on a fresh shell:
     #   (a) $bin_dir was just added to .bashrc/.zshrc/etc. but the current
-    #       shell hasn't sourced it yet → `decepticon` not found.
-    #   (b) The shell already has $bin_dir on PATH but a stale `decepticon`
+    #       shell hasn't sourced it yet → `raptix` not found.
+    #   (b) The shell already has $bin_dir on PATH but a stale `raptix`
     #       (e.g. removed npm shim) is cached in its hash table → the wrong
     #       binary is invoked or "No such file or directory" is reported.
     # Spelling both fixes out unconditionally is cheaper than diagnosing

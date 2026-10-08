@@ -1,0 +1,26 @@
+# Pinned benchmark dictionary (TC-5) — the ONLY wordlist the
+# sandbox-credentials profile ships. Versioned with the checkout so
+# cracking benchmarks are reproducible; rockyou.txt is deliberately not
+# provisioned. Benchmark fixtures MUST use entries from this file.
+# One entry per line, LF endings, UTF-8.
+password
+123456
+letmein
+qwerty
+admin
+Welcome1
+Password1
+P@ssw0rd
+Summer2026!
+Winter2026!
+Spring2026!
+Autumn2026!
+svc_backup
+Backup2026!
+changeme
+Corp123!
+Administrator
+football
+monkey
+dragon
+master

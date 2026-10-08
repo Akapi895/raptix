@@ -1,0 +1,31 @@
+{
+  "provenance": "legacy-http-controlled",
+  "method": "GET",
+  "path": "/api/engagements/cmupmdkw400013togf2geknfy/approvals",
+  "status": 200,
+  "contentType": "application/json",
+  "body": [
+    {
+      "kind": "approval_request",
+      "request_id": "w00-req-0001",
+      "engagement_name": "w00-capture-assessment",
+      "agent_name": "recon-agent",
+      "tool_name": "http_get",
+      "tool_args_redacted": {
+        "url": "http://authorized-test.invalid/"
+      },
+      "matched_rule": {
+        "technique_tag": "recon",
+        "tool_pattern": "http_*",
+        "timeout_seconds": 300,
+        "default_on_timeout": "deny"
+      },
+      "reason": "w00 controlled capture fixture",
+      "created_at": 1767225600,
+      "metadata": {
+        "source": "w00-capture",
+        "synthetic": true
+      }
+    }
+  ]
+}

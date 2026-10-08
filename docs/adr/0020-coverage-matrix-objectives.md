@@ -2,7 +2,7 @@
 
 - **Status:** Proposed
 - **Date:** 2026-09-29
-- **Deciders:** Decepticon maintainers
+- **Deciders:** Raptix maintainers
 - **Related:** `summary/impl-plan-surface-exploit.md`, `docs/adr/0018-recon-surface-inventory.md`, `docs/adr/0019-parameterize-surface-exploit-cells.md`
 
 ## Context
@@ -16,7 +16,7 @@ state and enforces sequential mutations.
 ## Decision
 
 Expose a read-only, engagement-scoped `kg_surface_inventory` capability only
-to the Decepticon orchestrator. It normalizes Endpoint nodes and their typed
+to the Raptix orchestrator. It normalizes Endpoint nodes and their typed
 children, applies the single vulnerability registry, and returns stable
 coverage cells plus `objective_expand` child payloads. The orchestrator adds
 the Initial Foothold parent and submits those children through one sequential

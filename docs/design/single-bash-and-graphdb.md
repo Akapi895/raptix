@@ -1,8 +1,8 @@
-# Decepticon Core Direction: Single Bash Tool + Graph DB Memory
+# Raptix Core Direction: Single Bash Tool + Graph DB Memory
 
 ## Why "single bash tool"
 
-Decepticon's offensive execution surface should mirror real operators:
+Raptix's offensive execution surface should mirror real operators:
 
 - One command execution primitive (`bash`)
 - Real attacker tradecraft expressed as shell command sequences
@@ -25,16 +25,16 @@ For recon/exploit/postexploit/ad/cloud lanes:
 
 Default remains JSON for simplicity and portability:
 
-- `DECEPTICON_KG_BACKEND=json` (default)
-- `DECEPTICON_KG_PATH=/workspace/kg.json`
+- `RAPTIX_KG_BACKEND=json` (default)
+- `RAPTIX_KG_PATH=/workspace/kg.json`
 
 Optional Neo4j backend for larger engagements and multi-agent concurrency:
 
-- `DECEPTICON_KG_BACKEND=neo4j`
-- `DECEPTICON_NEO4J_URI=bolt://localhost:7687`
-- `DECEPTICON_NEO4J_USER=neo4j`
-- `DECEPTICON_NEO4J_PASSWORD=...`
-- `DECEPTICON_NEO4J_DATABASE=neo4j` (optional)
+- `RAPTIX_KG_BACKEND=neo4j`
+- `RAPTIX_NEO4J_URI=bolt://localhost:7687`
+- `RAPTIX_NEO4J_USER=neo4j`
+- `RAPTIX_NEO4J_PASSWORD=...`
+- `RAPTIX_NEO4J_DATABASE=neo4j` (optional)
 
 Operational notes:
 - `docker-compose.yml` includes a `neo4j` service and wires LangGraph to it.
@@ -45,7 +45,7 @@ switches persistence backend under the `kg_*` tools.
 
 ## Differentiating edge (security-focused AGI direction)
 
-Decepticon's unique direction is not "chat UX" — it is **autonomous adversary
+Raptix's unique direction is not "chat UX" — it is **autonomous adversary
 execution under constraints**:
 
 1. **Realistic execution substrate**: commands run in isolated Kali sandbox,
@@ -57,5 +57,5 @@ execution under constraints**:
 4. **Operational guardrails**: scope/RoE + objective tracking enforce safer,
    auditable autonomy.
 
-This combination moves Decepticon toward a security AGI operator that behaves
+This combination moves Raptix toward a security AGI operator that behaves
 closer to real red teams than generic coding assistants.

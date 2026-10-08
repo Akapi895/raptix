@@ -26,8 +26,8 @@ default_stages: [pre-commit]
 # Grandfather pattern (keep these two hooks in sync):
 #   assets/.*
 #   reference/.*
-#   benchmark/results/.*
-#   packages/decepticon/decepticon/skills/_corpus/.*
+#   benchmarks/results/.*
+#   packages/raptix-skills/raptix_skills/defs/_corpus/.*
 #   .*\.snap
 #   .*\.lock
 
@@ -40,8 +40,8 @@ repos:
           (?x)^(
             assets/.*|
             reference/.*|
-            benchmark/results/.*|
-            packages/decepticon/decepticon/skills/_corpus/.*|
+            benchmarks/results/.*|
+            packages/raptix-skills/raptix_skills/defs/_corpus/.*|
             .*\.snap|
             .*\.lock
           )$
@@ -50,11 +50,10 @@ repos:
           (?x)^(
             assets/.*|
             reference/.*|
-            benchmark/results/.*|
-            packages/decepticon/decepticon/skills/_corpus/.*|
+            benchmarks/results/.*|
+            packages/raptix-skills/raptix_skills/defs/_corpus/.*|
             .*\.snap|
-            .*\.lock|
-            clients/web/public/.*\.svg
+            .*\.lock
           )$
       - id: check-yaml
       - id: check-toml
@@ -64,7 +63,7 @@ repos:
       - id: detect-private-key
         # tests/unit/cloud/test_cloud.py contains a test fixture private
         # key (intentionally — it's verifying the AWS credential parser).
-        exclude: ^packages/decepticon/tests/unit/cloud/test_cloud\.py$
+        exclude: ^packages/raptix/tests/unit/cloud/test_cloud\.py$
       - id: mixed-line-ending
         args: ["--fix=lf"]
         # PowerShell / Windows shell scripts intentionally use CRLF per

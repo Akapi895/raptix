@@ -18,7 +18,7 @@ To change the bar, open an ADR. No branch rule enforces that — see
 ## The Karpathy Four
 
 These four principles are the default behavioral contract for **every**
-Decepticon contribution, trivial or complex. They override any habit
+Raptix contribution, trivial or complex. They override any habit
 toward speed, breadth, or overcomplication. Bias: **caution over speed**.
 
 ### 1. Think Before Coding
@@ -105,7 +105,7 @@ changes," "obvious refactors," "docs-only" touching runtime code, or
 1. **You executed the new or changed code path on your machine.** Not
    imported. Not unit-tested in isolation. Actually called, in the
    actual runtime, against the actual surrounding system. If your
-   change is in `packages/decepticon/decepticon/agents/`, you ran an
+   change is in `packages/raptix/raptix/intelligence/agents/`, you ran an
    engagement that exercised the agent. If it is a CLI command, you
    ran the command. If it is an HTTP route, you hit the route. If it
    is a skill, you triggered the skill from an agent that loads it.
@@ -151,7 +151,7 @@ changes," "obvious refactors," "docs-only" touching runtime code, or
   actual runtime path and watching it load.
 - Adding a new CLI command, HTTP route, agent prompt, or skill
   without invoking it once.
-- Touching `docker-compose.yml`, `containers/*.Dockerfile`, or
+- Touching `docker-compose.yml`, `infra/containers/*.Dockerfile`, or
   `config/litellm.yaml` without bringing the stack up locally and
   watching it pass healthchecks.
 - Saying "should work," "should be fine," "I think this is right," or
@@ -175,7 +175,7 @@ observed. Examples that meet the bar:
 > implant on the same target. `make smoke` healthy on a clean
 > volume.
 
-> Ran `pytest packages/decepticon/tests/unit/middleware/test_safe_command.py::test_rejects_out_of_scope_host -x`
+> Ran `pytest packages/raptix/tests/unit/middleware/test_safe_command.py::test_rejects_out_of_scope_host -x`
 > twice: once on the parent commit (failed as expected: the new
 > CIDR-overlap check did not exist), once on this branch (passed).
 > Also ran `make ci-lint` and the full `pytest tests/`. Did **not**
@@ -197,7 +197,7 @@ The bar is on the *evidence*, not the *claim*.
 ## Banned patterns — PR closed on sight
 
 Each pattern is closed without further review when found. Several are
-already enforced by `.semgrep/decepticon-rules.yml`; the rest are
+already enforced by `.semgrep/raptix-rules.yml`; the rest are
 enforced by the maintainer reviewing the diff. There is no "I didn't
 know" exception once this document exists.
 
@@ -236,7 +236,7 @@ preserved.
 ### Type-safety escape hatches
 
 ```python
-# BANNED (also semgrep: decepticon-no-blanket-type-ignore)
+# BANNED (also semgrep: raptix-no-blanket-type-ignore)
 x = call()  # type: ignore
 y = other()  # pyright: ignore
 
@@ -250,16 +250,16 @@ justification.
 ### Logging in production
 
 ```python
-# BANNED in packages/decepticon/**, packages/decepticon-core/**
+# BANNED in packages/raptix/**, packages/raptix-core/**
 print(f"got result {result}")
 
 # REQUIRED
-from decepticon.core.logging import get_logger
+from raptix.core.logging import get_logger
 log = get_logger("agents.recon.scanner")
 log.info("recon scan complete", extra={"host_count": len(hosts)})
 ```
 
-`print` is for `clients/cli` and `scripts/` only. Everywhere else,
+`print` is for `apps/cli` and `scripts/` only. Everywhere else,
 use the project logger so output is structured and routable.
 
 ### Suppressed return values
@@ -406,7 +406,7 @@ The complement of the banned list. The reviewer is looking for these:
 - **Every public function has explicit type annotations**, including
   return type. `-> None` when nothing is returned.
 - **Every exception raised is a named class** that subclasses a
-  Decepticon base error (`DecepticonError` or a domain-specific child).
+  Raptix base error (`RaptixError` or a domain-specific child).
 - **Every fix PR's branch has a failing-test commit followed by a
   passing-test commit.** Don't squash locally; the maintainer wants
   to see the bug reproduced. CI will squash on merge.

@@ -1,12 +1,12 @@
-# Decepticon as a Library
+# Raptix as a Library
 
-Decepticon is built on top of `langchain` / `langgraph` / `deepagents`
+Raptix is built on top of `langchain` / `langgraph` / `deepagents`
 and follows the same composition idiom: opinionated middleware + tools
 + prompts you can either consume pre-built or compose into something
 of your own. This document covers the three usage paths and the
 override surface plugin authors have access to.
 
-If you only run Decepticon via the bundled Docker stack and never
+If you only run Raptix via the bundled Docker stack and never
 touch the Python code, none of this applies — keep using `curl | bash`
 and the CLI launcher. This document is for commercial / research
 integrators building on top of the agent code.
@@ -21,7 +21,7 @@ The 16 agent factories ship preconfigured. Module-level `graph`
 constants are what LangGraph Platform picks up from `langgraph.json`.
 
 ```python
-from decepticon.agents.standard.recon import create_recon_agent, graph
+from raptix.intelligence.agents.standard.recon import create_recon_agent, graph
 
 agent = create_recon_agent()  # default OSS configuration
 # `graph` is the same thing, built once at import time.
@@ -40,7 +40,7 @@ baseline (and apply any plugin overrides discovered via entry-points).
 ```python
 from langchain_core.tools import tool
 
-from decepticon.agents.standard.soundwave import create_soundwave_agent
+from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
 
 @tool
 def vendor_slack_ask_user(question: str, header: str = "") -> str:
@@ -70,15 +70,15 @@ Available kwargs on every factory:
 
 > When `tools` / `middleware` / `system_prompt` is `None` (the
 > default), the factory builds the OSS baseline AND applies any plugin
-> overrides discovered via the `decepticon.bundles` entry-point group.
+> overrides discovered via the `raptix.bundles` entry-point group.
 > When an explicit value is supplied, the baseline AND the plugin
 > overrides for that surface are bypassed — the caller takes full
 > control.
 
 ### 3. Direct composition with `langchain.create_agent`
 
-For total control, import Decepticon's building blocks and assemble
-with langchain's generic agent constructor. Decepticon's factory is
+For total control, import Raptix's building blocks and assemble
+with langchain's generic agent constructor. Raptix's factory is
 bypassed entirely.
 
 ```python
@@ -87,18 +87,18 @@ from langchain.agents.middleware import ModelFallbackMiddleware
 from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
 from deepagents.middleware.patch_tool_calls import PatchToolCallsMiddleware
 
-from decepticon.agents.prompts import load_prompt
-from decepticon.backends import build_sandbox_backend, make_agent_backend
-from decepticon.llm import LLMFactory
-from decepticon.middleware import (
+from raptix.intelligence.prompts import load_prompt
+from raptix.execution.backends import build_sandbox_backend, make_agent_backend
+from raptix.intelligence.llm import LLMFactory
+from raptix.middleware import (
     EngagementContextMiddleware,
     FilesystemMiddleware,
     SandboxNotificationMiddleware,
     SkillsMiddleware,
 )
-from decepticon.tools.bash import BASH_TOOLS
-from decepticon.tools.bash.bash import set_sandbox
-from decepticon.tools.research.tools import kg_query, kg_stats
+from raptix.execution.tools.bash import BASH_TOOLS
+from raptix.execution.tools.bash.bash import set_sandbox
+from raptix.execution.tools.research.tools import kg_query, kg_stats
 
 sandbox = build_sandbox_backend()
 set_sandbox(sandbox)
@@ -124,20 +124,20 @@ agent = create_agent(
 ```
 
 This is the canonical path for commercial / research integrators who want
-to ship their own service on top of Decepticon's agent code.
+to ship their own service on top of Raptix's agent code.
 
 ### 3b. Plugin orchestrator with the OSS slot system (`build_middleware(slots=...)`)
 
 When a downstream product wants to ship a **new orchestrator agent
-type** (not one of the OSS 16) but still wants Decepticon's slot
+type** (not one of the OSS 16) but still wants Raptix's slot
 system, safety gate, and plugin-override pipeline, pass an explicit
 ``slots`` set to ``build_middleware``:
 
 ```python
-from decepticon.agents.build import build_middleware, build_tools
-from decepticon.agents.middleware_slots import MiddlewareSlot
-from decepticon.agents.prompts import load_prompt
-from decepticon.llm import LLMFactory
+from raptix.intelligence.agents.build import build_middleware, build_tools
+from raptix.intelligence.agents.middleware_slots import MiddlewareSlot
+from raptix.intelligence.prompts import load_prompt
+from raptix.intelligence.llm import LLMFactory
 
 PRO_SLOTS = frozenset({
     MiddlewareSlot.ENGAGEMENT_CONTEXT,
@@ -156,15 +156,15 @@ PRO_SKILL_SOURCES = [
     "/skills/shared/",
 ]
 
-def create_decepticon_pro_agent(**kwargs):
+def create_raptix_pro_agent(**kwargs):
     # LLMFactory only knows OSS role assignments; pass default_role=
     # to inherit one as fallback until the plugin registers its own.
     llm_factory = LLMFactory()
-    llm = llm_factory.get_model("decepticon-pro", default_role="decepticon")
-    fallbacks = llm_factory.get_fallback_models("decepticon-pro", default_role="decepticon")
+    llm = llm_factory.get_model("raptix-pro", default_role="decepticon")
+    fallbacks = llm_factory.get_fallback_models("raptix-pro", default_role="decepticon")
 
     middleware = build_middleware(
-        role="decepticon-pro",         # custom role — NOT in SLOTS_PER_ROLE
+        role="raptix-pro",         # custom role — NOT in SLOTS_PER_ROLE
         slots=PRO_SLOTS,               # plugin author declares its slot set
         skill_sources=PRO_SKILL_SOURCES,  # bypass OSS skills_sources_for() lookup
         backend=..., llm=llm, fallback_models=fallbacks, subagents=[...],
@@ -189,15 +189,15 @@ Three plugin-orchestrator escape hatches converge here:
 
 ## Declarative plugin overrides (`PluginBundle`)
 
-Plugin authors who pip-install on top of an existing Decepticon Docker
+Plugin authors who pip-install on top of an existing Raptix Docker
 image (rather than composing a service from scratch) ship a
-`PluginBundle` under the `decepticon.bundles` entry-point group.
+`PluginBundle` under the `raptix.bundles` entry-point group.
 Factories discover and apply it automatically — no factory kwargs
 needed.
 
 ```python
 # vendor_pkg/bundles.py
-from decepticon.plugin_loader import PluginBundle
+from raptix.plugin_loader import PluginBundle
 from vendor_pkg.tools import vendor_slack_ask
 from vendor_pkg.middleware import vendor_skills_factory
 
@@ -223,13 +223,13 @@ VENDOR_BUNDLE = PluginBundle(
 
 ```toml
 # vendor_pkg/pyproject.toml
-[project.entry-points."decepticon.bundles"]
+[project.entry-points."raptix.bundles"]
 vendor = "vendor_pkg.bundles:VENDOR_BUNDLE"
 ```
 
-Activation also honors the existing `DECEPTICON_PLUGINS` env / config
+Activation also honors the existing `RAPTIX_PLUGINS` env / config
 allowlist via `bundle="vendor"`. Set
-`DECEPTICON_PLUGINS=standard,vendor` to opt in.
+`RAPTIX_PLUGINS=standard,vendor` to opt in.
 
 ### Adding skills via entry-points
 
@@ -248,17 +248,17 @@ def skill_sources(role: str) -> list[str]:
 
 ```toml
 # vendor_pkg/pyproject.toml
-[project.entry-points."decepticon.skills"]
+[project.entry-points."raptix.skills"]
 vendor = "vendor_pkg.skills:skill_sources"
 ```
 
 Plugin paths are appended after the OSS baseline returned by
-`decepticon.agents.middleware_slots.skills_sources_for`, so OSS skills
+`raptix.intelligence.agents.middleware_slots.skills_sources_for`, so OSS skills
 keep their priority in the progressive-disclosure budget.
 
 ### Override resolution order
 
-1. Plugin `decepticon.bundles` entries (merged across all installed
+1. Plugin `raptix.bundles` entries (merged across all installed
    plugins, last-write-wins on conflicts).
 2. Explicit kwargs passed to the factory (`tools=`, `middleware=`,
    `system_prompt=`, …). Always win.
@@ -282,7 +282,7 @@ A small allowlist of slots and tools is flagged safety-critical:
 
 Disabling or replacing any of these (whether via factory kwarg, plugin
 bundle, or both) raises `SafetyOverrideViolation` at agent-construction
-time unless `DECEPTICON_ALLOW_SAFETY_OVERRIDES=1` is set in the
+time unless `RAPTIX_ALLOW_SAFETY_OVERRIDES=1` is set in the
 environment. The gate exists so an accidentally-installed plugin
 cannot silently subvert the safety story — operators must explicitly
 opt in.
@@ -298,22 +298,22 @@ to honor the original semantics.
 
 | Import | Purpose |
 |--------|---------|
-| `decepticon.agents.standard.*`, `decepticon.agents.plugins.*` | Pre-built per-role agent factories |
-| `decepticon_core.contracts.slots` | `MiddlewareSlot` enum, `SLOTS_PER_ROLE`, `DEFAULT_SLOT_FACTORIES` |
-| `decepticon.agents.build` | `build_middleware`, `build_tools`, `resolve_prompt_overrides`, `SafetyOverrideViolation` |
-| `decepticon.agents.prompts` | `load_prompt`, `PromptBuilder` |
-| `decepticon.middleware` | `SkillsMiddleware`, `FilesystemMiddleware`, `EngagementContextMiddleware`, `OPPLANMiddleware`, `SandboxNotificationMiddleware`, `OpsControlNotificationMiddleware`, `KGMiddleware`, `SkillogyMiddleware`, … |
-| `decepticon.tools.bash` | `BASH_TOOLS` (the four bash tools), `set_sandbox` |
-| `decepticon.tools.research`, `decepticon.tools.references` | KG / CVE / payload tools |
-| `decepticon.tools.interaction` | `ask_user_question`, `complete_engagement_planning` |
-| `decepticon.tools.ops` | `ops_start`, `ops_stop`, `ops_status` (orchestrator-only, ADR-0006) |
-| `decepticon.backends` | `HTTPSandbox`, `build_sandbox_backend`, `make_agent_backend` |
-| `decepticon.llm` | `LLMFactory` |
-| `decepticon_core.types.engagement` | `RoE`, `CONOPS`, `DeconflictionPlan`, `OPPLAN`, `ThreatProfile`, `CleanupPlan`, `AbortPlan`, `ContactPlan`, `DataHandlingPlan` |
-| `decepticon_core.types.kg` | `KnowledgeGraph`, `Node`, `Edge`, `EdgeKind` |
-| `decepticon_core.plugin_loader` | `PluginBundle`, `SubAgentSpec`, `is_bundle_enabled`, `load_plugin_*` |
+| `raptix.intelligence.agents.standard.*`, `raptix.intelligence.agents.plugins.*` | Pre-built per-role agent factories |
+| `raptix_core.contracts.slots` | `MiddlewareSlot` enum, `SLOTS_PER_ROLE`, `DEFAULT_SLOT_FACTORIES` |
+| `raptix.intelligence.agents.build` | `build_middleware`, `build_tools`, `resolve_prompt_overrides`, `SafetyOverrideViolation` |
+| `raptix.intelligence.prompts` | `load_prompt`, `PromptBuilder` |
+| `raptix.middleware` | `SkillsMiddleware`, `FilesystemMiddleware`, `EngagementContextMiddleware`, `OPPLANMiddleware`, `SandboxNotificationMiddleware`, `OpsControlNotificationMiddleware`, `KGMiddleware`, `SkillogyMiddleware`, … |
+| `raptix.execution.tools.bash` | `BASH_TOOLS` (the four bash tools), `set_sandbox` |
+| `raptix.execution.tools.research`, `raptix.execution.tools.references` | KG / CVE / payload tools |
+| `raptix.execution.tools.interaction` | `ask_user_question`, `complete_engagement_planning` |
+| `raptix.execution.tools.ops` | `ops_start`, `ops_stop`, `ops_status` (orchestrator-only, ADR-0006) |
+| `raptix.backends` | `HTTPSandbox`, `build_sandbox_backend`, `make_agent_backend` |
+| `raptix.intelligence.llm` | `LLMFactory` |
+| `raptix_core.types.engagement` | `RoE`, `CONOPS`, `DeconflictionPlan`, `OPPLAN`, `ThreatProfile`, `CleanupPlan`, `AbortPlan`, `ContactPlan`, `DataHandlingPlan` |
+| `raptix_core.types.kg` | `KnowledgeGraph`, `Node`, `Edge`, `EdgeKind` |
+| `raptix_core.plugin_loader` | `PluginBundle`, `SubAgentSpec`, `is_bundle_enabled`, `load_plugin_*` |
 
-The schema / contract types live in **`decepticon-core`** (the contracts package); the framework re-exports them via the compat shim in `decepticon/__init__.py` for one minor cycle (`decepticon.core.schemas`, `decepticon.plugin_loader`, `decepticon.agents.middleware_slots`). New code should import from `decepticon_core.*` directly.
+The schema / contract types live in **`raptix-core`** (the contracts package); the framework re-exports them via the compat shim in `raptix/__init__.py` for one minor cycle (`raptix.core.schemas`, `raptix.plugin_loader`, `raptix.intelligence.agents.middleware_slots`). New code should import from `raptix_core.*` directly.
 
 ---
 
@@ -322,13 +322,13 @@ The schema / contract types live in **`decepticon-core`** (the contracts package
 ### Add a single vendor tool to the default agent
 
 ```python
-from decepticon.agents.standard.recon import create_recon_agent
+from raptix.intelligence.agents.standard.recon import create_recon_agent
 
-# Easiest: ship a PluginBundle (items=(my_tool,)) under decepticon.bundles
+# Easiest: ship a PluginBundle (items=(my_tool,)) under raptix.bundles
 # and the default factory picks it up automatically.
 
 # Or pass explicitly — but you have to include the full tool list:
-from decepticon.agents.standard.recon import _STANDARD_TOOLS
+from raptix.intelligence.agents.standard.recon import _STANDARD_TOOLS
 all_tools = [*_STANDARD_TOOLS.values(), my_tool]
 agent = create_recon_agent(tools=all_tools)
 ```
@@ -363,14 +363,14 @@ Library path (full control):
 ### Disable a non-critical slot for one agent
 
 ```python
-from decepticon.agents.middleware_slots import MiddlewareSlot
-from decepticon.agents.standard.soundwave import create_soundwave_agent
+from raptix.intelligence.agents.middleware_slots import MiddlewareSlot
+from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
 
 # Drop AnthropicPromptCachingMiddleware (we have our own cache layer).
 # This is library-style direct call; for plugin-wide disable, use
 # PluginBundle(disabled_middleware=("prompt-caching",)).
 import os
-os.environ["DECEPTICON_ALLOW_SAFETY_OVERRIDES"] = "0"  # default — only non-critical slots ok
+os.environ["RAPTIX_ALLOW_SAFETY_OVERRIDES"] = "0"  # default — only non-critical slots ok
 # … then use the factory's `middleware=` kwarg with your own composed list,
 # or rely on a plugin bundle.
 ```
@@ -379,7 +379,7 @@ os.environ["DECEPTICON_ALLOW_SAFETY_OVERRIDES"] = "0"  # default — only non-cr
 
 ## Versioning
 
-Decepticon-core follows SemVer 0.x semantics until the API has settled
+Raptix-core follows SemVer 0.x semantics until the API has settled
 through real commercial integrations. Public surface listed above is
 the intended stability target; internals (`_resolve_overrides`,
 private factory helpers, etc.) may change without notice.
@@ -389,8 +389,8 @@ Install from PyPI and pin a compatible range in your `pyproject.toml`:
 ```toml
 [project]
 dependencies = [
-    "decepticon>=1.0,<2",           # core SDK
-    # "decepticon[neo4j]>=1.0,<2",  # add the extra for the KG graph tools
+    "raptix>=1.0,<2",           # core SDK
+    # "raptix[neo4j]>=1.0,<2",  # add the extra for the KG graph tools
 ]
 ```
 

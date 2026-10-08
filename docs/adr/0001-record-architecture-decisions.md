@@ -7,7 +7,7 @@
 
 ## Context
 
-Decepticon's architecture has evolved through several iterations
+Raptix's architecture has evolved through several iterations
 (Purple Team AI → RL → GAN → LLM agents; monolithic agent → planned
 multi-agent decomposition; Docker-socket-exec sandbox → HTTP-daemon
 sandbox; etc.). Each pivot was deliberate, but the *reasoning* for

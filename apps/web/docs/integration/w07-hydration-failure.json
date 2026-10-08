@@ -1,0 +1,59 @@
+{
+  "runStatus": "success",
+  "threadMetadata": {
+    "engagement_id": "cmuqe4h0q0000tcfigksiyfes",
+    "workspace_slug": "w07-live-1a3562b1-0685-4d57-9408-902638f606c1",
+    "ui_assistant_id": "soundwave",
+    "graph_id": "soundwave",
+    "ui_flow": "planning",
+    "runtime_context_hash": "45fdf63f30607aed7994adfaa29826454237e7ea96a4afed109cd0b850441acb"
+  },
+  "values": {
+    "engagement_name": "w07-live-1a3562b1-0685-4d57-9408-902638f606c1",
+    "workspace_path": "/workspace/w07-live-1a3562b1-0685-4d57-9408-902638f606c1",
+    "target_type": "web_url",
+    "target_value": "https://authorized.invalid",
+    "authorization_confirmed": false,
+    "language": "",
+    "kg_engagement": ""
+  },
+  "checkpointMetadata": {
+    "engagement_name": "w07-live-1a3562b1-0685-4d57-9408-902638f606c1",
+    "workspace_path": "/workspace/w07-live-1a3562b1-0685-4d57-9408-902638f606c1",
+    "target_type": "web_url",
+    "target_value": "https://authorized.invalid",
+    "authorization_confirmed": true,
+    "graph_id": "soundwave",
+    "assistant_id": "80d61df3-aa04-5660-8c1f-8dd054a7dd64",
+    "user_id": "",
+    "ls_integration": "langchain_create_agent",
+    "lc_agent_name": "soundwave",
+    "created_by": "system",
+    "engagement_id": "cmuqe4h0q0000tcfigksiyfes",
+    "workspace_slug": "w07-live-1a3562b1-0685-4d57-9408-902638f606c1",
+    "ui_assistant_id": "soundwave",
+    "ui_flow": "planning",
+    "runtime_context_hash": "45fdf63f30607aed7994adfaa29826454237e7ea96a4afed109cd0b850441acb",
+    "ui_request_id": "w07-run-4c989579-e6c8-44eb-990b-57818cad2f05",
+    "run_attempt": 1,
+    "langgraph_version": "1.2.4",
+    "langgraph_api_version": "0.10.0",
+    "langgraph_plan": "enterprise",
+    "langgraph_host": "self-hosted",
+    "langgraph_api_url": "http://0.0.0.0:2024",
+    "run_id": "01a0fa9c-0940-78a3-bb2f-02ab5d6fee32",
+    "thread_id": "4b106260-6aaf-44e1-b8e4-eacf35979f4c",
+    "source": "loop",
+    "step": 4,
+    "parents": {},
+    "counters_since_delta_snapshot": {
+      "files": [
+        0,
+        6
+      ]
+    },
+    "langgraph_auth_user_id": "",
+    "langgraph_request_id": "f8f89d46-d711-48a6-82e5-c9a1ac6d16e0"
+  },
+  "checkpointPresent": true
+}

@@ -1,7 +1,7 @@
 # skillogy: load_skill by name 404s when find_skill ranking is polluted
 
 **Date:** 2026-06-12
-**Component:** `decepticon/skillogy/server/` (`app.py` load endpoint + `neo4j_backend.load_skill`)
+**Component:** `raptix/skillogy/server/` (`app.py` load endpoint + `neo4j_backend.load_skill`)
 **Severity:** high — agents cannot load known skills by name; breaks orchestrator skill-routing
 
 ## Symptom

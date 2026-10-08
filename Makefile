@@ -1,4 +1,4 @@
-# Decepticon — Pre-release Verification & Development
+# Raptix — Pre-release Verification & Development
 #
 # Purpose: dogfood and validate the OSS release flow before tagging. Every
 # Docker target builds from the local checkout (never pulls from GHCR), so
@@ -21,52 +21,58 @@ COMPOSE       := docker compose
 COMPOSE_DEV   := docker compose -f docker-compose.yml -f docker-compose.dev.yml
 COMPOSE_WATCH := docker compose -f docker-compose.yml -f docker-compose.dev.yml -f docker-compose.watch.yml
 PROFILES_ALL  := --profile cli --profile c2-sliver
-WEB_DIR       := clients/web
+# New-stack cutover (W16): web-raptix UI + API. Deliberately no legacy web
+# service in that lane — rollback restores it via `docker start raptix-web`.
+# W20: the legacy Next.js web lane is retired from active targets; the
+# archived image stays pullable from GHCR for emergency rollback only.
+COMPOSE_WEB_RAPTIX := docker compose -f docker-compose.web-raptix.yml
+WEB_RAPTIX_DB      := raptix_web_raptix
 
-# Dogfood: isolated $DECEPTICON_HOME so the launcher can onboard, write .env,
-# and stand up the stack without touching the user's real ~/.decepticon. The
+# Dogfood: isolated $RAPTIX_HOME so the launcher can onboard, write .env,
+# and stand up the stack without touching the user's real ~/.raptix. The
 # launcher resolves all relative paths against the compose file's directory,
-# so docker-compose.yml + config/ + containers/ + .env.example are symlinked
+# so docker-compose.yml + infra/config/ + infra/containers/ + .env.example are symlinked
 # back to the repo. workspace/ stays a real directory (engagement bind mount).
 DOGFOOD_HOME  := $(CURDIR)/.dogfood
-LAUNCHER_BIN  := clients/launcher/bin/decepticon
+LAUNCHER_BIN  := apps/launcher/bin/raptix
 
 # Match the launcher's explicit Compose project without interpolating the
 # environment-controlled stack/project name into Make's shell source.
 define CLEAN_LAUNCHER_STACK
-	@stack="$${DECEPTICON_STACK_NAME:-}"; project="$${DECEPTICON_COMPOSE_PROJECT:-}"; \
-	case "$$stack" in *[!a-z0-9-]* ) echo "invalid DECEPTICON_STACK_NAME: $$stack" >&2; exit 2;; esac; \
-	if [ -z "$$project" ]; then project="decepticon$${stack:+-$$stack}"; fi; \
-	case "$$project" in ""|[!a-z0-9]*|*[!a-z0-9_-]* ) echo "invalid DECEPTICON_COMPOSE_PROJECT: $$project" >&2; exit 2;; esac; \
+	@stack="$${RAPTIX_STACK_NAME:-}"; project="$${RAPTIX_COMPOSE_PROJECT:-}"; \
+	case "$$stack" in *[!a-z0-9-]* ) echo "invalid RAPTIX_STACK_NAME: $$stack" >&2; exit 2;; esac; \
+	if [ -z "$$project" ]; then project="raptix$${stack:+-$$stack}"; fi; \
+	case "$$project" in ""|[!a-z0-9]*|*[!a-z0-9_-]* ) echo "invalid RAPTIX_COMPOSE_PROJECT: $$project" >&2; exit 2;; esac; \
 	docker compose -p "$$project" $(PROFILES_ALL) down --volumes --remove-orphans 2>/dev/null; true
 endef
 
 # docker compose cannot expand ~ inside compose-file defaults, so resolve it
 # here before any subprocess inherits the env.
-export DECEPTICON_HOME ?= $(HOME)/.decepticon
+export RAPTIX_HOME ?= $(HOME)/.raptix
 
 # Mirror the launcher's start.go credential mount logic so `make dev` (and any
 # other target that calls `docker compose`) populates the litellm container's
 # Claude Code + Codex CLI OAuth tokens without requiring users to run
-# `decepticon onboard`. Existence check at make-time: real file when host has
+# `raptix onboard`. Existence check at make-time: real file when host has
 # tokens, /dev/null otherwise so docker doesn't synthesize a bind directory.
 export CLAUDE_CREDENTIALS_VOLUME ?= $(shell test -f $(HOME)/.claude/.credentials.json && echo $(HOME)/.claude/.credentials.json || echo /dev/null)
 export CODEX_AUTH_VOLUME ?= $(shell test -f $(HOME)/.codex/auth.json && echo $(HOME)/.codex/auth.json || echo /dev/null)
 
 .PHONY: help \
         dogfood launcher smoke \
-        dev cli-dev web-dev infra \
+        dev cli-dev webraptix-dev infra \
         quality quality-strict quality-cli test test-local lint lint-fix \
         ci-lint ci-test ci-test-coverage ci-test-coverage-report \
-        web-build web-hotswap web-lint web-migrate \
+        webraptix-build webraptix-db-ensure webraptix-up webraptix-down \
+        webraptix-health webraptix-quality \
         status logs health clean \
-        node-install web-db-ensure \
+        node-install \
         benchmark recreate-litellm
 
 # ── Help (default target) ────────────────────────────────────────
 
 help:
-	@echo "Decepticon — Pre-release Verification & Development"
+	@echo "Raptix — Pre-release Verification & Development"
 	@echo ""
 	@echo "Pre-release verification (release readiness):"
 	@echo "  make dogfood      Full OSS UX (launcher → onboard → CLI) on local code"
@@ -76,7 +82,7 @@ help:
 	@echo "Development (build the thing being released):"
 	@echo "  make dev          Backend hot-reload (compose watch)"
 	@echo "  make cli-dev      CLI locally + backend hot-reload"
-	@echo "  make web-dev      Web (Next.js) locally + backend hot-reload"
+	@echo "  make webraptix-quality  New web-raptix UI + server quality gates"
 	@echo ""
 	@echo "Quality gates (PR readiness):"
 	@echo "  make quality        PR gate — mirrors CI PR lane (fast, no slow tests, errors-only typecheck)"
@@ -90,11 +96,13 @@ help:
 	@echo "  make lint           Python lint + format check + basedpyright (all levels, local exploratory)"
 	@echo "  make lint-fix       Auto-fix Python lint + format"
 	@echo ""
-	@echo "Web dashboard (single checks):"
-	@echo "  make web-build    Prisma generate + Next build"
-	@echo "  make web-hotswap  Build + inject into running container (~15s)"
-	@echo "  make web-lint     ESLint"
-	@echo "  make web-migrate [NAME=]   Prisma migrate dev"
+	@echo "New web-raptix stack (W16 cutover lane; W20 retired the legacy web lane):"
+	@echo "  make webraptix-quality  New UI + server lint/typecheck/test/build"
+	@echo "  make webraptix-build    Build the two new-stack images"
+	@echo "  make webraptix-db-ensure  Create the dedicated DB if missing"
+	@echo "  make webraptix-up       Start UI + API (migrate deploy on boot)"
+	@echo "  make webraptix-health   Same-origin checks through the proxy"
+	@echo "  make webraptix-down     Stop the new stack"
 	@echo ""
 	@echo "Ops:"
 	@echo "  make status       docker compose ps"
@@ -118,33 +126,33 @@ dogfood: launcher
 	@$(COMPOSE) $(PROFILES_ALL) down --remove-orphans 2>/dev/null; true
 	@mkdir -p $(DOGFOOD_HOME)/workspace
 	@ln -sfn $(CURDIR)/docker-compose.yml $(DOGFOOD_HOME)/docker-compose.yml
-	@ln -sfn $(CURDIR)/config              $(DOGFOOD_HOME)/config
-	@ln -sfn $(CURDIR)/containers          $(DOGFOOD_HOME)/containers
+	@ln -sfn $(CURDIR)/infra/config              $(DOGFOOD_HOME)/config
+	@ln -sfn $(CURDIR)/infra/containers          $(DOGFOOD_HOME)/containers
 	@ln -sfn $(CURDIR)/.env.example        $(DOGFOOD_HOME)/.env.example
 	@echo ""
 	@echo "[dogfood] Building images from local code (tag :dev)..."
-	DECEPTICON_VERSION=dev $(COMPOSE) --profile cli build
+	RAPTIX_VERSION=dev $(COMPOSE) --profile cli build
 	@echo ""
-	@echo "[dogfood] Launching ./$(LAUNCHER_BIN) (DECEPTICON_HOME=$(DOGFOOD_HOME))"
+	@echo "[dogfood] Launching ./$(LAUNCHER_BIN) (RAPTIX_HOME=$(DOGFOOD_HOME))"
 	@echo ""
-	DECEPTICON_VERSION=dev DECEPTICON_HOME=$(DOGFOOD_HOME) ./$(LAUNCHER_BIN)
+	RAPTIX_VERSION=dev RAPTIX_HOME=$(DOGFOOD_HOME) ./$(LAUNCHER_BIN)
 
 ## Build the Go launcher binary (version=dev, gates auto-update + config sync).
 launcher:
-	cd clients/launcher && go build \
-		-ldflags '-X github.com/PurpleAILAB/Decepticon/clients/launcher/cmd.version=dev' \
-		-o bin/decepticon
+	cd apps/launcher && go build \
+		-ldflags '-X github.com/Akapi895/raptix/apps/launcher/cmd.version=dev' \
+		-o bin/raptix
 
 ## Compose-only smoke (no launcher, no onboard wizard) — fastest possible
 ## release-shape check. Replicates only the launcher's compose Up step:
-##   1. Down + purge volumes (parity with `decepticon remove`)
+##   1. Down + purge volumes (parity with `raptix remove`)
 ##   2. Build all images from local code (replaces `compose pull` from GHCR)
 ##   3. up -d --no-build --wait --wait-timeout  (identical to launcher Up)
-##   4. Health checks (identical to `decepticon health`)
+##   4. Health checks (identical to `raptix health`)
 ## Use dogfood for the full release flow; use smoke when the compose stack
 ## is the only thing you've changed.
 smoke:
-	@echo "=== Decepticon pre-release smoke (compose-only, no launcher) ==="
+	@echo "=== Raptix pre-release smoke (compose-only, no launcher) ==="
 	@echo ""
 	@echo "[1/4] Clean state (purging containers + volumes)..."
 	$(CLEAN_LAUNCHER_STACK)
@@ -155,7 +163,7 @@ smoke:
 	@echo ""
 	@echo "[3/4] Starting services (--no-build --wait, OSS launcher flow)..."
 	$(COMPOSE) --profile cli up -d --no-build --wait \
-		--wait-timeout $${DECEPTICON_STARTUP_TIMEOUT_SECONDS:-600}
+		--wait-timeout $${RAPTIX_STARTUP_TIMEOUT_SECONDS:-600}
 	@echo ""
 	@echo "[4/4] Health checks..."
 	@$(MAKE) -s health
@@ -182,25 +190,22 @@ dev:
 ## `node` exits (Ctrl-C).
 cli-dev: infra
 	@$(COMPOSE_WATCH) watch --no-up --quiet langgraph &
-	npm run build --workspace=@decepticon/streaming
-	cd clients/cli && npm run build
-	cd clients/cli && npm run dev & TSC_PID=$$!; \
+	npm run build --workspace=@raptix/streaming
+	cd apps/cli && npm run build
+	cd apps/cli && npm run dev & TSC_PID=$$!; \
 	  trap "kill $$TSC_PID 2>/dev/null" EXIT INT TERM; \
-	  cd clients/cli && DECEPTICON_API_URL=$${DECEPTICON_API_URL:-http://localhost:2024} node --watch dist/index.js
+	  cd apps/cli && RAPTIX_API_URL=$${RAPTIX_API_URL:-http://localhost:2024} node --watch dist/index.js
 
-## Next.js dev server locally — infra stays in Docker with hot-reload.
-web-dev: infra web-db-ensure node-install
-	# Build streaming first: both the Next dev server and the PTY-spawned CLI
-	# import @decepticon/streaming, which resolves to its dist/ build.
-	npm run build --workspace=@decepticon/streaming
-	@$(COMPOSE_WATCH) watch --no-up --quiet langgraph &
-	@echo "[web-dev] Starting terminal server (ws://localhost:3003)..."
-	@cd $(WEB_DIR) && npx tsx server/terminal-server.ts &
-	@echo "[web-dev] Starting Next.js dev server (http://localhost:3000)..."
-	cd $(WEB_DIR) && npm run dev
+## New-stack web dashboard dev server (W20 replaces the retired legacy
+## web-dev): build shared workspaces then run UI + API locally.
+webraptix-dev: node-install
+	npm run build --workspace=@raptix/streaming
+	npm run build --workspace=@raptix/web-contracts
+	@echo "[webraptix-dev] UI on http://localhost:5173 (proxies /api to :5280); start the API with: npm run dev:api"
+	cd apps/web && npm run dev
 
 # Internal: bring up backend infra (built from local code).
-# Chains the dev override so local-dev workflows (cli-dev, web-dev) pick up
+# Chains the dev override so local-dev workflows (cli-dev, webraptix-dev) pick up
 # the skills bind mount alongside the base stack. The OSS launcher path
 # (smoke + dogfood) keeps ``$(COMPOSE)`` to mirror what end users run.
 infra:
@@ -246,12 +251,12 @@ ci-test:
 ## SKILL.md schema validator (warn mode — Phase 0). Exit 0 even if violations found.
 .PHONY: audit-skills
 audit-skills:
-	uv run python -m decepticon.skill_audit --mode warn
+	uv run python -m raptix.skills.audit --mode warn
 
 ## SKILL.md schema validator (strict mode — post-Phase-0 CI gate). Exit 1 on any violation.
 .PHONY: audit-skills-strict
 audit-skills-strict:
-	uv run python -m decepticon.skill_audit --mode strict
+	uv run python -m raptix.skills.audit --mode strict
 
 ## Download and verify the immutable MITRE STIX bundle required by the
 ## Skillogy graph builder. The builder itself remains offline-only.
@@ -260,16 +265,16 @@ bootstrap-skill-graph:
 	uv run python scripts/bootstrap_skillogy_stix.py
 
 ## Skill graph builder (Phase 1a) — compile SKILL.md + seeds + MITRE STIX
-## into packages/decepticon/decepticon/skills/.graph/skills.cypher.
+## into packages/raptix/raptix/skills/.graph/skills.cypher.
 .PHONY: build-skill-graph
 build-skill-graph: bootstrap-skill-graph
-	uv run python -m decepticon.skillogy.builder --frozen-built-at
+	uv run python -m raptix.skills.engine.builder --frozen-built-at
 
 ## CI gate — assert the checked-in skills.cypher matches what the
 ## builder produces from the current SKILL.md + seed YAML + pinned STIX.
 .PHONY: check-skill-graph
 check-skill-graph: bootstrap-skill-graph
-	uv run python -m decepticon.skillogy.builder --frozen-built-at --check
+	uv run python -m raptix.skills.engine.builder --frozen-built-at --check
 
 ## main-push lane: slow included, coverage 60% gate (ratcheted from 35% in #380).
 ci-test-coverage:
@@ -288,46 +293,79 @@ ci-test-coverage-report:
 quality-cli: node-install
 	# streaming workspace must be built first — its package.json main
 	# resolves to dist/, which cli's typecheck + build consume.
-	npm run build --workspace=@decepticon/streaming
-	npm run typecheck --workspace=@decepticon/cli
-	npm run build --workspace=@decepticon/cli
-	npm run test --workspace=@decepticon/cli
+	npm run build --workspace=@raptix/streaming
+	npm run typecheck --workspace=@raptix/cli
+	npm run build --workspace=@raptix/cli
+	npm run test --workspace=@raptix/cli
 
-## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest + CLI + Web).
-## Use before opening a PR; passing this guarantees CI will pass.
-quality: ci-lint ci-test quality-cli web-lint web-build
+## PR gate — mirrors CI PR lane (errors-only typecheck + fast pytest + CLI + web-raptix).
+## Use before opening a PR; security/release/remote-run checks are separate gates.
+quality: ci-lint ci-test quality-cli webraptix-quality
 	@echo ""
 	@echo "OK — PR gates passed (mirrors CI PR lane)"
 
 ## Release gate — mirrors CI main-push lane (coverage 60%) + full basedpyright
 ## audit (warnings + info). Run before tagging a release.
-quality-strict: ci-lint ci-test-coverage quality-cli web-lint web-build
+quality-strict: ci-lint ci-test-coverage quality-cli webraptix-quality
 	@echo ""
 	@echo "==> basedpyright (full — warning + info audit, non-blocking)"
 	uv run basedpyright
 	@echo ""
 	@echo "OK — release gate passed (mirrors CI main lane + warning audit)"
 
-# ── Web Dashboard (single checks) ────────────────────────────────
-# All web targets share the root `node-install` so workspace deps hoist
-# into the root node_modules — no separate clients/web/node_modules tree.
+# ── Web Dashboard (legacy lane retired in W20) ───────────────────
+# The Next.js web-build/web-hotswap/web-lint/web-migrate targets and the
+# web-db-ensure bootstrap were retired with the W20 decommission; the
+# web-raptix stack below owns all active web quality/deploy targets.
 
-web-build: node-install
-	# streaming workspace first — the web resolves @decepticon/streaming to its
-	# dist/ via package exports (no src path alias), so next build needs it.
-	npm run build --workspace=@decepticon/streaming
-	cd $(WEB_DIR) && npx prisma generate && npm run build
+# ── New web-raptix stack (W16 cutover lane) ──────────────────────
+# Independent of the legacy Next service: same-origin nginx proxy in front of
+# the new API, dedicated database, reused base-network services and workspace.
 
-## Hot-swap web dashboard into running container (~15s vs ~5min docker build).
-## Builds Next.js on host, injects via tar pipe, restarts container.
-web-hotswap: node-install web-build
-	./scripts/web-hotswap.sh --skip-build
+webraptix-quality: node-install
+	npm run build --workspace=@raptix/streaming
+	npm run build --workspace=@raptix/web-contracts
+	npm run typecheck --workspace=@raptix/web-raptix-server
+	npm run test --workspace=@raptix/web-raptix-server
+	npm run typecheck --workspace=@raptix/web-raptix
+	npm run lint --workspace=@raptix/web-raptix
+	npm run build --workspace=@raptix/web-raptix
+	npm run test --workspace=@raptix/web-raptix
 
-web-lint: node-install
-	cd $(WEB_DIR) && npx eslint src/ --max-warnings 0
+webraptix-build:
+	$(COMPOSE_WEB_RAPTIX) build
 
-web-migrate: node-install
-	cd $(WEB_DIR) && npx prisma migrate dev --name $(or $(NAME),init)
+webraptix-db-ensure:
+	@echo "[webraptix-db-ensure] Waiting for PostgreSQL..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres pg_isready -U raptix -q 2>/dev/null && break; \
+		sleep 1; \
+	done
+	@docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres psql -U raptix -tAc \
+		"SELECT 1 FROM pg_database WHERE datname='$(WEB_RAPTIX_DB)'" | grep -q 1 \
+		|| docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-postgres psql -U raptix -c "CREATE DATABASE $(WEB_RAPTIX_DB)" >/dev/null
+	@echo "[webraptix-db-ensure] Database $(WEB_RAPTIX_DB) ready (migrations run by the API container on boot)."
+
+webraptix-up: webraptix-db-ensure
+	$(COMPOSE_WEB_RAPTIX) up -d --wait --wait-timeout 300
+
+webraptix-down:
+	$(COMPOSE_WEB_RAPTIX) down
+
+## Same-origin acceptance through the proxy: API JSON (never SPA HTML),
+## SPA fallback for /projects/*, immutable hashed assets.
+webraptix-health:
+	@curl -sf http://localhost:$${WEB_RAPTIX_PORT:-3000}/api/health >/dev/null \
+		&& echo "api:   OK (through proxy)" || (echo "api:   FAIL" && exit 1)
+	@curl -sf http://localhost:$${WEB_RAPTIX_PORT:-3000}/api/capabilities | head -c 1 | grep -q '{' \
+		&& echo "capabilities: JSON OK (no SPA fallback)" || (echo "capabilities: FAIL" && exit 1)
+	@curl -sf http://localhost:$${WEB_RAPTIX_PORT:-3000}/projects/cutover-check/charter | grep -q '<div id="root">' \
+		&& echo "spa:   OK (/projects/* fallback)" || (echo "spa:   FAIL" && exit 1)
+	@curl -sI "http://localhost:$${WEB_RAPTIX_PORT:-3000}/assets/immutable-check.js" | grep -qiE 'HTTP/[0-9.]+ 404|immutable' \
+		&& echo "assets: route OK" || (echo "assets: FAIL" && exit 1)
+	@docker ps --format '{{.Names}}' | grep -qx 'raptix-web' \
+		&& echo "legacy web: STILL RUNNING (rollback window open)" \
+		|| echo "legacy web: STOPPED (cutover complete)"
 
 # ── Status / Logs / Health / Clean ───────────────────────────────
 
@@ -338,21 +376,17 @@ status:
 logs:
 	$(COMPOSE) logs -f $(or $(SVC),langgraph)
 
-## Health checks: KG backend + Neo4j + Web (parity with `decepticon health`).
+## Health checks: KG backend + Neo4j + Web (parity with `raptix health`).
 health:
-	@$(COMPOSE) exec -T langgraph python -m decepticon.tools.research.health >/dev/null 2>&1 \
+	@$(COMPOSE) exec -T langgraph python -m raptix.execution.tools.research.health >/dev/null 2>&1 \
 		&& echo "kg:    OK" || (echo "kg:    FAIL" && exit 1)
 	@set -a; . ./.env; set +a; \
-	$(COMPOSE) exec -T neo4j cypher-shell -u neo4j -p "$${NEO4J_PASSWORD:-decepticon-graph}" "RETURN 1 AS ok;" >/dev/null 2>&1 \
+	$(COMPOSE) exec -T neo4j cypher-shell -u neo4j -p "$${NEO4J_PASSWORD:-raptix-graph}" "RETURN 1 AS ok;" >/dev/null 2>&1 \
 		&& echo "neo4j: OK" || (echo "neo4j: FAIL" && exit 1)
 	@set -a; . ./.env; set +a; \
-	if $(COMPOSE) ps --status running --services | grep -qx web; then \
-		curl -sf http://localhost:$${WEB_PORT:-3000} >/dev/null 2>&1 \
-			&& echo "web:   OK (http://localhost:$${WEB_PORT:-3000})" \
-			|| (echo "web:   FAIL — not reachable on port $${WEB_PORT:-3000}" && exit 1); \
-	else \
-		echo "web:   SKIP (optional profile not running)"; \
-	fi
+	curl -sf http://localhost:$${WEB_PORT:-3000}/api/health >/dev/null 2>&1 \
+		&& echo "web:   OK (web-raptix stack on http://localhost:$${WEB_PORT:-3000})" \
+		|| echo "web:   SKIP (web-raptix stack not running — use make webraptix-up)"
 
 ## Full teardown: containers + volumes + .dogfood/. Destructive — also
 ## wipes the dogfood .env (API keys) so the next `make dogfood` starts
@@ -368,17 +402,6 @@ clean:
 node-install:
 	@test -d node_modules || npm install
 
-# postgres-init/01-create-web-db.sql auto-creates decepticon_web on fresh
-# volumes. This target only waits for postgres readiness and applies
-# Prisma migrations.
-web-db-ensure:
-	@echo "[web-db-ensure] Waiting for PostgreSQL..."
-	@for i in 1 2 3 4 5 6 7 8 9 10; do \
-		docker exec decepticon$${DECEPTICON_STACK_NAME:+-$${DECEPTICON_STACK_NAME}}-postgres pg_isready -U decepticon -q 2>/dev/null && break; \
-		sleep 1; \
-	done
-	@cd $(WEB_DIR) && npx prisma migrate deploy 2>&1 | tail -1
-
 # ── Benchmark ────────────────────────────────────────────────────
 
 ## Force-recreate the litellm container so it captures the host's CURRENT
@@ -391,16 +414,16 @@ web-db-ensure:
 ## valid OAuth access token (token TTL ~8h ≫ cycle duration ~30m).
 recreate-litellm:
 	@$(COMPOSE) up -d --no-build --force-recreate litellm
-	@docker exec decepticon$${DECEPTICON_STACK_NAME:+-$${DECEPTICON_STACK_NAME}}-litellm sh -c 'test -s /root/.claude/.credentials.json' \
+	@docker exec raptix$${RAPTIX_STACK_NAME:+-$${RAPTIX_STACK_NAME}}-litellm sh -c 'test -s /root/.claude/.credentials.json' \
 		&& echo "recreate-litellm: creds mount OK" \
 		|| (echo "recreate-litellm: creds mount EMPTY — onboard first" && exit 1)
 
 ## Run benchmark suite (usage: make benchmark ARGS="--level 1")
 benchmark:
-	uv run python -m benchmark.runner $(ARGS)
+	uv run python -m benchmarks.runner $(ARGS)
 
 ## CVE-Bench offline dry run (mocked LLM + sandbox, 3 fixtures, seed=0).
 ## Output: benchmark/results/cve-bench/dry-run-<YYYY-MM-DD>.jsonl
 cve-bench-dry:
 	CVE_BENCH_DRY_RUN_SEED=0 PYTHONHASHSEED=0 \
-		uv run python -m benchmark.cve_bench.dry_run $(ARGS)
+		uv run python -m benchmarks.cve_bench.dry_run $(ARGS)

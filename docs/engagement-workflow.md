@@ -1,6 +1,6 @@
 # Engagement Workflow
 
-A Decepticon engagement runs in two phases: **Planning** (operator + Soundwave) and **Execution** (autonomous loop). Here's the complete flow from first launch to final report.
+A Raptix engagement runs in two phases: **Planning** (operator + Soundwave) and **Execution** (autonomous loop). Here's the complete flow from first launch to final report.
 
 ---
 
@@ -51,7 +51,7 @@ From the interview, Soundwave writes an eight-document engagement bundle to
 | **Cleanup Plan** | Expected artifact inventory with per-phase removal commands |
 
 The **OPPLAN** (Operations Plan) is not written by Soundwave — the orchestrator
-(Decepticon) builds it from the bundle once planning completes.
+(Raptix) builds it from the bundle once planning completes.
 
 ### 4. OPPLAN structure
 

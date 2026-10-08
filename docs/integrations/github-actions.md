@@ -1,19 +1,19 @@
 # GitHub Actions Integration
 
-> Run Decepticon security scans on every pull request, upload SARIF to
+> Run Raptix security scans on every pull request, upload SARIF to
 > Code Scanning, gate merges by severity.
 
 ## The composite action
 
-Decepticon ships a composite action at
-[`.github/actions/decepticon-scan`](../../.github/actions/decepticon-scan)
+Raptix ships a composite action at
+[`.github/actions/raptix-scan`](../../.github/actions/raptix-scan)
 that orchestrates: stack boot → scan → SARIF emit → Code Scanning upload
 → stack teardown.
 
 ## Minimal workflow
 
 ```yaml
-name: decepticon
+name: raptix
 on:
   pull_request:
 permissions:
@@ -25,7 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with: { fetch-depth: 0 }
-      - uses: PurpleAILAB/Decepticon/.github/actions/decepticon-scan@main
+      - uses: Akapi895/raptix/.github/actions/raptix-scan@main
         with:
           fail-on: high
         env:
@@ -41,12 +41,12 @@ jobs:
 | `scope-mode` | `diff` | `full` (whole target) or `diff` (changed files only). |
 | `diff-base` | `origin/main` | Git ref for diff-scope. |
 | `fail-on` | `high` | Threshold severity for non-zero exit. |
-| `sarif-output` | `decepticon.sarif` | Where to write SARIF. |
+| `sarif-output` | `raptix.sarif` | Where to write SARIF. |
 | `upload-sarif` | `true` | Upload to GitHub Code Scanning. |
 | `instruction` | `""` | Free-form scope/focus note. |
 | `instruction-file` | `""` | Path to a RoE/scope file. |
 | `langgraph-url` | `""` | Remote LangGraph URL; empty → boot local stack. |
-| `decepticon-version` | `latest` | Container tag when booting local stack. |
+| `raptix-version` | `latest` | Container tag when booting local stack. |
 
 ## Outputs
 
@@ -59,7 +59,7 @@ jobs:
 ## Secrets required
 
 At minimum one model-provider API key in repo secrets (the same set
-supported by `decepticon onboard`):
+supported by `raptix onboard`):
 
 - `ANTHROPIC_API_KEY` *(recommended for the orchestrator tier)*
 - `OPENAI_API_KEY`
@@ -68,7 +68,7 @@ supported by `decepticon onboard`):
 - `OPENROUTER_API_KEY`
 - `NVIDIA_API_KEY`
 
-Set `DECEPTICON_AUTH_PRIORITY` (also as an env var) to control fallback ordering.
+Set `RAPTIX_AUTH_PRIORITY` (also as an env var) to control fallback ordering.
 
 ## PR comment integration
 
@@ -82,7 +82,7 @@ this for you) and findings will appear:
 
 ## Diff-scoped scans
 
-When `scope-mode: diff` and `fetch-depth: 0` on checkout, Decepticon
+When `scope-mode: diff` and `fetch-depth: 0` on checkout, Raptix
 runs `git diff --name-only "<diff-base>...HEAD"` and limits the scan to
 those files. This drops PR-time scan times from minutes to tens of seconds
 for typical PRs. Falls back to full scope when the git diff fails (no

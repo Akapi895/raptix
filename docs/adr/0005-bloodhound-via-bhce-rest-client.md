@@ -38,9 +38,9 @@ concrete sub-decisions:
 
 1. **(Y) Run BHCE against a dedicated Neo4j container, reuse our Postgres.**
    Neo4j Community Edition only allows one user database, and our KGStore
-   already occupies it; we add a `decepticon-bhce-neo4j` container
+   already occupies it; we add a `raptix-bhce-neo4j` container
    (Neo4j 4.4.42 or 5.x — whichever the BHCE `dawgs` driver currently
-   supports as primary) plus a `decepticon-bhce-api` container running
+   supports as primary) plus a `raptix-bhce-api` container running
    `ghcr.io/specterops/bloodhound:v9.2.2`. The BHCE API points at
    our existing Postgres (`bloodhound` database, `pg_trgm` extension
    pre-created) via `bhe_database_connection` and at the new Neo4j via
@@ -129,8 +129,8 @@ the client's tests:
 - **Given up**
   - Authoring novel ADCS / SIDHistory / GMSA-related Cypher in-tree.
   - Treating the KGStore as the single AD source-of-truth.
-  - The `decepticon-net` "Neo4j is the one intentional shared service"
-    invariant relaxes to "two Neo4j instances, both inside `decepticon-net`,
+  - The `raptix-net` "Neo4j is the one intentional shared service"
+    invariant relaxes to "two Neo4j instances, both inside `raptix-net`,
     different roles" — CLAUDE.md needs a follow-up edit.
 
 - **Migration timeline**
@@ -164,7 +164,7 @@ the client's tests:
 - **(M1) Embed `mwnickerson/bloodhound_mcp` as a stdio MCP subprocess and
   let `langchain-mcp-adapters` expose its 13 composite tools.** Rejected:
   adds an external dependency on a non-SpecterOps-owned community wrapper
-  (GPL-3.0 vs Decepticon's Apache-2.0 OSS — licensing review needed),
+  (GPL-3.0 vs Raptix's Apache-2.0 OSS — licensing review needed),
   stdio glue is harder to debug, and we still need a Python REST client
   for `file-upload` workflows the MCP doesn't expose cleanly. The MCP's
   composite-tool shape is allowed inspiration, not load-bearing dependency.

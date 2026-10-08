@@ -1,0 +1,25 @@
+{
+  "ok": true,
+  "projectId": "cmuqswwoe000078fiynis17oe",
+  "threadId": "a05327a4-e9ef-4780-b437-680a1e134b2c",
+  "runId": "01a0fc17-139f-7b01-b16b-cc567c1dd938",
+  "finalStatus": "success",
+  "checks": [
+    "six concurrent thread POSTs acknowledge one bound native thread with sanitized pristine snapshot",
+    "early SSE attach/abort preserves native cursor without cancelling the acknowledged run",
+    "six concurrent submissions acknowledge one native run; changed intent and arbitrary run IDs are rejected",
+    "actual SSE cursor reconnect/late replay, pure reducer dedup and scope/cursor denial create no additional execution",
+    "vault stores the secret server-side encrypted and the metadata view is redacted by construction",
+    "explicit reveal returns the plaintext exactly once per call and is audited in the metadata",
+    "vault input validation attributes field failures instead of storing junk",
+    "revocation removes the secret and the audit log survives the deletion",
+    "foreign engagements stay denied for the vault endpoints",
+    "actual planning model run reaches a normal outcome under native reject policy; root snapshot and owned run list preserve identity",
+    "real API process restart preserves request/run deduplication; capability is live and the scoped resume route answers truthfully since W11",
+    "the vault capability is available with a valid 32-byte VAULT_ENCRYPTION_KEY and the missing-key posture stays unit-tested"
+  ],
+  "streamCursor": "1790935768356-0",
+  "publicEvents": 4,
+  "provenance": "actual new API5284/PostgreSQL/LangGraph2400 planning run exercising the W18 encrypted vault storage, redacted metadata, explicit audited reveal and revocation against the real database; context-only isolated target, runtime guard path unchanged",
+  "ownedRuntimeFixtureRemoved": true
+}

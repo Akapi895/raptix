@@ -1,0 +1,28 @@
+[project]
+name = "raptix-skills"
+# Sentinel — replaced with the git tag at Docker build time via ARG VERSION.
+version = "0.0.0"
+description = "Raptix skill corpus — operator-facing SKILL.md knowledge pack"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+requires-python = ">=3.13"
+
+authors = [
+    { name = "Decepticon Team" }
+]
+
+# The corpus is pure data (markdown + yaml); the runtime ships no code
+# here, so there are no dependencies at all.
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.sdist]
+include = ["raptix_skills"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["raptix_skills"]
+# Benchmark corpus is a dev/benchmark artifact — excluded from the
+# published wheel (mirrors the old raptix wheel exclusion).
+exclude = ["raptix_skills/defs/benchmark/**"]

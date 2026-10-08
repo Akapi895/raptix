@@ -1,0 +1,30 @@
+{
+  "provenance": "CLI submit block executed from repository source; installed runtime hydration helper executed without graph runs",
+  "sourceHash": "b05f10a981d1ddc01e2af49eaadf6d46831500969c9b2b8782c0345514b7abd2",
+  "env": {
+    "RAPTIX_ENGAGEMENT": "parity-project",
+    "RAPTIX_WORKSPACE_PATH": "/workspace/parity-project",
+    "RAPTIX_TARGET": "https://authorized.invalid",
+    "RAPTIX_TARGET_TYPE": "web_url",
+    "RAPTIX_AUTHORIZATION_CONFIRMED": "true"
+  },
+  "configurable": {
+    "engagement_name": "parity-project",
+    "workspace_path": "/workspace/parity-project",
+    "target_value": "https://authorized.invalid",
+    "target_type": "web_url",
+    "authorization_confirmed": true
+  },
+  "hydration": {
+    "module": "/app/packages/raptix/raptix/middleware/engagement.py",
+    "hydrateSourceHash": "dce6be9657fbf309f67371974b7f83c016cd3903bb92f871069adc46f58fe9c4",
+    "fresh": {
+      "engagement_name": "parity-project",
+      "workspace_path": "/workspace/parity-project",
+      "target_type": "web_url",
+      "target_value": "https://authorized.invalid",
+      "authorization_confirmed": true
+    },
+    "existingUpdates": null
+  }
+}

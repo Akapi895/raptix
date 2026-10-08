@@ -1,58 +1,58 @@
 # External agents — OpenClaw & Hermes
 
-Decepticon ships an **engagement MCP server** so external agent runtimes can
+Raptix ships an **engagement MCP server** so external agent runtimes can
 drive it like its CLI — from a phone, via those agents' chat channels. It
 exposes the full interactive loop over the Model Context Protocol: discover and
 resume engagements, launch one, **steer it by chatting**, **watch progress**,
 inspect the OPPLAN, and pull findings.
 
-This makes Decepticon usable from
+This makes Raptix usable from
 [OpenClaw](https://github.com/openclaw/openclaw) and
 [Hermes](https://github.com/NousResearch/hermes-agent).
 
 ```
-OpenClaw / Hermes  ──MCP──▶  decepticon-mcp  ──LangGraph SDK──▶  Decepticon server
+OpenClaw / Hermes  ──MCP──▶  raptix-mcp  ──LangGraph SDK──▶  Raptix server
    (chat / phone)              (bridge)         (HTTP :2024)        (16 agents, RoE, KG)
 ```
 
 The bridge is a thin control plane. The red-team work runs inside the
-Decepticon LangGraph server (full RoE enforcement, sandbox, knowledge-graph
+Raptix LangGraph server (full RoE enforcement, sandbox, knowledge-graph
 persistence); the MCP layer translates tool calls into LangGraph runs
-(`decepticon.mcp_server`) and reads persisted transcript/state/findings back.
+(`raptix.mcp_server`) and reads persisted transcript/state/findings back.
 
 ## Tools
 
 | Tool | Purpose |
 |------|---------|
-| `decepticon_list_graphs` | Discover engagement graphs (decepticon, recon, soundwave, …) |
-| `decepticon_list_engagements` | Browse / resume recent engagements |
-| `decepticon_start_engagement` | Launch a background engagement (targets + scope/RoE) |
-| `decepticon_send_message` | Steer / answer the coordinator / `/model` switch mid-run |
-| `decepticon_transcript` | Read the orchestrator narrative incrementally (watch) |
-| `decepticon_watch` | Tail the live sub-agent stream for a few seconds |
-| `decepticon_engagement_state` | Inspect OPPLAN / objectives / scope / phase |
-| `decepticon_engagement_status` | Latest run status + whether findings exist |
-| `decepticon_engagement_findings` | Findings summary / full SARIF v2.1.0 |
-| `decepticon_cancel_engagement` | Stop the active run |
+| `raptix_list_graphs` | Discover engagement graphs (raptix, recon, soundwave, …) |
+| `raptix_list_engagements` | Browse / resume recent engagements |
+| `raptix_start_engagement` | Launch a background engagement (targets + scope/RoE) |
+| `raptix_send_message` | Steer / answer the coordinator / `/model` switch mid-run |
+| `raptix_transcript` | Read the orchestrator narrative incrementally (watch) |
+| `raptix_watch` | Tail the live sub-agent stream for a few seconds |
+| `raptix_engagement_state` | Inspect OPPLAN / objectives / scope / phase |
+| `raptix_engagement_status` | Latest run status + whether findings exist |
+| `raptix_engagement_findings` | Findings summary / full SARIF v2.1.0 |
+| `raptix_cancel_engagement` | Stop the active run |
 
-Every tool is keyed by the `thread_id` returned from `decepticon_start_engagement`
-(or listed by `decepticon_list_engagements`) — no run-id juggling, just like the CLI.
+Every tool is keyed by the `thread_id` returned from `raptix_start_engagement`
+(or listed by `raptix_list_engagements`) — no run-id juggling, just like the CLI.
 
 ## 1. Install + run
 
 ```bash
-# Install Decepticon with the MCP server extra
-pip install 'decepticon[mcp]'        # or: uv sync --extra mcp
+# Install Raptix with the MCP server extra
+pip install 'raptix[mcp]'        # or: uv sync --extra mcp
 
-# Start the Decepticon LangGraph server (one of):
+# Start the Raptix LangGraph server (one of):
 langgraph dev                        # dev server on http://localhost:2024
 # or the Docker stack — see docs/deployment
 
 # Smoke-test the bridge over stdio (Ctrl-C to exit):
-DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport stdio
+RAPTIX_SKIP_BOOT=1 raptix-mcp --transport stdio
 ```
 
-> **`DECEPTICON_SKIP_BOOT=1`** — always set this for the bridge. It drives a
+> **`RAPTIX_SKIP_BOOT=1`** — always set this for the bridge. It drives a
 > *separate* LangGraph server and never builds agents in-process, so the eager
 > framework boot is pure cold-start overhead. With it, the server starts in a
 > few seconds instead of ~30s; the wiring below sets it for you. It does **not**
@@ -60,53 +60,53 @@ DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport stdio
 > bridge talks to, not in this process, so skipping the in-process boot leaves
 > scope enforcement untouched.
 
-The bridge connects to `DECEPTICON_API_URL` (default `http://localhost:2024`).
+The bridge connects to `RAPTIX_API_URL` (default `http://localhost:2024`).
 Override with `--langgraph-url` or the env var.
 
 ## 2. OpenClaw
 
 ```bash
 # Register the engagement MCP server (stdio)
-openclaw mcp set decepticon '{
-  "command": "decepticon-mcp",
+openclaw mcp set raptix '{
+  "command": "raptix-mcp",
   "args": ["--transport", "stdio"],
-  "env": { "DECEPTICON_API_URL": "http://localhost:2024", "DECEPTICON_SKIP_BOOT": "1" }
+  "env": { "RAPTIX_API_URL": "http://localhost:2024", "RAPTIX_SKIP_BOOT": "1" }
 }'
 
 # Install the agent skill (clone the repo first, then point at the skill dir)
-openclaw skills install ./Decepticon/integrations/agent-skills/decepticon --as decepticon --global
+openclaw skills install ./Raptix/integrations/agent-skills/raptix --as raptix --global
 openclaw gateway restart
 ```
 
 Now message your OpenClaw agent (dashboard or any connected channel, e.g.
-Telegram for phone): *"Start a Decepticon recon engagement against
+Telegram for phone): *"Start a Raptix recon engagement against
 `https://test.example.com` — scope only that host — then watch it and summarise
-findings."* The agent calls `decepticon_start_engagement`, polls
-`decepticon_transcript`, and reports findings.
+findings."* The agent calls `raptix_start_engagement`, polls
+`raptix_transcript`, and reports findings.
 
 ## 3. Hermes
 
 ```yaml
 # ~/.hermes/config.yaml
 mcp_servers:
-  decepticon:
-    command: decepticon-mcp
+  raptix:
+    command: raptix-mcp
     args: ["--transport", "stdio"]
     env:
-      DECEPTICON_API_URL: "http://localhost:2024"
-      DECEPTICON_SKIP_BOOT: "1"
+      RAPTIX_API_URL: "http://localhost:2024"
+      RAPTIX_SKIP_BOOT: "1"
 ```
 
 ```bash
 # Install the skill for Hermes (copy the skill folder into Hermes' skills dir)
-cp -r ./Decepticon/integrations/agent-skills/decepticon ~/.hermes/skills/red-teaming/decepticon
+cp -r ./Raptix/integrations/agent-skills/raptix ~/.hermes/skills/red-teaming/raptix
 ```
 
-Restart Hermes; the `decepticon` skill and `decepticon_*` tools become available.
+Restart Hermes; the `raptix` skill and `raptix_*` tools become available.
 
 ### The bundled skill
 
-The skill at `integrations/agent-skills/decepticon/` is one canonical AgentSkill
+The skill at `integrations/agent-skills/raptix/` is one canonical AgentSkill
 that loads in **both** OpenClaw and Hermes (same `SKILL.md` format), using
 progressive disclosure so the always-loaded context stays lean:
 
@@ -117,21 +117,21 @@ progressive disclosure so the always-loaded context stays lean:
   phone, recon-only, steering, resume, live burst, failure handling).
 
 Both install commands above copy the whole directory, so the reference files
-come along automatically. OpenClaw installs it globally as `decepticon`; Hermes
+come along automatically. OpenClaw installs it globally as `raptix`; Hermes
 auto-discovers it under the `red-teaming` category.
 
 ## 4. CLI-like workflow (what the agent does)
 
-1. `decepticon_start_engagement(targets=[...], instruction="In scope: …; Out of scope: …")`
+1. `raptix_start_engagement(targets=[...], instruction="In scope: …; Out of scope: …")`
    → keep the `thread_id`.
-2. `decepticon_transcript(thread_id, after_index=…)` — poll to narrate progress
+2. `raptix_transcript(thread_id, after_index=…)` — poll to narrate progress
    (operator prompts, coordinator replies, `task()` delegations to specialists).
-   `decepticon_watch(thread_id)` tails the live sub-agent feed for a few seconds.
-3. `decepticon_send_message(thread_id, "focus on the API, skip the marketing site")`
+   `raptix_watch(thread_id)` tails the live sub-agent feed for a few seconds.
+3. `raptix_send_message(thread_id, "focus on the API, skip the marketing site")`
    — steer mid-engagement, answer the coordinator, or `/model anthropic/claude-opus-4-8`.
-4. `decepticon_engagement_state(thread_id)` — check the OPPLAN / phase.
-5. `decepticon_engagement_findings(engagement_name, include_sarif=true)` — pull results.
-6. Later, `decepticon_list_engagements()` to resume any thread by `thread_id`.
+4. `raptix_engagement_state(thread_id)` — check the OPPLAN / phase.
+5. `raptix_engagement_findings(engagement_name, include_sarif=true)` — pull results.
+6. Later, `raptix_list_engagements()` to resume any thread by `thread_id`.
 
 ## 5. Remote / networked use (optional)
 
@@ -145,9 +145,9 @@ invalid `Authorization: Bearer` token gets a 401 before any tool runs).
 environment, never from argv:
 
 ```bash
-DECEPTICON_MCP_TOKEN=$(openssl rand -hex 32) \
-DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport streamable-http \
-  --host 0.0.0.0 --port 8765 --langgraph-url http://decepticon-host:2024
+RAPTIX_MCP_TOKEN=$(openssl rand -hex 32) \
+RAPTIX_SKIP_BOOT=1 raptix-mcp --transport streamable-http \
+  --host 0.0.0.0 --port 8765 --langgraph-url http://raptix-host:2024
 ```
 
 Clients send `Authorization: Bearer <token>`.
@@ -158,9 +158,9 @@ bearer JWT's signature, `iss`, and `aud` against your identity provider's JWKS
 June-2025 spec prescribes for remote servers:
 
 ```bash
-DECEPTICON_SKIP_BOOT=1 decepticon-mcp --transport streamable-http \
-  --host 0.0.0.0 --port 8765 --langgraph-url http://decepticon-host:2024 \
-  --issuer https://issuer.example.com --audience decepticon-mcp \
+RAPTIX_SKIP_BOOT=1 raptix-mcp --transport streamable-http \
+  --host 0.0.0.0 --port 8765 --langgraph-url http://raptix-host:2024 \
+  --issuer https://issuer.example.com --audience raptix-mcp \
   --jwks-uri https://issuer.example.com/.well-known/jwks.json \
   --required-scope engage
 ```
@@ -170,7 +170,7 @@ Point the agent's MCP client at `http://<bridge-host>:8765/mcp`. Loopback
 
 ## Authorization
 
-Engagements run under Decepticon's Rules-of-Engagement enforcement. The calling
+Engagements run under Raptix's Rules-of-Engagement enforcement. The calling
 agent **must** pass scope (in / out of scope) in the `instruction` argument and
 only target assets the operator is authorized to test. See the bundled
-`integrations/agent-skills/decepticon/SKILL.md` for the agent-facing contract.
+`integrations/agent-skills/raptix/SKILL.md` for the agent-facing contract.

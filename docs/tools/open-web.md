@@ -1,6 +1,6 @@
 # Open-web acquisition: `web_search` / `web_fetch`
 
-Two agent tools give Decepticon first-class open-web reach for OSINT and recon,
+Two agent tools give Raptix first-class open-web reach for OSINT and recon,
 backed by a site-agnostic fetch engine that gets past the WAF/anti-bot defenses
 most real targets sit behind. Design record: [ADR-0010](../adr/0010-open-web-acquisition.md).
 
@@ -18,9 +18,9 @@ tiny or challenge body is treated as suspect, not success.
 
 ## How it works
 
-The engine (`decepticon/sandbox_web/`) runs **inside the sandbox**; the tools
+The engine (`raptix/execution/sandbox/web/`) runs **inside the sandbox**; the tools
 dispatch it over the existing bash execution surface
-(`python3 -m decepticon.sandbox_web …`). Every byte of egress therefore happens
+(`python3 -m raptix.execution.sandbox.web …`). Every byte of egress therefore happens
 in `sandbox-net`, behind the nftables/DNS allowlist compiled from the
 engagement's `roe.json` — there is no management-side egress and no new
 transport.
@@ -58,14 +58,14 @@ browser tier are conservative by default.
 
 The engine never hardcodes a target site (host/selector/referer) — that
 knowledge enters only at call time via `selector` / `user_hint`. A CI gate
-(`python -m decepticon.sandbox_web.bias_check`) enforces it. The one exception
+(`python -m raptix.execution.sandbox.web.bias_check`) enforces it. The one exception
 is the `web_search` provider allowlist (the agreed OSINT entry points).
 
 ## Provenance
 
 The engine is precisely derived from [`fivetaku/insane-search`](https://github.com/fivetaku/insane-search)
 (MIT) — its Verdict model, WAF-profile ranking, transform/TLS grid, and
-No-Site-Name rule — with the governance **inverted** for Decepticon: every hop
+No-Site-Name rule — with the governance **inverted** for Raptix: every hop
 RoE-gated (vs anti-allowlist "try everything"), sandbox-only egress (vs
 in-process), build-time deps (vs runtime auto-install), and untrusted-output
 wrapping. See ADR-0010 for the full mapping.
