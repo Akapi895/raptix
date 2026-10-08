@@ -54,6 +54,7 @@ generation is needed.
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 from deepagents.middleware.subagents import CompiledSubAgent
@@ -71,7 +72,10 @@ from raptix_core.plugin_loader import (
 )
 
 _ROLE = "raptix"
-_RECURSION_LIMIT = 400
+# Orchestrator step budget for one run (langgraph super-steps). Tunable so a
+# long full-chain engagement (recon → foothold → privesc → report) can raise
+# it without a code change; the default keeps CI/dev runs bounded.
+_RECURSION_LIMIT = int(os.environ.get("RAPTIX_ORCHESTRATOR_RECURSION_LIMIT", "400"))
 
 
 def create_raptix_agent(
