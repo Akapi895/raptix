@@ -7,6 +7,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+from deepagents.backends.protocol import EditResult, LsResult, ReadResult, WriteResult
 from langchain_core.runnables import Runnable
 
 from raptix.core.subagent_streaming import (
@@ -15,6 +16,14 @@ from raptix.core.subagent_streaming import (
     set_subagent_renderer,
 )
 from raptix.middleware.dispatch import DispatchMiddleware, merge_dispatch_ledger
+from raptix.orchestration.mission.task_state import (
+    Budget,
+    Continuation,
+    EvidenceRef,
+    TaskState,
+    read_task_state,
+    write_task_state,
+)
 from raptix_core.types.dispatch_outcome import FailureKind, classify_dispatch_failure
 
 
@@ -214,3 +223,156 @@ def test_task_without_objective_clears_previous_objective_stamp(task: tuple) -> 
     state = {"objectives": [{"id": "A"}], "active_objective_id": "A"}
     reply = _call(tool, state, objective=None)
     assert reply.update["active_objective_id"] == ""
+
+
+class _LedgerBackend:
+    def __init__(self) -> None:
+        self.files: dict[str, str] = {}
+
+    def read(self, file_path: str, offset: int = 0, limit: int = 2000) -> ReadResult:
+        if file_path not in self.files:
+            return ReadResult(error=f"file_not_found: '{file_path}'")
+        return ReadResult(
+            file_data={
+                "content": self.files[file_path][offset : offset + limit],
+                "encoding": "utf-8",
+            }
+        )
+
+    def write(self, file_path: str, content: str) -> WriteResult:
+        self.files[file_path] = content
+        return WriteResult(path=file_path)
+
+    def edit(self, file_path: str, old: str, new: str, replace_all: bool = False) -> EditResult:
+        self.files[file_path] = self.files[file_path].replace(old, new)
+        return EditResult(path=file_path, occurrences=1)
+
+    def ls_info(self, path: str) -> list:
+        return []
+
+    def ls(self, path: str) -> LsResult:
+        return LsResult(entries=[])
+
+
+@pytest.fixture
+def handoff_task():
+    backend = _LedgerBackend()
+    inner = _Fails()
+    middleware = DispatchMiddleware(
+        backend=object(),
+        subagents=[
+            {
+                "name": "exploit",
+                "description": "test role",
+                "runnable": StreamingRunnable(inner, "exploit"),
+            }
+        ],
+        task_state_backend=backend,
+    )
+    token = set_subagent_renderer(_Renderer())
+    try:
+        yield middleware.tools[0], backend
+    finally:
+        clear_subagent_renderer(token)
+
+
+def _bare_middleware(task_state_backend: Any = None) -> DispatchMiddleware:
+    return DispatchMiddleware(
+        backend=object(),
+        subagents=[
+            {
+                "name": "exploit",
+                "description": "test role",
+                "runnable": StreamingRunnable(_Fails(), "exploit"),
+            }
+        ],
+        task_state_backend=task_state_backend,
+    )
+
+
+def test_handoff_flag_off_is_byte_identical(monkeypatch) -> None:
+    monkeypatch.delenv("RAPTIX_DISPATCH_HANDOFF", raising=False)
+    middleware = _bare_middleware()
+    runtime = SimpleNamespace(state={"objectives": [{"id": "A"}]}, config={})
+    assert middleware._handoff_description("orig intent", runtime, "A") == "orig intent"
+
+
+def test_handoff_block_includes_state_and_is_bounded(monkeypatch) -> None:
+    monkeypatch.setenv("RAPTIX_DISPATCH_HANDOFF", "1")
+    backend = _LedgerBackend()
+    state = TaskState(objective_id="A")
+    state.state_revision = 3
+    state.evidence_refs = [EvidenceRef(ref="evidence/scan.xml")]
+    state.continuation = Continuation(next_steps=["pivot to the web app"])
+    write_task_state(backend, state)
+
+    middleware = _bare_middleware(task_state_backend=backend)
+    runtime = SimpleNamespace(
+        state={
+            "workspace_path": "/workspace",
+            "objectives": [
+                {
+                    "id": "A",
+                    "title": "Recon the perimeter",
+                    "phase": "recon",
+                    "acceptance_criteria": ["nmap output captured"],
+                }
+            ],
+        },
+        config={},
+    )
+    block = middleware._handoff_description("orig intent", runtime, "A")
+    assert block.startswith("orig intent")
+    assert "<WORKER_INPUT" in block
+    assert "nmap output captured" in block
+    assert "Task-state revision: 3" in block
+    assert "evidence/scan.xml" in block
+    assert "pivot to the web app" in block
+    assert len(block) <= len("orig intent\n\n") + 4000
+
+
+def test_handoff_omits_empty_sections_without_task_state(monkeypatch) -> None:
+    monkeypatch.setenv("RAPTIX_DISPATCH_HANDOFF", "1")
+    middleware = _bare_middleware()
+    runtime = SimpleNamespace(
+        state={
+            "workspace_path": "/workspace",
+            "objectives": [{"id": "A", "title": "t", "phase": "recon", "acceptance_criteria": []}],
+        },
+        config={},
+    )
+    block = middleware._handoff_description("orig", runtime, "A")
+    assert "Acceptance criteria" not in block
+    assert "Evidence refs" not in block
+    assert "Task-state revision: 0" in block
+
+
+def test_failed_dispatch_merges_decision_and_preserves_counters(
+    handoff_task: tuple, monkeypatch
+) -> None:
+    monkeypatch.setenv("RAPTIX_DISPATCH_HANDOFF", "1")
+    tool, backend = handoff_task
+    seed = TaskState(objective_id="A")
+    seed.budget = Budget(attempts=2)
+    write_task_state(backend, seed)
+    state = {
+        "objectives": [
+            {
+                "id": "A",
+                "title": "t",
+                "phase": "recon",
+                "acceptance_criteria": [],
+                "priority": 1,
+                "status": "in-progress",
+            }
+        ],
+        "workspace_path": "/workspace",
+    }
+    _call(tool, state)
+    loaded = read_task_state(backend, "A").state
+    assert loaded is not None
+    assert loaded.budget.attempts == 3  # consumed attempts advance across new dispatches
+    assert any(
+        entry.action.startswith("dispatch:") and entry.outcome == "failed"
+        for entry in loaded.decision_record
+    )
