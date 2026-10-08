@@ -1,7 +1,7 @@
-import json
 import hashlib
+import json
 import re
-from collections import Counter, defaultdict
+from collections import Counter
 from datetime import datetime, timezone
 
 PATH = r"D:\.VTNet\phase-2\raptix\benchmarks\Silentium\run-20261008-0642\workspace\record.jsonl"
@@ -61,7 +61,7 @@ if first_ts and last_ts:
     dur = last_ts - first_ts
     t0 = datetime.fromtimestamp(first_ts, tz=timezone.utc).isoformat()
     t1 = datetime.fromtimestamp(last_ts, tz=timezone.utc).isoformat()
-    print(f"=== WALL CLOCK: {dur/3600:.2f} h  ({t0} -> {t1})")
+    print(f"=== WALL CLOCK: {dur / 3600:.2f} h  ({t0} -> {t1})")
 
 print("\n=== MODEL CALLS per agent ===")
 mc_agent = Counter(agent_of(e) for e in model_calls)
@@ -107,7 +107,9 @@ for e in tool_calls:
         bash_cmds.append((agent_of(e), cmd))
 
 timeout_prefixed = sum(1 for _, c in bash_cmds if re.match(r"^\s*(timeout|sleep\s+\d+\s*&&)", c))
-print(f"\n=== BASH: {len(bash_cmds)} calls; timeout/timeboxed prefix: {timeout_prefixed} ({100*timeout_prefixed/max(1,len(bash_cmds)):.0f}%)")
+print(
+    f"\n=== BASH: {len(bash_cmds)} calls; timeout/timeboxed prefix: {timeout_prefixed} ({100 * timeout_prefixed / max(1, len(bash_cmds)):.0f}%)"
+)
 
 cmd_clusters = Counter()
 for a, c in bash_cmds:
@@ -132,7 +134,11 @@ for a, d in dispatches:
     print(f"    [{a}] {d}")
 
 print("\n=== SKILL USAGE ===")
-load_skill = [(agent_of(e), (e.get("request") or {}).get("args") or {}) for e in tool_calls if (e.get("request") or {}).get("tool") == "load_skill"]
+load_skill = [
+    (agent_of(e), (e.get("request") or {}).get("args") or {})
+    for e in tool_calls
+    if (e.get("request") or {}).get("tool") == "load_skill"
+]
 sk_names = Counter()
 for a, args in load_skill:
     p = str(args.get("name_or_path") or args.get("name") or "?")
@@ -146,7 +152,11 @@ for e in tool_calls:
     if req.get("tool") == "find_skill":
         find_skill_total += 1
         content = str((e.get("response") or {}).get("content") or "")
-        if "0 result" in content.lower() or "no skill" in content.lower() or content.strip() == "[]":
+        if (
+            "0 result" in content.lower()
+            or "no skill" in content.lower()
+            or content.strip() == "[]"
+        ):
             zero_find += 1
 print(f"  find_skill: {find_skill_total} calls, {zero_find} empty")
 
@@ -202,6 +212,6 @@ for label, t in [("first CVE-2025-8110 mention", first_cve), ("first symlink men
             t = float(t)
     if t is not None and first_ts is not None:
         dt = datetime.fromtimestamp(t, tz=timezone.utc).isoformat()
-        print(f"  {label}: {dt} (+{(t-first_ts)/3600:.2f}h from start)")
+        print(f"  {label}: {dt} (+{(t - first_ts) / 3600:.2f}h from start)")
     else:
         print(f"  {label}: NEVER")

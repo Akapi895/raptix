@@ -12,9 +12,8 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from collections import Counter, defaultdict
-
 import os
+from collections import Counter, defaultdict
 
 PATH = os.environ.get("AUDIT_RECORD", "/workspace/record.jsonl")
 
@@ -49,9 +48,7 @@ def classify_msgs(messages: list[dict]):
     for i, m in enumerate(messages):
         content = m.get("content") or ""
         if isinstance(content, list):
-            content = "".join(
-                b.get("text", "") if isinstance(b, dict) else str(b) for b in content
-            )
+            content = "".join(b.get("text", "") if isinstance(b, dict) else str(b) for b in content)
         tc_len = len(json.dumps(m.get("tool_calls") or [], default=str))
         total = len(content) + tc_len
         if m.get("type") == "human":
@@ -79,7 +76,9 @@ per_agent_tot: Counter = Counter()
 per_agent_calls: Counter = Counter()
 
 # top-20 largest calls detail
-ranked = sorted(calls, key=lambda c: -int((c.get("response") or {}).get("usage", {}).get("input_tokens") or 0))
+ranked = sorted(
+    calls, key=lambda c: -int((c.get("response") or {}).get("usage", {}).get("input_tokens") or 0)
+)
 top_ids = {id(c) for c in ranked[:20]}
 
 detail_lines = []
@@ -186,7 +185,7 @@ for agent, lst in by_agent_calls.items():
         lcp_msgs.sort()
         med = lcp_msgs[pairs // 2]
         # avg message list len
-        avg_len = sum(len((c.get('request') or {}).get('messages') or []) for c in lst) / len(lst)
+        avg_len = sum(len((c.get("request") or {}).get("messages") or []) for c in lst) / len(lst)
         print(
             f"  {agent:11s} pairs={pairs:4d} median_identical_prefix={med:3d} msgs "
             f"(avg len {avg_len:.0f})  system_identical={sys_same * 100 / pairs:.0f}%"
@@ -225,12 +224,13 @@ per_agent_events: Counter = Counter(a for a, *_ in events)
 for a, n in per_agent_events.items():
     print(f"    {a}: {n}")
 
+
 def _is_summary(m: dict) -> bool:
     c = str(m.get("content", ""))[:300]
     return (
-        "conversation that has been summarized" in c
-        or "summary of the conversation to date" in c
+        "conversation that has been summarized" in c or "summary of the conversation to date" in c
     )
+
 
 for agent, pre, post in events:
     pre_inp = int(((pre.get("response") or {}).get("usage") or {}).get("input_tokens") or 0)
@@ -247,17 +247,23 @@ for agent, pre, post in events:
     w_calls = []
     for c in window:
         for tc in (c.get("response") or {}).get("tool_calls") or []:
-            w_calls.append((tc.get("name"), json.dumps(tc.get("args", {}), sort_keys=True, default=str)[:120]))
+            w_calls.append(
+                (tc.get("name"), json.dumps(tc.get("args", {}), sort_keys=True, default=str)[:120])
+            )
     pre_fps = set()
     for c in lst[:idx]:
         for tc in (c.get("response") or {}).get("tool_calls") or []:
-            pre_fps.add((tc.get("name"), json.dumps(tc.get("args", {}), sort_keys=True, default=str)))
+            pre_fps.add(
+                (tc.get("name"), json.dumps(tc.get("args", {}), sort_keys=True, default=str))
+            )
     repeats = [x for x in w_calls if (x[0], x[1]) in pre_fps]
     print(
-        f"  [{agent}] {pre.get('ts','')[11:19]}→{post.get('ts','')[11:19]}  "
+        f"  [{agent}] {pre.get('ts', '')[11:19]}→{post.get('ts', '')[11:19]}  "
         f"{pre_inp:,}→{post_inp:,}t  nmsg {len(pre_msgs)}→{len(post_msgs)}  summary_msg={has_summary}"
     )
-    print(f"      reorient: next12 calls input={reorient_inp:,}t  tool_calls={len(w_calls)}  repeated_pre={len(repeats)}")
+    print(
+        f"      reorient: next12 calls input={reorient_inp:,}t  tool_calls={len(w_calls)}  repeated_pre={len(repeats)}"
+    )
     for name, fp in repeats[:4]:
         print(f"        repeat: {name} {fp[:90]}")
 
@@ -271,12 +277,17 @@ for _agent, pre, post in pe[:6]:
     if nxt:
         i0 = int(((post.get("response") or {}).get("usage") or {}).get("input_tokens") or 0)
         i6 = int(((nxt.get("response") or {}).get("usage") or {}).get("input_tokens") or 0)
-        print(f"  {post.get('ts','')[11:19]}: {i0:,}t →(+6 calls)→ {i6:,}t  slope≈{(i6 - i0) / 6:+,.0f}t/call")
+        print(
+            f"  {post.get('ts', '')[11:19]}: {i0:,}t →(+6 calls)→ {i6:,}t  slope≈{(i6 - i0) / 6:+,.0f}t/call"
+        )
 
 # ------------------------------------------------- Q30 bash repeats
 print("\n==== Q30: bash command repeats ====")
+
+
 def canon_args(args):
     return json.dumps(args, sort_keys=True, default=str)
+
 
 bash_groups: dict[tuple, list[dict]] = defaultdict(list)
 for t in tools_log:
@@ -351,17 +362,22 @@ task_dispatches = [t for t in tools_log if (t.get("request") or {}).get("tool") 
 print(f"  task dispatches: {len(task_dispatches)}")
 for t in task_dispatches:
     st = (t.get("request") or {}).get("args", {}).get("subagent_type")
-    print(f"    seq={t.get('seq')} {t.get('ts','')[11:19]} -> {st}")
+    print(f"    seq={t.get('seq')} {t.get('ts', '')[11:19]} -> {st}")
 for agent, lst in by_agent_calls.items():
     first, last = lst[0], lst[-1]
-    print(f"  {agent:11s} model_calls={len(lst):4d} span {first.get('ts','')[11:19]}→{last.get('ts','')[11:19]}")
+    print(
+        f"  {agent:11s} model_calls={len(lst):4d} span {first.get('ts', '')[11:19]}→{last.get('ts', '')[11:19]}"
+    )
 
 # ------------------------------------------------- usage provenance
 print("\n==== Q05: usage provenance ====")
 src_counter = Counter(((c.get("response") or {}).get("usage_source") or "absent") for c in calls)
 print(f"  usage_source across model_calls: {dict(src_counter)}")
 detail_cache = Counter(
-    json.dumps(((c.get("response") or {}).get("usage") or {}).get("input_token_details") or {}, sort_keys=True)
+    json.dumps(
+        ((c.get("response") or {}).get("usage") or {}).get("input_token_details") or {},
+        sort_keys=True,
+    )
     for c in calls
 )
-print(f"  input_token_details shapes: {dict(detail_counter) if False else dict(detail_cache.most_common(4))}")
+print(f"  input_token_details shapes: {dict(detail_cache.most_common(4))}")
