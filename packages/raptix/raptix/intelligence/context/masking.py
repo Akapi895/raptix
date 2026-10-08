@@ -28,7 +28,24 @@ _EXEMPT_MARKERS = (
     "[ROE_REFUSED]",
     "[BACKGROUND]",
     "[AUTO-BACKGROUND]",
+    "[RUNNING",
+    "[DONE",
+    "[IDLE]",
+    "[KILLED]",
+    "[EMPTY]",
+    "[STALE]",
+    "[SIZE LIMIT]",
+    "[TIMEOUT]",
+    "[ERROR]",
+    "[UNKNOWN]",
+    "[session:",
+    "[cwd:",
+    "[AGENT_HALTED]",
+    "[Exit code:",
+    "[masked tool output:",
 )
+_MAX_BYTES = 1_000_000
+_MAX_MASKED_MESSAGES = 8
 
 
 def is_maskable(message: Any, *, turns_ago: int, after_turns: int, min_chars: int) -> bool:
@@ -37,7 +54,7 @@ def is_maskable(message: Any, *, turns_ago: int, after_turns: int, min_chars: in
     if getattr(message, "status", None) == "error":
         return False
     content = message.content if isinstance(message.content, str) else ""
-    if any(marker in content for marker in _EXEMPT_MARKERS):
+    if any(marker.lower() in content.lower() for marker in _EXEMPT_MARKERS):
         return False
     if turns_ago <= after_turns:
         return False
@@ -45,8 +62,7 @@ def is_maskable(message: Any, *, turns_ago: int, after_turns: int, min_chars: in
 
 
 def _scratch_path(message: ToolMessage) -> str:
-    token = getattr(message, "id", None) or str(id(message))
-    digest = hashlib.sha256(str(token).encode()).hexdigest()[:16]
+    digest = hashlib.sha256(message.content.encode("utf-8")).hexdigest()
     return posixpath.join(SCRATCH_DIR, f"masked-{digest}.txt")
 
 
@@ -60,23 +76,39 @@ def mask_messages(
     """Return (messages, masked_count); never raises."""
     if backend is None:
         return list(messages), 0
-    total = len(messages)
+    ages = [0] * len(messages)
+    age = 1
+    for index in range(len(messages) - 1, -1, -1):
+        ages[index] = age
+        if getattr(messages[index], "type", None) in {"human", "ai"}:
+            age += 1
     out = list(messages)
     masked = 0
+    remaining = _MAX_BYTES
     for index, message in enumerate(messages):
-        turns_ago = total - index
+        turns_ago = ages[index]
         if not is_maskable(
             message, turns_ago=turns_ago, after_turns=after_turns, min_chars=min_chars
         ):
             continue
         content = message.content
+        size = len(content.encode("utf-8"))
+        if size > remaining or masked >= _MAX_MASKED_MESSAGES:
+            continue
         ref = _scratch_path(message)
         try:
-            existing = backend.read(ref, offset=0, limit=1)
+            existing = backend.read(ref, offset=0, limit=_MAX_BYTES + 1)
             if existing.error:
                 write = backend.write(ref, content)
                 if write.error:
                     continue
+                existing = backend.read(ref, offset=0, limit=_MAX_BYTES + 1)
+            if (
+                existing.error
+                or not existing.file_data
+                or existing.file_data.get("content") != content
+            ):
+                continue
         except Exception as exc:  # noqa: BLE001 — fail-safe: leave message intact
             log.debug("mask offload failed: %s", type(exc).__name__)
             continue
@@ -87,6 +119,7 @@ def mask_messages(
         )
         out[index] = message.model_copy(update={"content": replacement})
         masked += 1
+        remaining -= size
     return out, masked
 
 

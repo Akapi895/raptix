@@ -48,6 +48,9 @@ Rules:
 - Put anything not backed by a persisted source under `hypotheses`, never under
   `completed_work` or `evidence`.
 """
+# LangChain formats this template with str.format(messages=...). JSON braces
+# are literal model instructions, not template variables.
+STRUCTURED_SUMMARY_PROMPT = STRUCTURED_SUMMARY_PROMPT.replace("{", "{{").replace("}", "}}")
 
 _FENCED_JSON = re.compile(r"```json\s*(?P<body>.*?)```", re.DOTALL)
 
@@ -69,11 +72,15 @@ def has_required_headers(content: str) -> bool:
 
 def parse_structured_section(content: str) -> tuple[dict[str, Any] | None, str | None]:
     """Extract and parse the fenced JSON block; return (data, error)."""
-    match = _FENCED_JSON.search(unwrap_summary(content))
-    if match is None:
+    matches = list(_FENCED_JSON.finditer(unwrap_summary(content)))
+    if len(content.encode("utf-8")) > 100_000:
+        return None, "structured summary exceeds byte cap"
+    if not matches:
         return None, "missing structured JSON block"
+    if len(matches) != 1:
+        return None, "ambiguous structured JSON blocks"
     try:
-        data = json.loads(match.group("body"))
+        data = json.loads(matches[0].group("body"))
     except json.JSONDecodeError as exc:
         return None, f"structured block is not valid JSON: {exc.msg}"
     if not isinstance(data, dict):
@@ -102,37 +109,44 @@ def validate_structured_summary(
 
     errors: list[str] = []
     for section in STRUCTURED_SECTIONS:
-        if not isinstance(data.get(section), list):
+        if not isinstance(data.get(section), list) or len(data[section]) > 50:
             errors.append(f"missing list '{section}'")
     if errors:
         return False, errors
 
-    known = set(evidence_refs or []) | set(action_hashes or [])
+    known = set(evidence_refs or [])
 
     def _ref_resolves(ref: str) -> bool:
-        if ref in known:
+        if ref in known and not ref.startswith("/"):
             return True
         if backend is None:
-            return True  # cannot verify without a workspace backend
-        return not backend.read(ref, offset=0, limit=1).error
+            return False
+        try:
+            return not backend.read(ref, offset=0, limit=1).error
+        except Exception:  # noqa: BLE001 — unresolved references refuse compaction
+            return False
 
     for item in data["evidence"]:
         ref = item.get("ref") if isinstance(item, dict) else None
-        if not isinstance(ref, str) or not ref:
+        if not isinstance(ref, str) or not ref or len(ref) > 512 or set(item) != {"ref"}:
             errors.append("evidence entry missing ref")
         elif not _ref_resolves(ref):
-            errors.append(f"unresolved evidence ref {ref}")
+            errors.append("unresolved evidence ref")
 
     for item in data["completed_work"]:
         if not isinstance(item, dict):
             errors.append("completed_work entry must be an object")
             continue
-        if item.get("evidence") is True:
+        if item.get("evidence") is True and set(item) == {"ref", "evidence"}:
             ref = item.get("ref")
             if not isinstance(ref, str) or not ref:
                 errors.append("completed_work marked evidence has no ref")
-            elif not _ref_resolves(ref):
-                errors.append(f"unresolved completed_work ref {ref}")
+            elif ref not in {
+                entry.get("ref") for entry in data["evidence"] if isinstance(entry, dict)
+            } or not _ref_resolves(ref):
+                errors.append("unresolved completed_work ref")
+        else:
+            errors.append("completed work requires evidence; unproven claims belong to hypotheses")
 
     action_set = set(action_hashes or [])
     for item in data["failed_attempts"]:
@@ -140,8 +154,20 @@ def validate_structured_summary(
             errors.append("failed_attempts entry must be an object")
             continue
         digest = item.get("action_hash")
-        if isinstance(digest, str) and digest and action_set and digest not in action_set:
-            errors.append(f"unknown ledger action hash {digest}")
+        if not isinstance(digest, str) or digest not in action_set:
+            errors.append("unknown ledger action hash")
+        if set(item) != {"action_hash", "reason", "retry_condition"}:
+            errors.append("invalid failed_attempts fields")
+
+    if any(
+        not isinstance(item, dict)
+        or set(item) != {"summary"}
+        or not isinstance(item["summary"], str)
+        for item in data["unresolved"]
+    ):
+        errors.append("invalid unresolved entries")
+    if any(not isinstance(hypothesis, str) for hypothesis in data["hypotheses"]):
+        errors.append("invalid hypotheses entries")
 
     lowered_hypotheses = {str(h).strip().lower() for h in data["hypotheses"] if isinstance(h, str)}
     for item in data["completed_work"]:

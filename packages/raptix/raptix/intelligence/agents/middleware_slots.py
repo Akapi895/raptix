@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import logging
 import os
 import uuid
@@ -458,6 +459,11 @@ class _SafeSummarizationProxy(AgentMiddleware):
         self._trigger_override = trigger_override
         self._keep_override = keep_override
         self._task_state_backend = task_state_backend
+        from raptix.middleware.execution_ledger import ExecutionLedgerMiddleware
+
+        self._context_io = ExecutionLedgerMiddleware(
+            role="compaction-io", backend=task_state_backend
+        )
         self._worker_instance_id = f"{role or 'worker'}:{uuid.uuid4().hex}"
 
     @property
@@ -525,32 +531,48 @@ class _SafeSummarizationProxy(AgentMiddleware):
             logger.debug("Compaction backend unavailable: %s", type(exc).__name__)
             return None
 
-    def _task_revision(self, request: Any) -> int:
+    def _task_revision(self, request: Any) -> int | None:
         objective_id = self._objective_id(request)
         backend = self._verify_backend(request)
-        if not objective_id or backend is None:
+        if not objective_id:
             return 0
+        if backend is None:
+            return None
         try:
             from raptix.orchestration.mission.task_state import read_task_state
 
             bundle = read_task_state(backend, objective_id)
+            if bundle.error:
+                return None
             return bundle.state.state_revision if bundle.state is not None else 0
         except Exception as exc:  # noqa: BLE001 — best-effort
             logger.debug("Task-state revision unavailable: %s", type(exc).__name__)
-            return 0
+            return None
 
     def _source_snapshot(self, request: Any) -> dict:
         """Capture the pre-compaction source revision (ADR-0052)."""
         state = getattr(request, "state", None) or {}
-        messages = state.get("messages", getattr(request, "messages", []))
+        messages = getattr(request, "messages", [])
+        if _transactional_compaction_enabled() and hasattr(self._inner, "_get_effective_messages"):
+            messages = self._inner._get_effective_messages(request)
         ids = (
-            [str(msg.id) for msg in messages if getattr(msg, "id", None)]
+            [
+                str(
+                    getattr(msg, "id", None)
+                    or (index, getattr(msg, "type", ""), getattr(msg, "content", ""))
+                )
+                for index, msg in enumerate(messages)
+            ]
             if isinstance(messages, list)
             else []
         )
         return {
             "message_ids_hash": hashlib.sha256("\n".join(ids).encode()).hexdigest(),
-            "task_revision": self._task_revision(request),
+            "task_revision": self._task_revision(request)
+            if (_transactional_compaction_enabled() or _structured_summary_enabled())
+            else 0,
+            "kg_revision": state.get("kg_revision"),
+            "context_epoch": state.get("context_epoch", 0),
         }
 
     def _evidence_context(self, request: Any) -> tuple[list[str], list[str], Any]:
@@ -569,7 +591,11 @@ class _SafeSummarizationProxy(AgentMiddleware):
             if state is not None:
                 refs = [ref.ref for ref in state.evidence_refs]
             entries = _load_entries(backend, ledger_path(objective_id))
-            hashes = [str(entry["action_hash"]) for entry in entries if entry.get("action_hash")]
+            hashes = [
+                str(entry["action_hash"])
+                for entry in entries
+                if entry.get("kind") in {"failed", "outcome_unknown"} and entry.get("action_hash")
+            ]
         except Exception as exc:  # noqa: BLE001 — best-effort
             logger.debug("Structured-summary references unavailable: %s", type(exc).__name__)
         return refs, hashes, backend
@@ -579,7 +605,11 @@ class _SafeSummarizationProxy(AgentMiddleware):
         message = event.get("summary_message")
         content = getattr(message, "content", "")
         if not isinstance(content, str):
-            return None
+            return (
+                "invalid summary content"
+                if (_transactional_compaction_enabled() or _structured_summary_enabled())
+                else None
+            )
         if _structured_summary_enabled():
             refs, hashes, backend = self._evidence_context(request)
             ok, errors = validate_structured_summary(
@@ -595,15 +625,92 @@ class _SafeSummarizationProxy(AgentMiddleware):
         if not file_path:
             return "offload produced no recovery reference"
         backend = self._verify_backend(request)
-        if backend is not None and backend.read(file_path, offset=0, limit=1).error:
-            return f"offload pointer {file_path} is not readable"
+        if backend is None or backend.read(file_path, offset=0, limit=1).error:
+            return "offload pointer is not readable"
         state = getattr(request, "state", None) or {}
         claimed = event.get("context_epoch")
         if isinstance(claimed, int) and claimed <= state.get("context_epoch", 0):
             return "stale compaction epoch"
-        if snapshot.get("task_revision") != self._task_revision(request):
+        current = self._source_snapshot(request)
+        if current["task_revision"] is None or any(
+            snapshot.get(key) != current.get(key)
+            for key in ("task_revision", "message_ids_hash", "kg_revision", "context_epoch")
+        ):
             return "source revision changed during compaction"
+        identity = self._stamp_identity(event, request, snapshot)
+        if any(
+            event.get(key) is not None and event[key] != identity[key]
+            for key in ("thread_id", "worker_instance_id")
+        ):
+            return "foreign compaction event"
         return None
+
+    def _checked_inner(self, request: Any, snapshot: dict) -> Any:
+        inner = self._scoped_inner(request)
+        if not (_transactional_compaction_enabled() or _structured_summary_enabled()):
+            return inner
+        inner = copy.copy(inner)
+        if _structured_summary_enabled() and hasattr(inner, "_lc_helper"):
+            refs, hashes, _ = self._context_io._bounded(self._evidence_context, request) or (
+                [],
+                [],
+                None,
+            )
+            sources = json.dumps(
+                {
+                    "task_state_revision": snapshot.get("task_revision"),
+                    "evidence_refs": refs,
+                    "failed_action_hashes": hashes,
+                }
+            )
+            inner._lc_helper = copy.copy(inner._lc_helper)
+            inner._lc_helper.summary_prompt += (
+                "\nPersisted sources (cite, do not invent):\n"
+                + sources.replace("{", "{{").replace("}", "}}")
+            )
+        build = getattr(inner, "_build_new_messages_with_path", None)
+        if build is not None:
+
+            def checked(summary: str, file_path: str | None) -> list:
+                messages = build(summary, file_path)
+                event = {"summary_message": messages[0], "file_path": file_path}
+                checked_result = self._context_io._bounded(
+                    lambda: (self._commit_rejection(event, request, snapshot),)
+                )
+                if checked_result is None or checked_result[0] is not None:
+                    raise _SummaryGenerationFailed(
+                        "Compaction validation refused before model call"
+                    )
+                return messages
+
+            inner._build_new_messages_with_path = checked
+        return inner
+
+    def _prepare_projection(self, request: Any) -> tuple[Any, Any]:
+        """Reject stale/foreign stored events locally before deepagents applies them."""
+        if not _transactional_compaction_enabled():
+            return request, request
+        event = request.state.get("_summarization_event")
+        if isinstance(event, dict):
+            expected = self._stamp_identity(event, request)
+            cutoff = event.get("cutoff_index")
+            invalid = (
+                not isinstance(cutoff, int)
+                or cutoff < 0
+                or cutoff > len(request.messages)
+                or event.get("context_epoch") != request.state.get("context_epoch", 0)
+                or any(
+                    event.get(key) != expected[key] for key in ("thread_id", "worker_instance_id")
+                )
+            )
+            if invalid:
+                request = request.override(state={**request.state, "_summarization_event": None})
+        effective = (
+            self._inner._get_effective_messages(request)
+            if hasattr(self._inner, "_get_effective_messages")
+            else request.messages
+        )
+        return request, request.override(messages=effective)
 
     def _stamp_identity(self, event: dict, request: Any, snapshot: dict | None = None) -> dict:
         """Additive identity fields for a persisted compaction event (ADR-0046).
@@ -643,12 +750,15 @@ class _SafeSummarizationProxy(AgentMiddleware):
             "worker_instance_id": worker_id,
             "context_epoch": epoch,
             "source_revision": (snapshot or {}).get("task_revision", 0),
+            "source_messages_hash": (snapshot or {}).get("message_ids_hash"),
             "covered_message_ids": covered,
         }
 
     @staticmethod
     def _strip_event(result: Any, update: dict) -> Any:
-        new_update = {k: v for k, v in update.items() if k != "_summarization_event"}
+        new_update = {
+            k: v for k, v in update.items() if k not in {"_summarization_event", "context_epoch"}
+        }
         return ExtendedModelResponse(result.model_response, command=Command(update=new_update))
 
     def _finalize(self, result: Any, request: Any, snapshot: dict | None = None) -> Any:
@@ -666,7 +776,20 @@ class _SafeSummarizationProxy(AgentMiddleware):
             )
             return self._strip_event(result, update)
         if isinstance(event, dict):
-            reason = self._commit_rejection(event, request, snapshot or {})
+            validation = (
+                self._context_io._bounded(
+                    lambda: (
+                        self._commit_rejection(
+                            event, request, snapshot or self._source_snapshot(request)
+                        ),
+                    )
+                )
+                if (_transactional_compaction_enabled() or _structured_summary_enabled())
+                else (None,)
+            )
+            reason = (
+                validation[0] if validation is not None else "compaction validation unavailable"
+            )
             if reason is not None:
                 logger.warning(
                     "Refusing to commit compaction (%s); keeping the "
@@ -689,6 +812,12 @@ class _SafeSummarizationProxy(AgentMiddleware):
 
     def wrap_model_call(self, request: Any, handler: Callable[[Any], Any]) -> Any:
         started = False
+        request, fallback = self._prepare_projection(request)
+        snapshot = (
+            self._context_io._bounded(self._source_snapshot, request)
+            if (_transactional_compaction_enabled() or _structured_summary_enabled())
+            else self._source_snapshot(request)
+        ) or {}
 
         def tracked(req: Any) -> Any:
             nonlocal started
@@ -701,9 +830,8 @@ class _SafeSummarizationProxy(AgentMiddleware):
             started = True
             return handler(req)
 
-        snapshot = self._source_snapshot(request)
         try:
-            result = self._scoped_inner(request).wrap_model_call(request, tracked)
+            result = self._checked_inner(request, snapshot).wrap_model_call(request, tracked)
         except Exception:
             if started:
                 # The downstream model call itself failed — that error is not
@@ -714,11 +842,17 @@ class _SafeSummarizationProxy(AgentMiddleware):
                 "this turn and forwarding the original request.",
                 exc_info=True,
             )
-            return handler(request)
+            return handler(fallback)
         return self._finalize(result, request, snapshot)
 
     async def awrap_model_call(self, request: Any, handler: Callable[[Any], Awaitable[Any]]) -> Any:
         started = False
+        request, fallback = self._prepare_projection(request)
+        snapshot = (
+            await self._context_io._to_thread(self._source_snapshot, request)
+            if (_transactional_compaction_enabled() or _structured_summary_enabled())
+            else self._source_snapshot(request)
+        ) or {}
 
         async def tracked(req: Any) -> Any:
             nonlocal started
@@ -731,9 +865,8 @@ class _SafeSummarizationProxy(AgentMiddleware):
             started = True
             return await handler(req)
 
-        snapshot = self._source_snapshot(request)
         try:
-            result = await self._scoped_inner(request).awrap_model_call(request, tracked)
+            result = await self._checked_inner(request, snapshot).awrap_model_call(request, tracked)
         except Exception:
             if started:
                 raise
@@ -742,7 +875,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
                 "this turn and forwarding the original request.",
                 exc_info=True,
             )
-            return await handler(request)
+            return await handler(fallback)
         return self._finalize(result, request, snapshot)
 
 
@@ -882,6 +1015,7 @@ def _make_context_manifest(*, backend: Any = None, **_: Any):
     flags = (
         os.environ.get("RAPTIX_CONTEXT_MANIFEST", "0").strip().lower(),
         os.environ.get("RAPTIX_CONTEXT_MASK", "0").strip().lower(),
+        os.environ.get("RAPTIX_CONTEXT_ASSEMBLY", "0").strip().lower(),
     )
     if not any(flag in {"1", "true", "yes"} for flag in flags):
         return None

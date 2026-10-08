@@ -19,9 +19,12 @@ context.
 
 ## Decision
 
-- **Transactional commit.** `_SafeSummarizationProxy._finalize` validates a
-  compaction event before it is applied and strips it (keeping the uncompacted
-  request) when any gate fails:
+- **Transactional commit.** A per-call copy of the inner middleware validates
+  the generated summary and recovery pointer before the downstream model sees
+  them. A rejected candidate uses the original effective request once; it is
+  never sent to the model first and then "fixed" by stripping an event.
+  `_finalize` rechecks at commit and strips both event and candidate epoch when
+  any gate fails, without blindly repeating an already-started model call:
   1. the summary is not the A3 error marker (existing);
   2. the offload produced a recovery reference;
   3. that reference is readable through the same engagement-scoped backend the
@@ -31,7 +34,9 @@ context.
   5. the event's epoch is not stale relative to the committed `context_epoch`;
   6. the source task-state revision is unchanged between wrap start and commit.
 - **Source revision.** At wrap start the proxy snapshots the task-state
-  revision and a hash of the pre-wrap effective message ids. The surviving
+  revision, KG revision, epoch and a hash of the pre-wrap effective message ids
+  (with a content-based fallback for id-less messages). Changes to any captured
+  source reject the candidate. The surviving
   event is stamped with that `source_revision` (replacing the Wave A
   placeholder constant).
 - **Flag.** `RAPTIX_TRANSACTIONAL_COMPACTION=1` (default off). The plan's flag
@@ -39,10 +44,11 @@ context.
   alters agent input to be flag-gated with current behavior as the default; the
   flag is added and recorded here. Off = Wave A behavior (error-summary strip
   only).
-- **Backend-unavailable degradation.** When no task-state backend can be
-  resolved the readability and revision checks are skipped rather than failing
-  the compaction, so library/benchmark runs without a workspace keep
-  compacting. This is a deliberate gap, named in the ADR.
+- **Unavailable verification.** With the transactional flag on, missing,
+  corrupt or unreachable source/recovery data refuses compaction. The model
+  still receives the uncompacted effective request. Verification uses bounded
+  I/O, and stored stale/foreign events are rejected locally before projection.
+  Flag off retains the earlier behavior.
 
 ## Threat model
 
@@ -63,7 +69,7 @@ effective projection only. No guardrail, RoE, or KG write is touched.
 
 - Always commit and rely on the pointer being best-effort — rejected: I-4/I-5
   require the commit itself to be conditional.
-- Reject on unreadable pointer even without a backend — rejected: would disable
-  compaction in backend-less environments; the honest gap is documented.
+- Commit an unverifiable pointer without a backend — rejected: with this flag
+  enabled it would violate I-4. Keeping the effective request is the fallback.
 - Validate semantics with an LLM — rejected for the gate: nondeterministic and
   not a hard gate (C2 keeps semantic fidelity advisory).

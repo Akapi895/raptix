@@ -30,14 +30,19 @@ machine-checkable references instead of trusting prose.
     `completed_work` ref marked `evidence: true` must resolve against the
     objective's task-state evidence refs, a ledger action hash, or a readable
     workspace file (via the engagement-scoped backend);
-  - a `failed_attempts` action hash must match a known ledger hash when ledger
-    hashes are available;
+  - a `failed_attempts` action hash must match a failed/unknown terminal ledger
+    receipt, including when the ledger is empty (empty never means unrestricted);
   - a hypothesis re-used as a `completed_work` ref is rejected.
-  - When no backend can be resolved, reference-existence checks are skipped
-    (same documented gap as C1); schema checks still run.
+  - Missing/unreadable references fail validation; completed work requires a
+    reference in the evidence section and unsupported "verified" fields are
+    rejected. JSON sections, entry counts and bytes are bounded. Template JSON
+    braces are escaped for LangChain's formatter. The per-call prompt includes
+    the persisted revision, evidence refs and failed action hashes as sources.
 - **Wired to the commit gate.** A validator failure is one of C1's
-  `_commit_rejection` reasons: the compaction event is stripped and the
-  uncompacted context is kept. Semantic fidelity is explicitly **not** a gate;
+  pre-model validation reasons: the candidate never reaches the downstream
+  model, the event is not committed and the uncompacted context is kept.
+  Reference existence does not certify the semantic achievement of an objective;
+  semantic fidelity is explicitly **not** a gate;
   an optional advisory LLM pass is out of scope.
 - **Flag.** `RAPTIX_SUMMARY_STRUCTURED=1` (default off); off = free-text
   summary with only the C1/ADR-0046 structure and error checks.
