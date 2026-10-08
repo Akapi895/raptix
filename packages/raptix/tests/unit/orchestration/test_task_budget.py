@@ -217,6 +217,41 @@ def test_fold_is_revision_neutral_and_accumulates() -> None:
     assert saved.budget.output_tokens == 3
 
 
+def test_worker_input_reports_remaining_budget(monkeypatch) -> None:
+    monkeypatch.setenv("RAPTIX_TASK_BUDGET", "1")
+    monkeypatch.setenv("RAPTIX_TASK_BUDGET_TOKENS", "1000")
+    monkeypatch.setenv("RAPTIX_DISPATCH_HANDOFF", "1")
+    from langchain_core.runnables import RunnableLambda
+
+    from raptix.middleware.dispatch import DispatchMiddleware
+    from raptix.orchestration.mission.task_state import Budget, write_task_state
+
+    backend = MemoryBackend()
+    write_task_state(
+        _scoped(backend),
+        TaskState(
+            objective_id="A", state_revision=3, budget=Budget(input_tokens=400, output_tokens=100)
+        ),
+    )
+    middleware = DispatchMiddleware(
+        backend=backend,
+        subagents=[
+            {
+                "name": "worker",
+                "description": "test",
+                "runnable": RunnableLambda(lambda state: {"messages": []}),
+            }
+        ],
+    )
+    runtime = SimpleNamespace(
+        state={"workspace_path": "/workspace", "objectives": [{"id": "A", "title": "task"}]},
+        config={"configurable": {"thread_id": "thread"}},
+        tool_call_id="call",
+    )
+    description = middleware._handoff_description("continue", runtime, "A")
+    assert "Remaining budget: tokens=500" in description
+
+
 def test_invalid_limit_env_fails_build_naming_variable(monkeypatch) -> None:
     from raptix.orchestration.mission.task_budget import budget_limits
 

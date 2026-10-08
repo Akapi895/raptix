@@ -358,6 +358,7 @@ class DispatchMiddleware(SubAgentMiddleware):
                 f"Budget: attempts={budget.attempts} model_calls={budget.model_calls} "
                 f"input_tokens={budget.input_tokens} wall_clock_s={budget.wall_clock_s} (consumed)"
             )
+            lines.extend(self._remaining_budget_lines(task_state))
         instructions = (
             '\nReturn a JSON WorkerResult: {"objective_id":"'
             + objective_id
@@ -368,6 +369,27 @@ class DispatchMiddleware(SubAgentMiddleware):
         )
         suffix = instructions + "\n</WORKER_INPUT>"
         return "\n".join(lines)[: _WORKER_INPUT_MAX_CHARS - len(suffix)] + suffix
+
+    @staticmethod
+    def _remaining_budget_lines(task_state: Any) -> list[str]:
+        """Remaining token/call budget when D1 limits are configured (ADR-0055)."""
+        from raptix.orchestration.mission.task_budget import budget_limits, task_budget_enabled
+
+        if not task_budget_enabled():
+            return []
+        try:
+            token_limit, call_limit = budget_limits()
+        except RuntimeError as exc:  # noqa: BLE001 — handoff must not fail on bad budget env
+            log.debug("remaining budget unavailable: %s", type(exc).__name__)
+            return []
+        budget = task_state.budget
+        remaining: list[str] = []
+        if token_limit:
+            consumed = budget.input_tokens + budget.output_tokens
+            remaining.append(f"tokens={max(token_limit - consumed, 0)}")
+        if call_limit:
+            remaining.append(f"calls={max(call_limit - budget.model_calls, 0)}")
+        return [f"Remaining budget: {' '.join(remaining)}"] if remaining else []
 
     def _merge_task_state(
         self, runtime: ToolRuntime, context: DispatchContext, outcome: dict, worker_result: Any
