@@ -22,7 +22,7 @@ from deepagents.backends.utils import validate_path
 from deepagents.middleware.filesystem import FilesystemMiddleware as BaseFilesystemMiddleware
 
 from raptix.execution.sandbox.kernel.base import SandboxBase
-from raptix.execution.tools.filesystem import filesystem_tools_without_execute
+from raptix.execution.tools.plumbing.filesystem import filesystem_tools_without_execute
 
 WORKSPACE = "/workspace"
 NO_WORKSPACE_ERROR = (
