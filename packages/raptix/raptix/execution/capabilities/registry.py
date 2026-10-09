@@ -59,6 +59,10 @@ class CapabilityRegistry:
             raise UnknownCapabilityError(str(capability_id))
         return manifest
 
+    @property
+    def availability_evaluator(self) -> AvailabilityEvaluator:
+        return self._availability
+
     def __contains__(self, capability_id: object) -> bool:
         return CapabilityId(str(capability_id)) in self._manifests
 

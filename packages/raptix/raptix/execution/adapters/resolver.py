@@ -62,7 +62,7 @@ class AdapterResolver:
         adapters: dict[str, ToolAdapter] | None = None,
     ) -> None:
         self._registry = registry
-        self._availability = availability or AvailabilityEvaluator()
+        self._availability = availability or registry.availability_evaluator
         self._adapters: dict[str, ToolAdapter] = (
             adapters if adapters is not None else default_adapters()
         )
