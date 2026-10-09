@@ -7,7 +7,7 @@ from pathlib import Path
 from raptix.cli.__main__ import main as cli_main
 from raptix.cli.export_transcript import EXIT_NOT_FOUND, EXIT_OK
 from raptix.cli.export_transcript import main as export_main
-from raptix.runtime.event_log import EventLog, EventType
+from raptix.execution.session.event_log import EventLog, EventType
 
 
 def _seed_engagement(workspace: Path, engagement_id: str = "eng-1") -> EventLog:

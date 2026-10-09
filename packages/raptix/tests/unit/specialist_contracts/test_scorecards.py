@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from raptix.capabilities.contracts import CapabilityLane
-from raptix.capabilities.scorecards import (
+from raptix.specialist_contracts.contracts import CapabilityLane
+from raptix.specialist_contracts.scorecards import (
     EvaluationRecord,
     build_scorecards,
     load_evaluation_records,

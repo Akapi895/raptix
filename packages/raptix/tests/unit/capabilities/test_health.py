@@ -13,8 +13,8 @@ from typing import Any
 
 import pytest
 
-from raptix.execution.capabilities import build_catalog
-from raptix.execution.capabilities.health import (
+from raptix.capabilities import build_catalog
+from raptix.capabilities.health import (
     UNPROBED,
     CapabilityHealth,
     PlacementHealthChecker,

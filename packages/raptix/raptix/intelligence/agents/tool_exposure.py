@@ -59,7 +59,7 @@ def summarize_tool_exposure(role: str, tools: list[Any]) -> dict[str, Any]:
 
     Used both by :func:`record_tool_exposure` (gated logging inside
     ``build_tools()``) and by the baseline-capture script in
-    ``benchmarks/tool_eval/baseline/``, so the two never drift.
+    ``benchmarks/suites/tool_eval/baseline/``, so the two never drift.
     """
     names = sorted({_tool_name(t) for t in tools})
     return {

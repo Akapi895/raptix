@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import AIMessage, SystemMessage, ToolMessage
 
-from raptix.runtime.recording import RecordingMiddleware, ReplayMiddleware
+from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
 from raptix_core.contracts.slots import SLOTS_PER_ROLE, MiddlewareSlot
 
 

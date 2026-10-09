@@ -1,4 +1,4 @@
-"""Tests for raptix.runtime.cart."""
+"""Tests for raptix.execution.session.cart."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import time
 
 import pytest
 
-from raptix.runtime import cart, recording
-from raptix.runtime.cart import (
+from raptix.execution.session import cart, recording
+from raptix.execution.session.cart import (
     ChangeEvent,
     EngagementSnapshot,
     LinearOPPLANAdapter,
@@ -18,7 +18,7 @@ from raptix.runtime.cart import (
     diff_snapshots,
     make_replay_dispatcher,
 )
-from raptix.runtime.task_spec import SubAgentTaskSpec
+from raptix.execution.session.task_spec import SubAgentTaskSpec
 
 
 class _Node:

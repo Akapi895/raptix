@@ -7,16 +7,16 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.config import BenchmarkConfig
-from benchmarks.provenance import (
+from benchmarks.engine.config import BenchmarkConfig
+from benchmarks.engine.provenance import (
     ProvenanceCaptureError,
     capture_container_images,
     capture_declared_model_assignments,
     capture_run_provenance,
 )
-from benchmarks.reporter import Reporter
+from benchmarks.engine.reporter import Reporter
+from benchmarks.engine.schemas import BenchmarkReport, Challenge, FilterConfig, RunProvenance
 from benchmarks.runner import _build_run_provenance
-from benchmarks.schemas import BenchmarkReport, Challenge, FilterConfig, RunProvenance
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -132,7 +132,7 @@ def test_capture_declared_model_assignments_uses_explicit_priority_and_role_over
         },
     }
     monkeypatch.setattr(
-        "benchmarks.provenance.subprocess.run",
+        "benchmarks.engine.provenance.subprocess.run",
         lambda argv, **_kwargs: subprocess.CompletedProcess(
             argv,
             0,
@@ -157,7 +157,7 @@ def test_capture_declared_models_rejects_container_priority_mismatch(monkeypatch
         "assignments": {"decepticon": ["openai/gpt-5.5"]},
     }
     monkeypatch.setattr(
-        "benchmarks.provenance.subprocess.run",
+        "benchmarks.engine.provenance.subprocess.run",
         lambda argv, **_kwargs: subprocess.CompletedProcess(
             argv,
             0,
@@ -222,7 +222,7 @@ def test_capture_container_images_prefers_registry_digest_and_keeps_local_image_
             stdout = "[]|sha256:" + "c" * 64
         return subprocess.CompletedProcess(argv, 0, stdout=stdout, stderr="")
 
-    monkeypatch.setattr("benchmarks.provenance.subprocess.run", run_docker)
+    monkeypatch.setattr("benchmarks.engine.provenance.subprocess.run", run_docker)
 
     images = capture_container_images(["local/challenge:latest"])
 
@@ -251,7 +251,7 @@ def test_capture_container_images_excludes_unrelated_running_projects(monkeypatc
             stderr="",
         )
 
-    monkeypatch.setattr("benchmarks.provenance.subprocess.run", run_docker)
+    monkeypatch.setattr("benchmarks.engine.provenance.subprocess.run", run_docker)
 
     images = capture_container_images([])
 

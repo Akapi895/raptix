@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from raptix.runtime.cart import AttackGraphProtocol, EngagementSnapshot
+from raptix.execution.session.cart import AttackGraphProtocol, EngagementSnapshot
 
 
 class _Conforming:

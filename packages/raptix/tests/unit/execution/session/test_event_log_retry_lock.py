@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from raptix.runtime.event_log import LOCK_ACQUIRE_TIMEOUT_S, _retry_lock
+from raptix.execution.session.event_log import LOCK_ACQUIRE_TIMEOUT_S, _retry_lock
 
 
 class _FailNTimes:

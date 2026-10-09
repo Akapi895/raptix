@@ -6,9 +6,9 @@ import hashlib
 import json
 from pathlib import Path
 
+from benchmarks.engine.schemas import Challenge, FilterConfig
+from benchmarks.engine.state import BenchmarkRunState, BenchmarkStepResult
 from benchmarks.providers.xbow import XBOWProvider
-from benchmarks.schemas import Challenge, FilterConfig
-from benchmarks.state import BenchmarkRunState, BenchmarkStepResult
 
 
 def _create_mock_benchmarks(tmp_path: Path) -> Path:

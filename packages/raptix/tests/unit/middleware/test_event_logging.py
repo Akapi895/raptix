@@ -13,7 +13,7 @@ from raptix.middleware.event_logging import (
     _redact_args,
     _summarize_value,
 )
-from raptix.runtime.event_log import EventLog, EventType, read_events
+from raptix.execution.session.event_log import EventLog, EventType, read_events
 
 # ── fakes mirroring the request/handler shapes used by other middleware tests ──
 

@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, TypeAlias
 
-log = logging.getLogger("raptix.runtime.shutdown")
+log = logging.getLogger("raptix.execution.session.shutdown")
 
 
 LangGraphState: TypeAlias = Mapping[str, Any]

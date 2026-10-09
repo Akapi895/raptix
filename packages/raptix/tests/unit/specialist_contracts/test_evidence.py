@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.capabilities.evidence import validate_evidence, validate_evidence_files
+from raptix.specialist_contracts.evidence import validate_evidence, validate_evidence_files
 
 
 def test_evidence_requires_positive_and_baseline_signals() -> None:

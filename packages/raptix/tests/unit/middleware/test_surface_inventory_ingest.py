@@ -14,7 +14,7 @@ from raptix.knowledge.graph.ingest import (
     available_scanners,
 )
 from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
-from raptix.runtime.recording import RecordingMiddleware, ReplayMiddleware
+from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
 
 
 class _StubStore:

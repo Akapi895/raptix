@@ -18,7 +18,7 @@ from typing import Any
 
 import pytest
 
-from raptix.execution.capabilities import AvailabilityEvaluator
+from raptix.capabilities import AvailabilityEvaluator
 from raptix.execution.workers import (
     MAX_WORKER_PRIMITIVES,
     BoundedWorkerRunner,
@@ -615,7 +615,7 @@ def test_worker_context_history_is_visible_to_the_planner() -> None:
 
 
 def test_catalog_worker_capability_matches_plan_example() -> None:
-    from raptix.execution.capabilities import build_catalog
+    from raptix.capabilities import build_catalog
 
     manifest = next(m for m in build_catalog() if str(m.id) == "exploit.unknown_service")
     (impl,) = manifest.implementations
@@ -630,7 +630,7 @@ def test_catalog_worker_capability_matches_plan_example() -> None:
 
 
 def test_runner_drives_the_catalog_worker_end_to_end() -> None:
-    from raptix.execution.capabilities import build_catalog
+    from raptix.capabilities import build_catalog
 
     manifest = next(m for m in build_catalog() if str(m.id) == "exploit.unknown_service")
     parser = FakeParser(ParseOutcome(observations=(Observation(kind="authentication.success"),)))

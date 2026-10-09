@@ -9,7 +9,7 @@ from pathlib import Path
 from statistics import median
 from typing import Any
 
-from raptix.capabilities.contracts import CapabilityLane
+from raptix.specialist_contracts.contracts import CapabilityLane
 
 
 @dataclass(frozen=True)

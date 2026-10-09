@@ -18,7 +18,7 @@ from typing import Final
 import pytest
 import yaml
 
-from raptix.execution.capabilities.catalog import build_catalog
+from raptix.capabilities.catalog import build_catalog
 
 REPO_ROOT: Final[Path] = Path(__file__).resolve().parents[5]
 DOCKERFILE_PATH: Final[Path] = REPO_ROOT / "infra" / "containers" / "sandbox.Dockerfile"

@@ -10,7 +10,7 @@ import json
 
 import pytest
 
-from raptix.execution.capabilities import (
+from raptix.capabilities import (
     build_catalog,
     build_coverage_inventory,
     collect_provenance,

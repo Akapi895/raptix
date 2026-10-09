@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from raptix.execution.capabilities.catalog import build_catalog
-from raptix.execution.capabilities.resources import (
+from raptix.capabilities.catalog import build_catalog
+from raptix.capabilities.resources import (
     TargetResource,
     load_target_resources,
     resource_for_architecture,

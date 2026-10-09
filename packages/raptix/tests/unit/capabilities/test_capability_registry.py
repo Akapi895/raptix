@@ -11,7 +11,7 @@ from typing import Any
 
 import pytest
 
-from raptix.execution.capabilities import (
+from raptix.capabilities import (
     AvailabilityEvaluator,
     CapabilityRegistry,
     EligibilityEvaluator,

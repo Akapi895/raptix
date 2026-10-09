@@ -1,12 +1,12 @@
 """EventLogMiddleware — persist engagement events to ``events.jsonl`` live.
 
-``raptix.runtime.event_log.EventLog`` is the append-only writer for an
+``raptix.execution.session.event_log.EventLog`` is the append-only writer for an
 engagement's ``events.jsonl``; until now nothing in the production agent
 stack actually drove it. This middleware closes that gap: it observes every
 model and tool round-trip and emits a compact event line per phase, so the
 orchestrator / dashboard can reconstruct an engagement timeline from disk.
 
-Design mirrors :class:`raptix.runtime.recording.RecordingMiddleware`
+Design mirrors :class:`raptix.execution.session.recording.RecordingMiddleware`
 (wraps BOTH model and tool calls) but writes *summaries*, never full
 prompts or tool output:
 
@@ -47,7 +47,7 @@ from langchain.agents.middleware import AgentMiddleware
 from langchain_core.messages import ToolMessage
 from typing_extensions import override
 
-from raptix.runtime.event_log import EventLog, EventType
+from raptix.execution.session.event_log import EventLog, EventType
 from raptix.telemetry.sink import (
     get_sink,
     reset_current_session,

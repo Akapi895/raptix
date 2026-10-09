@@ -12,11 +12,11 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.harness import _build_kickoff_prompt
+from benchmarks.engine.harness import _build_kickoff_prompt
+from benchmarks.engine.schemas import Challenge, FilterConfig
+from benchmarks.engine.state import BenchmarkRunState
 from benchmarks.providers import cybergym as cg
 from benchmarks.providers.cybergym import CyberGymProvider
-from benchmarks.schemas import Challenge, FilterConfig
-from benchmarks.state import BenchmarkRunState
 
 
 def _write_spec(tmp_path: Path) -> Path:

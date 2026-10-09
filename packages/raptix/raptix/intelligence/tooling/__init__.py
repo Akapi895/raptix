@@ -2,7 +2,7 @@
 
 Wave-scoped runtime helpers that sit between the agent builders
 (:mod:`raptix.intelligence.agents`) and the capability runtime
-(:mod:`raptix.execution.capabilities`):
+(:mod:`raptix.capabilities`):
 
 * :mod:`raptix.intelligence.tooling.exposure` — Wave T9 shadow-mode
   dynamic tool exposure.

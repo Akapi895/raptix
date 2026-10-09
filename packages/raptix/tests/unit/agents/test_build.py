@@ -650,7 +650,7 @@ def test_record_slot_absent_by_default(monkeypatch):
     """Without ``RAPTIX_RUNTIME__RECORD_PATH`` the stack assembles
     byte-identical to before — no recorder, no behavior change."""
     monkeypatch.delenv("RAPTIX_RUNTIME__RECORD_PATH", raising=False)
-    from raptix.runtime.recording import RecordingMiddleware
+    from raptix.execution.session.recording import RecordingMiddleware
 
     stack = _build_exploit_stack()
     assert not any(isinstance(m, RecordingMiddleware) for m in stack)
@@ -660,7 +660,7 @@ def test_record_slot_is_innermost_when_enabled(monkeypatch, tmp_path):
     """With the env var set the recorder assembles LAST (innermost), so
     it observes exact model/tool payloads, and it is observability-only:
     responses pass through unchanged and land in the JSONL."""
-    from raptix.runtime.recording import RecordingMiddleware
+    from raptix.execution.session.recording import RecordingMiddleware
 
     record_path = tmp_path / "record.jsonl"
     monkeypatch.setenv("RAPTIX_RUNTIME__RECORD_PATH", str(record_path))

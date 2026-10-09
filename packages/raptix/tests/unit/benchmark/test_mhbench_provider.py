@@ -32,6 +32,8 @@ from pathlib import Path
 
 import pytest
 
+from benchmarks.engine.schemas import Challenge, FilterConfig
+from benchmarks.engine.state import BenchmarkRunState, BenchmarkStepResult
 from benchmarks.providers import mhbench as mhb
 from benchmarks.providers.mhbench import (
     ExternalTopology,
@@ -44,8 +46,6 @@ from benchmarks.providers.mhbench import (
     _resolve_ssh_key_path,
     _select_flag_target,
 )
-from benchmarks.schemas import Challenge, FilterConfig
-from benchmarks.state import BenchmarkRunState, BenchmarkStepResult
 
 
 def _write_config(

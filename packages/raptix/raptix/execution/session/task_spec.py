@@ -1,6 +1,6 @@
 """Per-dispatch task spec for CART live-replay.
 
-When :class:`raptix.runtime.cart.ReplayRunner` flips from dry-run to
+When :class:`raptix.execution.session.cart.ReplayRunner` flips from dry-run to
 live mode it must hand the engagement orchestrator a self-contained
 description of *one* sub-agent dispatch: which role to run, the objective
 text, the OPPLAN objectives and ATT&CK techniques the dispatch covers, and

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from raptix.execution.capabilities.tool_versions import (
+from raptix.capabilities.tool_versions import (
     build_tool_provenance,
     parse_tool_versions_tsv,
     provenance_for_tool,

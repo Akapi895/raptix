@@ -1,11 +1,11 @@
-"""Tests for benchmarks.scorer.Scorer."""
+"""Tests for benchmarks.engine.scorer.Scorer."""
 
 from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from benchmarks.schemas import ChallengeResult, RunProvenance
-from benchmarks.scorer import Scorer
+from benchmarks.engine.schemas import ChallengeResult, RunProvenance
+from benchmarks.engine.scorer import Scorer
 
 
 def _make_result(
