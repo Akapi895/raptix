@@ -73,6 +73,7 @@ import os
 import re
 import tempfile
 import time
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, ClassVar
@@ -116,8 +117,6 @@ def record_level() -> str:
     if level not in _RECORD_LEVELS:
         raise RuntimeError(f"{_RECORD_LEVEL_ENV}={level!r} is not one of {sorted(_RECORD_LEVELS)}.")
     return level
-
-
 
 
 def _served_model(source: Any) -> str:
@@ -831,6 +830,7 @@ class RecordingMiddleware(AgentMiddleware):
         self._redacted = record_level() == "redacted"
         record_path = path or os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "")
         self._sink: _Sink | None = open_record(Path(record_path)) if record_path else None
+        self._tool_parents: dict[tuple[str, str], str] = {}
 
     def _envelope(self, request: Any, req_hash: str, dur_ms: int) -> dict[str, Any]:
         """Observability metadata; the replayer reads only kind/req_hash."""
@@ -849,6 +849,7 @@ class RecordingMiddleware(AgentMiddleware):
             ),
             "workspace": str(get("workspace_path") or os.environ.get("RAPTIX_WORKSPACE_PATH", "")),
             "objective_id": str(get("active_objective_id") or ""),
+            **identity(),
             "ts": datetime.now(timezone.utc).isoformat(),
             "dur_ms": dur_ms,
             "req_hash": req_hash,
@@ -864,71 +865,147 @@ class RecordingMiddleware(AgentMiddleware):
         if self._redacted:
             entry = sanitize_entry(entry)
         self._sink.write(entry)
+        _record_attempts(self._sink)
+
+    @contextmanager
+    def _scope(self, kind: str, request: Any):
+        parent = None
+        scope = self._scope_key(request)
+        tool_call = getattr(request, "tool_call", {}) or {}
+        if kind == "tool_call":
+            parent = self._tool_parents.pop((scope, str(tool_call.get("id"))), None)
+        with call_scope(kind, request, parent) as frame:
+            instrument_model(getattr(request, "model", None))
+            yield frame
+
+    @staticmethod
+    def _scope_key(request: Any) -> str:
+        state = getattr(request, "state", {}) or {}
+        from langgraph.config import get_config
+
+        try:
+            config = get_config()
+        except RuntimeError:
+            config = getattr(getattr(request, "runtime", None), "config", None) or {}
+        dispatch = active_dispatch.get()
+        return json.dumps(
+            [
+                state.get("workspace_path"),
+                state.get("engagement_name"),
+                (config.get("configurable") or {}).get("thread_id"),
+                dispatch.lease_token if dispatch else None,
+            ]
+        )
+
+    def _model_entry(
+        self, req_dict: dict[str, Any], req_hash: str, response: Any, request: Any = None
+    ) -> dict[str, Any]:
+        entry: dict[str, Any] = {
+            "kind": "model_call",
+            "req_hash": req_hash,
+            "request": req_dict,
+            "response": _serialize_ai_response(response),
+        }
+        served = _served_model(response)
+        if served:
+            entry["served_model"] = served
+        if raw_usage_logging_enabled():
+            entry["raw_usage"] = _raw_usage(response)
+        frame = active_call.get()
+        unwrapped = getattr(response, "model_response", response)
+        messages = getattr(unwrapped, "result", [unwrapped])
+        scope = self._scope_key(request)
+        if frame:
+            for message in messages:
+                for tool_call in getattr(message, "tool_calls", []) or []:
+                    if len(self._tool_parents) >= 256:
+                        self._tool_parents.pop(next(iter(self._tool_parents)))
+                    self._tool_parents[(scope, str(tool_call.get("id")))] = frame.call_id
+        return entry
 
     @override
     def wrap_model_call(self, request, handler):
         if self._sink is None:
             return handler(request)
-        req_dict = _serialize_model_request(request)
-        req_hash = _hash_request(req_dict)
-        start = time.monotonic()
-        try:
-            response = handler(request)
-        except Exception as exc:
-            self._record(
-                request,
-                {
-                    "kind": "model_call",
-                    "req_hash": req_hash,
-                    "request": req_dict,
-                    "response": _serialize_error_response(exc),
-                },
-                int((time.monotonic() - start) * 1000),
-            )
-            raise
-        self._record(
-            request,
-            {
-                "kind": "model_call",
-                "req_hash": req_hash,
-                "request": req_dict,
-                "response": _serialize_ai_response(response),
-            },
-            int((time.monotonic() - start) * 1000),
-        )
-        return response
+        with self._scope("model_call", request):
+            return self._capture(request, handler, "model_call")
 
     @override
     async def awrap_model_call(self, request, handler):
         if self._sink is None:
             return await handler(request)
-        req_dict = _serialize_model_request(request)
-        req_hash = _hash_request(req_dict)
-        start = time.monotonic()
+        with self._scope("model_call", request):
+            return await self._acapture(request, handler, "model_call")
+
+    def _entry(self, kind: str, payload: dict, digest: str, response: Any, request: Any) -> dict:
+        return (
+            self._model_entry(payload, digest, response, request)
+            if kind == "model_call"
+            else self._tool_entry(payload, digest, response)
+        )
+
+    def _capture(self, request: Any, handler: Any, kind: str) -> Any:
+        payload = (
+            _serialize_model_request(request)
+            if kind == "model_call"
+            else _serialize_tool_request(request)
+        )
+        digest = _hash_request(payload)
+        started = time.monotonic()
+        try:
+            response = handler(request)
+        except Exception as exc:
+            entry = {
+                "kind": kind,
+                "req_hash": digest,
+                "request": payload,
+                "response": _serialize_error_response(exc),
+            }
+            try:
+                self._record(request, entry, int((time.monotonic() - started) * 1000))
+            except Exception as capture_error:
+                log.debug("error capture unavailable: %s", type(capture_error).__name__)
+            raise
+        try:
+            self._record(
+                request,
+                self._entry(kind, payload, digest, response, request),
+                int((time.monotonic() - started) * 1000),
+            )
+        except Exception as capture_error:
+            log.debug("response capture unavailable: %s", type(capture_error).__name__)
+        return response
+
+    async def _acapture(self, request: Any, handler: Any, kind: str) -> Any:
+        payload = (
+            _serialize_model_request(request)
+            if kind == "model_call"
+            else _serialize_tool_request(request)
+        )
+        digest = _hash_request(payload)
+        started = time.monotonic()
         try:
             response = await handler(request)
         except Exception as exc:
+            entry = {
+                "kind": kind,
+                "req_hash": digest,
+                "request": payload,
+                "response": _serialize_error_response(exc),
+            }
+            try:
+                self._record(request, entry, int((time.monotonic() - started) * 1000))
+            except Exception as capture_error:
+                log.debug("error capture unavailable: %s", type(capture_error).__name__)
+            raise
+        try:
             self._record(
                 request,
-                {
-                    "kind": "model_call",
-                    "req_hash": req_hash,
-                    "request": req_dict,
-                    "response": _serialize_error_response(exc),
-                },
-                int((time.monotonic() - start) * 1000),
+                self._entry(kind, payload, digest, response, request),
+                int((time.monotonic() - started) * 1000),
             )
-            raise
-        self._record(
-            request,
-            {
-                "kind": "model_call",
-                "req_hash": req_hash,
-                "request": req_dict,
-                "response": _serialize_ai_response(response),
-            },
-            int((time.monotonic() - start) * 1000),
-        )
+        except Exception as capture_error:
+            log.debug("response capture unavailable: %s", type(capture_error).__name__)
         return response
 
     def _tool_entry(self, req_dict: dict[str, Any], req_hash: str, response: Any) -> dict[str, Any]:
@@ -956,43 +1033,15 @@ class RecordingMiddleware(AgentMiddleware):
     def wrap_tool_call(self, request, handler):
         if self._sink is None:
             return handler(request)
-        req_dict = _serialize_tool_request(request)
-        req_hash = _hash_request(req_dict)
-        start = time.monotonic()
-        try:
-            response = handler(request)
-        except Exception as exc:
-            entry = self._tool_entry(req_dict, req_hash, None)
-            entry["response"] = _serialize_error_response(exc)
-            self._record(request, entry, int((time.monotonic() - start) * 1000))
-            raise
-        self._record(
-            request,
-            self._tool_entry(req_dict, req_hash, response),
-            int((time.monotonic() - start) * 1000),
-        )
-        return response
+        with self._scope("tool_call", request):
+            return self._capture(request, handler, "tool_call")
 
     @override
     async def awrap_tool_call(self, request, handler):
         if self._sink is None:
             return await handler(request)
-        req_dict = _serialize_tool_request(request)
-        req_hash = _hash_request(req_dict)
-        start = time.monotonic()
-        try:
-            response = await handler(request)
-        except Exception as exc:
-            entry = self._tool_entry(req_dict, req_hash, None)
-            entry["response"] = _serialize_error_response(exc)
-            self._record(request, entry, int((time.monotonic() - start) * 1000))
-            raise
-        self._record(
-            request,
-            self._tool_entry(req_dict, req_hash, response),
-            int((time.monotonic() - start) * 1000),
-        )
-        return response
+        with self._scope("tool_call", request):
+            return await self._acapture(request, handler, "tool_call")
 
 
 class ReplayMiddleware(AgentMiddleware):

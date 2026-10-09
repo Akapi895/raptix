@@ -917,6 +917,9 @@ class _ProxiedChatOpenAI(ChatOpenAI):
     """
 
     def invoke(self, *args, **kwargs):
+        from raptix.runtime.call_context import instrument_model
+
+        instrument_model(self)
         try:
             result = super().invoke(*args, **kwargs)
         except Exception as exc:
@@ -932,6 +935,9 @@ class _ProxiedChatOpenAI(ChatOpenAI):
         # ``call_with_timeout`` the ``super().ainvoke(...)`` coroutine would
         # already exist and leak un-awaited ("coroutine was never awaited").
         timeout = _resolve_llm_timeout_seconds()
+        from raptix.runtime.call_context import instrument_model
+
+        instrument_model(self)
         try:
             result = await call_with_timeout(super().ainvoke(*args, **kwargs), timeout)
         except LLMTimeoutError:
@@ -953,6 +959,10 @@ def _log_served_model(requested: str, result: object) -> None:
     flow. Any extraction failure is swallowed silently.
     """
     try:
+        if os.environ.get("RAPTIX_LLM__LOG_RAW_USAGE", "0").lower() in {"1", "true", "yes"}:
+            from raptix.runtime.recording import _raw_usage
+
+            log.debug("llm.usage %s", json.dumps(_raw_usage(result), sort_keys=True))
         metadata = getattr(result, "response_metadata", None) or {}
         served = (
             metadata.get("model_name")

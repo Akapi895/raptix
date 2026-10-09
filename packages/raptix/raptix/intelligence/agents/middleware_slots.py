@@ -335,7 +335,7 @@ def _make_execution_ledger(*, backend: Any = None, role: str, **_: Any):
     """Wave B2 fail-safe execution receipts; None unless the flag is truthy."""
     if not any(
         os.environ.get(flag, "0").strip().lower() in {"1", "true", "yes"}
-        for flag in ("RAPTIX_EXECUTION_LEDGER", "RAPTIX_DISPATCH_HANDOFF")
+        for flag in ("RAPTIX_EXECUTION_LEDGER", "RAPTIX_DISPATCH_HANDOFF", "RAPTIX_TASK_HANDOFF")
     ):
         return None
     from raptix.middleware.execution_ledger import ExecutionLedgerMiddleware
@@ -381,6 +381,10 @@ def _make_model_fallback(*, fallback_models: list | None = None, **_: Any):
     """
     if not fallback_models:
         return None
+    if os.environ.get("RAPTIX_RUNTIME__RECORD_PATH"):
+        from raptix.runtime.call_context import TracedModelFallback
+
+        return TracedModelFallback(*fallback_models)
     return ModelFallbackMiddleware(*fallback_models)
 
 
@@ -464,6 +468,7 @@ class _SafeSummarizationProxy(AgentMiddleware):
         self._trigger_override = trigger_override
         self._keep_override = keep_override
         self._task_state_backend = task_state_backend
+        self._role = role
         from raptix.middleware.execution_ledger import ExecutionLedgerMiddleware
 
         self._context_io = ExecutionLedgerMiddleware(
@@ -491,8 +496,18 @@ class _SafeSummarizationProxy(AgentMiddleware):
         # than raising into the fallback below, which would silently drop
         # summarization for the turn.
         model = getattr(request, "model", None)
-        if model is None or model is self._inner.model:
+        if model is None:
             return self._inner
+        from raptix.runtime.recording import wrap_summary_model
+
+        original = getattr(self._inner.model, "_model", self._inner.model)
+        if model is original:
+            if not os.environ.get("RAPTIX_RUNTIME__RECORD_PATH"):
+                return self._inner
+            scoped = copy.copy(self._inner)
+            scoped._lc_helper = copy.copy(self._inner._lc_helper)
+            scoped._lc_helper.model = wrap_summary_model(model, role=self._role, request=request)
+            return scoped
         if self._capacity is not None:
             model = _apply_capacity_profile(model, self._capacity)
         defaults = compute_summarization_defaults(model)
@@ -502,6 +517,9 @@ class _SafeSummarizationProxy(AgentMiddleware):
             model,
             self._trigger_override or defaults["trigger"],
             self._keep_override or defaults["keep"],
+        )
+        scoped_inner._lc_helper.model = wrap_summary_model(
+            scoped_inner._lc_helper.model, role=self._role, request=request
         )
         return scoped_inner
 
@@ -993,6 +1011,9 @@ def _make_summarization(*, backend: Any, llm: Any, role: str = "", **_: Any):
     trigger, keep, overridden = _summarization_overrides(model)
     if overridden:
         inner._lc_helper = _rebuild_summary_helper(inner._lc_helper, model, trigger, keep)
+    from raptix.runtime.recording import wrap_summary_model
+
+    inner._lc_helper.model = wrap_summary_model(inner._lc_helper.model, role=role)
     return _SafeSummarizationProxy(
         inner,
         capacity=model.profile["max_input_tokens"] if model is not llm else None,
@@ -1021,6 +1042,7 @@ def _make_context_manifest(*, backend: Any = None, **_: Any):
         os.environ.get("RAPTIX_CONTEXT_MANIFEST", "0").strip().lower(),
         os.environ.get("RAPTIX_CONTEXT_MASK", "0").strip().lower(),
         os.environ.get("RAPTIX_CONTEXT_ASSEMBLY", "0").strip().lower(),
+        os.environ.get("RAPTIX_CONTEXT_PREFIX_ORDER", "0").strip().lower(),
     )
     if not any(flag in {"1", "true", "yes"} for flag in flags):
         return None
