@@ -1,4 +1,4 @@
-"""Unit tests for the pure-logic helpers in ``raptix.execution.tools.opplan``.
+"""Unit tests for the pure-logic helpers in ``raptix.execution.tools.plumbing.opplan``.
 
 Covers the three silent-corruption-prone paths that previously had **zero**
 direct coverage:
@@ -18,7 +18,7 @@ No network / docker / LLM dependencies.
 
 from __future__ import annotations
 
-from raptix.execution.tools.opplan import (
+from raptix.execution.tools.plumbing.opplan import (
     _VALID_TRANSITIONS,
     OPPLAN_FILE_SCHEMA_VERSION,
     _build_opplan_payload,

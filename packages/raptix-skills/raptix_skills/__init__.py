@@ -5,7 +5,7 @@ supporting YAML assets, organised by bundle (``standard/``,
 ``shared/``, ``plugins/``, ``benchmark/``). No code ships here.
 
 The runtime keeps the skill loader/registry/selector/engine in
-``raptix.skills`` and ``raptix.execution.tools.skills*``; it resolves
+``raptix.skills`` and ``raptix.execution.tools.plumbing.skills*``; it resolves
 this corpus through ``raptix.execution.backends.SKILLS_LOCAL_PATH``.
 Virtual ``/skills/<bundle>/...`` paths stay stable across the split —
 they derive from the relative path under this package root.

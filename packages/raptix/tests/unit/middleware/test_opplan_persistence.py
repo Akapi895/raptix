@@ -21,7 +21,7 @@ import pytest
 from deepagents.backends.filesystem import FilesystemBackend
 from langchain_core.messages import AIMessage, ToolMessage
 
-from raptix.execution.tools.opplan import (
+from raptix.execution.tools.plumbing.opplan import (
     OPPLAN_FILE_SCHEMA_VERSION,
     OPPLAN_TOOL_NAMES,
     OPPLAN_VIRTUAL_PATH,

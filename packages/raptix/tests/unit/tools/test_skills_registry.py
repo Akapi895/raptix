@@ -1,4 +1,4 @@
-"""Tests for ``raptix.execution.tools.skills_registry`` — slug resolver + safety."""
+"""Tests for ``raptix.execution.tools.plumbing.skills_registry`` — slug resolver + safety."""
 
 from __future__ import annotations
 
@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from raptix.execution.tools.skills_registry import (
+from raptix.execution.tools.plumbing.skills_registry import (
     SKILL_PATH_PREFIX,
     AmbiguousSkill,
     SkillRecord,
