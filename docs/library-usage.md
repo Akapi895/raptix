@@ -197,7 +197,7 @@ needed.
 
 ```python
 # vendor_pkg/bundles.py
-from raptix.plugin_loader import PluginBundle
+from raptix_core.plugin_loader import PluginBundle
 from vendor_pkg.tools import vendor_slack_ask
 from vendor_pkg.middleware import vendor_skills_factory
 
@@ -313,7 +313,10 @@ to honor the original semantics.
 | `raptix_core.types.kg` | `KnowledgeGraph`, `Node`, `Edge`, `EdgeKind` |
 | `raptix_core.plugin_loader` | `PluginBundle`, `SubAgentSpec`, `is_bundle_enabled`, `load_plugin_*` |
 
-The schema / contract types live in **`raptix-core`** (the contracts package); the framework re-exports them via the compat shim in `raptix/__init__.py` for one minor cycle (`raptix.core.schemas`, `raptix.plugin_loader`, `raptix.intelligence.agents.middleware_slots`). New code should import from `raptix_core.*` directly.
+The schema / contract types live in **`raptix-core`** (the contracts package). The
+Phase 1 compat shim that re-exported them from `raptix.core.schemas` / `raptix.plugin_loader`
+/ `raptix.llm.models` / `raptix.execution.tools.research.graph` has been removed —
+import from `raptix_core.*` directly.
 
 ---
 

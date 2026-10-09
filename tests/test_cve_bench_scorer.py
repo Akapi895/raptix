@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from benchmarks.cve_bench.loader import load_one
-from benchmarks.cve_bench.scorer import WIN_CONDITIONS, score, summarize
+from benchmarks.suites.cve_bench.loader import load_one
+from benchmarks.suites.cve_bench.scorer import WIN_CONDITIONS, score, summarize
 
 
 def _ch(cve: str = "CVE-2024-2624"):

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from benchmarks.cve_bench.loader import (
+from benchmarks.suites.cve_bench.loader import (
     DEFAULT_FIXTURES_DIR,
     WIN_CONDITIONS,
     CVEBenchChallenge,

@@ -1,10 +1,6 @@
 [![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](README.md)
 [![한국어](https://img.shields.io/badge/Language-한국어-red?style=for-the-badge)](README_KO.md)
 
-<div align="center">
-  <img src="assets/logo_banner.png" alt="Raptix Logo">
-</div>
-
 <h1 align="center">Raptix — Autonomous Red Team Agent</h1>
 
 <p align="center"><i>"Another AI hacker? Let us guess — it runs nmap and writes a report."</i></p>
@@ -109,10 +105,6 @@ We're building Raptix toward an **Offensive Vaccine** for the AI-driven threat l
 
 ## Benchmark
 
-<div align="center">
-  <img src="assets/benchmark/raptix_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
-</div>
-
 | Benchmark | Difficulty | Pass Rate |
 |-----------|------------|-----------|
 | [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Easy (Level 1)   | **45 / 45** (100 %) |
@@ -120,7 +112,7 @@ We're building Raptix toward an **Offensive Vaccine** for the AI-driven threat l
 | [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Hard (Level 3)   | **7 / 8** (87.5 %) |
 | [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | **All levels**   | **102 / 104** (98.08 %) |
 
-- **[Full per-challenge index, attack-class matrix, and LangSmith traces](benchmark/results/README.md)**
+- **[Full per-challenge index, attack-class matrix, and LangSmith traces](benchmarks/results/README.md)**
 - **[Comparison vs other AI pentest agents (Strix, PentestGPT, MAPTA, Cyber-AutoAgent, XBOW commercial, …)](docs/benchmark-comparison.md)**
 
 ---
@@ -150,10 +142,6 @@ But more importantly: it operates under the discipline that separates red teamer
 ---
 
 ## Architecture
-
-<div align="center">
-  <img src="assets/raptix_infra.svg" alt="Raptix Infrastructure" width="680">
-</div>
 
 Two-network design. The **always-on** management plane (LiteLLM, PostgreSQL, Skillogy, LangGraph) and the always-on sandbox plane stay up across the whole engagement; everything else is **dynamic-spawn** — the Web dashboard comes up on `/web` from the CLI, and specialist workloads (BloodHound CE, Sliver C2, Ghidra MCP, …) come up only when the orchestrator calls `ops_start(...)` (see [ADR-0006](docs/adr/0006-agent-driven-container-lifecycle.md)). Networks: management on `raptix-net`; sandbox + C2 server + targets on `sandbox-net`. Neo4j is dual-homed so the agent (on management) can persist findings written from inside the sandbox.
 
@@ -236,9 +224,3 @@ Do not use this project on any system or network without explicit written author
 ## License
 
 [Apache-2.0](LICENSE)
-
----
-
-<div align="center">
-  <img src="assets/main.png" alt="Raptix">
-</div>

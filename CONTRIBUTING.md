@@ -67,7 +67,7 @@ Use the [Feature Request](https://github.com/Akapi895/raptix/issues/new?template
 - **Python**: Pydantic v2, Ruff for formatting/linting, basedpyright for type checking
 - **Line length**: 100 characters
 - **Imports**: Absolute imports, public API re-exported through `__init__.py`
-- **Logging**: `from raptix.core.logging import get_logger; log = get_logger("module.sub")`
+- **Logging**: `from raptix_core.utils.logging import get_logger; log = get_logger("module.sub")`
 - **Skills**: Markdown files in `packages/raptix-skills/raptix_skills/defs/` with YAML frontmatter
 - **CLI (TypeScript)**: Ink.js components in `apps/cli/src/`
 

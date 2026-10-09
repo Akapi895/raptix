@@ -8,6 +8,30 @@ design spec, §13.4).
 
 ## [Unreleased]
 
+### Removed
+
+- Retired the Phase 1 core/framework/sdk-split compat shim layer ahead of the
+  originally planned `2.0.0` milestone: `raptix.core.schemas`, `raptix.core.config`,
+  `raptix.core.logging`, `raptix.plugin_loader`, `raptix.llm.models`, and
+  `raptix.execution.tools.research.graph` no longer resolve — import from
+  `raptix_core.*` directly (see `docs/migration/from-0.0.x.md`). The `raptix.server`
+  and `raptix.mcp_server` W14/W15 deprecated re-export shims are also removed —
+  import from `raptix.interfaces.api` / `raptix.interfaces.mcp`.
+- Promoted `execution/capabilities/` to top-level `capabilities/` (a sibling of
+  `execution/`, not nested in it); renamed the old top-level `capabilities/`
+  (plugin/specialist contracts, evidence, scorecards) to `specialist_contracts/`
+  to remove the name collision; folded top-level `runtime/` into
+  `execution/session/`.
+
+### Changed
+
+- Group benchmark implementation under `benchmarks/engine/` and independent
+  suites under `benchmarks/suites/`; retain the shared `benchmarks.runner` CLI
+  and root type exports. Internal imports and suite CLI commands use the new paths.
+- Group configs/guides/scenario inputs and upstream checkouts separately.
+  New runs use `benchmarks/results/runs/<suite>/<run-id>/`; selected historical
+  evidence moves to `benchmarks/results/published/<suite>/` without regeneration.
+
 ### Fixed
 
 - Preserve model content, tool calls and usage through LangChain ModelResponse

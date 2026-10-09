@@ -37,18 +37,16 @@ Pin-and-install advice:
 
 ## Import-path mapping
 
-Every legacy path keeps working for one release via the Phase 1
-shim layer. `decepticon.compat.register_legacy_imports()` runs at
-import time of `raptix` and emits a single `DeprecationWarning`
-listing the table below so the migration list shows up in test logs.
+The Phase 1 shim layer (`decepticon.compat.register_legacy_imports()`, plus the
+per-module PEP 562 shims below) has been **removed** — ahead of the originally
+planned `2.0.0` milestone. None of the legacy paths below resolve any more; import
+from the canonical path on the right.
 
-Opt out of the warning with `RAPTIX_NO_COMPAT=1` in the environment.
-
-| Legacy path | Canonical path |
+| Legacy path (removed) | Canonical path |
 |-------------|----------------|
 | `raptix.core.schemas` | `raptix_core.types.engagement` |
 | `raptix.llm.models` | `raptix_core.types.llm` |
-| `raptix.tools.research.graph` | `raptix_core.types.kg` |
+| `raptix.execution.tools.research.graph` (nee `raptix.tools.research.graph`) | `raptix_core.types.kg` |
 | `raptix.plugin_loader` | `raptix_core.plugin_loader` |
 | `raptix.core.config` | `raptix_core.utils.config` |
 | `raptix.core.logging` | `raptix_core.utils.logging` |
@@ -56,11 +54,9 @@ Opt out of the warning with `RAPTIX_NO_COMPAT=1` in the environment.
 | `raptix.agents.middleware_slots.SAFETY_CRITICAL_SLOTS` | `raptix_core.contracts.slots.SAFETY_CRITICAL_SLOTS` |
 | `raptix.agents.middleware_slots.SLOTS_PER_ROLE` | `raptix_core.contracts.slots.SLOTS_PER_ROLE` |
 
-The framework's `raptix.agents.middleware_slots` module keeps the
-`DEFAULT_SLOT_FACTORIES` and `skills_sources_for()` exports (those
-need langchain at import time, so they stay framework-side).
-
-The shims are **removed at `2.0.0`** — migrate before then.
+The framework's `raptix.intelligence.agents.middleware_slots` module keeps the
+`DEFAULT_SLOT_FACTORIES` and `skills_sources_for()` exports (those need langchain at
+import time, so they stay framework-side).
 
 ## New public surface for plugin authors
 

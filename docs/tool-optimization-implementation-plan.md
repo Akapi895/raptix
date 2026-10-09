@@ -3,7 +3,7 @@
 > Status: **T0/T1 FROZEN; T2 GO.** T3–T13 remain proposed.
 > Last updated: 2026-10-06
 > Tracks: `tool-optimization-plan.md` (analysis), Incalmo-lessons initiative
-> T0/T1 outputs: `benchmarks/tool_eval/baseline/` (T0a static +
+> T0/T1 outputs: `benchmarks/suites/tool_eval/baseline/` (T0a static +
 > T0b assembled, pinned profile), `docs/architecture/tool-classification.md`
 > (v2, 159 functions, 6-category taxonomy with Target Capability IDs).
 > The true inventory is 159, not the 148 estimated below — see the
@@ -305,7 +305,7 @@ Steps:
      they may contain credentials, hashes, tokens, keys)
    - `bash_usage_rate`
    - `success/failure` per tool call
-2. Save scenario fixtures in `benchmarks/tool_eval/baseline/`
+2. Save scenario fixtures in `benchmarks/suites/tool_eval/baseline/`
 3. Add lightweight tool-selection telemetry to `build_tools()` path
    (log which tools are offered, which are selected — no behavioral change)
 4. Tag baseline commit
@@ -319,7 +319,7 @@ validity, key names, and redacted summaries.
 
 **Acceptance (met):**
 - Baseline metrics recorded for all 11 OSS roles in `packages/raptix`
-  (`benchmarks/tool_eval/baseline/baseline.jsonl` — T0a static;
+  (`benchmarks/suites/tool_eval/baseline/baseline.jsonl` — T0a static;
   `assembled_baseline.jsonl` — T0b static+middleware union, with
   per-slot provenance and an explicit pinned baseline profile)
 - Telemetry hook in `build_tools()` (`tool_exposure.py`, opt-in via
@@ -1439,15 +1439,15 @@ Use `tests/fixtures/capabilities/held-out.jsonl` for final evaluation
 thresholds were frozen in T0 before this evaluation.
 
 **Acceptance:**
-- Evaluation harness in `benchmarks/tool_eval/`
+- Evaluation harness in `benchmarks/suites/tool_eval/`
 - Comparison against T0 baseline for all metrics
 - No material decrease in `capability_exposure_recall` or `task_success_rate`
   (per thresholds frozen in T0)
 - Document numeric results
 
 **Outcome: a pre-registered, deterministic-first evaluation harness under
-`benchmarks/tool_eval/` (`scenarios.py` + `metrics.py` + `thresholds.py`
-+ `evaluate.py` + `__main__.py`, entry `python -m benchmarks.tool_eval`),
+`benchmarks/suites/tool_eval/` (`scenarios.py` + `metrics.py` + `thresholds.py`
++ `evaluate.py` + `__main__.py`, entry `python -m benchmarks.suites.tool_eval`),
 scenario corpora at `packages/raptix-core/tests/fixtures/capabilities/`
 (`dev.jsonl` 6 scenarios, `held-out.jsonl` 4), frozen thresholds, and
 the two evidence reports (`benchmarks/results/tool-eval/report-2026-10-07-{dev,held-out}.json`).**
