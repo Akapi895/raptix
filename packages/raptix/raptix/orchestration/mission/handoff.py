@@ -74,6 +74,7 @@ def claim_lease(
     owner: str = "",
     ttl_s: float = DEFAULT_LEASE_TTL_S,
     now: float | None = None,
+    deadline: float | None = None,
 ) -> str | None:
     """Take the objective's lease unless a different unexpired owner holds it.
 
@@ -83,15 +84,19 @@ def claim_lease(
     current = time.time() if now is None else now
 
     def mutate(state: TaskState) -> None:
+        if deadline is not None and time.monotonic() > deadline:
+            raise TaskStateRefused("lease claim expired before persistence")
         lease = state.owner_lease
         if lease is not None and lease.token != token and lease.expires_at > current:
             raise TaskStateRefused(f"lease held by {lease.owner or lease.token}")
         state.owner_lease = OwnerLease(token=token, owner=owner, expires_at=current + ttl_s)
 
     try:
-        state = mutate_task_state(backend, objective_id, mutate)
+        state = mutate_task_state(backend, objective_id, mutate, fence=False)
     except TaskStateRefused as exc:
         return str(exc)
+    except Exception as exc:  # noqa: BLE001 — a contended/unavailable lock refuses the claim
+        return f"lease storage unavailable: {type(exc).__name__}"
     return None if state is not None else "lease backend unavailable"
 
 
@@ -105,8 +110,12 @@ def release_lease(backend: BackendProtocol | None, objective_id: str, token: str
             state.owner_lease = None
             released = True
 
-    mutate_task_state(backend, objective_id, mutate)
-    return released
+    try:
+        persisted = mutate_task_state(backend, objective_id, mutate, fence=False)
+    except Exception as exc:  # noqa: BLE001 — a contended lock leaves the lease in place
+        log.debug("lease release unavailable: %s", type(exc).__name__)
+        return False
+    return released and persisted is not None
 
 
 def lease_owner(backend: BackendProtocol | None, objective_id: str, token: str) -> bool:
@@ -131,7 +140,7 @@ def pending_executions(backend: BackendProtocol | None, objective_id: str) -> li
         entries = _load_entries(backend, ledger_path(objective_id))
     except Exception as exc:  # noqa: BLE001 — reconciliation is best-effort
         log.debug("pending executions unavailable: %s", type(exc).__name__)
-        return []
+        return [{"kind": "reconciliation_unavailable"}]
     return [
         entry for entry in reconcile_receipts(entries) if entry.get("kind") == "outcome_unknown"
     ]

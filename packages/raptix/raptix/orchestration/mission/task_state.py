@@ -18,11 +18,11 @@ import logging
 import os
 import posixpath
 import re
-import threading
 import uuid
 from collections.abc import Callable
 from datetime import datetime, timezone
 from enum import StrEnum
+from types import SimpleNamespace
 from typing import Any, Literal
 
 from deepagents.backends.protocol import BackendProtocol
@@ -40,11 +40,12 @@ TASK_STATE_DIR = "/workspace/plan/task-state"
 _MAX_EVIDENCE_REFS = 50
 _MAX_DECISIONS = 50
 _MAX_DOCUMENT_BYTES = 256_000
-_DOCUMENT_LOCKS = tuple(threading.RLock() for _ in range(64))
 
 
-def document_lock(path: str) -> Any:
-    return _DOCUMENT_LOCKS[hash(path) % len(_DOCUMENT_LOCKS)]
+def document_lock(path: str, backend: Any = None) -> Any:
+    from raptix.orchestration.mission.task_transaction import task_transaction
+
+    return task_transaction(path, backend)
 
 
 def scoped_task_backend(backend: Any, runtime: Any) -> BackendProtocol | None:
@@ -56,6 +57,20 @@ def scoped_task_backend(backend: Any, runtime: Any) -> BackendProtocol | None:
 
     if backend is None:
         return None
+    if getattr(runtime, "config", None) is None:
+        from langgraph.config import get_config
+
+        try:
+            config = get_config()
+        except RuntimeError:
+            config = {}
+        runtime = SimpleNamespace(
+            **{
+                name: getattr(runtime, name, None)
+                for name in ("state", "store", "context", "stream_writer", "tool_call_id")
+            },
+            config=config,
+        )
     resolved = backend(runtime) if callable(backend) else backend
     return EngagementFilesystemBackend(
         _rebind_sandbox_per_run(resolved, runtime), _workspace_from_runtime(runtime)
@@ -166,6 +181,7 @@ class TaskState(BaseModel):
     schema_version: Literal["1"] = TASK_STATE_SCHEMA_VERSION
     objective_id: str = Field(pattern=r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
     state_revision: int = Field(default=0, ge=0, strict=True)
+    accounting_revision: int = Field(default=0, ge=0, strict=True)
     saved_at: str = ""
     updated_by: str = ""
     last_event_id: str = ""
@@ -177,6 +193,8 @@ class TaskState(BaseModel):
     continuation: Continuation = Field(default_factory=Continuation)
     budget: Budget = Field(default_factory=Budget)
     owner_lease: OwnerLease | None = None
+    handoff_signals: list[Literal["stall"]] = Field(default_factory=list, max_length=1)
+    last_worker_phase: str = Field(default="", max_length=128)
     applied_dispatches: list[str] = Field(default_factory=list, max_length=768)
 
     @field_validator("evidence_refs", "decision_record")
@@ -260,23 +278,29 @@ def read_task_state(backend: BackendProtocol | None, objective_id: str) -> TaskS
     return TaskStateBundle(objective_id=objective_id, state=state.bounded())
 
 
-def write_task_state(backend: BackendProtocol | None, state: TaskState) -> str | None:
+def write_task_state(
+    backend: BackendProtocol | None, state: TaskState, *, owner_token: str | None = None
+) -> str | None:
     """Persist one objective's task state. Returns a backend error string, if any."""
     if backend is None:
         return "no backend"
     try:
         path = task_state_path(state.objective_id)
-        with document_lock(path):
+        with document_lock(path, backend):
             old, error = _read_text(backend, path)
             if old is None and error and not _looks_missing(error):
                 return error
             if old is not None:
                 prior = TaskState.model_validate_json(old)
+                _assert_owner(prior, owner_token)
+                if state.accounting_revision < prior.accounting_revision:
+                    return "stale accounting revision"
                 if (
                     prior.objective_id != state.objective_id
                     or state.state_revision <= prior.state_revision
                 ):
                     return "stale task-state revision or identity mismatch"
+                state.owner_lease = prior.owner_lease
             checked = TaskState.model_validate(state.bounded().model_dump())
             content = checked.model_dump_json(indent=2)
             if len(content.encode("utf-8")) > _MAX_DOCUMENT_BYTES:
@@ -321,10 +345,23 @@ class TaskStateRefused(Exception):
     """A locked task-state mutation declined by its own invariant (ADR-0057)."""
 
 
+def _assert_owner(state: TaskState, owner_token: str | None = None) -> None:
+    from raptix.core.dispatch_context import active_dispatch
+
+    if os.environ.get("RAPTIX_TASK_HANDOFF", "0").lower() not in {"1", "true", "yes"}:
+        return
+    context = active_dispatch.get()
+    token = owner_token or (context.lease_token if context else None)
+    if token and (state.owner_lease is None or state.owner_lease.token != token):
+        raise TaskStateRefused("task owner changed")
+
+
 def mutate_task_state(
     backend: BackendProtocol | None,
     objective_id: str,
     mutate: Callable[[TaskState], None],
+    *,
+    fence: bool = True,
 ) -> TaskState | None:
     """Locked, revision-neutral read-modify-write of one objective's state.
 
@@ -337,7 +374,7 @@ def mutate_task_state(
     if backend is None:
         return None
     path = task_state_path(objective_id)
-    with document_lock(path):
+    with document_lock(path, backend):
         try:
             old, error = _read_text(backend, path)
             if old is None and error and not _looks_missing(error):
@@ -346,15 +383,27 @@ def mutate_task_state(
                 state = TaskState(objective_id=objective_id)
             else:
                 state = TaskState.model_validate_json(old)
+            if state.objective_id != objective_id:
+                return None
+            if fence:
+                _assert_owner(state)
             mutate(state)
             state.saved_at = _now()
             content = state.bounded().model_dump_json(indent=2)
             if len(content.encode("utf-8")) > _MAX_DOCUMENT_BYTES:
                 return None
             if old is None:
-                backend.write(path, content)
+                persisted = backend.write(path, content)
             elif old != content:
-                backend.edit(path, old, content)
+                persisted = backend.edit(path, old, content)
+            else:
+                return state
+            if persisted.error:
+                log.debug("task-state persistence refused")
+                return None
+            recovered, error = _read_text(backend, path)
+            if error or recovered != content:
+                return None
             return state
         except TaskStateRefused:
             raise
@@ -370,6 +419,7 @@ def fold_task_budget(
     model_calls: int = 0,
     input_tokens: int = 0,
     output_tokens: int = 0,
+    wall_clock_s: float = 0.0,
     decision: DecisionRecord | None = None,
 ) -> TaskState | None:
     """Accumulate usage counters without bumping ``state_revision`` (ADR-0055).
@@ -381,9 +431,15 @@ def fold_task_budget(
     """
 
     def mutate(state: TaskState) -> None:
-        state.budget.model_calls += model_calls
-        state.budget.input_tokens += input_tokens
-        state.budget.output_tokens += output_tokens
+        deltas = Budget(
+            model_calls=model_calls,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+            wall_clock_s=wall_clock_s,
+        )
+        for key in ("model_calls", "input_tokens", "output_tokens", "wall_clock_s"):
+            setattr(state.budget, key, getattr(state.budget, key) + getattr(deltas, key))
+        state.accounting_revision += 1
         if decision is not None and not any(
             entry.action == decision.action for entry in state.decision_record
         ):
@@ -412,7 +468,7 @@ def persist_task_state_for_objectives(
         if not objective_id:
             continue
         try:
-            with document_lock(task_state_path(str(objective_id))):
+            with document_lock(task_state_path(str(objective_id)), backend):
                 bundle = read_task_state(backend, str(objective_id))
                 if bundle.error:
                     log.debug("task-state refresh skipped: %s", bundle.error)
