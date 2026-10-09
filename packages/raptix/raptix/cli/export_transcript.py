@@ -20,7 +20,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from raptix.runtime.event_log import EngagementEvent, EventType, read_events
+from raptix.execution.session.event_log import EngagementEvent, EventType, read_events
 
 EXIT_OK = 0
 EXIT_NOT_FOUND = 1

@@ -56,7 +56,7 @@ If a validation failure is detected mid-bundle, fix the failing document in plac
 
 Before handing off to raptix, confirm:
 
-- [ ] All eight `plan/*.json` files exist and validate against their schemas in `raptix.core.schemas`.
+- [ ] All eight `plan/*.json` files exist and validate against their schemas in `raptix_core.types.engagement`.
 - [ ] Threat Profile `initial_access` techniques are permitted under RoE.
 - [ ] CONOPS `kill_chain` phases reference RoE-in-scope assets only.
 - [ ] Cleanup `artifacts` cover every persistence-leaving phase.

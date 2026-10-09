@@ -257,10 +257,10 @@ class KGStore:
         """Build an EngagementSnapshot for ``cart.diff_snapshots`` consumption.
 
         Lazy-imported to avoid a circular: ``cart.py`` imports from
-        ``raptix.runtime``, which the middleware does not need to
+        ``raptix.execution.session``, which the middleware does not need to
         pull in just to construct a snapshot.
         """
-        from raptix.runtime.cart import EngagementSnapshot, SnapshotNodeKey, _hash_snapshot
+        from raptix.execution.session.cart import EngagementSnapshot, SnapshotNodeKey, _hash_snapshot
 
         self._check_engagement(engagement)
 

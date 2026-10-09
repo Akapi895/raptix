@@ -21,8 +21,8 @@ capability implementation and the resolver never synthesizes one.
 from __future__ import annotations
 
 from raptix.execution.adapters.base import ToolAdapter, adapter_classes
-from raptix.execution.capabilities.availability import AvailabilityEvaluator
-from raptix.execution.capabilities.registry import CapabilityRegistry
+from raptix.capabilities.availability import AvailabilityEvaluator
+from raptix.capabilities.registry import CapabilityRegistry
 from raptix_core.types.capability import (
     CapabilityAvailability,
     CapabilityManifest,
@@ -77,7 +77,7 @@ class AdapterResolver:
         """Build the :class:`ExecutionSpec` for one capability request.
 
         Raises:
-            raptix.execution.capabilities.registry.UnknownCapabilityError:
+            raptix.capabilities.registry.UnknownCapabilityError:
                 the capability id is not in the catalog.
             AdapterResolutionError: the capability is unavailable, or
                 none of its healthy implementations has a registered
