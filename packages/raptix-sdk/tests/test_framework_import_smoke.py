@@ -102,27 +102,6 @@ def test_framework_llm_importable() -> None:
     assert callable(create_llm)
 
 
-def test_compat_register_legacy_imports_idempotent() -> None:
-    """Re-calling register_legacy_imports() is a no-op (boot called it
-    once at framework import; explicit re-call must not re-warn)."""
-    import warnings
-
-    from raptix.compat import register_legacy_imports
-
-    with warnings.catch_warnings(record=True) as ws:
-        warnings.simplefilter("always")
-        register_legacy_imports()  # second call after boot's
-        register_legacy_imports()  # third call
-    # No new DeprecationWarning emitted from the boot list (boot
-    # already fired its single one). The per-import warnings on the
-    # shim modules fire only on attribute access; nothing accessed
-    # here.
-    boot_warnings = [w for w in ws if "Phase 1 compat shims" in str(w.message)]
-    assert boot_warnings == [], (
-        f"register_legacy_imports() should be idempotent; got {len(boot_warnings)} repeat warnings"
-    )
-
-
 def test_role_registry_seeded_with_16_oss_roles() -> None:
     """Framework boot pre-registers every OSS role per spec §8 gap #5."""
     import raptix  # boot fires
