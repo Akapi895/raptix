@@ -158,6 +158,11 @@ def validate_structured_summary(
             errors.append("unknown ledger action hash")
         if set(item) != {"action_hash", "reason", "retry_condition"}:
             errors.append("invalid failed_attempts fields")
+        if any(
+            not isinstance(item.get(field), str) or len(item[field]) > 2000
+            for field in ("reason", "retry_condition")
+        ):
+            errors.append("invalid failed_attempts text")
 
     if any(
         not isinstance(item, dict)
