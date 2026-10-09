@@ -144,6 +144,53 @@ def test_observation_returns_original_result_and_runs_tool_once(monkeypatch) -> 
     assert calls == [_tool_request()]
 
 
+def test_stall_reminder_fires_when_thread_id_only_on_tool_phase(monkeypatch) -> None:
+    """Regression: keys must agree across the tool and model hooks.
+
+    The window is filled in ``wrap_tool_call`` (where ``runtime.config``
+    carries ``thread_id``) but the reminder is looked up in
+    ``wrap_model_call`` (where it does not). Deriving the scope from the
+    thread id made the two keys diverge and the reminder never fired against
+    a live looping agent. The scope must come from graph state, which both
+    phases share.
+    """
+    monkeypatch.setenv("RAPTIX_PROGRESS_OBSERVE", "1")
+    middleware = _middleware()
+    reply = ToolMessage(content="scan done\n[Exit code: 0]", tool_call_id="call-1")
+    tool_request = _tool_request()
+    tool_request.runtime = SimpleNamespace(config={"configurable": {"thread_id": "thread-1"}})
+    for _ in range(12):
+        assert middleware.wrap_tool_call(tool_request, lambda _r, reply=reply: reply) is reply
+
+    seen: list[str] = []
+    model_request = _model_request()
+    model_request.runtime = SimpleNamespace(config={"configurable": {}})
+    middleware.wrap_model_call(
+        model_request, lambda request: seen.append(str(request.system_message.content))
+    )
+    assert "No verifiable progress" in seen[0]
+
+
+def test_stall_reminder_fires_despite_unique_envelope_ids(monkeypatch) -> None:
+    """Regression: per-call identity inside the result must not break the window.
+
+    The untrusted-output envelope embeds a unique ``tool_call_id`` into the
+    content the observer sees, so hashing it verbatim made byte-identical
+    results hash differently and the stall window never became uniform — a
+    live 80x identical loop never tripped the reminder.
+    """
+    monkeypatch.setenv("RAPTIX_PROGRESS_OBSERVE", "1")
+    middleware = _middleware()
+    for index in range(12):
+        content = (
+            f'<UNTRUSTED_TOOL_OUTPUT origin="bash" tool_call_id="chatcmpl-tool-{index:016x}" '
+            'risk="low">\n[Exit code: 0]\n500 Invalid file path\n</UNTRUSTED_TOOL_OUTPUT>'
+        )
+        reply = ToolMessage(content=content, status="success", tool_call_id=f"call-{index}")
+        assert middleware.wrap_tool_call(_tool_request(), lambda _r, reply=reply: reply) is reply
+    assert "No verifiable progress" in _system_text(middleware)
+
+
 def test_progress_only_slot_builds_without_kg(monkeypatch) -> None:
     from raptix.intelligence.agents.middleware_slots import _make_tried_edges
 

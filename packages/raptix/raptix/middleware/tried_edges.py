@@ -78,12 +78,29 @@ def progress_observe_enabled() -> bool:
     return os.environ.get("RAPTIX_PROGRESS_OBSERVE", "0").strip().lower() in {"1", "true", "yes"}
 
 
+# Per-call identity that middlewares further in embed into the result the
+# observer sees. The untrusted-output envelope carries ``tool_call_id``, which
+# is unique on every call, so hashing the enveloped content verbatim makes two
+# byte-identical results hash differently and the stall window never becomes
+# uniform. Strip the volatile identity before hashing; the conversation is
+# never touched.
+_VOLATILE_ID = re.compile(r'\btool_call_id="[^"]*"')
+
+
+def _stable_content(content: Any) -> Any:
+    if isinstance(content, str):
+        return _VOLATILE_ID.sub("", content)
+    if isinstance(content, list):
+        return [_stable_content(part) if isinstance(part, str) else part for part in content]
+    return content
+
+
 def _result_hash(result: Any) -> str | None:
     """Hash a bounded, structured view of a tool result: no raw payload stored."""
     if isinstance(result, ToolMessage):
         view: Any = {
             "status": result.status,
-            "content": result.content,
+            "content": _stable_content(result.content),
             "artifact": result.artifact,
         }
     else:
@@ -91,7 +108,10 @@ def _result_hash(result: Any) -> str | None:
         if not isinstance(update, dict):
             return None
         view = [
-            {"content": getattr(m, "content", ""), "status": getattr(m, "status", "")}
+            {
+                "content": _stable_content(getattr(m, "content", "")),
+                "status": getattr(m, "status", ""),
+            }
             for m in update.get("messages", [])
         ]
     encoded = json.dumps(view, sort_keys=True, ensure_ascii=False, default=str).encode()
@@ -221,12 +241,22 @@ class TriedEdgesMiddleware(AgentMiddleware):
         return str(state.get("active_objective_id") or "unscoped")
 
     def _key(self, request: Any) -> tuple[str, str]:
-        config = getattr(getattr(request, "runtime", None), "config", None) or {}
-        scope = (config.get("configurable") or {}).get("thread_id")
-        if not scope:
-            state = getattr(request, "state", None) or {}
-            scope = state.get("engagement_name") or state.get("kg_engagement") or "default"
+        # The window fills in ``wrap_tool_call`` but the reminder is looked up
+        # in ``wrap_model_call``. ``runtime.config.configurable.thread_id`` is
+        # present in the tool-phase request and absent in the model-phase
+        # request, so deriving the scope from it makes the two keys diverge and
+        # the stall reminder never fires. Prefer the graph-state identity
+        # (hydrated identically in both phases); fall back to the thread id
+        # only when the state carries no engagement scope at all.
         state = getattr(request, "state", None) or {}
+        scope = (
+            state.get("engagement_name")
+            or state.get("kg_engagement")
+            or state.get("workspace_path")
+        )
+        if not scope:
+            config = getattr(getattr(request, "runtime", None), "config", None) or {}
+            scope = (config.get("configurable") or {}).get("thread_id") or "default"
         return json.dumps(
             [scope, state.get("workspace_path"), state.get("engagement_name")]
         ), self._objective(request)

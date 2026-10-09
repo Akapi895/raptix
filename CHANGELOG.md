@@ -74,6 +74,12 @@ design spec, §13.4).
 
 ### Fixed
 
+- Tried-edge observer stall detection (found in a live benchmark): scope keys
+  derive from engagement/workspace state instead of the model-phase-missing
+  `thread_id`, and result digests strip the per-call `tool_call_id` that the
+  untrusted-output envelope embeds — byte-identical retry loops now register
+  as stalled across phases instead of evading the window.
+
 - Context completion review: cold imports no longer construct the whole agent
   graph; task accounting resolves the run workspace, unwraps extended model
   responses, is the authoritative usage source, and survives stale work-state
