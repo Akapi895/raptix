@@ -47,6 +47,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
         netcat-openbsd \
         iputils-ping \
         subfinder \
+        # dirsearch (python dir enumerator) + seclists (DNS + Web-Content
+        # corpus at /usr/share/seclists). Without seclists the sandbox has
+        # NO vhost/subdomain wordlist at all — dirb's lists are path-only —
+        # so vhost fuzzing (web-recon/discovery skill, recon evidence bar)
+        # is impossible. Also the referenced-by-skill paths
+        # /usr/share/wordlists/{dirb,subdomains}.txt do not exist in Kali;
+        # real dirb path is /usr/share/dirb/wordlists/.
+        dirsearch \
+        seclists \
         # ── Exploit & post-exploitation ──
         hydra \
         sqlmap \
@@ -77,7 +86,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=sandbox-apt-cache
         adb \
         apktool \
         # ── YARA (DFIR validation; complements yara-x on the host) ──
-        yara
+        yara && \
+    # seclists ships the full corpus (~1.8 GB incl. Passwords/Payloads);
+    # recon guidance only consumes Discovery/ (DNS vhost lists + Web-Content
+    # path lists) — prune the rest in this same layer so the image never
+    # carries it.
+    find /usr/share/seclists -mindepth 1 -maxdepth 1 -type d ! -name Discovery -exec rm -rf {} + && \
+    rm -f /usr/share/seclists/README.md /usr/share/seclists/LICENSE
 
 # ── Tools NOT yet wired into apt-install ──
 # Deliberately deferred to follow-up PRs because they need either a

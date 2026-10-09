@@ -72,6 +72,12 @@ design spec, §13.4).
   Add the `MiddlewareSlot.EXECUTION_LEDGER` plugin slot; existing public names
   and the default-off middleware stack remain compatible (ADRs 0049–0051).
 
+- Sandbox image ships `dirsearch` and the `seclists` Discovery corpus
+  (`/usr/share/seclists`): without it the sandbox had no vhost/subdomain
+  wordlist at all (dirb's lists are path-only), so the mandated vhost fuzz
+  pass could never run. Non-`Discovery/` corpora are pruned in the same
+  layer to keep the image lean.
+
 ### Fixed
 
 - Tried-edge observer stall detection (found in a live benchmark): scope keys
