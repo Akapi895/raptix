@@ -3,36 +3,36 @@
 # shape demonstrated from inside OSS). See raptix/intelligence/agents/plugins/__init__.py.
 # The nine domain specialists are plugin-owned since W10; their factories
 # import from the domain packs directly.
-from raptix_active_directory.agent import create_ad_operator_agent
-from raptix_cloud.agent import create_cloud_hunter_agent
-from raptix_contracts.agent import create_contract_auditor_agent
-from raptix_ics.agent import create_ics_operator_agent
-from raptix_iot.agent import create_iot_operator_agent
-from raptix_mobile.agent import create_mobile_operator_agent
-from raptix_phishing.agent import create_phisher_agent
-from raptix_reversing.agent import create_reverser_agent
-from raptix_wireless.agent import create_wireless_operator_agent
+from importlib import import_module
+from typing import Any
 
-from raptix.intelligence.agents.plugins.detector import create_detector_agent
-from raptix.intelligence.agents.plugins.exploiter import create_exploiter_agent
-from raptix.intelligence.agents.plugins.patcher import create_patcher_agent
-from raptix.intelligence.agents.plugins.scanner import create_scanner_agent
-from raptix.intelligence.agents.plugins.verifier import create_verifier_agent
-from raptix.intelligence.agents.plugins.vulnresearch import create_vulnresearch_agent
-from raptix.intelligence.agents.standard.analyst import create_analyst_agent
-from raptix.intelligence.agents.standard.autohunt import create_autohunt_agent
-from raptix.intelligence.agents.standard.blue_cell import create_blue_cell_agent
-from raptix.intelligence.agents.standard.exploit import create_exploit_agent
-from raptix.intelligence.agents.standard.forensicator import create_forensicator_agent
-from raptix.intelligence.agents.standard.osint_operator import create_osint_operator_agent
-from raptix.intelligence.agents.standard.postexploit import create_postexploit_agent
-from raptix.intelligence.agents.standard.raptix import create_raptix_agent
-from raptix.intelligence.agents.standard.recon import create_recon_agent
-from raptix.intelligence.agents.standard.soundwave import create_soundwave_agent
-from raptix.intelligence.agents.standard.supply_chain_operator import (
-    create_supply_chain_operator_agent,
-)
-from raptix.intelligence.agents.standard.surface_exploit import create_surface_exploit_agent
+_DOMAINS = {
+    "ad_operator": "active_directory",
+    "cloud_hunter": "cloud",
+    "contract_auditor": "contracts",
+    "ics_operator": "ics",
+    "iot_operator": "iot",
+    "mobile_operator": "mobile",
+    "phisher": "phishing",
+    "reverser": "reversing",
+    "wireless_operator": "wireless",
+}
+_PLUGINS = {"detector", "exploiter", "patcher", "scanner", "verifier", "vulnresearch"}
+
+
+def __getattr__(name: str) -> Any:
+    if name not in __all__:
+        raise AttributeError(name)
+    role = name.removeprefix("create_").removesuffix("_agent")
+    module = (
+        f"raptix_{_DOMAINS[role]}.agent"
+        if role in _DOMAINS
+        else f"{__name__}.{'plugins' if role in _PLUGINS else 'standard'}.{role}"
+    )
+    value = getattr(import_module(module), name)
+    globals()[name] = value
+    return value
+
 
 __all__ = [
     "create_recon_agent",

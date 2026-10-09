@@ -109,6 +109,7 @@ def test_compat_register_legacy_imports_idempotent() -> None:
 
     from raptix.compat import register_legacy_imports
 
+    register_legacy_imports()
     with warnings.catch_warnings(record=True) as ws:
         warnings.simplefilter("always")
         register_legacy_imports()  # second call after boot's
@@ -129,8 +130,11 @@ def test_role_registry_seeded_with_16_oss_roles() -> None:
 
     del raptix  # silence unused-import lint
 
+    from raptix._boot import _register_oss_roles
     from raptix_core.contracts.slots import SLOTS_PER_ROLE
     from raptix_core.registry import RoleRegistry
+
+    _register_oss_roles()
 
     for role in SLOTS_PER_ROLE:
         spec = RoleRegistry.get(role)

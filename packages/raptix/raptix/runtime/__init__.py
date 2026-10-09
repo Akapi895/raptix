@@ -1,91 +1,39 @@
-"""Runtime infrastructure for the Raptix orchestrator process.
+"""Resolve runtime exports on demand; shutdown must not import the model stack."""
 
-Each runtime module (event log, graceful shutdown, recording, CART, ...)
-ships in its own PR. This package init imports every known module
-best-effort so each PR can land in any order without colliding on
-this file.
-"""
+from importlib import import_module
+from typing import Any
 
-_exports: list[str] = []
+_MODULES = {
+    "EngagementEvent": "event_log",
+    "EventLog": "event_log",
+    "EventType": "event_log",
+    "read_events": "event_log",
+    "LangGraphState": "shutdown",
+    "install_shutdown_handlers": "shutdown",
+    "RecordingMiddleware": "recording",
+    "ReplayMiddleware": "recording",
+    "ReplayMismatchError": "recording",
+    "open_record": "recording",
+    "open_replay": "recording",
+    "Dispatcher": "task_spec",
+    "SubAgentTaskSpec": "task_spec",
+    "ChangeEvent": "cart",
+    "EngagementSnapshot": "cart",
+    "LinearOPPLANAdapter": "cart",
+    "OPPLANAdapter": "cart",
+    "ReplayPlan": "cart",
+    "ReplayRunner": "cart",
+    "SnapshotDelta": "cart",
+    "SnapshotNodeKey": "cart",
+    "Watcher": "cart",
+    "diff_snapshots": "cart",
+}
+__all__ = list(_MODULES)
 
-try:
-    from raptix.runtime.event_log import (  # noqa: F401  # re-exported via __all__
-        EngagementEvent,
-        EventLog,
-        EventType,
-        read_events,
-    )
 
-    _exports += ["EngagementEvent", "EventLog", "EventType", "read_events"]
-except ImportError:
-    pass
-
-try:
-    from raptix.runtime.shutdown import (  # noqa: F401  # re-exported via __all__
-        LangGraphState,
-        install_shutdown_handlers,
-    )
-
-    _exports += ["LangGraphState", "install_shutdown_handlers"]
-except ImportError:
-    pass
-
-try:
-    from raptix.runtime.recording import (  # noqa: F401
-        RecordingMiddleware,
-        ReplayMiddleware,
-        ReplayMismatchError,
-        open_record,
-        open_replay,
-    )
-
-    _exports += [
-        "RecordingMiddleware",
-        "ReplayMiddleware",
-        "ReplayMismatchError",
-        "open_record",
-        "open_replay",
-    ]
-except ImportError:
-    pass
-
-try:
-    from raptix.runtime.task_spec import (  # noqa: F401
-        Dispatcher,
-        SubAgentTaskSpec,
-    )
-
-    _exports += ["Dispatcher", "SubAgentTaskSpec"]
-except ImportError:
-    pass
-
-try:
-    from raptix.runtime.cart import (  # noqa: F401
-        ChangeEvent,
-        EngagementSnapshot,
-        LinearOPPLANAdapter,
-        OPPLANAdapter,
-        ReplayPlan,
-        ReplayRunner,
-        SnapshotDelta,
-        SnapshotNodeKey,
-        Watcher,
-        diff_snapshots,
-    )
-
-    _exports += [
-        "ChangeEvent",
-        "EngagementSnapshot",
-        "LinearOPPLANAdapter",
-        "OPPLANAdapter",
-        "ReplayPlan",
-        "ReplayRunner",
-        "SnapshotDelta",
-        "SnapshotNodeKey",
-        "Watcher",
-        "diff_snapshots",
-    ]
-except ImportError:
-    pass
-
-__all__ = _exports
+def __getattr__(name: str) -> Any:
+    if name not in _MODULES:
+        raise AttributeError(name)
+    value = getattr(import_module(f"{__name__}.{_MODULES[name]}"), name)
+    globals()[name] = value
+    return value

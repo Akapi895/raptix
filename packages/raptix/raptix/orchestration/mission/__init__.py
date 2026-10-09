@@ -7,7 +7,17 @@ cross-cutting adapters, so they live under orchestration rather than
 middleware. See ADR-0040.
 """
 
-from raptix.orchestration.mission.engagement import EngagementContextMiddleware
-from raptix.orchestration.mission.opplan import OPPLANMiddleware
+from importlib import import_module
+from typing import Any
+
+
+def __getattr__(name: str) -> Any:
+    modules = {"EngagementContextMiddleware": "engagement", "OPPLANMiddleware": "opplan"}
+    if name not in modules:
+        raise AttributeError(name)
+    value = getattr(import_module(f"{__name__}.{modules[name]}"), name)
+    globals()[name] = value
+    return value
+
 
 __all__ = ["EngagementContextMiddleware", "OPPLANMiddleware"]
