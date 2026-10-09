@@ -10,7 +10,7 @@ import enum
 from dataclasses import dataclass
 from typing import Any
 
-from raptix.capabilities.contracts import validate_contract_metadata
+from raptix.specialist_contracts.contracts import validate_contract_metadata
 from raptix.orchestration.phases.ukc import phase_from_slug
 from raptix.skills.audit.aliases import resolve_subdomain
 from raptix.skills.audit.canonical import load_canonical_subdomains

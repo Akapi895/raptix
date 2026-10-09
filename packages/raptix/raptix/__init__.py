@@ -14,9 +14,8 @@ except PackageNotFoundError:
 
 __package_name__ = "decepticon"
 
-# Phase 2 framework boot — register OSS roles with RoleRegistry,
-# materialize the PluginRegistry singleton, and surface the legacy
-# import paths via the compat shim. All idempotent / opt-out via env.
+# Phase 2 framework boot — register OSS roles with RoleRegistry and
+# materialize the PluginRegistry singleton. Idempotent / opt-out via env.
 #
 # The sandbox container ships only a subset of decepticon
 # (execution/sandbox/{kernel,server} + bare __init__.py) without
@@ -24,7 +23,6 @@ __package_name__ = "decepticon"
 # The sandbox.Dockerfile sets RAPTIX_SKIP_BOOT=1 in its ENV so this
 # import doesn't fail.
 if not _os.environ.get("RAPTIX_SKIP_BOOT"):
-    from raptix import _boot, compat
+    from raptix import _boot
 
     _boot.run()
-    compat.register_legacy_imports()

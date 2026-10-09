@@ -37,7 +37,7 @@ from raptix.knowledge.graph.migration_runner import (
     list_applied,
 )
 from raptix.knowledge.graph.store import KGStore
-from raptix.runtime.cart import AttackGraphProtocol, EngagementSnapshot
+from raptix.execution.session.cart import AttackGraphProtocol, EngagementSnapshot
 
 # ── Migrations ──────────────────────────────────────────────────────────
 

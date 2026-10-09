@@ -110,14 +110,14 @@ def _record_path_status() -> str:
     Silent capture loss (a pinned-but-unusable ``RAPTIX_RUNTIME__RECORD_PATH``)
     previously produced empty record files that nobody noticed until the
     post-mortem. Reporting it here makes the capture channel doctor-visible;
-    opening with :func:`raptix.runtime.recording.open_record` exercises the
+    opening with :func:`raptix.execution.session.recording.open_record` exercises the
     exact code path the run will use.
     """
     raw = os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "").strip()
     if not raw:
         return "off (set RAPTIX_RUNTIME__RECORD_PATH to capture full transcripts)"
     try:
-        from raptix.runtime.recording import open_record  # noqa: PLC0415
+        from raptix.execution.session.recording import open_record  # noqa: PLC0415
 
         sink = open_record(Path(raw))
     except Exception as exc:  # noqa: BLE001 — report, don't crash the doctor

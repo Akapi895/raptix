@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 
-from raptix.execution.capabilities import AvailabilityEvaluator, CapabilityRegistry
+from raptix.capabilities import AvailabilityEvaluator, CapabilityRegistry
 from raptix.intelligence.tooling.exposure import (
     RECOVERY_TOOL_NAMES,
     ROLLOUT_ORDER,

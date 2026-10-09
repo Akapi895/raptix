@@ -4,14 +4,14 @@ This is the seam that makes external agent runtimes (OpenClaw, Hermes, or any
 MCP client) able to *drive* Raptix like its CLI — from a phone, via those
 agents' chat channels. The full surface:
 
-- ``decepticon_list_graphs`` / ``decepticon_list_engagements`` — discover & resume
-- ``decepticon_start_engagement`` — launch an authorized engagement
-- ``decepticon_send_message`` — steer / answer / ``/model`` switch mid-run
-- ``decepticon_transcript`` — watch the orchestrator narrative incrementally
-- ``decepticon_watch`` — tail the live sub-agent stream for a few seconds
-- ``decepticon_engagement_state`` — inspect OPPLAN / scope / phase
-- ``decepticon_engagement_status`` / ``decepticon_engagement_findings`` — status & SARIF
-- ``decepticon_cancel_engagement`` — stop a run
+- ``raptix_list_graphs`` / ``raptix_list_engagements`` — discover & resume
+- ``raptix_start_engagement`` — launch an authorized engagement
+- ``raptix_send_message`` — steer / answer / ``/model`` switch mid-run
+- ``raptix_transcript`` — watch the orchestrator narrative incrementally
+- ``raptix_watch`` — tail the live sub-agent stream for a few seconds
+- ``raptix_engagement_state`` — inspect OPPLAN / scope / phase
+- ``raptix_engagement_status`` / ``raptix_engagement_findings`` — status & SARIF
+- ``raptix_cancel_engagement`` — stop a run
 
 The server is a thin control plane. The red-team work runs inside the
 Raptix LangGraph server (RoE enforcement, sandbox, knowledge-graph
@@ -47,7 +47,7 @@ def build_server(
     cfg = config or load_config()
     engagements = EngagementClient(cfg, client=client)
     verifier, auth = build_auth(cfg, host=host, port=port)
-    mcp = FastMCP("decepticon", host=host, port=port, token_verifier=verifier, auth=auth)
+    mcp = FastMCP("raptix", host=host, port=port, token_verifier=verifier, auth=auth)
     register_lifecycle_tools(mcp, engagements, cfg)
     register_interactive_tools(mcp, engagements)
     return mcp

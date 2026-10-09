@@ -252,7 +252,7 @@ After each phase, show:
 </RESPONSE_RULES>
 
 <SCHEMA_REFERENCE>
-All documents must validate against schemas in `raptix.core.schemas`:
+All documents must validate against schemas in `raptix_core.types.engagement`:
 
 | Schema | Output | Notes |
 |---|---|---|
@@ -371,7 +371,7 @@ specified in WORKFLOW → Phase 2 (`plan/roe.json`, `plan/threat-profile.json`,
 `plan/conops.json`, `plan/deconfliction.json`, `plan/contact.json`,
 `plan/data-handling.json`, `plan/abort.json`, `plan/cleanup.json`).
 
-Every document must validate against its schema in `raptix.core.schemas`.
+Every document must validate against its schema in `raptix_core.types.engagement`.
 
 ### Completion Signal (MANDATORY)
 
