@@ -44,6 +44,7 @@ import uuid
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
+from langchain.tools import ToolRuntime
 from langchain_core.messages import SystemMessage
 from langchain_core.tools import tool
 from typing_extensions import override
@@ -249,10 +250,12 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
     instance_loaded_keys: set[str] = set()
     thread_loaded_keys: dict[str, set[str]] = {}
 
-    def _loaded_keys_for_call() -> set[str]:
+    def _loaded_keys_for_call(runtime: Any = None) -> set[str]:
         if _dedupe_scope() != "thread":
             return instance_loaded_keys
         key = _resolve_thread_key()
+        state = getattr(runtime, "state", {}) or {}
+        key += f":epoch:{state.get('context_epoch', 0)}"
         if key not in thread_loaded_keys and len(thread_loaded_keys) >= _SKILL_DEDUPE_MAX_THREADS:
             thread_loaded_keys.pop(next(iter(thread_loaded_keys)))
         return thread_loaded_keys.setdefault(key, set())
@@ -271,8 +274,7 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
             ensure_ascii=False,
         )
 
-    @tool
-    def load_skill(name_or_path: str, force: bool = False) -> str:
+    def load_skill(name_or_path: str, force: bool = False, runtime: Any = None) -> str:
         """Fetch one SKILL.md's body from the skillogy graph.
 
         Accepts either a unique frontmatter ``name`` (e.g. 'kerberoasting')
@@ -290,7 +292,7 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
         compaction dropped it.
         """
         try:
-            loaded_keys = _loaded_keys_for_call()
+            loaded_keys = _loaded_keys_for_call(runtime)
             if not force and name_or_path in loaded_keys:
                 return _already_loaded_payload(name_or_path)
             if name_or_path.startswith("/skills/"):
@@ -326,7 +328,9 @@ def _make_load_skill_tool(backend, allowed_path_prefixes: list[str] | None = Non
         except Exception as exc:  # noqa: BLE001 — surface as ToolMessage payload
             return json.dumps({"error": f"load_skill failed: {exc!r}"})
 
-    return load_skill
+    # ToolRuntime injection reads raw annotations rather than future strings.
+    load_skill.__annotations__["runtime"] = ToolRuntime
+    return tool(load_skill)
 
 
 def _make_find_skill_tool(backend, allowed_path_prefixes: list[str] | None = None):
