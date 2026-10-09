@@ -13,6 +13,7 @@ import shlex
 import threading
 import time
 from collections import deque
+from types import SimpleNamespace
 from typing import Any, cast
 
 from langchain.agents.middleware import AgentMiddleware
@@ -77,15 +78,24 @@ def progress_observe_enabled() -> bool:
     return os.environ.get("RAPTIX_PROGRESS_OBSERVE", "0").strip().lower() in {"1", "true", "yes"}
 
 
-def _result_hash(result: Any) -> str:
+def _result_hash(result: Any) -> str | None:
     """Hash a bounded, structured view of a tool result: no raw payload stored."""
     if isinstance(result, ToolMessage):
-        view: Any = {"status": result.status, "content": str(result.content)[:4096]}
+        view: Any = {
+            "status": result.status,
+            "content": result.content,
+            "artifact": result.artifact,
+        }
     else:
-        view = {"type": type(result).__name__}
-    return hashlib.sha256(
-        json.dumps(view, sort_keys=True, ensure_ascii=False, default=str).encode()
-    ).hexdigest()
+        update = getattr(result, "update", None)
+        if not isinstance(update, dict):
+            return None
+        view = [
+            {"content": getattr(m, "content", ""), "status": getattr(m, "status", "")}
+            for m in update.get("messages", [])
+        ]
+    encoded = json.dumps(view, sort_keys=True, ensure_ascii=False, default=str).encode()
+    return hashlib.sha256(encoded).hexdigest() if len(encoded) <= 1_000_000 else None
 
 
 def _outcome(message: Any) -> tuple[str, str]:
@@ -164,6 +174,10 @@ class TriedEdgesMiddleware(AgentMiddleware):
         self._lock = threading.Lock()
         self._progress: dict[tuple[str, str], deque] = {}
         self._emitted: dict[tuple[str, str], tuple] = {}
+        from raptix.middleware.execution_ledger import ExecutionLedgerMiddleware
+
+        self._io = ExecutionLedgerMiddleware(role="progress-io", backend=backend)
+        self._io._slots = self._slots
 
     def _bounded_call(self, action: Any, *args: Any, **kwargs: Any) -> Any:
         if not self._slots.acquire(blocking=False):
@@ -174,31 +188,28 @@ class TriedEdgesMiddleware(AgentMiddleware):
             self._slots.release()
 
     def wrap_tool_call(self, request: Any, handler: Any) -> Any:
+        version = self._io._bounded(self._revision, request) if progress_observe_enabled() else None
         result = handler(request)
         if progress_observe_enabled():
-            try:
-                self._bounded_call(self._observe, request, result)
-            except Exception as exc:  # noqa: BLE001 — observation never blocks a tool
-                log.debug("progress observation skipped: %s", exc)
+            self._io._bounded(self._observe, request, result, version)
         return result
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
+        version = (
+            await self._io._to_thread(self._revision, request)
+            if progress_observe_enabled()
+            else None
+        )
         result = await handler(request)
         if progress_observe_enabled() or (_enabled() and self._store is not None):
-            try:
-                await asyncio.wait_for(
-                    asyncio.to_thread(self._after_tool, request, result),
-                    timeout=_MAX_SECONDS,
-                )
-            except Exception as exc:  # noqa: BLE001 — observation never blocks a tool
-                log.debug("tried-edge recording skipped: %s", exc)
+            await self._io._to_thread(self._after_tool, request, result, version)
         return result
 
-    def _after_tool(self, request: Any, result: Any) -> None:
+    def _after_tool(self, request: Any, result: Any, version: str | None) -> None:
         if progress_observe_enabled():
-            self._observe(request, result)
+            self._observe(request, result, version)
         if _enabled() and self._store is not None:
-            self._bounded_call(self._record, request, result)
+            self._record(request, result)
 
     def _objective(self, request: Any) -> str:
         from raptix.core.dispatch_context import active_dispatch
@@ -215,28 +226,43 @@ class TriedEdgesMiddleware(AgentMiddleware):
         if not scope:
             state = getattr(request, "state", None) or {}
             scope = state.get("engagement_name") or state.get("kg_engagement") or "default"
-        return str(scope), self._objective(request)
+        state = getattr(request, "state", None) or {}
+        return json.dumps(
+            [scope, state.get("workspace_path"), state.get("engagement_name")]
+        ), self._objective(request)
 
-    def _revision(self, request: Any) -> int:
-        if self._backend is None:
-            return 0
+    def _revision(self, request: Any) -> str | None:
+        state = getattr(request, "state", None) or {}
+        version = [
+            state.get("kg_revision"),
+            state.get("environment_revision"),
+            state.get("task_state_revision", 0),
+        ]
         try:
             from raptix.orchestration.mission.task_state import (
                 read_task_state,
                 scoped_task_backend,
             )
 
-            runtime = getattr(request, "runtime", None) or request
-            backend = scoped_task_backend(self._backend, runtime)
-            if backend is None:
-                return 0
-            state = read_task_state(backend, self._objective(request)).state
-            return state.state_revision if state is not None else 0
+            runtime = getattr(request, "runtime", None)
+            merged = SimpleNamespace(state=state, config=getattr(runtime, "config", None))
+            backend = scoped_task_backend(self._backend, merged)
+            if backend is not None:
+                bundle = read_task_state(backend, self._objective(request))
+                if bundle.error:
+                    return None
+                version.extend(
+                    [
+                        bundle.state.state_revision if bundle.state else 0,
+                        bundle.state.observed_kg_revision if bundle.state else None,
+                    ]
+                )
+            return hashlib.sha256(json.dumps(version, default=str).encode()).hexdigest()
         except Exception as exc:  # noqa: BLE001 — a progress signal is best-effort
             log.debug("progress revision unavailable: %s", type(exc).__name__)
-            return 0
+            return None
 
-    def _observe(self, request: Any, result: Any) -> None:
+    def _observe(self, request: Any, result: Any, before: str | None = None) -> None:
         tool_call = getattr(request, "tool_call", None)
         args = tool_call.get("args") if isinstance(tool_call, dict) else None
         name = getattr(getattr(request, "tool", None), "name", "") or ""
@@ -249,16 +275,54 @@ class TriedEdgesMiddleware(AgentMiddleware):
         except Exception as exc:  # noqa: BLE001 — hashing never blocks a tool
             log.debug("progress fingerprint skipped: %s", type(exc).__name__)
             return
-        entry = (action, self._revision(request), _result_hash(result), _technique(name, args))
+        after_request = request
+        update = getattr(result, "update", None)
+        if isinstance(update, dict):
+            after_request = SimpleNamespace(
+                state={**(request.state or {}), **update}, runtime=getattr(request, "runtime", None)
+            )
+        after = self._revision(after_request)
+        digest = _result_hash(result)
         key = self._key(request)
+        if before is None or after is None or digest is None or before != after:
+            with self._lock:
+                self._progress.pop(key, None)
+                self._emitted.pop(key, None)
+            self._persist_signal(request, False)
+            return
+        entry = (action, before, digest, _technique(name, args))
         with self._lock:
             window = self._progress.get(key)
             if window is None:
                 if len(self._progress) >= _PROGRESS_MAX_KEYS:
-                    self._progress.pop(next(iter(self._progress)), None)
+                    oldest = next(iter(self._progress))
+                    self._progress.pop(oldest, None)
+                    self._emitted.pop(oldest, None)
                 window = deque(maxlen=_STALL_WINDOW)
                 self._progress[key] = window
+            if window and window[-1][1:3] != entry[1:3]:
+                self._emitted.pop(key, None)
             window.append(entry)
+            stalled = len(window) == _STALL_WINDOW and all(e[1:3] == entry[1:3] for e in window)
+        self._persist_signal(request, stalled)
+
+    def _persist_signal(self, request: Any, stalled: bool) -> None:
+        if self._backend is None or self._objective(request) == "unscoped":
+            return
+        from raptix.orchestration.mission.task_state import mutate_task_state, scoped_task_backend
+
+        backend = scoped_task_backend(
+            self._backend,
+            SimpleNamespace(
+                state=request.state,
+                config=getattr(getattr(request, "runtime", None), "config", None),
+            ),
+        )
+
+        def mutate(state: Any) -> None:
+            state.handoff_signals = ["stall"] if stalled else []
+
+        mutate_task_state(backend, self._objective(request), mutate)
 
     def _progress_text(self, request: Any) -> str:
         if not progress_observe_enabled():
@@ -268,7 +332,7 @@ class TriedEdgesMiddleware(AgentMiddleware):
             window = self._progress.get(key)
             if window is None or len(window) < _STALL_WINDOW:
                 return ""
-            if any(entry != window[-1] for entry in window):
+            if any(entry[1:3] != window[-1][1:3] for entry in window):
                 self._emitted.pop(key, None)
                 return ""
             if self._emitted.get(key) == window[-1]:
@@ -367,5 +431,9 @@ class TriedEdgesMiddleware(AgentMiddleware):
         return request
 
     def _inject_progress(self, request: Any) -> Any:
-        text = self._progress_text(request)
-        return self._append_system(request, text) if text else request
+        try:
+            text = self._progress_text(request)
+            return self._append_system(request, text) if text else request
+        except Exception as exc:
+            log.debug("progress reminder unavailable: %s", type(exc).__name__)
+            return request
