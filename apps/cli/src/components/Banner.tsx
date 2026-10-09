@@ -1,82 +1,94 @@
 import React from "react";
-import { Text, Box, useStdout } from "ink";
+import { Text, Box } from "ink";
 
-// ── Full banner: braille logo + block-character text art (≥140 cols) ──
+// ── Full banner: RAPTIX logo + text art ───────────────────────────────
 const BANNER_FULL = `
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣶⣤⡀⠀⣤⣤⣾⣿⣦⣠⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣶⣶⣿⢿⣿⣿⣿⣿⣿⣻⣿⣟⣿⣿⣷⣾⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⢰⣿⣄⣼⣿⣆⠀⣀⣴⣾⣿⣻⣟⣷⣯⢿⡾⣯⣷⣿⣾⣯⣷⢿⡾⣿⣤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⣀⣸⣿⣿⣽⣯⣿⣻⣿⣟⣿⢾⣽⣟⣿⣻⣟⣿⣻⣯⡿⣾⣽⣟⣿⣽⣟⡿⣿⢿⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⢠⣾⣿⣷⣽⣷⢿⣷⢟⣮⣿⣻⡿⣿⣻⣿⣽⣻⢾⣯⣿⣻⣛⠿⣾⣽⢷⡿⣾⣻⣟⣯⣿⣇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠉⠙⢹⣷⢿⣯⡿⣿⢿⣟⣷⣿⣿⣿⣟⣯⣿⣻⢷⣿⡧⣿⢟⢮⣻⣟⣿⣽⣯⢿⣽⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀██████████                                         █████     ███⠀⠀
-⠀⠀⠀⠀⣼⣿⣻⣿⣾⣿⣟⣿⡾⣿⢾⣽⣟⣿⣿⡾⣯⣿⣾⣷⣽⣳⣧⣿⢿⣷⢿⡾⣿⣞⡿⣿⡀⠀⠀⠀⠀⠀⠀⠀░░███░░░░███                                       ░░███     ░░░⠀⠀
-⠀⠀⠀⠀⠻⣟⢽⣿⣾⢯⣿⣾⣟⡿⣯⣿⣿⣽⢿⣟⣿⣽⣟⣾⣿⣯⢿⡾⣿⣽⣻⣟⣷⡿⣽⣿⣯⠀⠀⠀⠀⠀⠀⠀⠀░███   ░░███  ██████   ██████   ██████  ████████  ███████   ████   ██████   ██████  ████████⠀⠀
-⠀⠀⠀⠀⠀⠀⠸⣿⣟⣿⣻⣾⣽⣿⣿⣻⣯⣿⣿⡿⣿⣾⣿⣿⣾⣻⣟⣿⣷⢿⣷⣯⣿⣽⢿⣾⠗⠀⠀⠀⠀⠀⠀⠀⠀░███    ░███ ███░░███ ███░░███ ███░░███░░███░░███░░░███░   ░░███  ███░░███ ███░░███░░███░░███⠀
-⠀⠀⠀⠀⠀⠀⢰⣿⣟⣿⢿⣿⡽⣷⣿⣿⡿⣿⡿⣿⣿⣿⣽⢷⣻⣽⣿⣿⣻⣿⣷⣿⣷⢿⠿⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀░███    ░███░███████ ░███ ░░░ ░███████  ░███ ░███  ░███     ░███ ░███ ░░░ ░███ ░███ ░███ ░███
-⠀⠀⠀⠀⠀⠀⢸⣿⣯⣟⣿⣯⣿⣟⣿⣾⣿⣿⢿⣿⡿⣺⣷⣿⢿⡫⠷⠝⠽⠝⣟⢷⣿⣷⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀░███    ███ ░███░░░  ░███  ███░███░░░   ░███ ░███  ░███ ███ ░███ ░███  ███░███ ░███ ░███ ░███
-⠀⠀⠀⠀⠀⠀⢘⣿⣾⢯⣿⣷⢿⡿⣿⣟⣿⣽⣿⣿⣝⣿⢿⠕⠁⠀⠀⢀⠄⠀⠀⠉⢻⢿⣿⣆⠀⠀⠀⠀⠀⠀⠀⠀⠀ ██████████  ░░██████ ░░██████ ░░██████  ░███████   ░░█████  █████░░██████ ░░██████  ████ █████
-⠀⠀⠀⠀⠀⠀⠀⣿⣿⢯⣿⣿⣻⣿⣿⣿⣻⣾⣿⣮⣿⡿⡇⠀⠀⠀⢃⣈⣤⠄⡨⠀⠈⢻⣿⡿⡄⠀⠀⠀⠀⠀⠀⠀⠀░░░░░░░░░░    ░░░░░░   ░░░░░░   ░░░░░░   ░███░░░     ░░░░░  ░░░░░  ░░░░░░   ░░░░░░  ░░░░ ░░░░░
-⠀⠀⠀⠀⠀⠀⠀⠸⣿⣟⣷⢿⣿⣿⣯⣿⣽⣿⣿⢮⣿⣯⠇⠀⢀⡉⢴⡽⣙⠀⠄⠀⠀⣸⣿⣟⡇⠀⠀⠀⠀⠀⠀⠀⠀                                         ░███⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣯⡿⣿⣾⣿⡿⣾⣷⣿⣯⢿⣿⣣⠀⠀⠀⠯⠋⡁⠐⠀⠀⢠⣟⣿⢯⠂⠀⠀⠀⠀⠀⠀⠀⠀                                         █████⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⡿⣿⣳⣿⣻⣿⣷⡿⣿⣿⣝⣿⣿⣷⣄⡀⠀⠀⠀⠈⣀⣴⣿⣿⣻⠃⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀                                       ░░░░░
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣻⣷⣿⣽⢿⣿⣿⣟⣿⣮⣟⣽⣿⣿⣷⣾⣾⣿⡿⣿⢯⣿⣾⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⠿⡿⣿⣾⣽⣟⣿⢿⣿⣷⣷⣽⣽⣫⣟⣽⣽⡾⠓⠻⣿⣿⣿⣦⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠑⠋⠟⢟⢿⢿⡷⣿⢿⢿⡻⢟⠟⠋⠈⠀⠀⠀⠑⠿⣿⣿⣿⣶⡀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢷⡿⡯⠃⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-`;
+	⠀⠀⠀⠀⠀⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠄
+	⠀⠀⠀⠀⠀⠘⣿⣶⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⣴⣿⠏
+	⠀⠀⠀⠀⠀⠀⠘⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⠏
+	⠀⠀⠀⠀⠀⠀⠀⠈⢿⣿⣿⣿⣦⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣴⣿⣿⣿⡿⠁
+	⠀⠀⠀⠀⠀⠀⠀⠀⠀⠹⣿⣿⣿⣷⣄⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⣿⠏
+	⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿⣿⣿⣷⣄⠀⠀⣠⣾⣿⣿⣿⡟⠁
+	⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣷⣾⣿⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠀⠀  ██████╗   █████╗ ██████╗ ████████╗██╗██╗  ██╗
+	⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠻⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀⠀  ██╔══██╗ ██╔══██╗██╔══██╗╚══██╔══╝██║╚██╗██╔╝
+	⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣼⣿⣿⣿⣿⣿⣿⣧⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀  ██████╔╝ ███████║██████╔╝   ██║   ██║ ╚███╔╝
+	⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⢀⣴⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⡀⠀⢀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ⠀  ██╔══██╗ ██╔══██║██╔═══╝    ██║   ██║ ██╔██╗
+	⠀⠀⠀⠀⠀⣼⣿⣿⣿⡄⣴⣿⣿⣿⣿⣿⡿⠃⠘⢿⣿⣿⣿⣿⣿⣦⣿⣿⣿⣧⠀⠀⠀⠀⠀⠀⠀⠀⠀ ██║   ██║██║  ██║██║        ██║   ██║██╔╝ ██╗
+	⠀⠀⠀⠀⠀⠀⠙⣻⣿⣿⣿⣿⣿⣿⣿⠟⠀⠀⠀⠀⠻⣿⣿⣿⣿⣿⣿⣿⣟⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ╚═╝   ╚═╝╚═╝  ╚═╝╚═╝        ╚═╝   ╚═╝╚═╝  ╚═╝
+	⠀⠀⠀⠀⠀⠀⠀⢈⣿⣿⣿⣿⣿⣟⡁⠀⠀⠀⠀⠀⠀⢈⣻⣿⣿⣿⣿⣿⡁
+	⠀⠀⠀⠀⠀⠀⣠⣿⣿⣿⠟⢿⠿⣿⣿⣿⠀⠀⠀⠀⣿⣿⣿⠿⡿⠻⣿⣿⣿⣄
+	⠀⠀⠀⣠⣤⣾⣿⣿⡿⠃⠀⠀⠀⠙⠟⠛⠀⠀⠀⠀⠛⠻⠋⠀⠀⠀⠘⢿⣿⣿⣷⣤⣄
+	⠀⠀⣾⣿⣿⣿⣿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⣿⣿⣿⣿⣷
+	⠀⠀⠻⣿⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⣿⣿⣿⠟
+⠀⠀⠀⠈⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠉⠁
+`.replace(/^\t/gm, "").trim();
 
-// ── Precomputed widths ───────────────────────────────────────────────
-const BANNER_FULL_WIDTH = Math.max(
-  ...BANNER_FULL.split("\n").map((l) => l.length),
-);
+// ── Banner processing ────────────────────────────────────────────────
 
-/** Extract just the braille logo by stripping block-character text art. */
-function extractLogo(banner: string): string {
-  return banner
-    .split("\n")
-    .map((line) => {
-      const idx = line.search(/[\u2588\u2591]/);
-      return idx > 0 ? line.slice(0, idx).replace(/[\s\u2800]+$/, "") : line;
-    })
-    .join("\n");
-}
+// Chia banner thành từng dòng
+const bannerLines = BANNER_FULL.split("\n");
 
-const BANNER_LOGO = extractLogo(BANNER_FULL);
-const BANNER_LOGO_WIDTH = Math.max(
-  ...BANNER_LOGO.split("\n").map((l) => l.length),
-);
+// Vị trí bắt đầu của chữ RAPTIX
+const TEXT_START_ROW = 6;
+const TEXT_ROW_COUNT = 6;
 
-// ── Responsive banner component ──────────────────────────────────────
+// Dấu phân cách: 3 dấu cách ASCII trước chữ block art
+const TEXT_SEPARATOR = / {3}(?=[█╔╚])/u;
+
+// Tách phần logo, giữ nguyên hình braille
+const BANNER_LOGO = bannerLines
+  .map((line) => {
+    const index = line.search(TEXT_SEPARATOR);
+
+    const logoPart =
+      index === -1
+        ? line
+        : line.slice(0, index);
+
+    return logoPart.replace(/[ \t\u2800]+$/gu, "");
+  })
+  .join("\n");
+
+// Tách phần chữ RAPTIX
+const BANNER_TEXT = bannerLines
+  .slice(TEXT_START_ROW, TEXT_START_ROW + TEXT_ROW_COUNT)
+  .map((line) => {
+    const index = line.search(TEXT_SEPARATOR);
+
+    if (index === -1) {
+      return "";
+    }
+
+    return line.slice(index + 3);
+  })
+  .join("\n");
+
+// ── Banner component ─────────────────────────────────────────────────
 
 export const Banner = React.memo(function Banner() {
-  const { stdout } = useStdout();
-  const cols = stdout?.columns ?? 80;
-
-  // Wide terminal — full banner with logo + text art
-  if (cols >= BANNER_FULL_WIDTH) {
-    return <Text color="red">{BANNER_FULL}</Text>;
-  }
-
-  // Medium terminal — braille logo + text name below
-  if (cols >= BANNER_LOGO_WIDTH) {
-    return (
-      <Box flexDirection="column">
-        <Text color="red">{BANNER_LOGO}</Text>
-        <Text color="red" bold>
-          {"       R A P T I X"}
+  return (
+    <Box
+      flexDirection="row"
+      alignItems="flex-start"
+      flexWrap="nowrap"
+    >
+      {/* Logo bên trái */}
+      <Box flexShrink={0}>
+        <Text color="red" wrap="truncate-end">
+          {BANNER_LOGO}
         </Text>
       </Box>
-    );
-  }
 
-  // Narrow terminal — text only
-  return (
-    <Box marginTop={1} marginBottom={1}>
-      <Text color="red" bold>
-        {"R A P T I X"}
-      </Text>
+      {/* Chữ RAPTIX bên phải */}
+      <Box
+        flexShrink={0}
+        marginLeft={3}
+        marginTop={TEXT_START_ROW}
+      >
+        <Text color="red" wrap="truncate-end">
+          {BANNER_TEXT}
+        </Text>
+      </Box>
     </Box>
   );
 });
