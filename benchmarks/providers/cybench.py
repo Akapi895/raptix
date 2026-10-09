@@ -33,9 +33,10 @@ from pathlib import Path
 
 import httpx
 
+from benchmarks.engine.paths import EXTERNAL_DIR
+from benchmarks.engine.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
+from benchmarks.engine.state import BenchmarkRunState
 from benchmarks.providers.base import BaseBenchmarkProvider
-from benchmarks.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
-from benchmarks.state import BenchmarkRunState
 
 log = logging.getLogger(__name__)
 
@@ -51,9 +52,9 @@ class CybenchProvider(BaseBenchmarkProvider):
 
     def __init__(self, benchmarks_dir: Path | None = None) -> None:
         # Default assumes the upstream repo is checked out at
-        # ``benchmarks/cybench`` (see README-cybench.md); tasks live under
+        # ``benchmarks/external/cybench`` (see docs/cybench.md); tasks live under
         # its ``benchmarks/`` subtree.
-        self._benchmarks_dir = benchmarks_dir or Path("benchmarks/cybench/benchmark")
+        self._benchmarks_dir = benchmarks_dir or EXTERNAL_DIR / "cybench" / "benchmark"
 
     @property
     def name(self) -> str:

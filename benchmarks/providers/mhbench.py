@@ -10,9 +10,10 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
+from benchmarks.engine.paths import EXTERNAL_DIR
+from benchmarks.engine.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
+from benchmarks.engine.state import BenchmarkRunState
 from benchmarks.providers.base import BaseBenchmarkProvider
-from benchmarks.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
-from benchmarks.state import BenchmarkRunState
 
 log = logging.getLogger(__name__)
 
@@ -263,7 +264,7 @@ def _load_generated_topologies(submodule_dir: Path) -> dict[str, TopologySpec]:
 # submodule when available. Adding new hand-tuned topologies is a one-
 # line ``_HAND_TUNED_TOPOLOGIES`` edit; adding new generated topologies
 # happens automatically when upstream drops new JSON files.
-_DEFAULT_MHBENCH_DIR = Path(__file__).resolve().parent.parent.parent / "benchmarks" / "MHBench"
+_DEFAULT_MHBENCH_DIR = EXTERNAL_DIR / "MHBench"
 _TOPOLOGIES: dict[str, TopologySpec] = {
     **_HAND_TUNED_TOPOLOGIES,
     **_load_generated_topologies(_DEFAULT_MHBENCH_DIR),
@@ -326,7 +327,7 @@ class MHBenchProvider(BaseBenchmarkProvider):
         # Resolve to absolute. Harness may invoke us from any cwd
         # (worktree root, test runner, IDE etc.); subprocess(cwd=...)
         # must point at the actual submodule directory regardless.
-        default_dir = Path(__file__).resolve().parent.parent.parent / "benchmarks" / "MHBench"
+        default_dir = _DEFAULT_MHBENCH_DIR
         self._mhbench_dir = (mhbench_dir or default_dir).resolve()
         # Path to MHBench's config.json (OpenStack creds + external_ip +
         # Elastic/C2 settings). Required for setup/teardown. Populated by

@@ -5,8 +5,8 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from benchmarks.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
-    from benchmarks.state import BenchmarkRunState
+    from benchmarks.engine.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
+    from benchmarks.engine.state import BenchmarkRunState
 
 
 class BaseBenchmarkProvider(ABC):

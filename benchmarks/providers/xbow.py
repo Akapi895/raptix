@@ -11,9 +11,10 @@ from pathlib import Path
 
 import httpx
 
+from benchmarks.engine.paths import EXTERNAL_DIR
+from benchmarks.engine.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
+from benchmarks.engine.state import BenchmarkRunState
 from benchmarks.providers.base import BaseBenchmarkProvider
-from benchmarks.schemas import Challenge, ChallengeResult, FilterConfig, SetupResult
-from benchmarks.state import BenchmarkRunState
 
 log = logging.getLogger(__name__)
 
@@ -26,8 +27,8 @@ class XBOWProvider(BaseBenchmarkProvider):
     """
 
     def __init__(self, benchmarks_dir: Path | None = None) -> None:
-        self._benchmarks_dir = benchmarks_dir or Path(
-            "benchmarks/xbow-validation-benchmarks/benchmarks"
+        self._benchmarks_dir = (
+            benchmarks_dir or EXTERNAL_DIR / "xbow-validation-benchmarks" / "benchmarks"
         )
 
     @property

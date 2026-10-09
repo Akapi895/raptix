@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from benchmarks.config import BenchmarkConfig
-from benchmarks.schemas import (
+from benchmarks.engine.config import BenchmarkConfig
+from benchmarks.engine.schemas import (
     BenchmarkReport,
     Challenge,
     ChallengeResult,
