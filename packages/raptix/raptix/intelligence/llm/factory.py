@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import Any, Literal
 
 import httpx
+from langchain_core.exceptions import ContextOverflowError
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_openai import ChatOpenAI
@@ -1397,6 +1398,28 @@ def _reraise_with_actionable_message(exc: Exception, model_name: str) -> None:
       - 404 NotFoundError (model not registered in litellm.yaml)
       - 429 RateLimitError (provider quota hit)
     """
+    # Preserve the concrete overflow subtype, including transport wrappers.
+    # Sanitizing the instance avoids reconstructing provider exceptions whose
+    # constructors require response/request arguments. Do not chain a raw
+    # wrapper back into the user-visible traceback.
+    candidate: BaseException | None = exc
+    seen: set[int] = set()
+    while candidate is not None and id(candidate) not in seen:
+        seen.add(id(candidate))
+        if isinstance(candidate, ContextOverflowError):
+            safe_message = _redact_secrets(str(candidate))
+            if safe_message != str(candidate):
+                candidate.args = (safe_message,)
+                if hasattr(candidate, "message"):
+                    candidate.message = safe_message
+                candidate.__cause__ = None
+                candidate.__context__ = None
+                candidate.__suppress_context__ = True
+            if candidate is exc:
+                return  # caller's bare raise preserves subtype and traceback
+            raise candidate from None
+        candidate = candidate.__cause__ or candidate.__context__
+
     _reraise_if_connection_error(exc)
 
     err_type = type(exc).__name__
