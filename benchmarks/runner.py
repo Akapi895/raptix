@@ -8,22 +8,22 @@ from pathlib import Path
 
 import typer
 
-from benchmarks.config import BenchmarkConfig
-from benchmarks.harness import Harness
-from benchmarks.provenance import (
+from benchmarks.engine.config import BenchmarkConfig
+from benchmarks.engine.harness import Harness
+from benchmarks.engine.provenance import (
     capture_container_images,
     capture_declared_model_assignments,
     capture_run_provenance,
 )
+from benchmarks.engine.reporter import Reporter
+from benchmarks.engine.schemas import Challenge, ChallengeResult, FilterConfig, RunProvenance
+from benchmarks.engine.scorer import Scorer
 from benchmarks.providers.base import BaseBenchmarkProvider
 from benchmarks.providers.cybench import CybenchProvider
 from benchmarks.providers.cybergym import CyberGymProvider
 from benchmarks.providers.exploitbench import ExploitBenchProvider
 from benchmarks.providers.mhbench import MHBenchProvider
 from benchmarks.providers.xbow import XBOWProvider
-from benchmarks.reporter import Reporter
-from benchmarks.schemas import Challenge, ChallengeResult, FilterConfig, RunProvenance
-from benchmarks.scorer import Scorer
 
 # --provider literal — extend here when adding new providers. Kept narrow
 # so a typo on the CLI fails loudly instead of falling back to xbow.
@@ -149,7 +149,7 @@ def run(
     cybench_dir: Path | None = typer.Option(
         None,
         "--cybench-dir",
-        help="Path to the Cybench tasks dir (default benchmarks/cybench/benchmark)",
+        help="Path to the Cybench tasks dir (default benchmarks/external/cybench/benchmark)",
     ),
     cybergym_config: Path | None = typer.Option(
         None,
@@ -233,7 +233,7 @@ def run(
         completed_at,
         provenance=provenance,
     )
-    reporter = Reporter(config.results_dir)
+    reporter = Reporter(config.results_dir / provider.name)
     json_path = reporter.write_json(report)
     md_path = reporter.write_markdown(report)
     evidence_dir = reporter.write_evidence(report)
