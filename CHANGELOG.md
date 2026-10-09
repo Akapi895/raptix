@@ -10,6 +10,31 @@ design spec, §13.4).
 
 ### Added
 
+- Opt-in stable-prefix hygiene (`RAPTIX_CONTEXT_PREFIX_ORDER`) ordering static
+  before dynamic blocks inside contiguous owned spans while keeping unknown and
+  guardrail blocks as fixed barriers; ships without a cache-billing claim
+  (ADR-0059).
+
+- End-to-end context-pipeline acceptance probe
+  (`benchmarks/context_eval/pipeline_probe.py`) exercising accounting, leases,
+  structured compaction, owned assembly, recording and history-wipe recovery
+  against the real route.
+
+- Attempt-chain telemetry: recorder entries carry `attempt_id` /
+  `parent_attempt_id` and `served_model`; summary-model calls are recorded
+  separately as `kind="summary_call"`; optional raw-usage passthrough via
+  `RAPTIX_LLM__LOG_RAW_USAGE` (ADR-0058).
+
+- Recorder sanitization and retention: a deterministic `export_sanitized`
+  removes credential-shaped values from shareable copies, and
+  `RAPTIX_RUNTIME__RECORD_LEVEL=redacted` marks a record non-replayable so
+  `open_replay` refuses it (ADR-0060).
+
+- Cache measurement probe (`benchmarks/context_eval/cache_probe.py`) recording
+  provider cache buckets for identical, append-prefix and changed-suffix
+  requests; absence of buckets is reported as UNKNOWN, not inferred from
+  latency (WP-E2).
+
 - Opt-in safe handoff policy (`RAPTIX_TASK_HANDOFF`, default off): an
   objective owner lease refuses concurrent owners and stale-owner writes, and
   dangling execution receipts are surfaced as `outcome_unknown` for
@@ -48,6 +73,17 @@ design spec, §13.4).
   and the default-off middleware stack remain compatible (ADRs 0049–0051).
 
 ### Fixed
+
+- Context completion review: cold imports no longer construct the whole agent
+  graph; task accounting resolves the run workspace, unwraps extended model
+  responses, is the authoritative usage source, and survives stale work-state
+  writers; objective leases use a unique per-invocation token, claim durably,
+  and fence dispatched writers inside the document transaction, with OS-level
+  cross-process locking; progress signals track real KG/task/result deltas with
+  bounded sync I/O; the recorder captures redacted-safe usage, summary failures,
+  and observable HTTP retries, and refuses mixed record modes or self-export;
+  structured-summary schema and skill epoch-reload gaps are closed (ADRs
+  0055–0061).
 
 - Validate compaction before submitting a summary to the model; reject changed
   revisions and unverifiable references, correctly format structured JSON prompts,

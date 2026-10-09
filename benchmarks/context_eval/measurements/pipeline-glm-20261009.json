@@ -1,0 +1,22 @@
+{
+  "requested_model": "custom/zai-org/GLM-5.3-Flash",
+  "synthetic_environment": true,
+  "history_wiped": true,
+  "actions": [
+    "first",
+    "second"
+  ],
+  "budget": {
+    "model_calls": 7,
+    "input_tokens": 5108,
+    "output_tokens": 3739,
+    "wall_clock_s": 90.64605579996714,
+    "attempts": 2
+  },
+  "evidence_count": 2,
+  "owner_released": true,
+  "objective_status": "running",
+  "summary_calls": 4,
+  "http_attempts": 6,
+  "passed": true
+}

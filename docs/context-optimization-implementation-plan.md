@@ -1272,3 +1272,37 @@ One PR. Follow AGENTS.md.
   Silentium export as an analysis reference only.
 - The final-acceptance test (§4) is assembled across B2/B3 and must be
   green before any Wave C/D/E work is judged a success.
+
+## 16. Completion status (2026-10-09)
+
+All A–E work packages are implemented and gated off by default except the
+correctness fixes already recorded in Wave A. A completion audit reproduced
+and then closed every remaining gap; the tracked ADRs are 0044–0061.
+
+- **Acceptance evidence (offline, deterministic):** `make ci-test` green
+  (6133 passed, 44 skipped) and `make ci-lint` green (ruff clean, basedpyright
+  errors-only 0). A composed regression builds the real compiled graphs with
+  every context flag on, forces transactional compaction, wipes model-visible
+  history, and proves the resumed worker continues from persisted state with no
+  repeated step, two hash-verified evidence refs, preserved counters, and a
+  released owner lease.
+- **Live pipeline evidence:** `benchmarks/context_eval/pipeline_probe.py` ran a
+  benign two-step objective against `custom/zai-org/GLM-5.3-Flash` through the
+  LiteLLM proxy with all context flags enabled: actions `["first","second"]`,
+  history wiped, `evidence_count=2`, `owner_released=true`,
+  `objective_status=running`, separate `summary_call` and `upstream_attempt`
+  entries, and no provider cache buckets. See
+  `benchmarks/context_eval/measurements/pipeline-glm-20261009.json`.
+- **E2/E3 outcome:** both the upstream (`CUSTOM_OPENAI_API_BASE`) and proxy
+  boundaries returned no cache buckets, so E3 ships the ADR-0059
+  *stable-prefix hygiene* branch (opt-in `RAPTIX_CONTEXT_PREFIX_ORDER=1`, no
+  billing claim). Cache savings cannot be asserted on this route.
+- **D3 sign-off:** the lease/reconciliation work is default-off
+  (`RAPTIX_TASK_HANDOFF`); enabling it in a live engagement remains a separate
+  operator decision (§9).
+- **Known residual:** proxy-internal retries are unobservable unless the proxy
+  returns them as metadata; the recorder marks that boundary explicitly rather
+  than guessing. Distributed backends without an OS-level task transaction must
+  not enable handoff, per ADR-0057.
+- **Not in scope (unchanged):** L7 blocking/pruning, response caching, and any
+  weakening of the guardrail stack or ADR-0042 workspace fence.
