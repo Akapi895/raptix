@@ -70,6 +70,8 @@ import hashlib
 import json
 import logging
 import os
+import re
+import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -84,6 +86,31 @@ from typing_extensions import override
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
 
 log = logging.getLogger(__name__)
+
+_RECORD_LEVEL_ENV = "RAPTIX_RUNTIME__RECORD_LEVEL"
+_RECORD_LEVELS = frozenset({"raw", "redacted"})
+
+
+class NonReplayableRecord(RuntimeError):
+    """Raised when replay is attempted against a record marked non-replayable."""
+
+
+class RecordModeError(ValueError):
+    """An append would mix raw and redacted recording modes."""
+
+
+class RecordExportError(ValueError):
+    """A sanitized export would overwrite its raw source."""
+
+
+def record_level() -> str:
+    """Resolved record level; invalid values fail loudly, naming the env var."""
+    level = os.environ.get(_RECORD_LEVEL_ENV, "raw").strip().lower() or "raw"
+    if level not in _RECORD_LEVELS:
+        raise RuntimeError(f"{_RECORD_LEVEL_ENV}={level!r} is not one of {sorted(_RECORD_LEVELS)}.")
+    return level
+
+
 
 
 class ReplayMismatchError(RuntimeError):
@@ -243,6 +270,162 @@ def _serialize_error_response(exc: BaseException) -> dict[str, Any]:
     }
 
 
+def _redact_bearer(match: re.Match[str]) -> str:
+    return f"{match.group(1)}[REDACTED:bearer]"
+
+
+def _redact_assignment(match: re.Match[str]) -> str:
+    return f"{match.group(1)}{match.group(2)}[REDACTED:credential]"
+
+
+_SECRET_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    (
+        "private_key",
+        re.compile(
+            r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?-----END [A-Z ]*PRIVATE KEY-----",
+            re.DOTALL,
+        ),
+    ),
+    ("jwt", re.compile(r"\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b")),
+    ("bearer", re.compile(r"(?i)\b(bearer\s+)([A-Za-z0-9._-]{8,})")),
+    (
+        "api_key",
+        re.compile(
+            r"\b(sk-[A-Za-z0-9]{12,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}"
+            r"|AKIA[0-9A-Z]{16}|xox[baprs]-[A-Za-z0-9-]{10,})\b"
+        ),
+    ),
+    (
+        "credential",
+        re.compile(
+            r"(?i)\b(password|passwd|secret|token|api[_-]?key|access[_-]?key)"
+            r"(\s*[:=]\s*)(?!\[REDACTED)[^\s\"',}]{4,}"
+        ),
+    ),
+)
+
+
+def _redact_string(value: str) -> str:
+    if value.lstrip().startswith(("{", "[")):
+        try:
+            parsed = json.loads(value)
+        except (ValueError, RecursionError):
+            parsed = None
+        if isinstance(parsed, (dict, list)):
+            return json.dumps(sanitize_entry(parsed), ensure_ascii=False, sort_keys=True)
+    redacted = value
+    for kind, pattern in _SECRET_PATTERNS:
+        if kind == "bearer":
+            redacted = pattern.sub(_redact_bearer, redacted)
+        elif kind == "credential":
+            redacted = pattern.sub(_redact_assignment, redacted)
+        else:
+            redacted = pattern.sub(f"[REDACTED:{kind}]", redacted)
+    redacted = re.sub(
+        r"(?i)(\b(?:bearer|basic)\s+)([^\s\"']+)",
+        lambda m: (
+            m.group(0)
+            if m.group(2).startswith("[REDACTED")
+            else m.group(1) + "[REDACTED:authorization]"
+        ),
+        redacted,
+    )
+    redacted = re.sub(
+        r"([a-zA-Z][a-zA-Z0-9+.-]*://)[^\s/@:]+:[^\s/@]+@", r"\1[REDACTED:credentials]@", redacted
+    )
+    return re.sub(
+        r"""(?i)((?:["']?\b(?:password|passwd|pwd|secret|token|api[_-]?key|access[_-]?key|client_secret|refresh_token)["']?)\s*[:=]\s*)("[^"]*"|'[^']*'|[^\s,;}{]+)""",
+        lambda m: (
+            m.group(0) if "[REDACTED:" in m.group(2) else m.group(1) + "[REDACTED:credential]"
+        ),
+        redacted,
+    )
+
+
+def sanitize_entry(value: Any, *, _depth: int = 0) -> Any:
+    """Deterministically redact secret-shaped strings across an entry (ADR-0060)."""
+    if _depth > 32:
+        return "[REDACTED:depth]"
+    if isinstance(value, str):
+        return _redact_string(value)
+    if isinstance(value, dict):
+        sensitive = {
+            "password",
+            "passwd",
+            "pwd",
+            "secret",
+            "token",
+            "api_key",
+            "apikey",
+            "access_token",
+            "refresh_token",
+            "client_secret",
+            "private_key",
+            "authorization",
+            "proxy_authorization",
+            "cookie",
+            "set_cookie",
+            "credentials",
+        }
+        return {
+            key: (
+                "[REDACTED:credential]"
+                if str(key).lower().replace("-", "_") in sensitive
+                or str(key).lower().endswith(("_password", "_secret", "_token", "_api_key"))
+                else sanitize_entry(item, _depth=_depth + 1)
+            )
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [sanitize_entry(item, _depth=_depth + 1) for item in value]
+    return value
+
+
+def export_sanitized(src: str | Path, dst: str | Path) -> int:
+    """Write a share-safe copy of a raw record; mark it non-replayable.
+
+    Returns the number of sanitized entries written. Malformed lines are
+    dropped (a shareable artifact must not fail on one bad line).
+    """
+    source = Path(src)
+    target = Path(dst)
+    if source.resolve() == target.resolve() or (
+        target.exists() and os.path.samefile(source, target)
+    ):
+        raise RecordExportError("sanitized export must not overwrite its raw source")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    written = 0
+    temporary = tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", newline="\n", dir=target.parent, delete=False
+    )
+    with source.open("r", encoding="utf-8") as reader, temporary as writer:
+        writer.write(
+            json.dumps(
+                {
+                    "kind": "record_header",
+                    "record_level": "redacted",
+                    "replayable": False,
+                    "source": _redact_string(source.name),
+                }
+            )
+            + "\n"
+        )
+        for line in reader:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(entry, dict):
+                continue
+            writer.write(json.dumps(sanitize_entry(entry), default=str) + "\n")
+            written += 1
+    os.replace(temporary.name, target)
+    return written
+
+
 class _Sink:
     """Append-only JSONL writer, shared per resolved path within a process.
 
@@ -257,14 +440,40 @@ class _Sink:
       line is lost; the fd is released at process exit.
     """
 
-    def __init__(self, path: Path) -> None:
+    def __init__(self, path: Path, *, redacted: bool = False) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         self._path = path
+        self.redacted = redacted
+        if path.exists() and path.stat().st_size:
+            with path.open(encoding="utf-8") as prior:
+                headers = []
+                for line in prior:
+                    try:
+                        row = json.loads(line)
+                    except ValueError:
+                        continue
+                    if isinstance(row, dict) and row.get("kind") == "record_header":
+                        headers.append(row)
+            was_redacted = any(h.get("replayable") is False for h in headers)
+            if was_redacted != redacted:
+                raise RecordModeError(
+                    "RAPTIX_RUNTIME__RECORD_LEVEL cannot change on an existing record"
+                )
         # Continue the seq of an existing file so a second process (or a
         # re-opened sink) does not restart the ordering from zero.
         self._seq = self._count_lines(path)
         self._fh = path.open("a", encoding="utf-8")
         self._poisoned = False
+        if redacted and self._seq == 0:
+            # A redacted record is not replayable; say so in the header so
+            # open_replay refuses it rather than silently mismatching.
+            self.write(
+                {
+                    "kind": "record_header",
+                    "record_level": "redacted",
+                    "replayable": False,
+                }
+            )
 
     @staticmethod
     def _count_lines(path: Path) -> int:
@@ -292,6 +501,7 @@ class _Sink:
         """Append one entry. Never raises; returns False once poisoned."""
         if self._poisoned:
             return False
+        entry = sanitize_entry(entry) if self.redacted else dict(entry)
         entry["seq"] = self._seq
         self._seq += 1
         try:
@@ -330,8 +540,10 @@ def open_record(path: str | Path) -> _Sink:
     key = str(resolved)
     existing = _SINKS.get(key)
     if existing is not None and not existing.closed:
+        if existing.redacted != (record_level() == "redacted"):
+            raise RecordModeError("record mode cannot change while a sink is open")
         return existing
-    sink = _Sink(resolved)
+    sink = _Sink(resolved, redacted=record_level() == "redacted")
     _SINKS[key] = sink
     log.info("recording enabled → %s", resolved)
     return sink
@@ -356,6 +568,10 @@ class _Replay:
                 except json.JSONDecodeError:
                     log.warning("malformed replay line skipped in %s", path)
                     continue
+                if not isinstance(entry, dict):
+                    continue
+                if entry.get("kind") == "record_header" and entry.get("replayable") is False:
+                    raise NonReplayableRecord(f"{path} is marked non-replayable")
                 kind = entry.get("kind")
                 req_hash = entry.get("req_hash")
                 if not kind or not req_hash:
@@ -411,6 +627,7 @@ class RecordingMiddleware(AgentMiddleware):
     def __init__(self, *, path: str | Path | None = None, role: str = "") -> None:
         super().__init__()
         self._role = role or ""
+        self._redacted = record_level() == "redacted"
         record_path = path or os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "")
         self._sink: _Sink | None = open_record(Path(record_path)) if record_path else None
 
@@ -443,6 +660,8 @@ class RecordingMiddleware(AgentMiddleware):
         if "objective_id" in entry:
             envelope["objective_id"] = entry["objective_id"]
         entry.update(envelope)
+        if self._redacted:
+            entry = sanitize_entry(entry)
         self._sink.write(entry)
 
     @override
