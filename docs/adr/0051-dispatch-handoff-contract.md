@@ -16,6 +16,13 @@ cannot inherit counters because nothing durable holds them (I-6).
 
 ## Decision
 
+Completion review: spell out EvidenceRef objects in WorkerInput, accept a single
+JSON fence without relaxing WorkerResult validation, and persist explicitly typed
+tool artifacts after scoped read-back/hash verification. Evidence therefore does
+not disappear when a worker's final prose is malformed. This records execution
+evidence, not canonical findings or objective completion. Owned assembly refreshes
+the bounded task working set on each request, including after compaction.
+
 - **WorkerInput block.** When ``RAPTIX_DISPATCH_HANDOFF=1`` and the objective
   resolves, ``DispatchMiddleware._prepare`` appends a deterministic,
   character-bounded ``<WORKER_INPUT>`` block to the child's description:

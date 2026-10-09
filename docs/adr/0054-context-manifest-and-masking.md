@@ -18,6 +18,12 @@ C3a/C3b data because it is the largest and most invasive change).
 
 ## Decision
 
+Completion review: assembly refreshes a bounded, JSON-escaped task working set
+from persisted state after compaction. Verified machine artifact refs are visible
+without relying on final worker prose. Request-local ownership is scoped to the
+dispatch invocation, and model-runtime config falls back to the runnable config
+only when explicit config is absent. Safety-owned blocks remain fixed barriers.
+
 - **C3a — manifest (observational).** `intelligence/context/manifest.py`
   enumerates each request's individual system blocks, messages/tool calls and
   tool schemas, hashes them, estimates chars/tokens and records source ownership,

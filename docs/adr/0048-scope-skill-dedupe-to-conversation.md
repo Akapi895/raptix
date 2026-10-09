@@ -18,6 +18,11 @@ compaction dropped the body, the pointer is actively wrong. Defect C5.
 
 ## Decision
 
+Completion review: thread-scoped cache identity also includes the injected
+runtime's context epoch. A committed compaction can therefore reload a skill
+whose body left the working set; runtime injection stays hidden from the public
+tool schema. The explicit legacy instance mode remains unchanged.
+
 - Add `RAPTIX_SKILL_DEDUPE_SCOPE=instance|thread`. `instance` keeps the legacy
   per-middleware set; `thread` keys the cache by the conversation
   (`langgraph.config` `thread_id` plus the active dispatch id and attempt).

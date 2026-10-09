@@ -18,6 +18,19 @@ sign-off and a threat model, and forbids automatic handoff.
 
 ## Decision
 
+### Completion review (2026-10-09)
+
+Each invocation has a unique lease token. An enabled lease must be durably claimed
+before dispatch; missing, busy, failed or timed-out storage refuses that dispatch.
+Ownership is checked inside the document transaction by every dispatched writer,
+including accounting. Work-state writes preserve newer accounting and lease state.
+Filesystem transactions use OS file locks across processes; other backends retain
+the existing process-local transaction lock and exact edit/read-back checks.
+Distributed remote-backend locking is not assumed: overlapping processes require
+a backend-provided task-state transaction. Unsupported distributed deployments
+must not enable handoff. Triggers are surfaced as advisory readiness in WorkerInput,
+never as automatic mid-flight interruption or implicit execution retry.
+
 - **Owner lease.** `TaskState` gains an optional `owner_lease`
   (`token`, `owner`, `expires_at`). A dispatch claims the objective's lease
   before continuing: a different, unexpired lease refuses the claim; an expired

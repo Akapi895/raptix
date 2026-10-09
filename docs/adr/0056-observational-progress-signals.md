@@ -18,6 +18,13 @@ requires explicit sign-off and a before/after benchmark.
 
 ## Decision
 
+### Completion review (2026-10-09)
+
+Capture input versions before tools and compare KG/task-state versions afterward.
+Hash the entire bounded result, including Command messages; skip oversized or
+unavailable observations instead of asserting a stall. Sync and async I/O use the
+same two-slot bounded executor. Clear both windows and emitted markers on eviction.
+
 - **Extend the existing observer.** `TriedEdgesMiddleware` (the L7-obs hook)
   gains a bounded, in-memory window of per-action fingerprints. Ring buffer per
   `(thread_id, objective_id)`, at most `_STALL_WINDOW = 12` entries, at most 64

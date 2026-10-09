@@ -23,6 +23,15 @@ bumped the revision, every compaction would be rejected.
 
 ## Decision
 
+### Completion review (2026-10-09)
+
+Resolve model I/O from request state plus runtime config; unwrap extended model
+responses. Automatic usage is the sole token/call source when enabled: worker
+reported deltas are only the legacy fallback. Accounting revisions prevent stale
+work-state snapshots from resetting counters. Dispatch wall-clock time is measured
+once at finish, and accounting obeys the current ownership fence. Validate this
+with compiled graphs and simultaneous handoff/accounting flags, not only stubs.
+
 - **Automatic accounting.** A `TASK_BUDGET` middleware (base slots, ADR-0055)
   wraps every model call. Its post-hook reads the response's latest
   `usage_metadata` and folds `model_calls`, `input_tokens` and `output_tokens`
