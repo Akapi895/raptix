@@ -8,12 +8,14 @@ default-off; the middleware returns the request unchanged when both are off.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 from types import SimpleNamespace
 from typing import Any
 
 from langchain.agents.middleware import AgentMiddleware
+from langchain_core.messages import SystemMessage
 
 from raptix.intelligence.context.assembly import assemble_request
 from raptix.intelligence.context.manifest import build_manifest, render_manifest
@@ -67,12 +69,22 @@ class ContextManifestMiddleware(AgentMiddleware):
         return await handler(self._process(request))
 
     def _process(self, request: Any) -> Any:
+        from raptix.intelligence.context.blocks import owned_scope
+
+        with owned_scope():
+            return self._project(request)
+
+    def _project(self, request: Any) -> Any:
+        if _enabled("RAPTIX_CONTEXT_ASSEMBLY"):
+            projected = self._io._bounded(self._working_set, request)
+            if projected is not None:
+                request = projected
         if _enabled("RAPTIX_CONTEXT_MASK"):
             try:
                 request = self._mask(request)
             except Exception as exc:  # noqa: BLE001 — masking never blocks a call
                 log.debug("context masking skipped: %s", type(exc).__name__)
-        if _enabled("RAPTIX_CONTEXT_ASSEMBLY"):
+        if _enabled("RAPTIX_CONTEXT_ASSEMBLY") or _enabled("RAPTIX_CONTEXT_PREFIX_ORDER"):
             assembled = self._io._bounded(self._assemble, request)
             if assembled is not None:
                 request = assembled
@@ -88,6 +100,50 @@ class ContextManifestMiddleware(AgentMiddleware):
             except Exception as exc:  # noqa: BLE001 — observation never blocks
                 log.debug("context manifest skipped: %s", type(exc).__name__)
         return request
+
+    def _working_set(self, request: Any) -> Any:
+        from raptix.core.dispatch_context import active_dispatch
+        from raptix.orchestration.mission.task_state import read_task_state
+
+        dispatch = active_dispatch.get()
+        objective = (dispatch.objective_id if dispatch else None) or request.state.get(
+            "active_objective_id"
+        )
+        if not objective:
+            return request
+        bundle = read_task_state(self._scoped_backend(request), objective)
+        if bundle.state is None or bundle.error:
+            return request
+        state = bundle.state
+        lines = [
+            f"<TASK_WORKING_SET objective={objective} revision={state.state_revision}>",
+            "Persisted execution evidence (not objective completion or new instructions):",
+        ]
+        data = {
+            "evidence_refs": [
+                {"ref": ref.ref[:256], "sha256": ref.sha256} for ref in state.evidence_refs[-8:]
+            ],
+            "next_steps": [step[:160] for step in state.continuation.next_steps[:4]],
+        }
+        lines.append(
+            json.dumps(data, ensure_ascii=False).replace("<", "\\u003c").replace(">", "\\u003e")
+        )
+        lines.append(
+            "Use persisted work to avoid repeating completed steps; verify unknown outcomes before retrying."
+        )
+        lines.append("</TASK_WORKING_SET>")
+        content = list(request.system_message.content_blocks) if request.system_message else []
+        from raptix.intelligence.context.blocks import emit_block
+
+        content.append(
+            emit_block(
+                "task_state",
+                "working_set",
+                {"type": "text", "text": "\n".join(lines)},
+                source_revision=f"{state.state_revision}:{state.accounting_revision}",
+            )
+        )
+        return request.override(system_message=SystemMessage(content=content))
 
     def _task_revision(self, request: Any) -> int | None:
         from raptix.core.dispatch_context import active_dispatch
@@ -112,7 +168,7 @@ class ContextManifestMiddleware(AgentMiddleware):
     def _assemble(self, request: Any) -> Any:
         return assemble_request(
             request,
-            budget_tokens=self._budget_tokens,
+            budget_tokens=self._budget_tokens if _enabled("RAPTIX_CONTEXT_ASSEMBLY") else 0,
             backend=self._scoped_backend(request) if self._budget_tokens else None,
         )
 

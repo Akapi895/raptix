@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from raptix.intelligence.context.blocks import block_owner, content_hash
+from raptix.intelligence.context.blocks import block_owner, content_hash, enabled
 from raptix.intelligence.context.manifest import build_manifest
 
 
@@ -26,6 +26,22 @@ def assemble_request(request: Any, *, budget_tokens: int, backend: Any) -> Any:
             seen.add(identity)
         kept.append(block)
     blocks = list(reversed(kept))
+    if enabled("RAPTIX_CONTEXT_PREFIX_ORDER"):
+        start = 0
+        while start < len(blocks):
+            if block_owner(blocks[start].get("text", "")) is None:
+                start += 1
+                continue
+            end = start
+            while end < len(blocks) and block_owner(blocks[end].get("text", "")) is not None:
+                end += 1
+            blocks[start:end] = sorted(
+                blocks[start:end],
+                key=lambda block: bool(
+                    (owner := block_owner(block.get("text", ""))) and owner.source_revision
+                ),
+            )
+            start = end
     candidate = request.override(system_message=system.model_copy(update={"content": blocks}))
     if budget_tokens > 0 and backend is not None:
         cost = build_manifest(candidate)["total_chars"]

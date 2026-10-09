@@ -22,6 +22,7 @@ class ContextBlock:
 
 
 _BLOCKS: ContextVar[dict[str, ContextBlock] | None] = ContextVar("context_blocks", default=None)
+_OWNER: ContextVar[str | None] = ContextVar("context_block_owner", default=None)
 
 
 def enabled(name: str) -> bool:
@@ -34,16 +35,24 @@ def content_hash(text: str) -> str:
 
 @contextmanager
 def owned_scope() -> Iterator[None]:
-    if _BLOCKS.get() is not None or not (
-        enabled("RAPTIX_CONTEXT_ASSEMBLY") or enabled("RAPTIX_CONTEXT_MANIFEST")
+    from raptix.core.dispatch_context import active_dispatch
+
+    dispatch = active_dispatch.get()
+    owner = dispatch.lease_token if dispatch else None
+    if (_BLOCKS.get() is not None and _OWNER.get() == owner) or not (
+        enabled("RAPTIX_CONTEXT_ASSEMBLY")
+        or enabled("RAPTIX_CONTEXT_MANIFEST")
+        or enabled("RAPTIX_CONTEXT_PREFIX_ORDER")
     ):
         yield
         return
     token = _BLOCKS.set({})
+    owner_token = _OWNER.set(owner)
     try:
         yield
     finally:
         _BLOCKS.reset(token)
+        _OWNER.reset(owner_token)
 
 
 def emit_block(
