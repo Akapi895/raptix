@@ -1,4 +1,4 @@
-"""Tests for raptix.runtime.task_spec."""
+"""Tests for raptix.execution.session.task_spec."""
 
 from __future__ import annotations
 
@@ -6,8 +6,8 @@ import json
 
 import pytest
 
-from raptix.runtime import SubAgentTaskSpec as SubAgentTaskSpecReexport
-from raptix.runtime.task_spec import Dispatcher, SubAgentTaskSpec
+from raptix.execution.session import SubAgentTaskSpec as SubAgentTaskSpecReexport
+from raptix.execution.session.task_spec import Dispatcher, SubAgentTaskSpec
 
 
 def test_reexported_from_runtime_package():

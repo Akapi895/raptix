@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, call, patch
 
 import pytest
 
-from raptix.runtime.event_log import EventLog, EventType, _acquire_lock, _release_lock
+from raptix.execution.session.event_log import EventLog, EventType, _acquire_lock, _release_lock
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows-only locking path")

@@ -17,7 +17,7 @@ Pieces in this module
   added/removed/changed nodes and edges, keyed by ATT&CK technique tag.
 
 - :class:`ReplayRunner` — orchestrates a replay using the existing
-  :class:`raptix.runtime.recording.ReplayMiddleware`. When a snapshot
+  :class:`raptix.execution.session.recording.ReplayMiddleware`. When a snapshot
   shows new attack surface in a technique-tagged region, the runner
   re-executes only the objectives mapped to that technique.
 
@@ -53,8 +53,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol, runtime_checkable
 
-from raptix.runtime.recording import ReplayMiddleware
-from raptix.runtime.task_spec import Dispatcher, SubAgentTaskSpec
+from raptix.execution.session.recording import ReplayMiddleware
+from raptix.execution.session.task_spec import Dispatcher, SubAgentTaskSpec
 
 log = logging.getLogger(__name__)
 
@@ -323,7 +323,7 @@ class ReplayRunner:
 
     Construction inputs are the OPPLAN adapter, an attack-graph snapshot
     provider, and the path to the record file the original engagement
-    produced (via :class:`raptix.runtime.recording.RecordingMiddleware`).
+    produced (via :class:`raptix.execution.session.recording.RecordingMiddleware`).
 
     :meth:`plan` produces a :class:`ReplayPlan` describing what would run;
     :meth:`execute` actually invokes the orchestrator. Defaulting to dry-run

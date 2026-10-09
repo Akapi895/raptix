@@ -34,8 +34,8 @@ from raptix.execution.adapters import (
     default_adapters,
 )
 from raptix.execution.adapters.base import artifact_name_param, str_list_param, str_param
-from raptix.execution.capabilities import AvailabilityEvaluator, CapabilityRegistry
-from raptix.execution.capabilities.registry import UnknownCapabilityError
+from raptix.capabilities import AvailabilityEvaluator, CapabilityRegistry
+from raptix.capabilities.registry import UnknownCapabilityError
 from raptix.knowledge.ingest.registry import default_registry, iter_node_observations
 from raptix_core.types.capability import (
     Artifact,
@@ -121,7 +121,7 @@ class TestAdapterContract:
             assert adapter.capability_id and adapter.executable
 
     def test_adapter_ids_match_catalog_implementations(self) -> None:
-        from raptix.execution.capabilities import build_catalog
+        from raptix.capabilities import build_catalog
 
         catalog_adapter_ids = {
             impl.adapter_id
@@ -761,7 +761,7 @@ class TestNoBashFallback:
             AdapterResolver(registry).resolve(_request("test.cap"))
 
     def test_bash_is_not_a_catalogued_capability(self) -> None:
-        from raptix.execution.capabilities import build_catalog
+        from raptix.capabilities import build_catalog
 
         catalog_ids = {str(manifest.id) for manifest in build_catalog()}
         assert not any(capability.startswith("bash") for capability in catalog_ids)

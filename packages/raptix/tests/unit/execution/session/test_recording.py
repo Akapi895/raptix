@@ -1,4 +1,4 @@
-"""Tests for raptix.runtime.recording."""
+"""Tests for raptix.execution.session.recording."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from langchain_core.messages import AIMessage
 
-from raptix.runtime.recording import (
+from raptix.execution.session.recording import (
     ReplayMiddleware,
     ReplayMismatchError,
     _canonicalize,

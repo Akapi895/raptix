@@ -1,5 +1,5 @@
 """Serializer + record/replay-middleware coverage for
-``raptix.runtime.recording``.
+``raptix.execution.session.recording``.
 
 ``test_recording.py`` covers ``_canonicalize`` / ``_hash_request`` and the
 basic sink/replay round-trip. This file adds the previously-uncovered parts:
@@ -26,7 +26,7 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
 
-from raptix.runtime.recording import (
+from raptix.execution.session.recording import (
     RecordingMiddleware,
     ReplayMiddleware,
     ReplayMismatchError,

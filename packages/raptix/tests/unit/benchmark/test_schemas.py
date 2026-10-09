@@ -1,4 +1,4 @@
-"""Tests for benchmarks.schemas Pydantic models."""
+"""Tests for benchmarks.engine.schemas Pydantic models."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from benchmarks.schemas import (
+from benchmarks.engine.schemas import (
     BenchmarkReport,
     Challenge,
     ChallengeResult,

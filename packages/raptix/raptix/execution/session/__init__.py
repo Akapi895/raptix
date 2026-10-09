@@ -9,7 +9,7 @@ this file.
 _exports: list[str] = []
 
 try:
-    from raptix.runtime.event_log import (  # noqa: F401  # re-exported via __all__
+    from raptix.execution.session.event_log import (  # noqa: F401  # re-exported via __all__
         EngagementEvent,
         EventLog,
         EventType,
@@ -21,7 +21,7 @@ except ImportError:
     pass
 
 try:
-    from raptix.runtime.shutdown import (  # noqa: F401  # re-exported via __all__
+    from raptix.execution.session.shutdown import (  # noqa: F401  # re-exported via __all__
         LangGraphState,
         install_shutdown_handlers,
     )
@@ -31,7 +31,7 @@ except ImportError:
     pass
 
 try:
-    from raptix.runtime.recording import (  # noqa: F401
+    from raptix.execution.session.recording import (  # noqa: F401
         RecordingMiddleware,
         ReplayMiddleware,
         ReplayMismatchError,
@@ -50,7 +50,7 @@ except ImportError:
     pass
 
 try:
-    from raptix.runtime.task_spec import (  # noqa: F401
+    from raptix.execution.session.task_spec import (  # noqa: F401
         Dispatcher,
         SubAgentTaskSpec,
     )
@@ -60,7 +60,7 @@ except ImportError:
     pass
 
 try:
-    from raptix.runtime.cart import (  # noqa: F401
+    from raptix.execution.session.cart import (  # noqa: F401
         ChangeEvent,
         EngagementSnapshot,
         LinearOPPLANAdapter,

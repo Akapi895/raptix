@@ -34,7 +34,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-log = logging.getLogger("raptix.runtime.event_log")
+log = logging.getLogger("raptix.execution.session.event_log")
 
 
 def _env_float(name: str, default: float) -> float:

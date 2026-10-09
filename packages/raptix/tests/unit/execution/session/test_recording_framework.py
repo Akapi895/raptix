@@ -18,7 +18,7 @@ from raptix.middleware._audit_sink import RoEAuditSink
 from raptix.middleware.dispatch import DispatchMiddleware
 from raptix.middleware.roe import RoEGuardrailMiddleware
 from raptix.orchestration.mission.opplan import OPPLANState
-from raptix.runtime.recording import RecordingMiddleware
+from raptix.execution.session.recording import RecordingMiddleware
 
 
 class ToolModel(FakeMessagesListChatModel):

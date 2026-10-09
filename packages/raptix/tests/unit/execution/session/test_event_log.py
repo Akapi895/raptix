@@ -1,4 +1,4 @@
-"""Tests for ``raptix.runtime.event_log`` — append-only engagement log."""
+"""Tests for ``raptix.execution.session.event_log`` — append-only engagement log."""
 
 from __future__ import annotations
 
@@ -7,7 +7,7 @@ import json
 import time
 from pathlib import Path
 
-from raptix.runtime.event_log import (
+from raptix.execution.session.event_log import (
     EngagementEvent,
     EventLog,
     EventType,

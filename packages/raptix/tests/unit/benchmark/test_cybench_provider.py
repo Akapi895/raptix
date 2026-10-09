@@ -13,9 +13,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from benchmarks.engine.schemas import Challenge, FilterConfig
+from benchmarks.engine.state import BenchmarkRunState, BenchmarkStepResult
 from benchmarks.providers.cybench import CybenchProvider
-from benchmarks.schemas import Challenge, FilterConfig
-from benchmarks.state import BenchmarkRunState, BenchmarkStepResult
 
 
 def _write_task(

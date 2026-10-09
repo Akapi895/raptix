@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from raptix.capabilities.contracts import (
+from raptix.specialist_contracts.contracts import (
     CapabilityLane,
     discover_contracts,
     validate_contract_metadata,

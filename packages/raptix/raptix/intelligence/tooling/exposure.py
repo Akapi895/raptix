@@ -58,13 +58,13 @@ from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from raptix.execution.capabilities import (
+from raptix.capabilities import (
     AvailabilityEvaluator,
     CapabilityRegistry,
     EligibilityEvaluator,
 )
-from raptix.execution.capabilities.availability import _probe_executable as _default_probe
-from raptix.execution.capabilities.registry import UnknownCapabilityError
+from raptix.capabilities.availability import _probe_executable as _default_probe
+from raptix.capabilities.registry import UnknownCapabilityError
 from raptix_core.types.capability import CapabilityStatus, ImplementationKind, RequirementSpec
 
 logger = logging.getLogger("raptix.tools.exposure")

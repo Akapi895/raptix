@@ -1,4 +1,4 @@
-"""Tests for ``raptix.runtime.shutdown`` — bounded graceful shutdown.
+"""Tests for ``raptix.execution.session.shutdown`` — bounded graceful shutdown.
 
 Signal-handling behavior MUST run in subprocesses, never in the pytest
 worker process, because installing SIGINT/SIGTERM handlers there would
@@ -54,7 +54,7 @@ def _write_driver(
             import sys
             import time
 
-            from raptix.runtime.shutdown import install_shutdown_handlers
+            from raptix.execution.session.shutdown import install_shutdown_handlers
 
 
             def _state():
@@ -220,7 +220,7 @@ def test_double_signal_within_window_forces_immediate_exit(tmp_path: Path) -> No
             import signal
             import time
 
-            from raptix.runtime.shutdown import install_shutdown_handlers
+            from raptix.execution.session.shutdown import install_shutdown_handlers
 
 
             def _state():
@@ -255,7 +255,7 @@ def test_missing_workspace_path_does_not_hang(tmp_path: Path) -> None:
             import sys
             import time
 
-            from raptix.runtime.shutdown import install_shutdown_handlers
+            from raptix.execution.session.shutdown import install_shutdown_handlers
 
 
             def _state():
@@ -280,7 +280,7 @@ def test_missing_workspace_path_does_not_hang(tmp_path: Path) -> None:
 
 def test_install_shutdown_handlers_is_idempotent() -> None:
     """In-process API test: repeated install with same/new provider does not raise."""
-    from raptix.runtime.shutdown import install_shutdown_handlers
+    from raptix.execution.session.shutdown import install_shutdown_handlers
 
     def _state_a() -> dict:
         return {}
@@ -318,7 +318,7 @@ class TestFlushLogicInProcess:
     """Direct unit tests for the flush helpers — cross-platform; no real signals."""
 
     def test_run_flush_writes_finding_opplan_and_executive(self, tmp_path: Path) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         state = {
             "workspace_path": str(tmp_path),
@@ -348,7 +348,7 @@ class TestFlushLogicInProcess:
         assert (tmp_path / "report" / "report_partial_executive.md").exists()
 
     def test_run_flush_with_no_workspace_returns_empty_result(self, tmp_path: Path) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         mod._state_provider = lambda: {}
         result = mod._run_flush("SIGINT", deadline=time_monotonic_plus(5))
@@ -361,7 +361,7 @@ class TestFlushLogicInProcess:
     def test_run_flush_continues_after_one_write_error(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         state = {
             "workspace_path": str(tmp_path),
@@ -384,7 +384,7 @@ class TestFlushLogicInProcess:
         assert any("findings:" in e for e in result.errors)
 
     def test_existing_findings_offset_next_id(self, tmp_path: Path) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         findings_dir = tmp_path / "findings"
         findings_dir.mkdir()
@@ -397,7 +397,7 @@ class TestFlushLogicInProcess:
         assert next_id == 4
 
     def test_finding_markdown_includes_severity_and_summary(self) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         body = mod._finding_markdown(
             {
@@ -414,7 +414,7 @@ class TestFlushLogicInProcess:
         assert "https://target/search" in body
 
     def test_events_jsonl_event_appended_when_file_exists(self, tmp_path: Path) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         events = tmp_path / "events.jsonl"
         events.write_text("", encoding="utf-8")
@@ -437,7 +437,7 @@ class TestFlushLogicInProcess:
         assert entry["findings_written"] == 2
 
     def test_events_jsonl_skipped_when_file_absent(self, tmp_path: Path) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         result = mod._FlushResult(workspace=tmp_path)
         written = mod._write_checkpoint_event_if_available(
@@ -448,7 +448,7 @@ class TestFlushLogicInProcess:
         assert not (tmp_path / "events.jsonl").exists()
 
     def test_atomic_write_uses_tmp_then_replace(self, tmp_path: Path) -> None:
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         target = tmp_path / "out" / "file.md"
         mod._write_atomic(target, "hello\n")
@@ -473,7 +473,7 @@ class TestPerComponentTimeout:
     ) -> None:
         import time as _time
 
-        from raptix.runtime import shutdown as mod
+        from raptix.execution.session import shutdown as mod
 
         monkeypatch.setattr(mod, "PER_COMPONENT_FLUSH_SECONDS", 0.2, raising=False)
 

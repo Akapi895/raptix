@@ -60,7 +60,7 @@ from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 # KG/Neo4j dependency) — exactly the dependency-correlation surface this agent
 # needs per its docstring. Only the kg_* tools in tools/research stay deferred
 # pending the Neo4j middleware redesign.
-from raptix.execution.tools.research.tools import cve_by_package, cve_lookup
+from raptix.execution.tools.research.cve import cve_by_package, cve_lookup
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory
 from raptix.intelligence.prompts import load_prompt

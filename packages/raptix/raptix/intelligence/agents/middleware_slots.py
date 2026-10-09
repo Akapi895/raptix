@@ -60,7 +60,7 @@ from raptix.middleware.opscontrol_notifications import (
 from raptix.middleware.prompt_injection_shield import PromptInjectionShieldMiddleware
 from raptix.middleware.proxy_key_override import ProxyKeyOverrideMiddleware
 from raptix.middleware.roe import build_default_sink
-from raptix.runtime.recording import RecordingMiddleware
+from raptix.execution.session.recording import RecordingMiddleware
 
 # Slot enum + per-role applicability mapping + safety-critical set
 # all live in the contract layer now (raptix_core.contracts.slots).
