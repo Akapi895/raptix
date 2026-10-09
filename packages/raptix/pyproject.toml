@@ -72,6 +72,13 @@ dependencies = [
     "httpx>=0.27.0",
     # SIEM/EDR detection pushers (execution/tools/defense) POST via requests.
     "requests>=2.32.0",
+    # Sigma -> SIEM query conversion for execution/tools/defense/{splunk,elastic,
+    # sentinel}.py — the official Sigma taxonomy + per-target field-mapping
+    # pipelines (SigmaHQ), replacing a hand-rolled partial translator.
+    "pysigma>=1.5.0",
+    "pysigma-backend-splunk>=2.1.0",
+    "pysigma-backend-elasticsearch>=2.1.0",
+    "pysigma-backend-kusto>=1.0.0",
     "deepagents>=0.5.0",
     # Open-web engine (raptix/execution/sandbox/web) — runs inside the sandbox, which
     # mounts raptix as /deps/raptix, so its pure-Python parse deps ride
@@ -133,10 +140,11 @@ raptix-cli = "raptix.cli.__main__:main"
 raptix-kg-health = "raptix.execution.tools.research.health:main"
 raptix-mcp = "raptix.interfaces.mcp.__main__:main"
 
-# Plugin entry-point groups consumed by ``raptix.plugin_loader``.
+# Plugin entry-point groups consumed by ``raptix_core.plugin_loader``.
 # External packages (downstream or community plugins) declare their
-# contributions under these groups. See ``raptix/plugin_loader.py``
-# for the loader contract (shapes, factory kwargs, error isolation).
+# contributions under these groups. See
+# ``packages/raptix-core/raptix_core/plugin_loader.py`` for the loader
+# contract (shapes, factory kwargs, error isolation).
 #
 #   [project.entry-points."raptix.tools"]
 #   my-tools = "my_pkg.tools:get_tools"
