@@ -423,7 +423,7 @@ benchmark:
 	uv run python -m benchmarks.runner $(ARGS)
 
 ## CVE-Bench offline dry run (mocked LLM + sandbox, 3 fixtures, seed=0).
-## Output: benchmark/results/cve-bench/dry-run-<YYYY-MM-DD>.jsonl
+## Output: benchmarks/results/runs/cve-bench/<run-id>/report.jsonl
 cve-bench-dry:
 	CVE_BENCH_DRY_RUN_SEED=0 PYTHONHASHSEED=0 \
-		uv run python -m benchmarks.cve_bench.dry_run $(ARGS)
+		uv run python -m benchmarks.suites.cve_bench.dry_run $(ARGS)

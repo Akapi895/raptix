@@ -6,7 +6,7 @@
 > Last updated: 2026-10-08
 > Source of diagnosis: [`docs/context-optimization.md`](context-optimization.md)
 > (analysis transcript) and
-> [`benchmarks/Silentium/run-20261008-0642/analysis/CONTEXT_AUDIT.md`](../benchmarks/Silentium/run-20261008-0642/analysis/CONTEXT_AUDIT.md)
+> [`benchmarks/results/published/silentium/run-20261008-0642/analysis/CONTEXT_AUDIT.md`](../benchmarks/results/published/silentium/run-20261008-0642/analysis/CONTEXT_AUDIT.md)
 > (revalidated audit). Both are analysis artifacts — **never tune thresholds
 > against Silentium data**; it is a case study, not a training set.
 > Tracks: Incalmo-lessons safe subset (`incalmo-lessons-implementation-guide.md`),
@@ -162,7 +162,7 @@ Every WP ships its own tests; the shared toolbox is:
   patterns). No LLM required for determinism: drive with scripted models or
   ReplayMiddleware records built offline.
 - **Offline record analysis** — the audit scripts
-  (`benchmarks/Silentium/run-20261008-0642/analysis/`) are read-only evidence
+  (`benchmarks/results/published/silentium/run-20261008-0642/analysis/`) are read-only evidence
   tooling; extend, never tune against them.
 
 ---

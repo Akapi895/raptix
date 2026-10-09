@@ -1,10 +1,6 @@
 [![English](https://img.shields.io/badge/Language-English-blue?style=for-the-badge)](README.md)
 [![한국어](https://img.shields.io/badge/Language-한국어-red?style=for-the-badge)](README_KO.md)
 
-<div align="center">
-  <img src="assets/logo_banner.png" alt="Raptix Logo">
-</div>
-
 <h1 align="center">Raptix — 자율 레드팀 에이전트</h1>
 
 <p align="center"><i>"또 AI 해킹 툴이야? nmap 돌리고 리포트 쓰는 거 아니야?"</i></p>
@@ -93,10 +89,6 @@ AI 기반 위협 환경에 맞선 **공격형 백신**을 지향하고 있습니
 
 ## 벤치마크
 
-<div align="center">
-  <img src="assets/benchmark/raptix_donut.png" alt="Raptix — XBOW pass rate 102/104 (98.08%)" width="560">
-</div>
-
 | 벤치마크 | 난이도 | 통과율 |
 |---------|--------|--------|
 | [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Easy (Level 1)   | **45 / 45** (100 %) |
@@ -104,7 +96,7 @@ AI 기반 위협 환경에 맞선 **공격형 백신**을 지향하고 있습니
 | [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | Hard (Level 3)   | **7 / 8** (87.5 %) |
 | [XBOW validation-benchmarks](https://github.com/PurpleAILAB/xbow-validation-benchmarks) | **모든 난이도**   | **102 / 104** (98.08 %) |
 
-- **[챌린지별 전체 인덱스 · 공격 클래스 매트릭스 · LangSmith 트레이스](benchmark/results/README.md)**
+- **[챌린지별 전체 인덱스 · 공격 클래스 매트릭스 · LangSmith 트레이스](benchmarks/results/README.md)**
 - **[다른 AI 펜테스트 에이전트와 비교 (Strix · PentestGPT · MAPTA · Cyber-AutoAgent · XBOW 상용 등)](docs/benchmark-comparison.md)**
 
 ---
@@ -134,10 +126,6 @@ AI + 해킹 도구들은 대부분 nmap 돌리고 리포트 출력하는 데모�
 ---
 
 ## 아키텍처
-
-<div align="center">
-  <img src="assets/raptix_infra.svg" alt="Raptix Infrastructure" width="680">
-</div>
 
 두 개의 네트워크로 분리된 설계 — 관리 서비스(LiteLLM, PostgreSQL, LangGraph, Web)는 `raptix-net`, 샌드박스 / C2 서버 / 타깃은 `sandbox-net`. Neo4j는 양 네트워크에 듀얼-홈으로 두어 관리망의 에이전트가 샌드박스 내부에서 기록한 발견 사항을 영속화할 수 있게 합니다.
 
@@ -220,9 +208,3 @@ make cli     # 인터랙티브 CLI 열기 (별도 터미널)
 ## 라이선스
 
 [Apache-2.0](LICENSE)
-
----
-
-<div align="center">
-  <img src="assets/main.png" alt="Raptix">
-</div>
