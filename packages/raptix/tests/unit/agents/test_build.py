@@ -601,6 +601,7 @@ def test_middleware_slot_enum_order_is_assembly_order():
         "sandbox-notification",
         "opscontrol-notification",
         "budget",
+        "task-budget",
         "model-override",
         "model-fallback",
         "proxy-key-override",

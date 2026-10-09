@@ -35,12 +35,14 @@ from raptix.core.dispatch_context import active_dispatch
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
 from raptix.orchestration.mission.task_state import (
     TASK_STATE_DIR,
+    EvidenceRef,
     WorkerResult,
     _looks_missing,
     _read_text,
     _safe_objective_id,
     _upsert_text,
     document_lock,
+    mutate_task_state,
     scoped_task_backend,
 )
 
@@ -174,7 +176,7 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
         except Exception:
             self._bounded(self._finish, request, receipt, "failed")
             raise
-        self._bounded(self._finish, request, receipt, _outcome(result))
+        self._bounded(self._finish, request, receipt, _outcome(result), result)
         return result
 
     async def awrap_tool_call(self, request: Any, handler: Any) -> Any:
@@ -187,7 +189,7 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
         except Exception:
             await self._to_thread(self._finish, request, receipt, "failed")
             raise
-        await self._to_thread(self._finish, request, receipt, _outcome(result))
+        await self._to_thread(self._finish, request, receipt, _outcome(result), result)
         return result
 
     def _bounded(self, action: Any, *args: Any) -> Any:
@@ -273,7 +275,7 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
         if receipt is not None:
             self._append(request, [dict(receipt, kind="planned"), receipt])
 
-    def _finish(self, request: Any, receipt: dict | None, kind: str) -> None:
+    def _finish(self, request: Any, receipt: dict | None, kind: str, result: Any = None) -> None:
         if not receipt:
             return
         self._append(
@@ -289,6 +291,42 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
                 }
             ],
         )
+        artifact = getattr(result, "artifact", None)
+        if (
+            kind == "succeeded"
+            and isinstance(artifact, dict)
+            and isinstance(artifact.get("evidence_refs"), list)
+        ):
+            backend = self._backend_for(request)
+            verified = []
+            for candidate in artifact["evidence_refs"][:4]:
+                reference = EvidenceRef.model_validate(candidate)
+                if not reference.ref.startswith("/workspace/") or not reference.sha256:
+                    continue
+                recovered = backend.read(reference.ref, offset=0, limit=1_000_001)
+                if recovered.error or not recovered.file_data:
+                    continue
+                content = recovered.file_data.get("content")
+                if (
+                    isinstance(content, str)
+                    and len(content.encode()) <= 1_000_000
+                    and hashlib.sha256(content.encode()).hexdigest() == reference.sha256.lower()
+                ):
+                    verified.append(reference)
+
+            def persist(state: Any) -> None:
+                refs = {ref.ref: ref for ref in state.evidence_refs}
+                fresh = any(
+                    ref.ref not in refs or refs[ref.ref].sha256 != ref.sha256 for ref in verified
+                )
+                refs.update({ref.ref: ref for ref in verified})
+                state.evidence_refs = list(refs.values())[-50:]
+                if fresh:
+                    state.state_revision += 1
+                    state.updated_by = "execution-evidence"
+
+            if verified:
+                mutate_task_state(backend, str(receipt["objective_id"]), persist)
 
     def _append(self, request: Any, additions: list[dict]) -> None:
         backend = self._backend_for(request)
@@ -307,9 +345,10 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
             _write_entries(backend, path, entries)
 
     def before_agent(self, state: Any, runtime: Any) -> dict | None:
-        if active_dispatch.get() is not None and os.environ.get(
-            "RAPTIX_DISPATCH_HANDOFF", "0"
-        ).strip().lower() in {"1", "true", "yes"}:
+        if active_dispatch.get() is not None and any(
+            os.environ.get(flag, "0").strip().lower() in {"1", "true", "yes"}
+            for flag in ("RAPTIX_DISPATCH_HANDOFF", "RAPTIX_TASK_HANDOFF")
+        ):
             return {"worker_result": {}}
         return None
 
@@ -317,11 +356,10 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
         return self.before_agent(state, runtime)
 
     def after_agent(self, state: Any, runtime: Any) -> dict | None:
-        if os.environ.get("RAPTIX_DISPATCH_HANDOFF", "0").strip().lower() not in {
-            "1",
-            "true",
-            "yes",
-        }:
+        if not any(
+            os.environ.get(flag, "0").strip().lower() in {"1", "true", "yes"}
+            for flag in ("RAPTIX_DISPATCH_HANDOFF", "RAPTIX_TASK_HANDOFF")
+        ):
             return None
         context = active_dispatch.get()
         if context is None or not context.objective_id:
@@ -334,7 +372,10 @@ class ExecutionLedgerMiddleware(AgentMiddleware):
         ):
             return None
         try:
-            reported = WorkerResult.model_validate_json(messages[-1].content)
+            text = messages[-1].content.strip()
+            if text.startswith("```json") and text.endswith("```"):
+                text = text.removeprefix("```json").removesuffix("```").strip()
+            reported = WorkerResult.model_validate_json(text)
         except ValueError:
             return None
         if reported.objective_id != context.objective_id:

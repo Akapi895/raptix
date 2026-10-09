@@ -14,6 +14,7 @@ import json
 import logging
 import os
 import threading
+import time
 from copy import copy
 from typing import Annotated, Any, NotRequired
 
@@ -73,7 +74,10 @@ def merge_dispatch_ledger(left: dict | None, right: dict | None) -> dict:
 
 
 def _handoff_enabled() -> bool:
-    return os.environ.get("RAPTIX_DISPATCH_HANDOFF", "0").strip().lower() in {"1", "true", "yes"}
+    return any(
+        os.environ.get(flag, "0").strip().lower() in {"1", "true", "yes"}
+        for flag in ("RAPTIX_DISPATCH_HANDOFF", "RAPTIX_TASK_HANDOFF")
+    )
 
 
 def _handoff_lease_enabled() -> bool:
@@ -169,11 +173,18 @@ class DispatchMiddleware(SubAgentMiddleware):
                 "dispatch_ledger_full",
                 "Thread dispatch ledger is full; start a new thread",
             )
-        if _handoff_lease_enabled() and objective_id:
-            token = f"{dispatch_id}:{int(prior.get('attempt', 0)) + 1}"
-            held = self._task_io._bounded(self._claim_lease, runtime, objective_id, token)
-            if held:
-                return _reply(runtime, "handoff_lease_held", held)
+        context = DispatchContext(dispatch_id, objective_id, int(prior.get("attempt", 0)) + 1)
+        from raptix.runtime.call_context import active_call
+
+        traced = active_call.get()
+        if traced is not None:
+            context = DispatchContext(
+                context.dispatch_id,
+                context.objective_id,
+                context.attempt,
+                lease_token=context.lease_token,
+                parent_call_id=traced.call_id,
+            )
         config = getattr(runtime, "config", None) or {}
         scope = (config.get("configurable") or {}).get("thread_id")
         scope = str(scope or runtime.state.get("engagement_name") or id(runtime.state))
@@ -186,8 +197,23 @@ class DispatchMiddleware(SubAgentMiddleware):
                     "An invocation of this dispatch is already active",
                 )
             self._active.add(key)
+        if _handoff_lease_enabled() and objective_id:
+            claimed = self._task_io._bounded(
+                lambda: (
+                    self._claim_lease(
+                        runtime, objective_id, context.lease_token, time.monotonic() + 2.0
+                    ),
+                )
+            )
+            if claimed is None or claimed[0] is not None:
+                self._release(key)
+                return _reply(
+                    runtime,
+                    "handoff_lease_held",
+                    claimed[0] if claimed else "Lease storage unavailable or busy",
+                )
         return (
-            DispatchContext(dispatch_id, objective_id, int(prior.get("attempt", 0)) + 1),
+            context,
             key,
             fingerprint,
             (
@@ -252,14 +278,14 @@ class DispatchMiddleware(SubAgentMiddleware):
             }
         }
         updates["active_objective_id"] = context.objective_id or ""
-        if _handoff_enabled():
+        if _handoff_enabled() or os.environ.get("RAPTIX_TASK_BUDGET", "0") == "1":
             self._task_io._bounded(self._merge_task_state, runtime, context, outcome, worker_result)
         if _handoff_lease_enabled() and context.objective_id:
             self._task_io._bounded(
                 self._release_lease,
                 runtime,
                 context.objective_id,
-                f"{context.dispatch_id}:{context.attempt}",
+                context.lease_token,
             )
         return Command(update=updates)
 
@@ -271,13 +297,15 @@ class DispatchMiddleware(SubAgentMiddleware):
             log.debug("handoff backend unavailable: %s", type(exc).__name__)
             return None
 
-    def _claim_lease(self, runtime: ToolRuntime, objective_id: str, token: str) -> str | None:
+    def _claim_lease(
+        self, runtime: ToolRuntime, objective_id: str, token: str, deadline: float | None = None
+    ) -> str | None:
         from raptix.orchestration.mission.handoff import claim_lease
 
         backend = self._task_state_backend_for(runtime)
         if backend is None:
-            return None
-        return claim_lease(backend, objective_id, token=token, owner="dispatch")
+            return "Lease backend unavailable"
+        return claim_lease(backend, objective_id, token=token, owner="dispatch", deadline=deadline)
 
     def _release_lease(self, runtime: ToolRuntime, objective_id: str, token: str) -> None:
         from raptix.orchestration.mission.handoff import release_lease
@@ -325,6 +353,23 @@ class DispatchMiddleware(SubAgentMiddleware):
             lines.append("Task-state revision: 0")
         else:
             lines.append(f"Task-state revision: {task_state.state_revision}")
+            if _handoff_lease_enabled():
+                from raptix.orchestration.mission.handoff import handoff_reason
+
+                config = (getattr(runtime, "config", None) or {}).get("configurable", {})
+                reason = handoff_reason(
+                    requested=bool(config.get("handoff_requested")),
+                    budget_exhausted=any(
+                        d.action.startswith("budget_exhausted:") for d in task_state.decision_record
+                    ),
+                    stalled="stall" in task_state.handoff_signals,
+                    phase_changed=bool(
+                        task_state.last_worker_phase
+                        and task_state.last_worker_phase != objective.get("phase")
+                    ),
+                )
+                if reason:
+                    lines.append(f"Handoff readiness (advisory): {reason.value}")
             lines.append(f"Work state: {task_state.work_state.status.value}")
             lines.append(f"Work reason: {task_state.work_state.reason[:256]}")
             refs = [ref.ref for ref in task_state.evidence_refs][-_HANDOFF_MAX_ITEMS:]
@@ -342,7 +387,13 @@ class DispatchMiddleware(SubAgentMiddleware):
             pending = pending_executions(backend, objective_id)
             if pending:
                 lines.append("Unknown executions: reconcile before any retry.")
-                lines.extend(f"- {entry['action_hash']}" for entry in pending[:4])
+                if any(entry.get("kind") == "reconciliation_unavailable" for entry in pending):
+                    lines.append(
+                        "Execution ledger unavailable; inspect persisted evidence before retrying."
+                    )
+                lines.extend(
+                    f"- {entry['action_hash']}" for entry in pending[:4] if "action_hash" in entry
+                )
             continuation = task_state.continuation
             for label, items in (
                 ("Next steps", continuation.next_steps),
@@ -362,10 +413,14 @@ class DispatchMiddleware(SubAgentMiddleware):
         instructions = (
             '\nReturn a JSON WorkerResult: {"objective_id":"'
             + objective_id
-            + '","outcome":"success|failed|blocked","evidence_refs":[],"continuation":'
+            + '","outcome":"success","evidence_refs":[{"ref":"/workspace/evidence/example.txt",'
+            '"sha256":"<64 hexadecimal characters from the persisted artifact>"}],"continuation":'
             '{"next_steps":[],"blockers":[],"awaiting":[]},"budget_delta":'
             '{"model_calls":0,"input_tokens":0,"wall_clock_s":0},"reason":""}.'
             "\nA successful tool/dispatch does not mark the objective completed."
+            "\nChoose outcome success, failed or blocked. evidence_refs must contain objects with ref/sha256,"
+            " never strings or a [path, hash] pair. Use [] if there is no verified artifact."
+            " Automatic accounting is authoritative; do not estimate usage in budget_delta."
         )
         suffix = instructions + "\n</WORKER_INPUT>"
         return "\n".join(lines)[: _WORKER_INPUT_MAX_CHARS - len(suffix)] + suffix
@@ -395,18 +450,12 @@ class DispatchMiddleware(SubAgentMiddleware):
         self, runtime: ToolRuntime, context: DispatchContext, outcome: dict, worker_result: Any
     ) -> None:
         """Best-effort fold of the dispatch outcome into durable task state."""
-        if not _handoff_enabled() or not context.objective_id:
+        automatic = os.environ.get("RAPTIX_TASK_BUDGET", "0").lower() in {"1", "true", "yes"}
+        if not (_handoff_enabled() or automatic) or not context.objective_id:
             return
         backend = self._task_state_backend_for(runtime)
         if backend is None:
             return
-        if _handoff_lease_enabled():
-            from raptix.orchestration.mission.handoff import lease_owner
-
-            token = f"{context.dispatch_id}:{context.attempt}"
-            if not lease_owner(backend, context.objective_id, token):
-                log.debug("handoff fold skipped: lease no longer owned")
-                return
         try:
             state = getattr(runtime, "state", None) or {}
             objective = next(
@@ -414,15 +463,23 @@ class DispatchMiddleware(SubAgentMiddleware):
                 {"id": context.objective_id},
             )
             path = task_state_path(context.objective_id)
-            with document_lock(path):
+            with document_lock(path, backend):
                 bundle = read_task_state(backend, context.objective_id)
                 if bundle.error:
                     log.debug("handoff merge skipped: %s", bundle.error)
+                    return
+                if _handoff_lease_enabled() and (
+                    bundle.state is None
+                    or bundle.state.owner_lease is None
+                    or bundle.state.owner_lease.token != context.lease_token
+                ):
+                    log.debug("handoff fold skipped: owner changed")
                     return
                 marker = f"{context.dispatch_id}:{context.attempt}"
                 if bundle.state is not None and marker in bundle.state.applied_dispatches:
                     return
                 merged = advance_task_state(objective, prior=bundle.state, updated_by="dispatch")
+                merged.last_worker_phase = str(objective.get("phase") or "")[:128]
                 reported = None
                 if worker_result:
                     try:
@@ -455,15 +512,26 @@ class DispatchMiddleware(SubAgentMiddleware):
                     refs.update({ref.ref: ref for ref in reported.evidence_refs})
                     merged.evidence_refs = list(refs.values())[-50:]
                     merged.continuation = reported.continuation
-                    for field in ("model_calls", "input_tokens", "wall_clock_s"):
+                    for field in (
+                        ()
+                        if automatic
+                        else ("model_calls", "input_tokens", "output_tokens", "wall_clock_s")
+                    ):
                         setattr(
                             merged.budget,
                             field,
                             getattr(merged.budget, field) + getattr(reported.budget_delta, field),
                         )
                 merged.budget.attempts += 1
+                if automatic:
+                    merged.budget.wall_clock_s += max(time.monotonic() - context.started_at, 0.0)
+                    merged.accounting_revision += 1
                 merged.applied_dispatches.append(marker)
-                error = write_task_state(backend, merged)
+                error = write_task_state(
+                    backend,
+                    merged,
+                    owner_token=(context.lease_token if _handoff_lease_enabled() else None),
+                )
                 if error:
                     log.debug("handoff merge failed: %s", error)
         except Exception as exc:  # noqa: BLE001 — best-effort

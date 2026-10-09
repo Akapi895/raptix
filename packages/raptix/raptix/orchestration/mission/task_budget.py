@@ -14,8 +14,10 @@ import asyncio
 import logging
 import os
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from contextvars import copy_context
+from types import SimpleNamespace
 from typing import Any, cast
 
 from langchain.agents.middleware import AgentMiddleware
@@ -78,6 +80,7 @@ def _as_int(value: Any) -> int:
 
 def usage_delta(response: Any) -> tuple[int, int, int]:
     """Return ``(model_calls, input_tokens, output_tokens)`` for one model result."""
+    response = getattr(response, "model_response", response)
     messages = getattr(response, "result", None)
     if not isinstance(messages, list):
         messages = [response]
@@ -110,7 +113,16 @@ class TaskBudgetMiddleware(AgentMiddleware):
         return str(objective_id) if objective_id else None
 
     def _backend_for(self, request: Any) -> Any:
-        runtime = getattr(request, "runtime", None) or request
+        runtime = getattr(request, "runtime", None)
+        config = getattr(runtime, "config", None)
+        if config is None:
+            from langgraph.config import get_config
+
+            try:
+                config = get_config()
+            except RuntimeError:
+                config = {}
+        runtime = SimpleNamespace(state=getattr(request, "state", {}) or {}, config=config)
         try:
             return scoped_task_backend(self._backend, runtime)
         except Exception as exc:  # noqa: BLE001 — accounting never blocks the model loop
@@ -136,7 +148,7 @@ class TaskBudgetMiddleware(AgentMiddleware):
             )
         return None
 
-    def _fold(self, request: Any, objective_id: str, response: Any) -> None:
+    def _fold(self, request: Any, objective_id: str, response: Any, elapsed: float = 0.0) -> None:
         calls, input_tokens, output_tokens = usage_delta(response)
         backend = self._backend_for(request)
         if backend is None:
@@ -149,6 +161,7 @@ class TaskBudgetMiddleware(AgentMiddleware):
             model_calls=calls,
             input_tokens=input_tokens,
             output_tokens=output_tokens,
+            wall_clock_s=elapsed if active_dispatch.get() is None else 0.0,
             decision=marker,
         )
 
@@ -204,7 +217,12 @@ class TaskBudgetMiddleware(AgentMiddleware):
             finally:
                 _WRITE_SLOTS.release()
 
-        future = _WRITERS.submit(run)
+        try:
+            future = _WRITERS.submit(run)
+        except RuntimeError:
+            _WRITE_SLOTS.release()
+            log.debug("task-budget executor unavailable")
+            return None
         future.add_done_callback(lambda completed: completed.exception())
         try:
             return await asyncio.wait_for(
@@ -221,8 +239,9 @@ class TaskBudgetMiddleware(AgentMiddleware):
         if not objective_id:
             return handler(request)
         request = self._bounded(self._remind, request, objective_id) or request
+        started = time.monotonic()
         result = handler(request)
-        self._bounded(self._fold, request, objective_id, result)
+        self._bounded(self._fold, request, objective_id, result, time.monotonic() - started)
         return result
 
     async def awrap_model_call(self, request: Any, handler: Any) -> Any:
@@ -232,8 +251,9 @@ class TaskBudgetMiddleware(AgentMiddleware):
         if not objective_id:
             return await handler(request)
         request = await self._to_thread(self._remind, request, objective_id) or request
+        started = time.monotonic()
         result = await handler(request)
-        await self._to_thread(self._fold, request, objective_id, result)
+        await self._to_thread(self._fold, request, objective_id, result, time.monotonic() - started)
         return result
 
 
