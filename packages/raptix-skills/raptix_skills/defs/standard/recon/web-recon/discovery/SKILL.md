@@ -17,11 +17,11 @@ Surface the application's path tree, alternate virtual hosts, and JS-embedded en
 
 ### ffuf (Recommended — Fast, Flexible)
 ```bash
-# Basic directory fuzzing
-ffuf -u https://<target>/FUZZ -w /usr/share/wordlists/dirb/common.txt -mc 200,301,302,403
+# Basic directory fuzzing (Kali dirb path — /usr/share/wordlists/ does not exist)
+ffuf -u https://<target>/FUZZ -w /usr/share/dirb/wordlists/common.txt -mc 200,301,302,403
 
 # With file extensions
-ffuf -u https://<target>/FUZZ -w /usr/share/wordlists/dirb/common.txt \
+ffuf -u https://<target>/FUZZ -w /usr/share/dirb/wordlists/common.txt \
     -e .php,.asp,.aspx,.jsp,.html,.js,.json,.xml,.txt,.bak,.old,.sql,.zip,.tar.gz
 
 # Filter by response size (exclude default pages)
@@ -49,18 +49,26 @@ done
 ## 2. Virtual Host (vHost) Discovery
 
 ```bash
-# vHost fuzzing via Host header
-ffuf -u https://<target_ip>/ -H "Host: FUZZ.<target>" \
-    -w /usr/share/wordlists/subdomains.txt -fs <default_size>
+# Baseline first: the default/redirect response size is the noise filter.
+# (IP-based GET → 301 to a domain = default_server; catch-all 200 = fallback page)
+curl -s -o /dev/null -w "%{http_code} %{size_download}\n" http://<target_ip>/
+
+# vHost fuzzing via Host header — wordlist MUST come from seclists
+# (/usr/share/wordlists/subdomains.txt does not exist in the sandbox)
+ffuf -u http://<target_ip>/ -H "Host: FUZZ.<target>" \
+    -w /usr/share/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
+    -fs <default_size> -mc 200,301,302,403
 
 # With TLS SNI
-ffuf -u https://FUZZ.<target>/ -w /usr/share/wordlists/subdomains.txt \
+ffuf -u https://FUZZ.<target>/ -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt \
     -mc 200,301,302,403 -fs <default_size>
 ```
 
 **Why vHost discovery matters:**
 - Multiple applications may share one IP but respond differently based on Host header
 - Internal/staging apps often hidden behind non-public vhost names
+
+**Evidence bar (hard rule)**: hand-picked Host headers (admin/dev/internal/...) are NEVER sufficient to conclude "single vhost" — they only prove those specific names miss. Any default_server `301` redirect or catch-all page requires the wordlist fuzz pass above before the handoff claims the vhost surface is known. Sandbox wordlist locations: `/usr/share/seclists/Discovery/DNS/` (vhost/subdomain lists), `/usr/share/dirb/wordlists/` (path lists only — not usable for vhost fuzzing).
 
 ## 3. Nginx/Apache Alias Off-By-One Probe
 

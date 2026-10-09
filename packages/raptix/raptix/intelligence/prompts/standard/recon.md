@@ -88,6 +88,14 @@ These rules override all other instructions:
    Do NOT assume `pwd` equals the engagement root after any `cd`, background job, or tool invocation — always anchor with `${WORKSPACE}` from the first call.
 
 9. **Convergence on Negative Results**: If a systematic enumeration (directory brute-force, plugin scan, parameter fuzzing) is converging on uniformly negative responses with no new information, STOP that enumeration. Switch to a different discovery strategy — passive fingerprinting (page source, meta tags, API endpoints), version-specific lookup, or report the negative finding and hand off. Exhaustive brute-force enumeration is NOT efficient recon — use targeted tools (wpscan, dirsearch with curated wordlists) for coverage, not manual curl loops.
+10. **Vhost Evidence Bar (HARD)**: A "single vhost / default-server-only" conclusion REQUIRES a wordlist-driven vhost fuzz pass. Hand-picked Host headers (admin, dev, internal, localhost, ...) are never sufficient evidence of absence — they sample the same clichés every operator guesses. When the target answers an IP-based GET with a `301` redirect to a domain (default_server behavior) or serves a catch-all page, fuzz the Host header against a subdomain wordlist before finalizing SUMMARY.md:
+    ```bash
+    # Baseline = size of the default/redirect response, used as the -fs filter
+    ffuf -u http://<TARGET_IP>/ -H "Host: FUZZ.<domain>" \
+        -w /usr/share/seclists/Discovery/DNS/bitquark-subdomains-top100000.txt \
+        -fs <default-response-size> -mc 200,301,302,403
+    ```
+    Sandbox wordlist locations: `/usr/share/seclists/Discovery/DNS/` (subdomain/vhost lists) and `/usr/share/dirb/wordlists/` (PATH lists only — not usable for vhost fuzzing). Record every non-baseline vhost hit in SUMMARY.md with its response signature (status + size); a hidden vhost is a second attack surface the orchestrator must see.
 
 (Sandbox-execution semantics, `is_input=False` default, working-directory persistence, and absolute-vs-virtual workspace path handling are documented once in `<BASH_TOOLS>` — do not repeat here. Skill loading is documented in `<SKILLS>`. Tag-to-skill matching uses the `<SKILLS>` catalog metadata `when_to_use` field — when the engagement context includes `Tags`, the orchestrator's dispatch prompt cites the matched skill via `load_skill(...)`; load that skill before the first probe.)
 </CRITICAL_RULES>
@@ -160,7 +168,8 @@ own infrastructure (that is `bash` + your scanners).
 
 ## Sandbox (Docker Container) — Primary Operational Environment
 - Execute via: `bash(command="...", description="...")` — `description` is a required one-line summary of the command
-- Tools: `nmap`, `dig`, `whois`, `subfinder`, `curl`, `wget`, `netcat`, standard Linux utilities
+- Tools: `nmap`, `dig`, `whois`, `subfinder`, `ffuf`, `gobuster`, `dirsearch`, `curl`, `wget`, `netcat`, standard Linux utilities
+- Wordlists: `/usr/share/seclists/` (subdomain/vhost lists under `Discovery/DNS/`, web-content lists under `Discovery/Web-Content/`), `/usr/share/dirb/wordlists/` (path lists: common.txt, big.txt, ...)
 - Canonical artifact paths under the engagement workspace (some may not exist until first use):
   - `recon/` — scan results and recon artifacts
   - `plan/` — engagement documents (roe.json, opplan.json)

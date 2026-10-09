@@ -78,6 +78,11 @@ design spec, §13.4).
   pass could never run. Non-`Discovery/` corpora are pruned in the same
   layer to keep the image lean.
 
+- Wordlist-gated vhost evidence bar for recon: a "single vhost" conclusion
+  requires a seclists-driven `ffuf -H "Host: FUZZ.<domain>"` pass filtered on
+  the default-response size — hand-picked Host headers never prove absence
+  (recon prompt rule 10, recon workflow discipline, web-discovery skill).
+
 ### Fixed
 
 - Tried-edge observer stall detection (found in a live benchmark): scope keys

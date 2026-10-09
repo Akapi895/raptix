@@ -52,7 +52,7 @@ General sequence: passive → OSINT → cloud → active → web.
 Web-recon order within the hub:
 
 1. **Technology fingerprint** (passive httpx)
-2. **Discovery** (`discovery.md`) — directory/file fuzzing, vhost, JS analysis
+2. **Discovery** (`discovery.md`) — directory/file fuzzing, vhost fuzzing, JS analysis. Vhost fuzz is MANDATORY when the host shows default_server behavior (IP-based GET → `301` to a domain, or catch-all responses): conclude "single vhost" only after a wordlist-driven `ffuf -H "Host: FUZZ.<domain>" -fs <default-size>` pass, never from hand-picked Host headers.
 3. **API enumeration** (`api-enumeration.md`) — REST, GraphQL, params
 4. **CMS scanning** (`cms-scanning.md`) — only if CMS detected
 5. **WAF detection** (`waf-detection.md`) — note multi-proxy stack for smuggling handoff
@@ -102,6 +102,8 @@ Recommended exploit gate: <e.g. "run smuggling.md confirm-desync gate before ite
 ```
 
 ## Discipline / Tag-conditional rules
+
+- **Vhost evidence bar**: hand-picked Host headers (admin/dev/internal/...) are never proof of single-vhost — they only prove those specific names miss. A default_server `301` redirect or a catch-all page REQUIRES a wordlist vhost fuzz pass (`/usr/share/seclists/Discovery/DNS/`) with the default-response-size filter before the handoff claims the vhost surface is known.
 
 - If `Tags` includes `race_condition` / `toctou` / `concurrent`, the **Session-write timeline** section MUST be populated. Empty timeline + race tag = exploit will flag handoff back as "recon incomplete: session-write timeline missing".
 - If `Tags` includes `smuggling_desync` / `request_smuggling` / `hrs` / `desync`, the **Frontend stack** section MUST be populated. Differential parsing alone (different status codes from different framing headers) is **NOT** confirmed desync — it is a hint. Recon must distinguish:
