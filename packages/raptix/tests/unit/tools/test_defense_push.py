@@ -3,9 +3,10 @@
 Coverage additions on top of test_defense.py (which handles the basic converter
 happy paths and minimal conops tests).  This file focuses on:
   - HTTP push functions (mocked requests) for splunk, elastic, sentinel, edr
-  - All severity-map and logsource-to-table lookup paths
-  - Converter edge cases not yet tested (startswith/equals/non-string values,
-    nested AND/OR/NOT/parens in conditions)
+  - All severity-map paths
+  - Converter integration behavior: our pipeline-selection logic and
+    exception-type wrapping around pySigma (condition-DSL coverage itself is
+    pySigma's own test suite's job, not ours to re-verify)
   - ConOps helpers: list_targets, engagement_slug, _load_conops, invalid JSON
   - EDR: push_defender_xdr_detection and push_crowdstrike_ioa (full mock)
   - Error branches: missing URL/auth, HTTP 4xx, network exception
@@ -29,24 +30,16 @@ from raptix.execution.tools.defense.edr import (
 )
 from raptix.execution.tools.defense.elastic import (
     SigmaToElasticError,
-    _field_clause_lucene,
-    _selection_to_lucene,
     push_detection_rule,
     sigma_to_lucene,
 )
 from raptix.execution.tools.defense.sentinel import (
     SigmaToKqlError,
-    _field_clause_kql,
-    _selection_to_kql,
-    _table_for_logsource,
     push_analytic_rule,
     sigma_to_kql,
 )
 from raptix.execution.tools.defense.splunk import (
     SigmaConversionError,
-    _field_clause,
-    _quote_spl,
-    _selection_to_spl,
     push_savedsearch,
     sigma_to_spl,
 )
@@ -156,92 +149,49 @@ class TestConOpsHelpers:
 
 
 class TestSplunkConverter:
-    def test_quote_spl_non_string(self):
-        assert _quote_spl(42) == "42"
-        assert _quote_spl(3.14) == "3.14"
-
-    def test_quote_spl_escapes_backslash_and_quote(self):
-        result = _quote_spl('C:\\path\\"name"')
-        assert "\\\\" in result
-        assert '\\"' in result
-
-    def test_field_clause_equals(self):
-        assert _field_clause("EventID", "", "4624") == 'EventID="4624"'
-
-    def test_field_clause_startswith(self):
-        assert _field_clause("Image", "startswith", "C:\\Windows") == 'Image="C:\\\\Windows*"'
-
-    def test_field_clause_contains(self):
-        assert _field_clause("CommandLine", "contains", "bypass") == 'CommandLine="*bypass*"'
-
-    def test_field_clause_endswith(self):
-        assert _field_clause("Image", "endswith", ".exe") == 'Image="*.exe"'
-
-    def test_field_clause_non_string_with_modifier(self):
-        # numeric value with contains modifier: falls back to quoted form
-        result = _field_clause("Count", "contains", 99)
-        assert "99" in result
-
-    def test_field_clause_unknown_modifier_raises(self):
-        with pytest.raises(SigmaConversionError, match="unsupported"):
-            _field_clause("f", "regex", ".*")
-
-    def test_selection_to_spl_list_values(self):
-        sel = {"Image|endswith": [".exe", ".dll"]}
-        result = _selection_to_spl(sel)
-        assert 'Image="*.exe"' in result
-        assert 'Image="*.dll"' in result
-        assert "OR" in result
-
-    def test_sigma_to_spl_no_detection_raises(self):
-        with pytest.raises(SigmaConversionError, match="missing a ``detection``"):
+    def test_sigma_to_spl_malformed_rule_raises_our_exception_type(self):
+        # pySigma's own SigmaError must surface as our SigmaConversionError,
+        # not leak as a raw sigma.exceptions type — that's the integration
+        # contract callers (the @tool wrapper) rely on.
+        with pytest.raises(SigmaConversionError):
             sigma_to_spl({})
-
-    def test_sigma_to_spl_no_condition_raises(self):
-        with pytest.raises(SigmaConversionError, match="must be a string"):
-            sigma_to_spl({"detection": {}})
-
-    def test_sigma_to_spl_empty_selections_raises(self):
-        with pytest.raises(SigmaConversionError, match="no selections"):
-            sigma_to_spl({"detection": {"condition": "sel"}})
-
-    def test_sigma_to_spl_selection_not_dict_raises(self):
-        rule = {"detection": {"sel": "not-a-dict", "condition": "sel"}}
-        with pytest.raises(SigmaConversionError, match="must be a dict"):
-            sigma_to_spl(rule)
 
     def test_sigma_to_spl_and_condition(self):
         rule = {
+            "title": "t",
+            "logsource": {"product": "test"},
             "detection": {
                 "selA": {"a": "1"},
                 "selB": {"b": "2"},
                 "condition": "selA and selB",
-            }
+            },
         }
         spl = sigma_to_spl(rule)
-        assert "AND" in spl
         assert "a=" in spl and "b=" in spl
 
     def test_sigma_to_spl_not_condition(self):
         rule = {
+            "title": "t",
+            "logsource": {"product": "test"},
             "detection": {
                 "sel": {"a": "1"},
                 "condition": "not sel",
-            }
+            },
         }
         spl = sigma_to_spl(rule)
         assert "NOT" in spl
 
-    def test_sigma_to_spl_parenthesised_condition(self):
+    def test_sigma_to_spl_or_condition(self):
         rule = {
+            "title": "t",
+            "logsource": {"product": "test"},
             "detection": {
                 "selA": {"a": "1"},
                 "selB": {"b": "2"},
                 "condition": "(selA or selB)",
-            }
+            },
         }
         spl = sigma_to_spl(rule)
-        assert "(" in spl and ")" in spl
         assert "OR" in spl
 
 
@@ -251,70 +201,25 @@ class TestSplunkConverter:
 
 
 class TestSentinelConverter:
-    def test_table_for_logsource_known(self):
-        assert _table_for_logsource({"product": "windows", "category": "sysmon"}) == "SecurityEvent"
-        assert _table_for_logsource({"product": "linux", "category": "syslog"}) == "Syslog"
-        assert _table_for_logsource({"product": "network", "category": "dns"}) == "DnsEvents"
-        assert _table_for_logsource({"product": "cloud", "category": "azure"}) == "AzureActivity"
-        assert _table_for_logsource({"product": "cloud", "category": "aws"}) == "AWSCloudTrail"
-
-    def test_table_for_logsource_unknown_falls_back_to_syslog(self):
-        assert _table_for_logsource({"product": "weird", "category": "unknown"}) == "Syslog"
-
-    def test_table_for_logsource_empty(self):
-        assert _table_for_logsource({}) == "Syslog"
-
-    def test_field_clause_kql_equals_string(self):
-        assert _field_clause_kql("Image", "", "calc.exe") == 'Image == "calc.exe"'
-
-    def test_field_clause_kql_contains(self):
-        assert _field_clause_kql("Cmd", "contains", "bypass") == 'Cmd contains "bypass"'
-
-    def test_field_clause_kql_startswith(self):
-        assert _field_clause_kql("P", "startswith", "C:") == 'P startswith "C:"'
-
-    def test_field_clause_kql_endswith(self):
-        assert _field_clause_kql("F", "endswith", ".ps1") == 'F endswith ".ps1"'
-
-    def test_field_clause_kql_non_string_equals(self):
-        assert _field_clause_kql("EventID", "", 4624) == "EventID == 4624"
-
-    def test_field_clause_kql_unsupported_modifier_raises(self):
-        with pytest.raises(SigmaToKqlError, match="unsupported"):
-            _field_clause_kql("f", "regex", ".*")
-
-    def test_selection_to_kql_list_or(self):
-        sel = {"Image|endswith": [".exe", ".dll"]}
-        result = _selection_to_kql(sel)
-        assert 'endswith ".exe"' in result
-        assert " or " in result
-
-    def test_sigma_to_kql_missing_detection_raises(self):
-        with pytest.raises(SigmaToKqlError, match="missing ``detection``"):
+    def test_sigma_to_kql_malformed_rule_raises_our_exception_type(self):
+        with pytest.raises(SigmaToKqlError):
             sigma_to_kql({})
-
-    def test_sigma_to_kql_no_condition_raises(self):
-        with pytest.raises(SigmaToKqlError, match="must be a string"):
-            sigma_to_kql({"detection": {}})
-
-    def test_sigma_to_kql_selection_not_dict_raises(self):
-        rule = {
-            "detection": {"sel": "bad", "condition": "sel"},
-            "logsource": {},
-        }
-        with pytest.raises(SigmaToKqlError, match="must be a dict"):
-            sigma_to_kql(rule)
 
     def test_sigma_to_kql_unknown_token_raises(self):
         rule = {
+            "title": "t",
+            "logsource": {"product": "windows", "category": "process_creation"},
             "detection": {"sel": {"a": "1"}, "condition": "sel xor bad"},
-            "logsource": {},
         }
-        with pytest.raises(SigmaToKqlError, match="unknown token"):
+        with pytest.raises(SigmaToKqlError):
             sigma_to_kql(rule)
 
-    def test_sigma_to_kql_and_or_not_parens(self):
+    def test_sigma_to_kql_and_or_not_parens_resolve_to_the_real_asim_table(self):
+        # Pins the integration we actually care about: windows/process_creation
+        # resolves to the real ASIM table (imProcessCreate), not a generic
+        # "SecurityEvent" placeholder the hand-rolled predecessor used.
         rule = {
+            "title": "t",
             "logsource": {"product": "windows", "category": "process_creation"},
             "detection": {
                 "selA": {"Image|endswith": ".exe"},
@@ -323,14 +228,15 @@ class TestSentinelConverter:
             },
         }
         kql = sigma_to_kql(rule)
-        assert kql.startswith("SecurityEvent")
+        assert kql.startswith("imProcessCreate")
         assert "and" in kql
         assert "or" in kql
         assert "not" in kql
 
     def test_sigma_to_kql_escapes_double_quote(self):
         rule = {
-            "logsource": {},
+            "title": "t",
+            "logsource": {"product": "windows", "category": "process_creation"},
             "detection": {
                 "sel": {"CommandLine|contains": 'he said "hi"'},
                 "condition": "sel",
@@ -352,55 +258,19 @@ class TestSentinelConverter:
 
 
 class TestElasticConverter:
-    def test_field_clause_lucene_equals_string(self):
-        assert _field_clause_lucene("Image", "", "calc.exe") == 'Image: "calc.exe"'
-
-    def test_field_clause_lucene_contains(self):
-        assert _field_clause_lucene("Cmd", "contains", "bypass") == "Cmd: *bypass*"
-
-    def test_field_clause_lucene_startswith(self):
-        assert _field_clause_lucene("Path", "startswith", "C:") == "Path: C:*"
-
-    def test_field_clause_lucene_endswith(self):
-        assert _field_clause_lucene("File", "endswith", ".ps1") == "File: *.ps1"
-
-    def test_field_clause_lucene_non_string_equals(self):
-        assert _field_clause_lucene("EventID", "", 4624) == "EventID: 4624"
-
-    def test_field_clause_lucene_unsupported_modifier_raises(self):
-        with pytest.raises(SigmaToElasticError, match="unsupported modifier"):
-            _field_clause_lucene("f", "regex", ".*")
-
-    def test_field_clause_lucene_non_string_unsupported_raises(self):
+    def test_sigma_to_lucene_malformed_rule_raises_our_exception_type(self):
         with pytest.raises(SigmaToElasticError):
-            _field_clause_lucene("f", "contains", 42)
-
-    def test_selection_to_lucene_list_or(self):
-        sel = {"Image|endswith": [".exe", ".dll"]}
-        result = _selection_to_lucene(sel)
-        assert "*.exe" in result
-        assert "OR" in result
-
-    def test_sigma_to_lucene_missing_detection_raises(self):
-        with pytest.raises(SigmaToElasticError, match="missing ``detection``"):
             sigma_to_lucene({})
-
-    def test_sigma_to_lucene_no_condition_raises(self):
-        with pytest.raises(SigmaToElasticError, match="must be a string"):
-            sigma_to_lucene({"detection": {}})
-
-    def test_sigma_to_lucene_selection_not_dict_raises(self):
-        rule = {"detection": {"sel": "bad", "condition": "sel"}}
-        with pytest.raises(SigmaToElasticError, match="must be a dict"):
-            sigma_to_lucene(rule)
 
     def test_sigma_to_lucene_and_or_not(self):
         rule = {
+            "title": "t",
+            "logsource": {"product": "test"},
             "detection": {
                 "selA": {"Image|endswith": ".exe"},
                 "selB": {"ParentImage|contains": "cmd"},
                 "condition": "selA and selB",
-            }
+            },
         }
         lucene = sigma_to_lucene(rule)
         assert "AND" in lucene
@@ -408,10 +278,12 @@ class TestElasticConverter:
 
     def test_sigma_to_lucene_escapes_double_quote(self):
         rule = {
+            "title": "t",
+            "logsource": {"product": "test"},
             "detection": {
                 "sel": {"CommandLine|contains": 'with "quotes"'},
                 "condition": "sel",
-            }
+            },
         }
         lucene = sigma_to_lucene(rule)
         assert '\\"quotes\\"' in lucene

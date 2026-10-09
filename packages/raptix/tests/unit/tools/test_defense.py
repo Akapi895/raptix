@@ -39,6 +39,9 @@ def _basic_sigma() -> dict:
 
 
 def test_sigma_to_spl_basic():
+    # No logsource-specific Splunk pipeline renames these two fields (CIM
+    # already uses Image/CommandLine for this category), so they pass
+    # through unchanged — still routed through the real pySigma engine.
     spl = sigma_to_spl(_basic_sigma())
     assert 'Image="*\\\\powershell.exe"' in spl
     assert 'CommandLine="*DownloadString*"' in spl
@@ -46,11 +49,13 @@ def test_sigma_to_spl_basic():
 
 def test_sigma_to_spl_with_or_condition():
     rule = {
+        "title": "or-rule",
+        "logsource": {"product": "test"},
         "detection": {
             "selA": {"a": "1"},
             "selB": {"b": "2"},
             "condition": "selA or selB",
-        }
+        },
     }
     spl = sigma_to_spl(rule)
     assert "OR" in spl
@@ -58,23 +63,30 @@ def test_sigma_to_spl_with_or_condition():
 
 
 def test_sigma_to_spl_with_list_value():
+    # pySigma renders a multi-value field|endswith selection as one IN(...)
+    # clause rather than the old hand-rolled repeated-OR-clause form.
     rule = {
+        "title": "list-rule",
+        "logsource": {"product": "test"},
         "detection": {
             "sel": {"Image|endswith": ["\\cmd.exe", "\\powershell.exe"]},
             "condition": "sel",
-        }
+        },
     }
     spl = sigma_to_spl(rule)
-    assert 'Image="*\\\\cmd.exe"' in spl
-    assert 'Image="*\\\\powershell.exe"' in spl
+    assert "Image IN" in spl
+    assert "*\\\\cmd.exe" in spl
+    assert "*\\\\powershell.exe" in spl
 
 
 def test_sigma_to_spl_unknown_modifier_raises():
     rule = {
+        "title": "t",
+        "logsource": {"product": "test"},
         "detection": {
             "sel": {"field|exotic_modifier": "x"},
             "condition": "sel",
-        }
+        },
     }
     with pytest.raises(SigmaConversionError):
         sigma_to_spl(rule)
@@ -82,24 +94,32 @@ def test_sigma_to_spl_unknown_modifier_raises():
 
 def test_sigma_to_spl_unknown_selection_raises():
     rule = {
+        "title": "t",
+        "logsource": {"product": "test"},
         "detection": {
             "selA": {"a": "1"},
             "condition": "missing_selection",
-        }
+        },
     }
     with pytest.raises(SigmaConversionError):
         sigma_to_spl(rule)
 
 
-def test_sigma_to_kql_picks_security_event_for_windows():
+def test_sigma_to_kql_maps_to_the_real_asim_table_and_fields():
+    # The ASIM pipeline resolves windows/process_creation to the real
+    # normalized table (imProcessCreate) and maps Image/CommandLine to
+    # their ASIM field names — the hand-rolled predecessor sent every
+    # Windows rule to a generic "SecurityEvent" table with unmapped fields,
+    # which parses but matches nothing against a real ASIM workspace.
     kql = sigma_to_kql(_basic_sigma())
-    assert kql.startswith("SecurityEvent")
-    assert "where" in kql
-    assert 'endswith "\\\\powershell.exe"' in kql or "endswith" in kql
+    assert kql.startswith("imProcessCreate")
+    assert "TargetProcessName" in kql
+    assert "TargetProcessCommandLine" in kql
 
 
 def test_sigma_to_kql_unknown_modifier_raises():
     rule = {
+        "title": "t",
         "logsource": {"product": "windows", "category": "process_creation"},
         "detection": {
             "sel": {"field|nope": "x"},
@@ -111,17 +131,22 @@ def test_sigma_to_kql_unknown_modifier_raises():
 
 
 def test_sigma_to_lucene_basic():
+    # ECS maps Image -> process.executable.caseless and CommandLine ->
+    # process.command_line for a real Elastic cluster; the hand-rolled
+    # predecessor emitted the raw Sigma field names unmapped.
     lucene = sigma_to_lucene(_basic_sigma())
-    assert "Image: *\\powershell.exe" in lucene
-    assert "CommandLine: *DownloadString*" in lucene
+    assert "process.executable.caseless:*\\\\powershell.exe" in lucene
+    assert "process.command_line:*DownloadString*" in lucene
 
 
 def test_sigma_to_lucene_unknown_token_raises():
     rule = {
+        "title": "t",
+        "logsource": {"product": "test"},
         "detection": {
             "sel": {"a": "1"},
             "condition": "sel xor what",
-        }
+        },
     }
     with pytest.raises(SigmaToElasticError):
         sigma_to_lucene(rule)
@@ -192,10 +217,12 @@ def test_resolve_auth_value_success(monkeypatch: pytest.MonkeyPatch):
 
 def test_sigma_to_spl_contains_with_spaces_stays_quoted():
     rule = {
+        "title": "t",
+        "logsource": {"product": "test"},
         "detection": {
             "sel": {"CommandLine|contains": "cmd.exe /c whoami"},
             "condition": "sel",
-        }
+        },
     }
     spl = sigma_to_spl(rule)
     assert 'CommandLine="*cmd.exe /c whoami*"' in spl
@@ -203,10 +230,12 @@ def test_sigma_to_spl_contains_with_spaces_stays_quoted():
 
 def test_sigma_to_spl_contains_with_special_chars_escaped():
     rule = {
+        "title": "t",
+        "logsource": {"product": "test"},
         "detection": {
             "sel": {"CommandLine|contains": 'say "hello" and\\or'},
             "condition": "sel",
-        }
+        },
     }
     spl = sigma_to_spl(rule)
     assert 'CommandLine="*say \\"hello\\" and\\\\or*"' in spl

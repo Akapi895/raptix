@@ -1,4 +1,4 @@
-"""Sigma → Microsoft Sentinel Analytic Rule (ARM-based push).
+"""Sigma → Microsoft Sentinel Analytic Rule (ARM-based push), via pySigma.
 
 Sentinel Analytic Rules live under
 ``Microsoft.SecurityInsights/scheduledAlertRules``. We assemble a minimal
@@ -9,9 +9,15 @@ The bearer token is acquired by the operator out-of-band (via
 ``az account get-access-token --resource https://management.azure.com``)
 and exported into the env var named in the ConOps auth spec.
 
-We translate the Sigma detection body to KQL using the same selection
-semantics as Splunk's SPL converter — full pysigma support comes later
-if the agent emits a rule we can't translate.
+We translate the Sigma detection body to KQL using the official ``pySigma``
+engine + the ``pySigma-backend-kusto`` ``sentinel_asim`` pipeline. Earlier
+versions hand-rolled a logsource→table lookup (e.g. every Windows rule went
+to the generic ``SecurityEvent`` table) with Sigma's raw field names passed
+straight through — against a real ASIM-normalized workspace that produces a
+query that parses but matches nothing (the ASIM table for process creation
+is ``imProcessCreate`` with fields like ``TargetProcessName``, not
+``SecurityEvent``/``Image``). The ASIM pipeline resolves both the table and
+the field names from the Sigma logsource/field taxonomy.
 """
 
 from __future__ import annotations
@@ -25,94 +31,33 @@ from raptix_defense.conops import (
     resolve_auth_value,
     resolve_siem_target,
 )
+from sigma.backends.kusto.kusto import KustoBackend
+from sigma.collection import SigmaCollection
+from sigma.exceptions import SigmaError
+from sigma.pipelines.sentinelasim import sentinel_asim_pipeline
 
 
 class SigmaToKqlError(RuntimeError):
-    """Raised when Sigma → KQL conversion fails on an unsupported construct."""
-
-
-_LOGSOURCE_TO_TABLE = {
-    ("windows", "process_creation"): "SecurityEvent",
-    ("windows", "powershell"): "SecurityEvent",
-    ("windows", "sysmon"): "SecurityEvent",
-    ("linux", "process_creation"): "Syslog",
-    ("linux", "syslog"): "Syslog",
-    ("network", "firewall"): "AzureDiagnostics",
-    ("network", "dns"): "DnsEvents",
-    ("cloud", "azure"): "AzureActivity",
-    ("cloud", "aws"): "AWSCloudTrail",
-}
-
-
-def _table_for_logsource(logsource: dict[str, Any]) -> str:
-    product = (logsource.get("product") or "").lower()
-    category = (logsource.get("category") or "").lower()
-    return _LOGSOURCE_TO_TABLE.get((product, category), "Syslog")
-
-
-def _field_clause_kql(field: str, modifier: str, value: Any) -> str:
-    if isinstance(value, str):
-        escaped = value.replace('"', '\\"')
-        if modifier == "contains":
-            return f'{field} contains "{escaped}"'
-        if modifier == "startswith":
-            return f'{field} startswith "{escaped}"'
-        if modifier == "endswith":
-            return f'{field} endswith "{escaped}"'
-        if modifier in ("", "equals"):
-            return f'{field} == "{escaped}"'
-    else:
-        if modifier in ("", "equals"):
-            return f"{field} == {value}"
-    raise SigmaToKqlError(f"unsupported Sigma modifier ``{modifier}`` for KQL")
-
-
-def _selection_to_kql(selection: dict[str, Any]) -> str:
-    clauses: list[str] = []
-    for field, value in selection.items():
-        base, modifier = (field.split("|", 1) + [""])[:2]
-        if isinstance(value, list):
-            sub = " or ".join(_field_clause_kql(base, modifier, v) for v in value)
-            clauses.append(f"({sub})")
-        else:
-            clauses.append(_field_clause_kql(base, modifier, value))
-    return " and ".join(clauses)
+    """Raised when pySigma can't translate a Sigma rule to KQL."""
 
 
 def sigma_to_kql(sigma_rule: dict[str, Any]) -> str:
-    """Translate a Sigma rule dict to a KQL query string for Sentinel."""
-    detection = sigma_rule.get("detection")
-    if not isinstance(detection, dict):
-        raise SigmaToKqlError("Sigma rule missing ``detection`` block")
-    logsource = sigma_rule.get("logsource") or {}
-    table = _table_for_logsource(logsource)
+    """Translate a Sigma rule dict to a KQL query string for Sentinel via pySigma.
 
-    condition = detection.get("condition")
-    if not isinstance(condition, str):
-        raise SigmaToKqlError("Sigma rule ``detection.condition`` must be a string")
-
-    selections = {k: v for k, v in detection.items() if k != "condition"}
-    tokens = condition.replace("(", " ( ").replace(")", " ) ").split()
-    rendered: list[str] = []
-    for tok in tokens:
-        lower = tok.lower()
-        if lower == "and":
-            rendered.append("and")
-        elif lower == "or":
-            rendered.append("or")
-        elif lower == "not":
-            rendered.append("not")
-        elif tok in ("(", ")"):
-            rendered.append(tok)
-        elif tok in selections:
-            value = selections[tok]
-            if not isinstance(value, dict):
-                raise SigmaToKqlError(f"selection ``{tok}`` must be a dict")
-            rendered.append(f"({_selection_to_kql(value)})")
-        else:
-            raise SigmaToKqlError(f"unknown token ``{tok}`` in condition")
-    where_clause = " ".join(rendered)
-    return f"{table}\n| where {where_clause}"
+    Applies the Sentinel ASIM pipeline, which resolves both the target ASIM
+    table (e.g. ``imProcessCreate``) and the field-name mapping from the
+    rule's logsource/fields — the hand-rolled predecessor did neither.
+    Raises SigmaToKqlError — not a raw pySigma exception — so callers keep
+    one exception type to catch.
+    """
+    try:
+        collection = SigmaCollection.from_dicts([sigma_rule])
+        queries = KustoBackend(processing_pipeline=sentinel_asim_pipeline()).convert(collection)
+    except SigmaError as exc:
+        raise SigmaToKqlError(str(exc)) from exc
+    if not queries:
+        raise SigmaToKqlError("pySigma produced no KQL query for this rule")
+    return str(queries[0])
 
 
 _SEVERITY_MAP = {
