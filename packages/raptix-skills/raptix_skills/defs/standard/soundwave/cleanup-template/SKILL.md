@@ -69,4 +69,4 @@ Before writing `plan/cleanup.json`:
 
 ## Output
 
-Write to `plan/cleanup.json` validating against `raptix.core.schemas.CleanupPlan`.
+Write to `plan/cleanup.json` validating against `raptix_core.types.engagement.CleanupPlan`.

@@ -69,4 +69,4 @@ Before writing `plan/data-handling.json`:
 
 ## Output
 
-Write to `plan/data-handling.json` validating against `raptix.core.schemas.DataHandlingPlan`.
+Write to `plan/data-handling.json` validating against `raptix_core.types.engagement.DataHandlingPlan`.
