@@ -11,7 +11,6 @@ stable import paths and are never moved for cosmetic grouping.
 | Group | Purpose |
 |---|---|
 | `bash/` | **Frozen (guardrail).** Sandbox command execution. Do not restructure or weaken `SafeCommand`. |
-| `network/` | Network reconnaissance and service interaction. |
 | `web/` | Web application testing and HTTP tooling. |
 | `browser/` | Headless browser-driven interaction. |
 | `cloud/` | Cloud provider enumeration and testing. |
@@ -32,6 +31,7 @@ stable import paths and are never moved for cosmetic grouping.
 |---|---|
 | `contracts/` | Tool contracts and shared type surface. |
 | `mcp/` | MCP client/server tool bridging. |
+| `plumbing/` | Agent-support tool modules with no single attack-surface domain (`filesystem`, `skills`/`skills_registry`, `verification`, `opplan`). Unrelated to each other — import from the specific submodule, not the package. |
 
 ## Conventions
 

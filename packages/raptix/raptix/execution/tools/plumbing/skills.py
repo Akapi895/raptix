@@ -9,7 +9,7 @@ from typing import Any
 
 from langchain_core.tools import tool
 
-from raptix.execution.tools.skills_registry import (
+from raptix.execution.tools.plumbing.skills_registry import (
     AmbiguousSkill,
     SkillRecord,
     build_registry_from_package,
