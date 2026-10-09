@@ -1,6 +1,6 @@
 """Raptix skill registry + slug / fuzzy resolver.
 
-This module is the data-layer counterpart to ``raptix.execution.tools.skills``.
+This module is the data-layer counterpart to ``raptix.execution.tools.plumbing.skills``.
 The existing ``load_skill`` tool reads a single fully-qualified
 ``/skills/...`` path. The registry walks the package's skill tree
 (plus virtual ``/skills/...`` paths shipped from plugins / shared
