@@ -14,11 +14,11 @@ from langchain_core.messages import AIMessage
 from langchain_core.runnables import RunnableLambda
 from langchain_core.tools import tool
 
+from raptix.execution.session.recording import RecordingMiddleware
 from raptix.middleware._audit_sink import RoEAuditSink
 from raptix.middleware.dispatch import DispatchMiddleware
 from raptix.middleware.roe import RoEGuardrailMiddleware
 from raptix.orchestration.mission.opplan import OPPLANState
-from raptix.execution.session.recording import RecordingMiddleware
 
 
 class ToolModel(FakeMessagesListChatModel):

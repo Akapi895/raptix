@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from raptix.skills.audit.rules import RuleId, validate_skill_file
 from raptix.specialist_contracts.contracts import (
     CapabilityLane,
     discover_contracts,
     validate_contract_metadata,
 )
-from raptix.skills.audit.rules import RuleId, validate_skill_file
 
 
 def _contract() -> dict[str, object]:

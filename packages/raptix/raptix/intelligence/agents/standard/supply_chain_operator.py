@@ -29,8 +29,8 @@ from raptix.execution.backends import build_sandbox_backend, make_agent_backend
 from raptix.execution.tools.bash import BASH_TOOLS
 from raptix.execution.tools.bash.bash import set_sandbox
 from raptix.execution.tools.references.tools import lookup_payload, search_security_references
-from raptix.execution.tools.research.semantic import inspect_asset, search_knowledge
 from raptix.execution.tools.research.cve import cve_lookup
+from raptix.execution.tools.research.semantic import inspect_asset, search_knowledge
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
 from raptix.intelligence.agents.build import build_middleware, build_tools
 from raptix.intelligence.llm import LLMFactory

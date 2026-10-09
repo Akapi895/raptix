@@ -12,6 +12,8 @@ from typing import Any
 
 import pytest
 
+from raptix.capabilities import AvailabilityEvaluator, CapabilityRegistry
+from raptix.capabilities.registry import UnknownCapabilityError
 from raptix.execution.adapters import (
     AdapterParameterError,
     AdapterResolutionError,
@@ -34,8 +36,6 @@ from raptix.execution.adapters import (
     default_adapters,
 )
 from raptix.execution.adapters.base import artifact_name_param, str_list_param, str_param
-from raptix.capabilities import AvailabilityEvaluator, CapabilityRegistry
-from raptix.capabilities.registry import UnknownCapabilityError
 from raptix.knowledge.ingest.registry import default_registry, iter_node_observations
 from raptix_core.types.capability import (
     Artifact,

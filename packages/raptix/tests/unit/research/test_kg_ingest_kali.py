@@ -9,8 +9,8 @@ from types import SimpleNamespace
 import pytest
 from langchain_core.messages import ToolMessage
 
-from raptix.execution.tools.research import tools as research_tools
 from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
+from raptix.execution.tools.research import tools as research_tools
 from raptix_core.types.kg import KnowledgeGraph, NodeKind
 
 

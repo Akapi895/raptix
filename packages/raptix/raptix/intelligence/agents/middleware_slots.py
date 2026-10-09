@@ -36,6 +36,7 @@ from deepagents.middleware.summarization import create_summarization_middleware
 from langchain.agents.middleware import AgentMiddleware, ModelFallbackMiddleware
 from langchain_anthropic.middleware import AnthropicPromptCachingMiddleware
 
+from raptix.execution.session.recording import RecordingMiddleware
 from raptix.intelligence.agents._benchmark_mode import benchmark_skill_sources
 from raptix.middleware import (
     EngagementContextMiddleware,
@@ -60,7 +61,6 @@ from raptix.middleware.opscontrol_notifications import (
 from raptix.middleware.prompt_injection_shield import PromptInjectionShieldMiddleware
 from raptix.middleware.proxy_key_override import ProxyKeyOverrideMiddleware
 from raptix.middleware.roe import build_default_sink
-from raptix.execution.session.recording import RecordingMiddleware
 
 # Slot enum + per-role applicability mapping + safety-critical set
 # all live in the contract layer now (raptix_core.contracts.slots).

@@ -1,4 +1,4 @@
-﻿"""TC-0 coverage-inventory tests.
+"""TC-0 coverage-inventory tests.
 
 Deterministic: registries are injected (no PATH/import probing), so the
 report content is stable regardless of the host running the tests.
