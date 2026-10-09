@@ -1,4 +1,4 @@
-"""PoC validator + CVSS estimator.
+"""PoC validator + CVSS attachment.
 
 Takes a PoC script (bash, python, curl invocation, http request text) and
 runs it inside the Docker sandbox against the target. The validator looks
@@ -12,26 +12,28 @@ a negative control (same request without payload) to differentiate
 "works because of payload" from "works anyway". Optional but strongly
 recommended for bounty reports.
 
-CVSS estimation
----------------
-If the PoC confirms exploitation, :class:`CVSSVector` is built from
-caller-provided access flags (AV/AC/PR/UI/S/C/I/A). The base score is
-computed with the standard v3.1 formula so the agent can attach a
-defensible score to each validated finding without reaching for an
-external calculator.
+CVSS scoring
+------------
+If the PoC confirms exploitation and the caller supplied a vector string,
+scoring is delegated to :mod:`raptix.execution.tools.reporting.cvss` — the
+single canonical CVSS 3.1 implementation (base + environmental score, used
+by ``cvss_score_tool`` too). This module used to carry its own duplicate
+base-score-only formula; see that module for the scoring math itself.
 """
 
 from __future__ import annotations
 
 import asyncio
 import hashlib
-import math
 import re
 import time
 from dataclasses import dataclass, field
-from enum import StrEnum
 from typing import Any, Awaitable, Callable
 
+from langchain_core.tools import tool
+
+from raptix.execution.tools.reporting.cvss import parse_vector, score_vector
+from raptix.execution.tools.research._state import _json, graph_transaction
 from raptix_core.types.kg import (
     Edge,
     EdgeKind,
@@ -44,137 +46,24 @@ from raptix_core.utils.logging import get_logger
 
 log = get_logger("research.poc")
 
-
-# ── CVSS v3.1 base score ────────────────────────────────────────────────
-
-
-class AV(StrEnum):
-    NETWORK = "N"
-    ADJACENT = "A"
-    LOCAL = "L"
-    PHYSICAL = "P"
+_BAND_TO_SEVERITY: dict[str, Severity] = {
+    "Critical": Severity.CRITICAL,
+    "High": Severity.HIGH,
+    "Medium": Severity.MEDIUM,
+    "Low": Severity.LOW,
+    "None": Severity.INFO,
+}
 
 
-class AC(StrEnum):
-    LOW = "L"
-    HIGH = "H"
+def parse_cvss_vector(vector: str) -> str:
+    """Validate a CVSS 3.1 vector string, returning it unchanged on success.
 
-
-class PR(StrEnum):
-    NONE = "N"
-    LOW = "L"
-    HIGH = "H"
-
-
-class UI(StrEnum):
-    NONE = "N"
-    REQUIRED = "R"
-
-
-class Scope(StrEnum):
-    UNCHANGED = "U"
-    CHANGED = "C"
-
-
-class Impact(StrEnum):
-    NONE = "N"
-    LOW = "L"
-    HIGH = "H"
-
-
-_AV_VALUE = {AV.NETWORK: 0.85, AV.ADJACENT: 0.62, AV.LOCAL: 0.55, AV.PHYSICAL: 0.2}
-_AC_VALUE = {AC.LOW: 0.77, AC.HIGH: 0.44}
-_UI_VALUE = {UI.NONE: 0.85, UI.REQUIRED: 0.62}
-_IMPACT_VALUE = {Impact.NONE: 0.0, Impact.LOW: 0.22, Impact.HIGH: 0.56}
-_PR_UNCHANGED = {PR.NONE: 0.85, PR.LOW: 0.62, PR.HIGH: 0.27}
-_PR_CHANGED = {PR.NONE: 0.85, PR.LOW: 0.68, PR.HIGH: 0.5}
-
-
-@dataclass
-class CVSSVector:
-    av: AV = AV.NETWORK
-    ac: AC = AC.LOW
-    pr: PR = PR.NONE
-    ui: UI = UI.NONE
-    scope: Scope = Scope.UNCHANGED
-    c: Impact = Impact.HIGH
-    i: Impact = Impact.HIGH
-    a: Impact = Impact.HIGH
-
-    def to_vector_string(self) -> str:
-        return (
-            f"CVSS:3.1/AV:{self.av.value}/AC:{self.ac.value}/PR:{self.pr.value}/"
-            f"UI:{self.ui.value}/S:{self.scope.value}/"
-            f"C:{self.c.value}/I:{self.i.value}/A:{self.a.value}"
-        )
-
-    def base_score(self) -> float:
-        """Compute CVSS v3.1 base score per spec.
-
-        Reference: https://www.first.org/cvss/v3.1/specification-document
-        """
-        iss = 1 - (
-            (1 - _IMPACT_VALUE[self.c]) * (1 - _IMPACT_VALUE[self.i]) * (1 - _IMPACT_VALUE[self.a])
-        )
-        if self.scope == Scope.UNCHANGED:
-            impact = 6.42 * iss
-        else:
-            impact = 7.52 * (iss - 0.029) - 3.25 * math.pow(iss - 0.02, 15)
-        pr_val = _PR_UNCHANGED[self.pr] if self.scope == Scope.UNCHANGED else _PR_CHANGED[self.pr]
-        exploitability = (
-            8.22 * _AV_VALUE[self.av] * _AC_VALUE[self.ac] * pr_val * _UI_VALUE[self.ui]
-        )
-        if impact <= 0:
-            return 0.0
-        if self.scope == Scope.UNCHANGED:
-            base = min(impact + exploitability, 10.0)
-        else:
-            base = min(1.08 * (impact + exploitability), 10.0)
-        # CVSS rounds up to 1 decimal
-        return math.ceil(base * 10) / 10
-
-    def to_severity(self) -> Severity:
-        score = self.base_score()
-        if score >= 9.0:
-            return Severity.CRITICAL
-        if score >= 7.0:
-            return Severity.HIGH
-        if score >= 4.0:
-            return Severity.MEDIUM
-        if score > 0.0:
-            return Severity.LOW
-        return Severity.INFO
-
-
-def parse_cvss_vector(vector: str) -> CVSSVector:
-    """Parse a complete CVSS v3.1 base vector without inventing defaults."""
-    if not vector.startswith("CVSS:3.1/"):
-        raise ValueError("CVSS vector must start with 'CVSS:3.1/'")
-    metrics: dict[str, str] = {}
-    for segment in vector.removeprefix("CVSS:3.1/").split("/"):
-        key, separator, value = segment.partition(":")
-        if not separator or not key or not value:
-            raise ValueError(f"invalid CVSS metric {segment!r}")
-        if key in metrics:
-            raise ValueError(f"duplicate CVSS metric {key!r}")
-        metrics[key] = value
-    expected = {"AV", "AC", "PR", "UI", "S", "C", "I", "A"}
-    unexpected = set(metrics) - expected
-    missing = expected - set(metrics)
-    if unexpected:
-        raise ValueError(f"unsupported CVSS metrics: {', '.join(sorted(unexpected))}")
-    if missing:
-        raise ValueError(f"missing CVSS metrics: {', '.join(sorted(missing))}")
-    return CVSSVector(
-        av=AV(metrics["AV"]),
-        ac=AC(metrics["AC"]),
-        pr=PR(metrics["PR"]),
-        ui=UI(metrics["UI"]),
-        scope=Scope(metrics["S"]),
-        c=Impact(metrics["C"]),
-        i=Impact(metrics["I"]),
-        a=Impact(metrics["A"]),
-    )
+    Delegates validation to :func:`raptix.execution.tools.reporting.cvss.parse_vector`.
+    ``CVSSError`` is a ``ValueError`` subclass, so existing ``except ValueError``
+    callers (``validate_finding``, ``validate_workspace_finding``) are unaffected.
+    """
+    parse_vector(vector)
+    return vector
 
 
 # ── PoC validation ──────────────────────────────────────────────────────
@@ -250,7 +139,7 @@ async def validate_poc(
     runner: PoCRunner,
     negative_command: str | None = None,
     negative_patterns: list[str] | None = None,
-    cvss: CVSSVector | None = None,
+    cvss: str | None = None,
     graph: KnowledgeGraph | None = None,
 ) -> PoCResult:
     """Run a PoC command and evaluate against success/negative patterns.
@@ -289,9 +178,14 @@ async def validate_poc(
     cvss_score: float | None = None
     sev: str | None = None
     if cvss is not None:
-        cvss_vec_str = cvss.to_vector_string()
-        cvss_score = cvss.base_score()
-        sev = cvss.to_severity().value
+        scored = score_vector(cvss)
+        cvss_vec_str = scored["normalized_vector"]
+        if scored["has_environmental"]:
+            cvss_score = scored["environmental_score"]
+            sev = _BAND_TO_SEVERITY[scored["environmental_severity"]].value
+        else:
+            cvss_score = scored["base_score"]
+            sev = _BAND_TO_SEVERITY[scored["base_severity"]].value
 
     result = PoCResult(
         validated=validated,
@@ -429,3 +323,73 @@ def sandbox_runner(sandbox: Any, *, timeout: float | None = None) -> PoCRunner:
         return out, "", code
 
     return _run
+
+
+# ── Agent-facing tool ─────────────────────────────────────────────────────
+
+
+@tool
+async def validate_finding(
+    vuln_id: str,
+    poc_command: str,
+    success_patterns: str,
+    negative_command: str = "",
+    negative_patterns: str = "",
+    cvss_vector: str = "",
+) -> str:
+    """Run a PoC inside the sandbox and mark the vuln validated on hit.
+
+    WHEN TO USE: After identifying a vulnerability, craft a minimal
+    reproducer and run it here. The validator applies ZFP (zero false
+    positives) by requiring a negative control: if the same request
+    without the payload *also* fires the success pattern, the result is
+    demoted.
+
+    SUCCESS PATTERNS are Python regexes (DOTALL + IGNORECASE). Use simple
+    substrings when you don't need regex power.
+
+    CVSS_VECTOR example: ``"CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"``
+    If provided, the base score is computed and written back onto the
+    vuln node.
+
+    Args:
+        vuln_id: Graph id of the vulnerability node to validate.
+        poc_command: Bash command that exercises the vulnerability.
+        success_patterns: Comma-separated list of regexes to match in stdout.
+        negative_command: Optional baseline command (same request without payload).
+        negative_patterns: Comma-separated regexes expected in the baseline.
+        cvss_vector: Optional CVSS v3.1 vector string.
+
+    Returns:
+        JSON validation record including success signals, negative
+        control hits, stdout excerpt, and CVSS score if provided.
+    """
+    from raptix.execution.tools.bash.bash import get_sandbox
+
+    sandbox = get_sandbox()
+    if sandbox is None:
+        return _json({"error": "HTTPSandbox not initialized"})
+
+    def _split(s: str) -> list[str]:
+        return [p.strip() for p in s.split(",") if p.strip()]
+
+    cvss: str | None = None
+    if cvss_vector:
+        try:
+            cvss = parse_cvss_vector(cvss_vector)
+        except ValueError as exc:
+            return _json({"error": f"bad CVSS vector: {exc}"})
+
+    with graph_transaction() as graph:
+        runner = sandbox_runner(sandbox)
+        result = await validate_poc(
+            vuln_id=vuln_id,
+            poc_command=poc_command,
+            success_patterns=_split(success_patterns),
+            runner=runner,
+            negative_command=negative_command or None,
+            negative_patterns=_split(negative_patterns) if negative_patterns else None,
+            cvss=cvss,
+            graph=graph,
+        )
+        return _json(result.to_dict())
