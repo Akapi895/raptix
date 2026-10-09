@@ -83,10 +83,13 @@ from langchain_core.messages import AIMessage, ToolMessage
 from langgraph.types import Command
 from typing_extensions import override
 
+from raptix.core.dispatch_context import active_dispatch
 from raptix.orchestration.mission.objective_context import ObjectiveContextState
+from raptix.runtime.call_context import active_call, call_scope, identity, instrument_model
 
 log = logging.getLogger(__name__)
 
+_RAW_USAGE_ENV = "RAPTIX_LLM__LOG_RAW_USAGE"
 _RECORD_LEVEL_ENV = "RAPTIX_RUNTIME__RECORD_LEVEL"
 _RECORD_LEVELS = frozenset({"raw", "redacted"})
 
@@ -103,6 +106,10 @@ class RecordExportError(ValueError):
     """A sanitized export would overwrite its raw source."""
 
 
+def raw_usage_logging_enabled() -> bool:
+    return os.environ.get(_RAW_USAGE_ENV, "0").strip().lower() in {"1", "true", "yes"}
+
+
 def record_level() -> str:
     """Resolved record level; invalid values fail loudly, naming the env var."""
     level = os.environ.get(_RECORD_LEVEL_ENV, "raw").strip().lower() or "raw"
@@ -111,6 +118,77 @@ def record_level() -> str:
     return level
 
 
+
+
+def _served_model(source: Any) -> str:
+    """The provider/model the route actually served, if the response exposes it."""
+    source = getattr(source, "model_response", source)
+    message = source
+    if isinstance(source, ModelResponse):
+        message = next((m for m in reversed(source.result) if isinstance(m, AIMessage)), None)
+    metadata = getattr(message, "response_metadata", None) or {}
+    if not isinstance(metadata, dict):
+        return ""
+    return str(metadata.get("model_name") or metadata.get("model") or "")[:128]
+
+
+def _raw_usage(source: Any) -> dict[str, Any]:
+    """Usage-bearing metadata for the raw-usage debug passthrough (never params)."""
+    source = getattr(source, "model_response", source)
+    message = source
+    if isinstance(source, ModelResponse):
+        message = next((m for m in reversed(source.result) if isinstance(m, AIMessage)), None)
+    usage = getattr(message, "usage_metadata", None)
+    metadata = getattr(message, "response_metadata", None)
+    raw: dict[str, Any] = {}
+    if isinstance(usage, dict) and usage:
+        raw["usage_metadata"] = _usage_numbers(usage)
+    if isinstance(metadata, dict):
+        for key in ("token_usage", "usage", "model_name", "model"):
+            value = metadata.get(key)
+            if isinstance(value, dict) and value:
+                raw[key] = _usage_numbers(value)
+    details = raw.get("usage_metadata")
+    if isinstance(details, dict) and details.get("input_token_details") is not None:
+        raw["input_token_details"] = details["input_token_details"]
+    return raw
+
+
+def _usage_numbers(usage: dict) -> dict[str, Any]:
+    counts = {
+        "input_tokens",
+        "output_tokens",
+        "total_tokens",
+        "prompt_tokens",
+        "completion_tokens",
+        "cached_tokens",
+        "cache_read_input_tokens",
+        "cache_creation_input_tokens",
+        "reasoning_tokens",
+        "cache_creation_tokens",
+        "cache_read",
+        "cache_creation",
+        "audio",
+        "text",
+        "reasoning",
+    }
+    details = {
+        "prompt_tokens_details",
+        "completion_tokens_details",
+        "input_token_details",
+        "output_token_details",
+    }
+    return {
+        key: (value if key in counts else _usage_numbers(value))
+        for key, value in usage.items()
+        if (
+            key in counts
+            and isinstance(value, (int, float))
+            and not isinstance(value, bool)
+            and value >= 0
+        )
+        or (key in details and isinstance(value, dict))
+    }
 
 
 class ReplayMismatchError(RuntimeError):
@@ -209,6 +287,7 @@ def _normalize_usage(message: Any) -> tuple[dict[str, Any] | None, str]:
 
 
 def _serialize_ai_response(message: Any) -> dict[str, Any]:
+    message = getattr(message, "model_response", message)
     if isinstance(message, ModelResponse):
         messages = message.result
         serialized = _serialize_ai_response(
@@ -600,6 +679,128 @@ class _Replay:
 def open_replay(path: str | Path) -> _Replay:
     """Open ``path`` for replay lookups."""
     return _Replay(Path(path))
+
+
+def _record_attempts(sink: _Sink) -> None:
+    frame = active_call.get()
+    if frame is None:
+        return
+    for attempt in frame.attempts:
+        entry = {
+            **identity(),
+            **{k: v for k, v in attempt.items() if k != "started"},
+            "kind": "upstream_attempt",
+            "ts": datetime.now(timezone.utc).isoformat(),
+        }
+        sink.write(entry)
+    frame.attempts.clear()
+
+
+def summary_call_recording_enabled() -> bool:
+    return bool((os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "") or "").strip())
+
+
+class SummaryCallRecorder:
+    """Duck-typed model proxy that records summary-model calls separately.
+
+    The summarization helper calls ``model.invoke``/``ainvoke`` directly,
+    bypassing the RECORD middleware slot, so wrapping the summary model is the
+    only point that sees those calls. Every other attribute delegates to the
+    real model so token-counter and profile access keep working.
+    """
+
+    def __init__(self, model: Any, *, role: str = "") -> None:
+        self._model = model
+        self._role = role
+        self._request = None
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._model, name)
+
+    def invoke(self, input: Any, config: Any = None, **kwargs: Any) -> Any:
+        with call_scope("summary_call", self._request):
+            start = time.monotonic()
+            instrument_model(self._model)
+            try:
+                response = self._model.invoke(input, config=config, **kwargs)
+            except Exception as exc:
+                _record_summary_call(
+                    self._role, input, exc, int((time.monotonic() - start) * 1000), self._request
+                )
+                raise
+            _record_summary_call(
+                self._role, input, response, int((time.monotonic() - start) * 1000), self._request
+            )
+            return response
+
+    async def ainvoke(self, input: Any, config: Any = None, **kwargs: Any) -> Any:
+        with call_scope("summary_call", self._request):
+            start = time.monotonic()
+            instrument_model(self._model)
+            try:
+                response = await self._model.ainvoke(input, config=config, **kwargs)
+            except Exception as exc:
+                _record_summary_call(
+                    self._role, input, exc, int((time.monotonic() - start) * 1000), self._request
+                )
+                raise
+            _record_summary_call(
+                self._role, input, response, int((time.monotonic() - start) * 1000), self._request
+            )
+            return response
+
+
+def wrap_summary_model(model: Any, *, role: str = "", request: Any = None) -> Any:
+    """Wrap a summary model for separate telemetry, or return it unchanged."""
+    if not summary_call_recording_enabled():
+        return model
+    wrapped = SummaryCallRecorder(
+        model._model if isinstance(model, SummaryCallRecorder) else model,
+        role=role or getattr(model, "_role", ""),
+    )
+    wrapped._request = request
+    return wrapped
+
+
+def _record_summary_call(
+    role: str, prompt: Any, response: Any, dur_ms: int, request: Any = None
+) -> None:
+    try:
+        record_path = (os.environ.get("RAPTIX_RUNTIME__RECORD_PATH", "") or "").strip()
+        if not record_path:
+            return
+        entry: dict[str, Any] = {
+            "kind": "summary_call",
+            "req_hash": _hash_request({"summary_prompt": str(prompt)}),
+            "agent": role,
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "dur_ms": dur_ms,
+            "request": {"role": role},
+            "response": (
+                _serialize_error_response(response)
+                if isinstance(response, Exception)
+                else _serialize_ai_response(response)
+                if not isinstance(response, str)
+                else {"content": response}
+            ),
+        }
+        entry.update(identity())
+        state = getattr(request, "state", {}) or {}
+        dispatch = active_dispatch.get()
+        entry["objective_id"] = (dispatch.objective_id if dispatch else None) or state.get(
+            "active_objective_id"
+        )
+        served = _served_model(response)
+        if served:
+            entry["served_model"] = served
+        if raw_usage_logging_enabled():
+            entry["raw_usage"] = _raw_usage(response)
+        if record_level() == "redacted":
+            entry = sanitize_entry(entry)
+        open_record(Path(record_path)).write(entry)
+        _record_attempts(open_record(Path(record_path)))
+    except Exception as exc:  # noqa: BLE001 — telemetry never blocks summarization
+        log.debug("summary-call recording skipped: %s", type(exc).__name__)
 
 
 class RecordingMiddleware(AgentMiddleware):
