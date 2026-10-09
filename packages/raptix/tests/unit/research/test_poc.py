@@ -1,65 +1,19 @@
-"""Unit tests for PoC validation + CVSS computation."""
+"""Unit tests for PoC validation.
+
+CVSS scoring itself is covered by ``tests/unit/reporting/test_cvss.py`` —
+``poc.py`` only delegates to ``reporting.cvss.score_vector``.
+"""
 
 from __future__ import annotations
 
 import pytest
 
-from raptix.execution.tools.research.poc import (
-    AC,
-    AV,
-    PR,
-    UI,
-    CVSSVector,
-    Impact,
-    Scope,
-    Severity,
-    _match_signals,
-    validate_poc,
-)
+from raptix.execution.tools.research.poc import _match_signals, validate_poc
 from raptix_core.types.kg import (
     KnowledgeGraph,
     Node,
     NodeKind,
 )
-
-
-class TestCVSSv31:
-    def test_canonical_critical_rce(self) -> None:
-        # AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H
-        v = CVSSVector()
-        assert v.base_score() == 9.8
-        assert v.to_severity() == Severity.CRITICAL
-
-    def test_scope_change_boosts_score(self) -> None:
-        v = CVSSVector(scope=Scope.CHANGED)
-        assert v.base_score() == 10.0
-
-    def test_auth_required_medium(self) -> None:
-        v = CVSSVector(pr=PR.LOW, c=Impact.LOW, i=Impact.NONE, a=Impact.NONE)
-        # Authenticated low-impact
-        assert 3.0 <= v.base_score() <= 5.0
-
-    def test_no_impact_is_zero(self) -> None:
-        v = CVSSVector(c=Impact.NONE, i=Impact.NONE, a=Impact.NONE)
-        assert v.base_score() == 0.0
-        assert v.to_severity() == Severity.INFO
-
-    def test_vector_string_round_trip(self) -> None:
-        v = CVSSVector(
-            av=AV.NETWORK,
-            ac=AC.LOW,
-            pr=PR.NONE,
-            ui=UI.NONE,
-            scope=Scope.CHANGED,
-            c=Impact.HIGH,
-            i=Impact.HIGH,
-            a=Impact.HIGH,
-        )
-        assert v.to_vector_string() == "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
-
-    def test_severity_buckets(self) -> None:
-        low = CVSSVector(c=Impact.LOW, i=Impact.NONE, a=Impact.NONE, pr=PR.HIGH)
-        assert low.to_severity() in (Severity.LOW, Severity.MEDIUM)
 
 
 class TestSignalMatching:
@@ -132,7 +86,7 @@ class TestValidatePoc:
         async def runner(cmd: str) -> tuple[str, str, int]:
             return ("pwned", "", 0)
 
-        cvss = CVSSVector()
+        cvss = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
         result = await validate_poc(
             vuln_id="vuln1",
             poc_command="curl",
@@ -152,7 +106,7 @@ class TestValidatePoc:
         async def runner(cmd: str) -> tuple[str, str, int]:
             return ("root creds leaked AccessKeyId: ABCD", "", 0)
 
-        cvss = CVSSVector(scope=Scope.CHANGED)
+        cvss = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H"
         result = await validate_poc(
             vuln_id=vuln.id,
             poc_command="curl /exploit",
