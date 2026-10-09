@@ -8,12 +8,12 @@ from pathlib import Path
 import pytest
 from langchain_core.messages import ToolMessage
 
+from raptix.execution.session.event_log import EventLog, EventType, read_events
 from raptix.middleware.event_logging import (
     EventLogMiddleware,
     _redact_args,
     _summarize_value,
 )
-from raptix.execution.session.event_log import EventLog, EventType, read_events
 
 # ── fakes mirroring the request/handler shapes used by other middleware tests ──
 

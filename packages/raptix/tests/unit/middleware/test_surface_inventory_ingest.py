@@ -8,13 +8,13 @@ from typing import Any
 import pytest
 from langchain_core.messages import ToolMessage
 
+from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
 from raptix.knowledge.graph.ingest import (
     _adapt_arjun_json,
     _adapt_katana_jsonl,
     available_scanners,
 )
 from raptix.middleware.kg_autoingest import KGAutoIngestMiddleware
-from raptix.execution.session.recording import RecordingMiddleware, ReplayMiddleware
 
 
 class _StubStore:
