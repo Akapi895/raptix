@@ -34,7 +34,9 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+from langchain_core.tools import tool
 
+from raptix.execution.tools.research._state import _json
 from raptix_core.utils.logging import get_logger
 
 log = get_logger("research.cve")
@@ -478,3 +480,55 @@ async def lookup_package(
 def rank_exploitability(records: list[Exploitability]) -> list[Exploitability]:
     """Return a copy sorted by composite exploitability score, highest first."""
     return sorted(records, key=lambda r: r.score, reverse=True)
+
+
+# ── Agent-facing tools ───────────────────────────────────────────────────
+
+
+@tool
+async def cve_lookup(cve_ids: str) -> str:
+    """Look up CVEs against NVD + EPSS with real-world exploitability scoring.
+
+    WHEN TO USE: Whenever you find a service version (nmap -sV),
+    dependency (package.json, requirements.txt, Cargo.lock), or CVE ID
+    from any source. Returns a ranked list: CVEs with high CVSS *and*
+    high EPSS (or KEV listing) bubble to the top.
+
+    The composite ``score`` blends:
+    - CVSS base (0-10)
+    - EPSS probability (log-scaled)
+    - CISA KEV membership (floors score at 9.0)
+
+    Args:
+        cve_ids: Comma-separated CVE IDs, e.g. ``"CVE-2024-12345,CVE-2023-99999"``.
+
+    Returns:
+        JSON list of exploitability records, highest score first.
+    """
+    ids = [c.strip() for c in cve_ids.split(",") if c.strip()]
+    if not ids:
+        return _json({"error": "no CVE IDs provided"})
+    records = await lookup_cves(ids)
+    return _json([r.to_dict() for r in records])
+
+
+@tool
+async def cve_by_package(package: str, version: str, ecosystem: str = "PyPI") -> str:
+    """Query OSV for CVEs affecting ``package@version`` in an ecosystem.
+
+    WHEN TO USE: After reading a manifest file (requirements.txt,
+    package.json, go.sum, Cargo.lock). Pair with ``cve_lookup`` to score
+    the results and prioritise bounty-worthy targets.
+
+    Args:
+        package: Package name (exact, case-sensitive).
+        version: Installed version string.
+        ecosystem: One of PyPI, npm, crates.io, Go, Maven, RubyGems,
+            NuGet, Packagist, Pub, Hex.
+
+    Returns:
+        JSON list of vulnerability IDs (CVE/GHSA). Empty if the package
+        version is clean (or the OSV API was unreachable).
+    """
+    ids = await lookup_package(package, version, ecosystem)
+    return _json({"package": package, "version": version, "ecosystem": ecosystem, "ids": ids})
