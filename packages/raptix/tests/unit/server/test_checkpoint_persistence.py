@@ -8,7 +8,7 @@ from langchain_core.runnables import RunnableConfig
 from langgraph.graph import START, StateGraph
 from langgraph.types import Command, interrupt
 
-from raptix.server.checkpointer import sqlite_checkpointer
+from raptix.interfaces.api.checkpointer import sqlite_checkpointer
 
 
 class InterviewState(TypedDict):

@@ -1,1 +1,1 @@
-"""Unit tests for raptix.mcp_server."""
+"""Unit tests for raptix.interfaces.mcp."""

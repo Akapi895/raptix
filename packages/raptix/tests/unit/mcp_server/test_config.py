@@ -1,10 +1,10 @@
-"""Tests for raptix.mcp_server.config (env-driven settings)."""
+"""Tests for raptix.interfaces.mcp.config (env-driven settings)."""
 
 from __future__ import annotations
 
 import pytest
 
-from raptix.mcp_server.config import (
+from raptix.interfaces.mcp.config import (
     ENV_API_URL,
     ENV_ASSISTANT,
     ENV_AUDIENCE,

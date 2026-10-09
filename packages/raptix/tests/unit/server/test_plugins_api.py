@@ -25,8 +25,8 @@ from fastapi import HTTPException
 from fastapi.testclient import TestClient
 
 from raptix.graph_registry import _BUNDLE_TO_GRAPHS
-from raptix.server import plugins_api
-from raptix.server.plugins_api import (
+from raptix.interfaces.api import plugins_api
+from raptix.interfaces.api.plugins_api import (
     _path_to_module,
     _resolve_bundle,
     app,

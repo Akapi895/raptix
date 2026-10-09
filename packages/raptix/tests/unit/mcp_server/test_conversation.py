@@ -1,10 +1,10 @@
-"""Tests for raptix.mcp_server.conversation (ThreadState parsing)."""
+"""Tests for raptix.interfaces.mcp.conversation (ThreadState parsing)."""
 
 from __future__ import annotations
 
 from typing import Any
 
-from raptix.mcp_server.conversation import build_engagement_state, build_transcript
+from raptix.interfaces.mcp.conversation import build_engagement_state, build_transcript
 
 _STATE: dict[str, Any] = {
     "values": {
