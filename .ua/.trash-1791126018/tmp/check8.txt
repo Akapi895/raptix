@@ -1,6 +1,0 @@
-file:packages/raptix/raptix/runtime/event_log.py | Nhật ký sự kiện append-only cho từng chiến dịch, ghi file events.jsonl với khóa 
-file:packages/raptix/raptix/tools/evidence/__init__.py | Điểm xuất khẩu của gói công cụ bằng chứng, gom các công cụ asciicast và niêm pho
-TEST: function:packages/raptix/tests/unit/cli/test_audit.py:test_verify_tampered_ledger_returns_nonzero | Kiểm thử CLI kiểm toán — Xác minh bị giả mạo sổ cái returns khác không.
-TESTED_BY: {'source': 'file:packages/raptix/raptix/agents/__init__.py', 'target': 'file:packages/raptix/tests/unit/agents/test_build.py', 'type': 'tested_by', 'direction': 'forward', 'weight': 0.5}
-CALLS: {'source': 'function:packages/raptix/raptix/runtime/event_log.py:_acquire_lock', 'target': 'function:packages/raptix/raptix/runtime/event_log.py:_retry_lock', 'type': 'calls', 'direction': 'forward', 'weight': 0.8}
-missing fields: 0
