@@ -37,7 +37,7 @@ import os
 import time
 import uuid
 from datetime import UTC, datetime
-from typing import Any, Callable
+from typing import Any, Callable, get_args, get_type_hints
 
 from langchain_core.messages import AIMessage
 from langchain_core.messages.tool import ToolCall
@@ -51,6 +51,61 @@ log = logging.getLogger("raptix.subagent_streaming")
 # makes the sub-agent transcript survive reconnect / completion, independent of
 # any attached SSE client.
 TRANSCRIPT_STATE_KEY = "subagent_transcripts"
+
+# Channel keys that must NEVER cross the child->parent state boundary
+# (ADR-0045). Keys annotated with PrivateStateAttr anywhere in the child
+# graph's state-schema MRO are resolved at runtime; this constant is the
+# belt-and-braces floor for the known contaminant.
+PRIVATE_CHILD_STATE_KEYS: frozenset[str] = frozenset({"_summarization_event", "context_epoch"})
+
+
+def _private_state_keys(runnable: Runnable) -> frozenset[str]:
+    """Resolve output-private annotations, including nested NotRequired/Annotated."""
+    schema = getattr(runnable, "schema", None) or getattr(
+        getattr(runnable, "builder", None), "state_schema", None
+    )
+    private = set(PRIVATE_CHILD_STATE_KEYS)
+    if schema is not None:
+        try:
+            annotations = get_type_hints(schema, include_extras=True)
+        except (NameError, TypeError) as exc:
+            log.warning("Child state annotations could not be resolved: %s", exc)
+            annotations = {}
+        for key, annotation in annotations.items():
+            pending = [annotation]
+            while pending:
+                candidate = pending.pop()
+                if getattr(candidate, "output", False) is True:
+                    private.add(key)
+                    break
+                pending.extend(get_args(candidate))
+    return frozenset(private)
+
+
+def _public_child_state(runnable: Runnable, last_state: dict) -> dict:
+    """Match compiled invoke output when consuming internal values streams."""
+    while isinstance(runnable, RunnableBinding):
+        runnable = runnable.bound
+    private = _private_state_keys(runnable)
+    public = None
+    if hasattr(runnable, "output_channels"):
+        try:
+            public = set(runnable.get_output_schema().model_fields)
+        except (TypeError, ValueError) as exc:
+            # Raw StateGraphs can expose annotations Pydantic cannot render.
+            # Their compiled output channels still define the output contract.
+            log.debug("Using compiled output channels instead of output schema: %s", exc)
+            channels = runnable.output_channels
+            public = {channels} if isinstance(channels, str) else set(channels)
+    return {
+        **{
+            key: value
+            for key, value in last_state.items()
+            if key not in private and (public is None or key in public)
+        },
+        "messages": last_state.get("messages", []),
+    }
+
 
 # Persisted-copy bound. The live ``writer`` event always carries the FULL
 # tool result; only the copy appended to the durable transcript is capped, so
@@ -516,7 +571,9 @@ class StreamingRunnable(RunnableBinding):
 
         if not has_renderer and writer is None:
             log.warning("[%s] No channels available — falling back to plain invoke()", self._name)
-            return self._runnable.invoke(input, config, **kwargs)
+            return _public_child_state(
+                self._runnable, self._runnable.invoke(input, config, **kwargs)
+            )
 
         prompt = self._extract_prompt(input)
         # Per-invocation id so consumers can distinguish two concurrent
@@ -583,7 +640,8 @@ class StreamingRunnable(RunnableBinding):
             error_msg = self._failure_message(exc, transcript)
             if last_state is not None:
                 last_state.setdefault("messages", []).append(error_msg)
-                return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
+                projected_state = _public_child_state(self._runnable, last_state)
+                return {**projected_state, TRANSCRIPT_STATE_KEY: transcript}
             return {"messages": [error_msg], TRANSCRIPT_STATE_KEY: transcript}
 
         self._emit_end(
@@ -617,7 +675,10 @@ class StreamingRunnable(RunnableBinding):
                 TRANSCRIPT_STATE_KEY: transcript,
             }
 
-        return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
+        return {
+            **_public_child_state(self._runnable, last_state),
+            TRANSCRIPT_STATE_KEY: transcript,
+        }
 
     async def ainvoke(self, input: Any, config: Any = None, **kwargs: Any) -> Any:
         """Stream sub-agent execution (async), emitting events to available channels.
@@ -637,7 +698,9 @@ class StreamingRunnable(RunnableBinding):
 
         if not has_renderer and writer is None:
             log.warning("[%s] No channels available — falling back to plain ainvoke()", self._name)
-            return await self._runnable.ainvoke(input, config, **kwargs)
+            return _public_child_state(
+                self._runnable, await self._runnable.ainvoke(input, config, **kwargs)
+            )
 
         prompt = self._extract_prompt(input)
         # Per-invocation id so consumers can distinguish two concurrent
@@ -710,7 +773,8 @@ class StreamingRunnable(RunnableBinding):
             error_msg = self._failure_message(exc, transcript)
             if last_state is not None:
                 last_state.setdefault("messages", []).append(error_msg)
-                return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
+                projected_state = _public_child_state(self._runnable, last_state)
+                return {**projected_state, TRANSCRIPT_STATE_KEY: transcript}
             return {"messages": [error_msg], TRANSCRIPT_STATE_KEY: transcript}
 
         self._emit_end(
@@ -742,4 +806,7 @@ class StreamingRunnable(RunnableBinding):
                 TRANSCRIPT_STATE_KEY: transcript,
             }
 
-        return {**last_state, TRANSCRIPT_STATE_KEY: transcript}
+        return {
+            **_public_child_state(self._runnable, last_state),
+            TRANSCRIPT_STATE_KEY: transcript,
+        }
