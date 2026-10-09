@@ -9,15 +9,51 @@ capture) yields zero fabricated success.
 
 from __future__ import annotations
 
-import pytest
+from typing import Any, Protocol, cast
 
-from raptix.knowledge.ingest import ParseOutcome, default_registry
+import pytest
+from pydantic import JsonValue
+
+from raptix.knowledge.ingest import default_registry as _default_registry
 from raptix.knowledge.ingest.materialize import apply_observations
-from raptix_core.types.capability import Artifact, Observation
+from raptix_core.types.capability import Artifact
 from raptix_core.types.kg import EdgeKind, KnowledgeGraph, NodeKind
 
 
-def _artifact(content: bytes, hint: str | None = None, **metadata: object) -> Artifact:
+class _NodeFixture(Protocol):
+    kind: str
+    data: dict[str, Any]
+
+
+class _OutcomeFixture(Protocol):
+    observations: list[_NodeFixture]
+    summary: dict[str, Any]
+
+
+class _RegistryFixture:
+    def resolve(self, *args: Any, **kwargs: Any) -> Any:
+        parser = _default_registry().resolve(*args, **kwargs)
+        assert parser is not None
+        return parser
+
+    def parsers(self) -> Any:
+        return _default_registry().parsers()
+
+    def parse(self, artifact: Artifact, content: bytes) -> _OutcomeFixture:
+        outcome = _default_registry().parse(artifact, content)
+        for observation in outcome.observations:
+            if observation.kind != "parse.summary":
+                assert isinstance(observation.data.get("props"), dict)
+                if "edges_out" in observation.data:
+                    assert isinstance(observation.data["edges_out"], list)
+        return cast(_OutcomeFixture, outcome)
+
+
+def default_registry() -> _RegistryFixture:
+    return _RegistryFixture()
+
+
+def _artifact(content: bytes, hint: str | None = None, **metadata: JsonValue) -> Artifact:
     import hashlib
 
     digest = hashlib.sha256(content).hexdigest()
@@ -26,11 +62,11 @@ def _artifact(content: bytes, hint: str | None = None, **metadata: object) -> Ar
         artifact_ref=f"sha256://{digest}",
         format_hint=hint,
         producer="test",
-        metadata=metadata,  # type: ignore[arg-type]
+        metadata=metadata,
     )
 
 
-def _node_observations(outcome: ParseOutcome) -> list[Observation]:
+def _node_observations(outcome: _OutcomeFixture) -> list[_NodeFixture]:
     return [obs for obs in outcome.observations if obs.kind != "parse.summary"]
 
 

@@ -50,6 +50,7 @@ async def test_compiled_agent_records_model_payload(tmp_path: Path, async_mode: 
     )
     path = tmp_path / "record.jsonl"
     recorder = RecordingMiddleware(path=path, role="review")
+    assert recorder._sink is not None
     agent = create_agent(
         ToolModel(responses=[canary, AIMessage(content="done")]),
         tools=[echo_canary],
@@ -108,6 +109,7 @@ async def test_dispatch_objective_reaches_child_and_checkpoint(
     )
     path = tmp_path / "record.jsonl"
     recorder = RecordingMiddleware(path=path)
+    assert recorder._sink is not None
     agent = create_agent(model, middleware=[SeedObjectives(), dispatch, recorder])
     try:
         inputs = {"messages": [{"role": "user", "content": "review"}]}

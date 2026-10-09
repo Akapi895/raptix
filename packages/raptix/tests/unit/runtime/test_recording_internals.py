@@ -569,6 +569,7 @@ def test_replay_skips_error_entries(tmp_path: Path):
 def test_sink_poison_never_breaks_the_run(tmp_path: Path):
     rec_path = tmp_path / "rec.jsonl"
     rec = RecordingMiddleware(path=rec_path)
+    assert rec._sink is not None
     rec._sink.close()  # simulate an unusable sink
     resp = ToolMessage(content="REAL", tool_call_id="t", name="bash", status="success")
     out = rec.wrap_tool_call(_tool_request(), lambda _r: resp)
@@ -637,5 +638,6 @@ def test_make_record_threads_role(monkeypatch: pytest.MonkeyPatch, tmp_path: Pat
 
     mw = _make_record(role="recon")
     assert mw is not None
+    assert mw._sink is not None
     assert mw._role == "recon"
     mw._sink.close()

@@ -55,6 +55,7 @@ def test_framework_dict_tool_call_refuses_out_of_scope_command(tmp_path: Path) -
         state=state,
         runtime=runtime,
     )
+    assert request.tool is not None
     request.tool.name = "bash"
     executed = []
 
